@@ -78,11 +78,11 @@ event LostChild( Actor C )
 	}
 }
 
-function SendPawnDied(Pawn diedPawn, Controller Killer)
+function SendPawnDied(Controller killed, Controller killer)
 {
 	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
 	{
-		TcpLinkServerAcceptor(currentAcceptor).SendPawnDied(diedPawn, Killer);
+		TcpLinkServerAcceptor(currentAcceptor).SendPawnDied(killed, killer);
 	}
 }
 

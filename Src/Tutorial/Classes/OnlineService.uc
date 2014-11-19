@@ -20,9 +20,9 @@ function AddPawn(Pawn newPawn){
 	tcpServer.addPawn(newPawn);
 }
 
-function SendPawnDied(Pawn diedPawn, Controller Killer)
+function SendPawnDied(Controller killed, Controller killer)
 {
-	tcpServer.SendPawnDied(diedPawn, Killer);
+	tcpServer.SendPawnDied(killed, killer);
 }
 
 defaultproperties

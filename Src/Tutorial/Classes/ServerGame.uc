@@ -21,9 +21,16 @@ function AddDefaultInventory( pawn PlayerPawn ){
 	} 
 }
 
+function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType )
+{
+	Super.NotifyKilled(Killer, Killed, KilledPawn, damageType);
+	
+	service.SendPawnDied(killed, killer);
+}
+
 defaultproperties
 {
-	DefaultInventory(0)=class'ProceduralWeapon'
+	DefaultInventory(0)=class'MyWeapon_PoisonDamage'
     DefaultInventory(1)=none
     DefaultPawnClass=class'TutorialPawn'
 }

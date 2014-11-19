@@ -9,7 +9,7 @@ simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optiona
         P = Pawn(Impact.HitActor);                     // Defining the pawn
         P.HealDamage(10, Instigator.Controller, InstantHitDamageTypes[1]);
         
-         `Log("***Pawn Health:" @P.Health); 
+        // `Log("***Pawn Health:" @P.Health); 
     }   
 }
 

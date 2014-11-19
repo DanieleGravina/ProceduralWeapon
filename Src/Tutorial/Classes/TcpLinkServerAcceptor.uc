@@ -13,8 +13,8 @@ var ProceduralWeapon procWeapon;
 var array<Pawn> pawns;
 
 function Initialize(array<Pawn> p){
-	`log("[TcpLinkServerAcceptor] pawns added");
-	pawns = p;
+	//`log("[TcpLinkServerAcceptor] pawns added");
+	//pawns = p;
 }
 
 event Accepted()
@@ -33,8 +33,6 @@ event ReceivedBinary(int Count , byte B[255])
 	local float value;
 	local array<string> parsedString;
 	
-	local Pawn p;
-	
 	for( i = 0; i < Count; i++ )
 	{
 		n = int(B[i]);
@@ -42,39 +40,60 @@ event ReceivedBinary(int Count , byte B[255])
 	}
 	
 	`log("[TcpLinkServerAcceptor] Received line: "$line);
-    if (line ~= "close")
-    {
-        SendText("Closing by request");
-        Close();
-        return;
-    }
-    //SendText(line);
+	
+	ParseStringIntoArray(line, parsedString, ":", false);
     
-    ParseStringIntoArray(line, parsedString, ":", false);
+	for(i = 0; i < parsedString.Length; ++i){
+			
+		if (InStr(parsedString[i], "close") != -1)
+		{
+			SendText("Closing by request");
+			Close();
+			return;
+		}
     
-    for(i = 0; i < parsedString.Length - 1; i += 2){
-    	ModifyWeapon(parsedString[i], parsedString[i+1]);
-    }
+		if (InStr(parsedString[i], "StartMatch") != -1)
+		{
+			WorldInfo.Game.StartMatch();
+		}
+
+		if (InStr(parsedString[i], "Spread") != -1 || InStr(parsedString[i], "RoF") != -1)
+		{
+			if(i + 1 < parsedString.Length)
+			{
+				ModifyWeapon(parsedString[i], parsedString[i+1]);
+				i++;
+			}
+		}
+		
+	}
+   
     
    
 }
 
+// Modify weapon of bots (and player)
 function ModifyWeapon(string WeaponElement, string Value)
 {
 	local int i;
+	local Controller Aplayer;
 	
-	for(i = 0; i < pawns.Length; ++i){
-        	if(pawns[i] != none && pawns[i].Weapon != none){
-	            `log("[TcpLinkServerAcceptor] change "$WeaponElement$" pawn: "$string(i));
-        		if (WeaponElement ~= "RoF")
-				{
-					ModifyRoF(Value, pawns[i]);
-				}
-				else if (WeaponElement ~= "Spread")
-				{
-					ModifySpread(Value, pawns[i]);
-				}
+	foreach WorldInfo.AllControllers(class'Controller', Aplayer)
+	{
+		if (Aplayer.bIsPlayer && Aplayer.Pawn != none && Aplayer.Pawn.Weapon != none)
+		{
+			
+			`log("[TcpLinkServerAcceptor] change "$WeaponElement$" "$Value$" pawn: "$Aplayer.PlayerReplicationInfo.playername);
+        	if (WeaponElement ~= "RoF")
+			{
+				ModifyRoF(Value, Aplayer.Pawn);
 			}
+			else if (WeaponElement ~= "Spread")
+			{
+				ModifySpread(Value, Aplayer.Pawn);
+			}
+			
+		}
 	}
 }
 
@@ -108,32 +127,25 @@ function ModifySpread(string Value, Pawn p)
 	p.Weapon.Spread[0] = val;
 }
 
-function SendPawnDied(Pawn diedPawn, Controller Killer)
+function SendPawnDied(Controller killed, Controller killer)
 {
-	local int i, j, k;
+	local int i;
 	local string line;
 	local byte B[255];
 	
-	for(i = 0; i < pawns.Length; ++i){
-		if(pawns[i] == Killer.Pawn)
-		{
-			k = i;
-		}
-	}
+	`log("[TcpLinkServerAcceptor] SendPawnDied called");
 	
-	for(i = 0; i < pawns.Length; ++i){
-		if(pawns[i] == diedPawn)
-		{
-			line = "pawn died "$string(i)$" Killer: "$string(k);
-			
-			for(j = 0; j < Len(line); ++j){
-				B[j] = byte(Asc(Right(Left(line, j+1), 1)));
-			}
-			
-			SendBinary(Len(line), B);
-		}
-	}
 	
+	if (killed.bIsPlayer)
+	{
+		line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
+			
+		for(i = 0; i < Len(line); ++i){
+			B[i] = byte(Asc(Right(Left(line, i+1), 1)));
+		}
+			
+		SendBinary(Len(line), B);
+	}
 }
 
 event Closed()

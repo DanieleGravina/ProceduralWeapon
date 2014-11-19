@@ -218,20 +218,6 @@ function SendPawnToOnlineService(OnlineService service){
 	service.AddPawn(Self);
 }
 
-function bool Died(Controller Killer, class<DamageType> damageType, vector HitLocation)
-{
-	local bool result;
-	
-	result = Super.Died(Killer, damageType, HitLocation);
-	
-	if(result)
-	{
-		myService.SendPawnDied(self, Killer);
-	}
-	
-	return result;
-}
-
 
    
 
