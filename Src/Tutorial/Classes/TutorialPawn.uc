@@ -11,9 +11,6 @@ var WeaponFlashlight                 Flashlight;
 var float                                        DamageOverlayTime;
 var LinearColor                          DamageBodyMatColor;
 
-/** Used for communication with the TcpLink client */
-var OnlineService myService;
-
 
 
 ///***************************************************************************
@@ -210,12 +207,6 @@ simulated singular event Rotator GetBaseAimRotation()
     }
 
     return POVRot;
-}
-
-function SendPawnToOnlineService(OnlineService service){
-    `log("[TutorialPAwn] SendPawnToOnlineService");
-    myService = service;
-	service.AddPawn(Self);
 }
 
 

@@ -15,14 +15,16 @@ function Initialize(ServerGame sg)
     tcpServer = Spawn(class'TcpLinkServer');
 }
 
-function AddPawn(Pawn newPawn){
-	`log("[OnlineServer] AddPawn");
-	tcpServer.addPawn(newPawn);
-}
-
 function SendPawnDied(Controller killed, Controller killer)
 {
 	tcpServer.SendPawnDied(killed, killer);
+}
+
+// Inform client that the game has ended
+function SendEndGame()
+{
+	tcpServer.SendEndGame();
+	`log("[OnlineService] EndGame called");
 }
 
 defaultproperties

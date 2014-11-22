@@ -8,9 +8,15 @@
  */ 
 class TcpLinkServerAcceptor extends TcpLink;
 
-var ProceduralWeapon procWeapon;
+struct BotKill
+{
+	var string name;
+	var int num_kills;
+	var int num_dies;
+};
 
-var array<Pawn> pawns;
+var array<BotKill> botStatics;
+
 
 function Initialize(array<Pawn> p){
 	//`log("[TcpLinkServerAcceptor] pawns added");
@@ -78,6 +84,9 @@ function ModifyWeapon(string WeaponElement, string Value)
 	local int i;
 	local Controller Aplayer;
 	
+	local string line;
+	local bool found;
+	
 	foreach WorldInfo.AllControllers(class'Controller', Aplayer)
 	{
 		if (Aplayer.bIsPlayer && Aplayer.Pawn != none && Aplayer.Pawn.Weapon != none)
@@ -92,8 +101,32 @@ function ModifyWeapon(string WeaponElement, string Value)
 			{
 				ModifySpread(Value, Aplayer.Pawn);
 			}
+
+			found = false;
+			
+			for(i = 0; i < botStatics.Length; ++i)
+			{
+				if(botStatics[i].name == Aplayer.PlayerReplicationInfo.playername){
+					found = true;
+				}
+			}
+			
+			if(!found){
+				botStatics.Add(1);
+			
+				botStatics[botStatics.Length - 1].name = Aplayer.PlayerReplicationInfo.playername;
+				botStatics[botStatics.Length - 1].num_kills = 0;
+				botStatics[botStatics.Length - 1].num_dies = 0;
+			}
 			
 		}
+	}
+	
+	for(i = 0; i < botStatics.Length; ++i)
+	{
+		line = botStatics[i].name$" "$string(botStatics[i].num_kills)$" "$string(botStatics[i].num_dies);
+
+		`log("[TcpLinkServerAcceptor] "$line);
 	}
 }
 
@@ -140,12 +173,48 @@ function SendPawnDied(Controller killed, Controller killer)
 	{
 		line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
 			
-		for(i = 0; i < Len(line); ++i){
-			B[i] = byte(Asc(Right(Left(line, i+1), 1)));
-		}
+		`log("[TcpLinkServerAcceptor] "$line);
+		
+		for(i = 0; i < botStatics.Length; ++i)
+		{
+			if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
+			{
+				botStatics[i].num_kills++;
+			}
 			
+			if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+			{
+				botStatics[i].num_dies++;
+			}
+		}
+	}
+}
+
+//Send to client bot statics of the last match
+function SendEndGame()
+{
+	local string line;
+	local int i, j;
+	local byte B[255];
+	
+	`log("[TcpLinkServerAcceptor] EndGame called");
+	
+	
+	for(i = 0; i < botStatics.Length; ++i)
+	{
+		line = botStatics[i].name$" "$string(botStatics[i].num_kills)$" "$string(botStatics[i].num_dies);
+
+		`log("[TcpLinkServerAcceptor] "$line);
+		
+		for(j = 0; j < Len(line); ++j){
+			B[j] = byte(Asc(Right(Left(line, j+1), 1)));
+		}
+		
 		SendBinary(Len(line), B);
 	}
+	
+	
+	
 }
 
 event Closed()

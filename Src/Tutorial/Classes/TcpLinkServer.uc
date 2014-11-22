@@ -12,15 +12,7 @@ var int ListenPort;
 var int MaxClients;
 var int NumClients;
 
-var array<Pawn> pawns;
-
 var Actor currentAcceptor;
-
-function AddPawn(Pawn newPawn){
-	`log("[TcpLinkServer] addPawn");
-	`log("[TcpLinkServer] numPawn: "$string(pawns.Length));
-	pawns.AddItem(newPawn);
-}
 
 event PostBeginPlay()
 {
@@ -57,10 +49,6 @@ event GainedChild( Actor C )
  		Close();
 	}
 	
-	if(TcpLinkServerAcceptor(C) != none){
-		TcpLinkServerAcceptor(C).Initialize(pawns);
-	}
-	
 	currentAcceptor = C;
 }
 
@@ -83,6 +71,15 @@ function SendPawnDied(Controller killed, Controller killer)
 	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
 	{
 		TcpLinkServerAcceptor(currentAcceptor).SendPawnDied(killed, killer);
+	}
+}
+
+function SendEndGame()
+{
+	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
+	{
+		`log("[TcpLinkServer] EndGame called");
+		TcpLinkServerAcceptor(currentAcceptor).SendEndGame();
 	}
 }
 
