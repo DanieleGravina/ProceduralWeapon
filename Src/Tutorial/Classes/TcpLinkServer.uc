@@ -74,12 +74,11 @@ function SendPawnDied(Controller killed, Controller killer)
 	}
 }
 
-function SendEndGame()
+function CheckFinishGame()
 {
 	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
 	{
-		`log("[TcpLinkServer] EndGame called");
-		TcpLinkServerAcceptor(currentAcceptor).SendEndGame();
+		TcpLinkServerAcceptor(currentAcceptor).CheckFinishGame();
 	}
 }
 

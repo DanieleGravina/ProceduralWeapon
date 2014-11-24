@@ -74,18 +74,18 @@ simulated function vector InstantFireStartTrace()
 * Location that projectiles will spawn from. Works for secondary fire on 
 * third person mesh
 ***************************************************************************/
-simulated function vector GetPhysicalFireStartLoc(optional vector AimDir)
+/*simulated function vector GetPhysicalFireStartLoc(optional vector AimDir)
 {
     Local SkeletalMeshComponent AttachedMesh;
     local vector SocketLocation;
-    Local TutorialPawn TutPawn;
+    Local PWPawn TutPawn;
     
-    TutPawn = TutorialPawn(Owner);
+    TutPawn = PWPawn(Owner);
     AttachedMesh = TutPawn.CurrentWeaponAttachment.Mesh;
     AttachedMesh.GetSocketWorldLocationAndRotation(MuzzleFlashSocket, SocketLocation);
 
     return SocketLocation;
-}
+}*/
 
 
 /***************************************************************************
@@ -96,9 +96,9 @@ simulated function vector GetEffectLocation()
 {
     Local SkeletalMeshComponent AttachedMesh;
     local vector SocketLocation;
-    Local TutorialPawn TutPawn;
+    Local PWPawn TutPawn;
     
-    TutPawn = TutorialPawn(Owner);
+    TutPawn = PWPawn(Owner);
     AttachedMesh = TutPawn.CurrentWeaponAttachment.Mesh;
     AttachedMesh.GetSocketWorldLocationAndRotation(MuzzleFlashSocket, SocketLocation);
 

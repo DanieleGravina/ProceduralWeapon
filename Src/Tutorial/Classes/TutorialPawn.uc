@@ -52,6 +52,8 @@ simulated event PostBeginPlay()
     
     /** called from UTPawn, spawns the default controller */
     SpawnDefaultController();
+    
+    
 }
 
 

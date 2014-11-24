@@ -1,18 +1,15 @@
 class OnlineService extends Actor;
 
-//Reference to Game Class
-var ServerGame game;
-
 var ProceduralWeapon procWeap;
 
 var TcpLinkServer tcpServer;
 var TcpLinkServerAcceptor tcpAcceptor;
 
 
-function Initialize(ServerGame sg)
+function Initialize()
 {
-    game = sg;
     tcpServer = Spawn(class'TcpLinkServer');
+    
 }
 
 function SendPawnDied(Controller killed, Controller killer)
@@ -21,10 +18,9 @@ function SendPawnDied(Controller killed, Controller killer)
 }
 
 // Inform client that the game has ended
-function SendEndGame()
+function CheckFinishGame()
 {
-	tcpServer.SendEndGame();
-	`log("[OnlineService] EndGame called");
+	tcpServer.CheckFinishGame();
 }
 
 defaultproperties
