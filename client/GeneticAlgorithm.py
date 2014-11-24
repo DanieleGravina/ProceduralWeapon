@@ -1,4 +1,5 @@
 import random
+import BalancedWeaponClient
 
 from deap import base
 from deap import creator

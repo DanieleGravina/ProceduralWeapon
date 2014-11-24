@@ -1,48 +1,13 @@
 import socket
 import time
 
-# create a socket object
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-
-# get local machine name
-host = socket.gethostname()                           
-
-port = 3742
-
-# connection to hostname on the port.
-s.connect((host, port))     
-
-messageInit = "Init"
-
-s.send(messageInit.encode())
-
-time.sleep(0.1)
-
 messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-
-for count in range(0,8):    
-    print(count)
-    s.send(messageWeapon.encode())
-    time.sleep(0.1)
 
 messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
 
-for count in range(0,8):    
-    print(count)
-    s.send(messageProjectile.encode())
-    time.sleep(0.1)
-
+messageInit = ":Init"
 messageStartMatch = ':StartMatch'
 
-s.send(messageStartMatch.encode())    
-
-while True:
-    data = s.recv(255)
-    
-    print ("Received %s" % data.decode())  
-
-    if data.decode() == 'End' : 
-        break;
 
 class BalancedWeaponClient:
     def __init__(self): 
@@ -55,6 +20,9 @@ class BalancedWeaponClient:
 
         #send to UDK server init message
         self.s.send(messageInit.encode()) 
+
+    def SendStartMatch():
+        self.s.send(messageStartMatch.encode())
 
     def SendWeaponParams(self, Rof, Spread, MaxAmmo, ShotCost, Range):
         messageWeapon = ':WeaponPar'
@@ -80,12 +48,18 @@ class BalancedWeaponClient:
     def WaitForBotStatics(self):
         while True:
             data = s.recv(255)
-            self.buffer += data.decode()
-            
-            print ("Received %s" % data.decode())  
+            data.decode()
 
-            if data.decode() == 'End' : 
-                break;
+            splitted = data.split(":", string.count(data))
+
+            for string in splitted:
+
+                if  string == 'End' : 
+                    return;
+                else
+                    self.buffer += string   
+                    print ("Received %s" % string)
+
 
                 
 
