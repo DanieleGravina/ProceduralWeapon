@@ -1,5 +1,5 @@
 import random
-import BalancedWeaponClient
+from BalancedWeaponClient import BalancedWeaponClient
 
 from deap import base
 from deap import creator
@@ -27,6 +27,24 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 toolbox.register("evaluate", evaluate)
 
 def main():
+
+    client = BalancedWeaponClient()
+
+    client.SendStartMatch()
+
+    client.SendInit()
+
+    for i in range (0,8):
+        client.SendWeaponParams(i, 0.1, 0.5, 40, 1, 10000)
+
+    for i in range (0,8):
+        client.SendProjectileParams(1000, 5, 10, 1)
+
+    client.WaitForBotStatics()
+
+    client.GetStatics()
+
+
     pop = toolbox.population(n=50)
     CXPB, MUTPB, NGEN = 0.5, 0.2, 40
 
@@ -62,4 +80,6 @@ def main():
         # The population is entirely replaced by the offspring
         pop[:] = offspring
 
-    return pop
+    print(pop)
+
+main()
