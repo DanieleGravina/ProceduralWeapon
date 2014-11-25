@@ -7,11 +7,14 @@ messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:
 
 messageInit = ":Init"
 messageStartMatch = ':StartMatch'
+messageClose = ":Close"
+messageReset = ':Reset'
 
 
 class BalancedWeaponClient:
     def __init__(self): 
         self.buffer = ''
+        self.statics = {}
         #create socket object
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = 3742
@@ -30,8 +33,8 @@ class BalancedWeaponClient:
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
         messageWeapon = ':WeaponPar'
         messageWeapon += ':ID:' + str(id)
-        messageWeapon += ':Rof:' + str(Rof)
-        messageWeapon += ':Spread:' + str(Spread)
+        messageWeapon += ':Rof:' + str(Rof/100)
+        messageWeapon += ':Spread:' + str(Spread/10)
         messageWeapon += ':MaxAmmo:' + str(MaxAmmo)
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)
@@ -49,8 +52,17 @@ class BalancedWeaponClient:
         self.s.send(messageProjectile.encode())
         time.sleep(0.1)
 
+    def SendClose(self):
+        self.s.send(messageClose.encode())
+
+    def SendReset(self):
+        self.s.send(messageReset.encode())
+
     def WaitForBotStatics(self):
-        while True:
+
+        finish = True
+
+        while finish:
             data = self.s.recv(255)
             data.decode()
 
@@ -58,22 +70,31 @@ class BalancedWeaponClient:
 
             for string in splitted:
 
+                print("Received %s" % string)
+
                 if  string == 'End' : 
-                    return
+                    finish = False
                 else :
                     self.buffer += string
-                    print ("Received %s" % string)
+
+        self.SendClose()
+        self.s.close()
+
+
+
 
     def GetStatics(self):
 
-         splitted = self.buffer.split(":")
+         strings = self.buffer.split(":")
 
          i = 0
 
-         while(i < len(splitted)) :
-            if splitted[i] == 'ID':
-                self.statics += { splitted[i+1] : (splitted[i+3], splitted[i+5]) }
+         while(i < len(strings)) :
+            if strings[i] == "ID":
+                self.statics.update({ int(strings[i+1]) : (int(strings[i+3]), int(strings[i+5]) ) })
                 i += 6
+            else :
+                i += 1
 
          print(self.statics)
 

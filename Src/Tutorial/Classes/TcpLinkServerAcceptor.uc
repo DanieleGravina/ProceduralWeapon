@@ -19,6 +19,7 @@ var bool bIsReset;
 
 struct BotKill
 {
+	var int id;
 	var string name;
 	var int num_kills;
 	var int num_dies;
@@ -60,16 +61,15 @@ event ReceivedBinary(int Count , byte B[255])
 			bIsInitialized = true;
 		}
 			
-		if (InStr(parsedString[i], "close") != -1)
+		if (InStr(parsedString[i], "Close") != -1)
 		{
-			SendText("Closing by request");
 			Close();
 			return;
 		}
 
-		if (InStr(parsedString[i], "reset") != -1)
+		if (InStr(parsedString[i], "Reset") != -1)
 		{
-			bIsReset = true;
+			ServerGame(WorldInfo.Game).Reset();
 		}
     
 		if (InStr(parsedString[i], "StartMatch") != -1)
@@ -149,7 +149,11 @@ function ModifyWeapon(array<string> WeaponPar, int index)
 		
 		`log("[TcpLinkServerAcceptor] set "$par$" "$string(val)$" "$string(weapInitialized));
 		
-		if (par ~= "RoF")
+		if (par ~= "ID")
+		{
+			botStatics[weapInitialized].id = val;
+		} 
+		else if (par ~= "RoF")
 		{
 			ServerGame(WorldInfo.Game).mapBotPar[weapInitialized].weapPars.RoF = val;
 		}
@@ -276,7 +280,7 @@ function FinishGame()
 	
 	for(i = 0; i < botStatics.Length; ++i)
 	{
-		line = botStatics[i].name$" "$string(botStatics[i].num_kills)$" "$string(botStatics[i].num_dies);
+		line = "%:ID:"$botStatics[i].id$":kills:"$string(botStatics[i].num_kills)$":dies:"$string(botStatics[i].num_dies);
 
 		`log("[TcpLinkServerAcceptor] "$line);
 		
@@ -287,15 +291,13 @@ function FinishGame()
 		SendBinary(Len(line), B);
 	}
 	
-	line = "End";
+	line = "%End";
 	
 	for(j = 0; j < Len(line); ++j){
 		B[j] = byte(Asc(Right(Left(line, j+1), 1)));
 	}
 	
 	SendBinary(Len(line), B);
-	
-	ServerGame(WorldInfo.Game).Reset();
 	
 	
 }

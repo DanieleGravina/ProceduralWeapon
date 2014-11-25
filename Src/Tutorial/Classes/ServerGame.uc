@@ -102,5 +102,5 @@ defaultproperties
     DefaultInventory(1)=none
     DefaultPawnClass=class'PWPawn'
     
-    ScoreGoal = 2;
+    ScoreGoal = 1;
 }

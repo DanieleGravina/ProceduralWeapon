@@ -3,6 +3,8 @@ class ProceduralWeapon extends MyWeapon;
 //Cannot pickup any different weapon from default one
 function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 {
+	return false;
+	
 	if(ItemClass == class'UTWeap_LinkGun' || ItemClass == class'UTWeap_Physicsgun' || 
        ItemClass == class'UTWeap_RocketLauncher_Content' || ItemClass == class'UTWeap_ShockRifle' || ItemClass == class'ProceduralWeapon')
 	{
