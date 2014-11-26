@@ -1,7 +1,6 @@
 class ServerGame extends UTGame;
 
 var OnlineService service;
-var int ScoreGoal;
 
 /* holds the weapon parameters controlled by the genetic algorithm */
 struct PWParameters{
@@ -36,7 +35,7 @@ event PreBeginPlay()
     service.Initialize();
     
     GoalScore = 1000;
-    //SetGameSpeed(20);
+    //SetGameSpeed(30);
 }
 
 function AddDefaultInventory( pawn Pawn ){
@@ -44,7 +43,7 @@ function AddDefaultInventory( pawn Pawn ){
 	
 	`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 	
-	if(PWPawn(Pawn) != none && Pawn.Controller.bIsPlayer)
+	if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 	{
 		PWPawn(Pawn).SetProceduralWeapon();
 	}
@@ -81,6 +80,8 @@ function PWParameters GetPWParameters(string botName)
 			return mapBotPar[i].weapPars;
 		}
 	}
+	
+	return mapBotPar[0].weapPars;
 }
 
 function PPParameters GetPPParameters(string botName)
@@ -94,6 +95,8 @@ function PPParameters GetPPParameters(string botName)
 			return mapBotPar[i].projPars;
 		}
 	}	
+	
+	return mapBotPar[0].projPars;
 }
 
 defaultproperties
@@ -102,5 +105,7 @@ defaultproperties
     DefaultInventory(1)=none
     DefaultPawnClass=class'PWPawn'
     
-    ScoreGoal = 1;
+    bAutoNumBots = true;
+    
+    bChangeLevels = false;
 }

@@ -3,7 +3,6 @@ class ProceduralWeapon extends MyWeapon;
 //Cannot pickup any different weapon from default one
 function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 {
-	return false;
 	
 	if(ItemClass == class'UTWeap_LinkGun' || ItemClass == class'UTWeap_Physicsgun' || 
        ItemClass == class'UTWeap_RocketLauncher_Content' || ItemClass == class'UTWeap_ShockRifle' || ItemClass == class'ProceduralWeapon')
@@ -16,6 +15,26 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 		return false;
 	}
 }
+
+simulated function Projectile ProjectileFire()
+{
+    local Projectile SpawnedProjectile;
+
+    SpawnedProjectile = super.ProjectileFire();
+    
+    return SpawnedProjectile;
+}
+
+function class<Projectile> GetProjectileClass()
+{
+    return WeaponProjectiles[CurrentFireMode];  // Use our default projectile
+}
+
+simulated function FireAmmunition()
+{
+    Super.FireAmmunition();
+}
+
 
 
 
@@ -43,15 +62,16 @@ defaultproperties
     AttachmentClass=class'UTGameContent.UTAttachment_ShockRifle'
 
     // Defines the type of fire for each mode
-    WeaponFireTypes(0)=EWFT_InstantHit
+    WeaponFireTypes(0)=EWFT_Projectile
     WeaponFireTypes(1)=EWFT_Projectile
-    WeaponProjectiles(1)=class'ProceduralProjectile'
+    WeaponProjectiles(1)=class'UTProj_ShockBall'
+    WeaponProjectiles(0)=class'UTProj_ShockBall'
 
     // Damage types
-    InstantHitDamage(0)=45
+    InstantHitDamage(0)=0
     FireInterval(0)=+1.0
     FireInterval(1)=+1.3
-    InstantHitDamageTypes(0)=class'UTDmgType_ShockPrimary'
+    InstantHitDamageTypes(0)=None
     InstantHitDamageTypes(1)=None                   // Not an instant hit weapon, so set to "None"
 
     
@@ -67,8 +87,8 @@ defaultproperties
      // AI logic
     MaxDesireability=1                           // Max desireability for bots
     AIRating=1
-    CurrentRating=0.65
-    bInstantHit=true                                // Is it an instant hit weapon?
+    CurrentRating=1
+    bInstantHit=false                               // Is it an instant hit weapon?
     bSplashJump=false
     bRecommendSplashDamage=true                     // Can a bot use this for splash damage?
     bSniping=true                                   // Could a bot snipe with this?

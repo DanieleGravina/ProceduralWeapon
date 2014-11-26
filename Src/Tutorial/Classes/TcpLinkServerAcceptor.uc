@@ -13,9 +13,21 @@ var int projInitialized;
 
 var int numParWeapon;
 var int numParProjectile;
-var bool bIsInitialized;
 
-var bool bIsReset;
+var bool bIsGameInitialized;
+
+var int GoalScore;
+
+var int StateCurrent;
+var bool bGameStarted;
+
+//states
+var int INITIALIZATION;
+var int SIMULATION;
+var int ENDGAME;
+
+//Max Duration in seconds of a match
+var float MaxDuration;
 
 struct BotKill
 {
@@ -55,10 +67,9 @@ event ReceivedBinary(int Count , byte B[255])
     
 	for(i = 0; i < parsedString.Length; ++i){
 		
-		if (InStr(parsedString[i], "Init") != -1 && !bIsInitialized)
+		if (InStr(parsedString[i], "Init") != -1 && StateCurrent == INITIALIZATION)
 		{
 			Initialize();
-			bIsInitialized = true;
 		}
 			
 		if (InStr(parsedString[i], "Close") != -1)
@@ -72,13 +83,24 @@ event ReceivedBinary(int Count , byte B[255])
 			ServerGame(WorldInfo.Game).Reset();
 		}
     
-		if (InStr(parsedString[i], "StartMatch") != -1)
+		if (InStr(parsedString[i], "StartMatch") != -1 && StateCurrent == INITIALIZATION)
 		{
-			WorldInfo.Game.StartMatch();
+			StateCurrent = SIMULATION;
+			SetTimer(MaxDuration, false, 'TimeOut');
+			if(bGameStarted)
+			{
+				ServerGame(WorldInfo.Game).KillBots();
+				ServerGame(WorldInfo.Game).ResetLevel();
+			}
+			else
+			{
+				ServerGame(WorldInfo.Game).StartMatch();
+				bGameStarted = true;
+			}
 		}
 
 		//Initialize weapon parameter of bots
-		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length)
+		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParWeapon*2 < parsedString.Length)
 			{
@@ -89,7 +111,7 @@ event ReceivedBinary(int Count , byte B[255])
 			weapInitialized++;
 		}
 
-		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length)
+		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParProjectile*2 < parsedString.Length)
 			{
@@ -110,13 +132,23 @@ event ReceivedBinary(int Count , byte B[255])
 function Initialize()
 {
 	
-	local Controller Aplayer;
+	local AIController Aplayer;
 	
 	`log("[TcpLinkServerAcceptor] initialize");
 	
-	foreach WorldInfo.AllControllers(class'Controller', Aplayer)
+	botStatics.Remove(0, botStatics.Length);
+	
+	weapInitialized = 0;
+	projInitialized = 0;
+	
+	if(ServerGame(WorldInfo.Game).mapBotPar.Length != 0)
 	{
-		if (Aplayer.bIsPlayer)
+		bIsGameInitialized = true;
+	}	
+	
+	foreach WorldInfo.AllControllers(class'AIController', Aplayer)
+	{
+		if (Aplayer.bIsPlayer && Aplayer.PlayerReplicationInfo != none && Aplayer.PlayerReplicationInfo.playername != "")
 		{
 			botStatics.Add(1);
 			botStatics[botStatics.Length - 1].name =  Aplayer.PlayerReplicationInfo.playername;
@@ -124,9 +156,11 @@ function Initialize()
 			botStatics[botStatics.Length - 1].num_dies = 0;
 
 			//TODO rewrite in more elegant way
-			ServerGame(WorldInfo.Game).mapBotPar.Add(1);
-			ServerGame(WorldInfo.Game).mapBotPar[ServerGame(WorldInfo.Game).mapBotPar.Length - 1].botName = Aplayer.PlayerReplicationInfo.playername;
-			
+			if(!bIsGameInitialized)
+			{
+				ServerGame(WorldInfo.Game).mapBotPar.Add(1);
+				ServerGame(WorldInfo.Game).mapBotPar[ServerGame(WorldInfo.Game).mapBotPar.Length - 1].botName = Aplayer.PlayerReplicationInfo.playername;
+			}
 		
 			`log("[TcpLinkServerAcceptor] initialize bot "$botStatics[botStatics.Length - 1].name);
 		}
@@ -223,35 +257,39 @@ function SendPawnDied(Controller killed, Controller killer)
 	local string line;
 	local byte B[255];
 	
-	`log("[TcpLinkServerAcceptor] SendPawnDied called");
-	
-	if(killer == none)
+	if(StateCurrent == SIMULATION && killed.PlayerReplicationInfo.playername != "Player")
 	{
-		killer = killed;
-	}
 	
+		`log("[TcpLinkServerAcceptor] SendPawnDied called");
 	
-	if (killed.bIsPlayer)
-	{
-		line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
-			
-		`log("[TcpLinkServerAcceptor] "$line);
-		
-		for(i = 0; i < botStatics.Length; ++i)
+		if(killer == none)
 		{
-			if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
-			{
-				botStatics[i].num_kills++;
-			}
+			killer = killed;
+		}
+	
+	
+		if (killed.bIsPlayer)
+		{
+			line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
 			
-			if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+			`log("[TcpLinkServerAcceptor] "$line);
+		
+			for(i = 0; i < botStatics.Length; ++i)
 			{
-				botStatics[i].num_dies++;
+				if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
+				{
+					botStatics[i].num_kills++;
+				}
+			
+				if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+				{
+					botStatics[i].num_dies++;
+				}
 			}
 		}
-	}
 	
-	CheckFinishGame();
+		CheckFinishGame();
+	}
 }
 
 function CheckFinishGame()
@@ -260,12 +298,22 @@ function CheckFinishGame()
 	
 	for(i = 0; i < botStatics.Length; ++i)
 	{
-		if(botStatics[i].num_kills >= ServerGame(WorldInfo.Game).ScoreGoal)
+		if(botStatics[i].num_kills >= GoalScore)
 		{
-			`log("[TcpLinkServerAcceptor] Check "$botStatics[i].num_kills);
+			StateCurrent = ENDGAME;
+			ClearTimer('TimeOut');
 			FinishGame();
+			return;
 		}
 	}
+}
+
+//if the match is too long, time out will call finishgame
+function TimeOut()
+{
+	StateCurrent = ENDGAME;
+	FinishGame();	
+	
 }
 
 //Send to client bot statics of the last match
@@ -298,7 +346,7 @@ function FinishGame()
 	}
 	
 	SendBinary(Len(line), B);
-	
+
 	
 }
 
@@ -317,6 +365,16 @@ defaultproperties
 	projInitialized = 0;
 	numParWeapon = 5;
 	numParProjectile = 4;
-	bIsInitialized = false;
-	bIsReset = false;
+	
+	bIsGameInitialized = false;
+	bGameStarted = false;
+	
+	GoalScore = 15;
+	
+	StateCurrent = 1;
+	INITIALIZATION = 1;
+	SIMULATION = 2;
+	ENDGAME = 3;
+	
+	MaxDuration = 30f;
 }

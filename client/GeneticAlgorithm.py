@@ -14,9 +14,9 @@ toolbox = base.Toolbox()
 
 messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
 
-WEIGHT = 1000
+WEIGHT = 100
 
-#default Rof = 1.0
+#default Rof = 100
 ROF_MIN, ROF_MAX = 1, 500
 #default Spread = 0
 SPREAD_MIN, SPREAD_MAX = 0, 50
@@ -40,6 +40,35 @@ toolbox.register("individual", tools.initCycle, creator.Individual,
                     toolbox.attr_shot_cost, toolbox.attr_range), n = N_CYCLES)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+def check_param(param, min, max):
+    if param < min :
+        param = min
+    elif param > max :
+        param = max
+
+def check(param, n) :
+    if n == 0:
+        check_param(param, ROF_MIN, ROF_MAX)
+    elif n == 1:
+        check_param(param, SPREAD_MIN, SPREAD_MAX)
+    elif n == 2:
+        check_param(param, AMMO_MIN, AMMO_MAX)
+    elif n == 3:
+        check_param(param, SHOT_COST_MIN, SHOT_COST_MAX)
+    elif n == 4:
+        check_param(param, RANGE_MIN, RANGE_MAX)
+
+def checkBounds(min, max):
+    def decorator(func):
+        def wrapper(*args, **kargs):
+            offspring = func(*args, **kargs)
+            for child in offspring:
+                for i in range(len(child)):
+                    check(child[i], i)
+            return offspring
+        return wrapper
+    return decorator
 
 def difference_from_population(individual, population):
     sum = 0
@@ -65,10 +94,10 @@ def evaluate_population(population) :
     client = BalancedWeaponClient()
     client.SendInit()
 
-    for i in range (0, 8):
+    for i in range (0, 7):
         client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-    for i in range (0, 8):
+    for i in range (0, 7):
         client.SendProjectileParams(1000, 5, 10, 1)
 
     client.SendStartMatch()
@@ -77,20 +106,24 @@ def evaluate_population(population) :
 
     return client.GetStatics()
 
-
+# ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    return difference_from_population(population[index], population) + difference_statics(index, statics)
+    return difference_from_population(population[index], population) - difference_statics(index, statics),
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutGaussian, mu = 0, sigma = 1, indpb = 0.1)
+
+toolbox.decorate("mate", checkBounds(0,1))
+toolbox.decorate("mutate", checkBounds(0,1))
+
 toolbox.register("select", tools.selTournament, tournsize = 3)
 toolbox.register("evaluate", evaluate)
 
 def main():
 
-    pop = toolbox.population(n = 8)
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 1
+    pop = toolbox.population(n = 7)
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 10
 
     fitnesses = []
 
@@ -128,8 +161,12 @@ def main():
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
+        statics = evaluate_population(pop)
+
         for i in range(len(invalid_ind)) :
             fitnesses += [toolbox.evaluate(i, invalid_ind, statics)]
+
+        print(fitnesses)
 
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit

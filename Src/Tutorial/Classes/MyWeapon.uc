@@ -64,10 +64,10 @@ var float LastTargetLockCheckTime;
 * Instigator.GetWeaponStartTraceLocation()
 * @returns position of trace start for instantfire()
 ***************************************************************************/
-simulated function vector InstantFireStartTrace()
+/*simulated function vector InstantFireStartTrace()
 {
     return GetPhysicalFireStartLoc();
-}
+}*/
 
 
 /***************************************************************************
@@ -92,7 +92,7 @@ simulated function vector InstantFireStartTrace()
 * Overridden from UTWeapon.uc
 * @return the location + offset from which to spawn effects (primarily tracers) 
 ***************************************************************************/
-simulated function vector GetEffectLocation()
+/*simulated function vector GetEffectLocation()
 {
     Local SkeletalMeshComponent AttachedMesh;
     local vector SocketLocation;
@@ -103,7 +103,7 @@ simulated function vector GetEffectLocation()
     AttachedMesh.GetSocketWorldLocationAndRotation(MuzzleFlashSocket, SocketLocation);
 
     return SocketLocation;
-}
+}*/
 
 
 /*********************************************************************************************

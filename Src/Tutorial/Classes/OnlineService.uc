@@ -18,10 +18,10 @@ function SendPawnDied(Controller killed, Controller killer)
 }
 
 // Inform client that the game has ended
-function CheckFinishGame()
+/*function CheckFinishGame()
 {
 	tcpServer.CheckFinishGame();
-}
+}*/
 
 defaultproperties
 {

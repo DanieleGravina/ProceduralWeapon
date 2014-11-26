@@ -74,18 +74,18 @@ function SendPawnDied(Controller killed, Controller killer)
 	}
 }
 
-function CheckFinishGame()
+/*function CheckFinishGame()
 {
 	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
 	{
 		TcpLinkServerAcceptor(currentAcceptor).CheckFinishGame();
 	}
-}
+}*/
 
 
 defaultproperties
 {
     ListenPort=3742
-    MaxClients=2    
+    MaxClients=1    
     AcceptClass=Class'TcpLinkServerAcceptor'
 }
