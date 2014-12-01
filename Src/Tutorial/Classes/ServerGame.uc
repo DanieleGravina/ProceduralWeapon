@@ -1,6 +1,10 @@
 class ServerGame extends UTGame;
 
-var OnlineService service;
+var TcpLinkServer tcpServer;
+
+var bool bGameStart;
+
+var int numPlayers;
 
 /* holds the weapon parameters controlled by the genetic algorithm */
 struct PWParameters{
@@ -26,16 +30,22 @@ struct BotParTriple{
 	var PPParameters projPars;
 };
 
+/* array of weapon parameters */
 var array<BotParTriple> mapBotPar;
 
 event PreBeginPlay()
 {
     super.PreBeginPlay();
-    service = Spawn(class'OnlineService');
-    service.Initialize();
     
-    GoalScore = 1000;
-    //SetGameSpeed(30);
+    tcpServer = Spawn(class'TcpLinkServer');
+
+    //TODO fix server mode 
+	if(WorldInfo.NetMode == NM_Standalone)
+	{
+		`log("[ServerGame] standalone game");
+	}
+    
+    SetGameSpeed(30);
 }
 
 function AddDefaultInventory( pawn Pawn ){
@@ -53,21 +63,8 @@ function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, cla
 {
 	Super.NotifyKilled(Killer, Killed, KilledPawn, damageType);
 	
-	service.SendPawnDied(killed, killer);
+	tcpServer.SendPawnDied(killed, killer);
 }
-
-/*function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
-{
-	local bool result;
-	
-	result = Super.CheckEndGame(Winner, Reason);
-	service.CheckEndGame();
-	`log("[ServerGame] CheckEndGame called");
-	
-	Reset();
-	
-	return false;
-}*/
 
 function PWParameters GetPWParameters(string botName)
 {
@@ -99,13 +96,32 @@ function PPParameters GetPPParameters(string botName)
 	return mapBotPar[0].projPars;
 }
 
+function int LevelRecommendedPlayers()
+{
+	return numPlayers + 1;
+}
+
+function bool TooManyBots(Controller botToRemove)
+{
+	if(NumBots > numPlayers)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 defaultproperties
 {
 	DefaultInventory(0)=class'ProceduralWeapon'
     DefaultInventory(1)=none
     DefaultPawnClass=class'PWPawn'
     
-    bAutoNumBots = true;
+    bChangeLevels = false
+
+    bGameStart = false
     
-    bChangeLevels = false;
+    numPlayers = 2
 }

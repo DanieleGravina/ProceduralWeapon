@@ -94,10 +94,10 @@ def evaluate_population(population) :
     client = BalancedWeaponClient()
     client.SendInit()
 
-    for i in range (0, 7):
+    for i in range (0, 2):
         client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-    for i in range (0, 7):
+    for i in range (0, 2):
         client.SendProjectileParams(1000, 5, 10, 1)
 
     client.SendStartMatch()
@@ -122,7 +122,7 @@ toolbox.register("evaluate", evaluate)
 
 def main():
 
-    pop = toolbox.population(n = 7)
+    pop = toolbox.population(n = 2)
     CXPB, MUTPB, NGEN = 0.5, 0.2, 10
 
     fitnesses = []

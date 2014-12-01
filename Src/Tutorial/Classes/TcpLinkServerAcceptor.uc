@@ -19,7 +19,6 @@ var bool bIsGameInitialized;
 var int GoalScore;
 
 var int StateCurrent;
-var bool bGameStarted;
 
 //states
 var int INITIALIZATION;
@@ -42,8 +41,9 @@ var array<BotKill> botStatics;
 event Accepted()
 {
     `log("[TcpLinkServerAcceptor] New client connected");
+
     // make sure the proper mode is set
-    LinkMode=MODE_Binary;
+    LinkMode = MODE_Binary;
 }
 
 event ReceivedBinary(int Count , byte B[255])
@@ -87,20 +87,22 @@ event ReceivedBinary(int Count , byte B[255])
 		{
 			StateCurrent = SIMULATION;
 			SetTimer(MaxDuration, false, 'TimeOut');
-			if(bGameStarted)
+			
+			if(ServerGame(WorldInfo.Game).bGameStart)
 			{
-				ServerGame(WorldInfo.Game).KillBots();
+				//ServerGame(WorldInfo.Game).RestartGame();
 				ServerGame(WorldInfo.Game).ResetLevel();
 			}
 			else
 			{
 				ServerGame(WorldInfo.Game).StartMatch();
-				bGameStarted = true;
+				ServerGame(WorldInfo.Game).bGameStart = true;
 			}
 		}
 
 		//Initialize weapon parameter of bots
-		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length && StateCurrent == INITIALIZATION)
+		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length 
+		    && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParWeapon*2 < parsedString.Length)
 			{
@@ -111,7 +113,8 @@ event ReceivedBinary(int Count , byte B[255])
 			weapInitialized++;
 		}
 
-		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length && StateCurrent == INITIALIZATION)
+		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < ServerGame(WorldInfo.Game).mapBotPar.Length 
+		    && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParProjectile*2 < parsedString.Length)
 			{
@@ -367,7 +370,6 @@ defaultproperties
 	numParProjectile = 4;
 	
 	bIsGameInitialized = false;
-	bGameStarted = false;
 	
 	GoalScore = 15;
 	
@@ -376,5 +378,5 @@ defaultproperties
 	SIMULATION = 2;
 	ENDGAME = 3;
 	
-	MaxDuration = 30f;
+	MaxDuration = 300f;
 }

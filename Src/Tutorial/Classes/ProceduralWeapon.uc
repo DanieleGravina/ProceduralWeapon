@@ -147,4 +147,6 @@ defaultproperties
     
     // controller rumble to play when firing
     WeaponFireWaveForm=ForceFeedbackWaveformShooting1 
+    
+    Priority = 11
 }

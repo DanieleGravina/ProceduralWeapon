@@ -1,5 +1,5 @@
 //=============================================================================
-// PWPawn, extends pawn to control the rpocedural weapon selected by pawn
+// PWPawn, extends pawn to control the procedural weapon selected by pawn
 //
 //=============================================================================
 class PWPawn extends UTPawn
@@ -17,7 +17,7 @@ simulated event PostBeginPlay()
     `Log("PWPawn up");
     
     /** called from UTPawn, spawns the default controller */
-    SpawnDefaultController();
+    //SpawnDefaultController();
     
 }
 
@@ -52,40 +52,30 @@ function SetProceduralWeapon()
 	}
 }
 
-//Modified, PWPawn can't get any weapon different from default one
-/*function HandlePickup(Inventory Inv)
-{
-	local ProceduralWeapon myWeapon;
-	
-	myWeapon = ProceduralWeapon(Weapon);
-	
-	MakeNoise(0.2);
-	myWeapon.AmmoCount = myWeapon.MaxAmmoCount;
-	
-	`Log("PWPawn pickup");
-}*/
-
 defaultproperties
 {
+	
+	//InventoryManagerClass = class'MyInventoryManager'
+	
 	minRangeSniping = 10000;
 	
 	 /** AI and navigation */
-    bAvoidLedges=true               // don't get too close to ledges
+    /*AvoidLedges=true               // don't get too close to ledges
     bStopAtLedges=true              // if bAvoidLedges and bStopAtLedges, Pawn doesn't try to walk along the edge at all
-    bUpdateEyeHeight=true           // Updates eye height so that the flashlight can become dynamic
+    bUpdateEyeHeight=true           // Updates eye height so that the flashlight can become dynamic*/
 	
 	 /** PostRender functions */
     bPostRenderIfNotVisible = true  // IF true, may call PostRenderFor() even when this actor is not visible 
     bPostRenderOtherTeam=true       // If true, call postrenderfor() even if on different team
     
-    begin object class=SkeletalMeshComponent Name=Model3D                
+    /*begin object class=SkeletalMeshComponent Name=Model3D                
       SkeletalMesh=CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode
       PhysicsAsset=CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics
       AnimSets(0)=CH_AnimHuman.Anims.K_AnimHuman_BaseMale
       AnimtreeTemplate=CH_AnimHuman_Tree.AT_CH_Human
     end object
 
-   Components.Add(Model3D);
+   Components.Add(Model3D);*/
     
    ControllerClass=UTGame.UTBot
 }

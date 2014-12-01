@@ -188,6 +188,30 @@ function PickedUpBy(Pawn P)
 function SpawnCopyFor( Pawn Recipient )
 {
 	local Inventory Inv;
+	
+	/*if(ServerGame(WorldInfo.Game) != none)
+	{
+		if ( UTInventoryManager(Recipient.InvManager)!=None )
+		{
+			Inv = UTInventoryManager(Recipient.InvManager).HasInventoryOfClass(class'ProceduralWeapon');
+			if ( UTWeapon(Inv)!=none )
+			{
+				UTWeapon(Inv).AddAmmo(class'ProceduralWeapon'.Default.AmmoCount);
+				UTWeapon(Inv).AnnouncePickup(Recipient);
+				return;
+			}
+			
+			return;
+			Inv = spawn(class'ProceduralWeapon');
+			if ( Inv != None )
+			{
+				Inv.GiveTo(Recipient);
+				Inv.AnnouncePickup(Recipient);
+			}
+		}
+	}
+	else
+	{*/
 	if ( UTInventoryManager(Recipient.InvManager)!=None )
 	{
 		Inv = UTInventoryManager(Recipient.InvManager).HasInventoryOfClass(WeaponPickupClass);

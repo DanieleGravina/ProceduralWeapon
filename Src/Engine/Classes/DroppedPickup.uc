@@ -114,8 +114,22 @@ event Landed(Vector HitNormal, Actor FloorActor)
 /** give pickup to player */
 function GiveTo( Pawn P )
 {
+	//local Inventory Inv;
+	
 	if( Inventory != None )
 	{
+		/*if(ProceduralWeapon(Inventory) != none)
+		{
+			Inv = UTInventoryManager(P.InvManager).HasInventoryOfClass(class'ProceduralWeapon');
+			if ( UTWeapon(Inv)!=none )
+			{
+				UTWeapon(Inv).AddAmmo(class'ProceduralWeapon'.Default.AmmoCount);
+				UTWeapon(Inv).AnnouncePickup(P);
+				return;
+			}
+			return;
+		}*/
+		
 		Inventory.AnnouncePickup(P);
 		Inventory.GiveTo(P);
 		Inventory = None;
