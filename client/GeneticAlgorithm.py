@@ -1,5 +1,9 @@
 import random
+
+
 from BalancedWeaponClient import BalancedWeaponClient
+
+from math import log
 
 from deap import base
 from deap import creator
@@ -28,6 +32,10 @@ SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
 RANGE_MIN, RANGE_MAX = 100, 100000
 
 N_CYCLES = 1
+# num bot in the server side
+NUM_BOTS = 2
+# size of the population
+NUM_POP = 4
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -90,25 +98,86 @@ def difference_statics(index, statics):
 
     return sum*WEIGHT/len(statics)
 
-def evaluate_population(population) :
-    client = BalancedWeaponClient()
-    client.SendInit()
+# Run the simulation on the server side (UDK)
+def simulate_population(population) :
 
-    for i in range (0, 2):
-        client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
+    index = 0
+    result = {}
 
-    for i in range (0, 2):
-        client.SendProjectileParams(1000, 5, 10, 1)
+    while index < NUM_POP:
 
-    client.SendStartMatch()
+        client = BalancedWeaponClient()
+        client.SendInit()
 
-    client.WaitForBotStatics()
+        for i in range (index, NUM_BOTS + index):
+            client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-    return client.GetStatics()
+        for i in range (index, NUM_BOTS + index):
+            client.SendProjectileParams(1000, 5, 10, 1)
+
+        client.SendStartMatch()
+
+        client.WaitForBotStatics()
+
+        result.update(client.GetStatics())
+
+        index += 2
+
+    return result
+
+def entropy(statics) :
+
+    e = 0
+
+    total_kills = 0
+    total_dies = 0
+
+    for key, val in statics.items():
+        total_kills += val[0]
+        total_dies += val[1]
+
+    for i in range(0, NUM_POP):
+        e += evaluate_entropy(i, statics, total_kills, total_dies, NUM_POP)
+
+    return e 
+
+
+def evaluate_entropy(index, statics, total_kills, total_dies, N) :
+
+    p_kills = 0  if total_kills == 0 else statics[index][0]/total_kills
+    p_dies = 0 if total_dies == 0 else statics[index][1]/total_dies
+
+    entropy_kill = p_kills*log(p_kills, N) if p_kills != 0 else 0
+
+    entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
+
+    return -(entropy_kill + entropy_dies)
+
+def fitness(index, statics, total_entropy) :
+    e = 0
+
+    total_kills = 0
+    total_dies = 0
+
+    for key, val in statics.items():
+        if key != index :
+            total_kills += val[0]
+            total_dies += val[1]
+
+    for i in range(0, NUM_POP):
+        if i != index :
+            e += evaluate_entropy(i, statics, total_kills, total_dies, NUM_POP - 1)
+
+
+    result = 0 if total_entropy == 0 else abs(1 - e)/total_entropy
+
+    return result
+    
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    return difference_from_population(population[index], population) - difference_statics(index, statics),
+    total_entropy = entropy(statics)
+    return fitness(index, statics, total_entropy),
 
 
 toolbox.register("mate", tools.cxTwoPoint)
@@ -122,14 +191,14 @@ toolbox.register("evaluate", evaluate)
 
 def main():
 
-    pop = toolbox.population(n = 2)
+    pop = toolbox.population(n = NUM_POP)
     CXPB, MUTPB, NGEN = 0.5, 0.2, 10
 
     fitnesses = []
 
     print(pop)
 
-    statics = evaluate_population(pop)
+    statics = simulate_population(pop)
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -161,7 +230,7 @@ def main():
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
-        statics = evaluate_population(pop)
+        statics = simulate_population(pop)
 
         for i in range(len(invalid_ind)) :
             fitnesses += [toolbox.evaluate(i, invalid_ind, statics)]
