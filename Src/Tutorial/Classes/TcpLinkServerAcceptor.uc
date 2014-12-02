@@ -273,20 +273,36 @@ function SendPawnDied(Controller killed, Controller killer)
 	
 		if (killed.bIsPlayer)
 		{
-			line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
-			
-			`log("[TcpLinkServerAcceptor] "$line);
-		
-			for(i = 0; i < botStatics.Length; ++i)
+			if(killer == none || killed.PlayerReplicationInfo.playername == killer.PlayerReplicationInfo.playername)
 			{
-				if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
+				line = "Player died "$killed.PlayerReplicationInfo.playername$" Suicide";
+				`log("[TcpLinkServerAcceptor] "$line);
+		
+				for(i = 0; i < botStatics.Length; ++i)
 				{
-					botStatics[i].num_kills++;
+					if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+					{
+						botStatics[i].num_dies++;
+					}
 				}
+			}
+			else
+			{
+				line = "Player died "$killed.PlayerReplicationInfo.playername$" Killer: "$killer.PlayerReplicationInfo.playername;
 			
-				if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+				`log("[TcpLinkServerAcceptor] "$line);
+		
+				for(i = 0; i < botStatics.Length; ++i)
 				{
-					botStatics[i].num_dies++;
+					if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
+					{
+						botStatics[i].num_kills++;
+					}
+			
+					if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
+					{
+						botStatics[i].num_dies++;
+					}
 				}
 			}
 		}
@@ -371,12 +387,12 @@ defaultproperties
 	
 	bIsGameInitialized = false;
 	
-	GoalScore = 15;
+	GoalScore = 10;
 	
 	StateCurrent = 1;
 	INITIALIZATION = 1;
 	SIMULATION = 2;
 	ENDGAME = 3;
 	
-	MaxDuration = 300f;
+	MaxDuration = 1200f;
 }

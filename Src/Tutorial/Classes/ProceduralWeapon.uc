@@ -7,7 +7,7 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 	if(ItemClass == class'UTWeap_LinkGun' || ItemClass == class'UTWeap_Physicsgun' || 
        ItemClass == class'UTWeap_RocketLauncher_Content' || ItemClass == class'UTWeap_ShockRifle' || ItemClass == class'ProceduralWeapon')
 	{
-		AmmoCount = MaxAmmoCount;
+		AddAmmo(MaxAmmoCount);
 		return true;
 	}
 	else
@@ -21,6 +21,12 @@ simulated function Projectile ProjectileFire()
     local Projectile SpawnedProjectile;
 
     SpawnedProjectile = super.ProjectileFire();
+
+	if(ProceduralProjectile(SpawnedProjectile) != none)
+	{
+		//`log("[ProceduralWeapon] ProjectileFire: set projectile");
+		ProceduralProjectile(SpawnedProjectile).Initialize();
+	}
     
     return SpawnedProjectile;
 }
@@ -64,8 +70,8 @@ defaultproperties
     // Defines the type of fire for each mode
     WeaponFireTypes(0)=EWFT_Projectile
     WeaponFireTypes(1)=EWFT_Projectile
-    WeaponProjectiles(1)=class'UTProj_ShockBall'
-    WeaponProjectiles(0)=class'UTProj_ShockBall'
+    WeaponProjectiles(1)=class'ProceduralProjectile'
+    WeaponProjectiles(0)=class'ProceduralProjectile'
 
     // Damage types
     InstantHitDamage(0)=0

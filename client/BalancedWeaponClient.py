@@ -12,16 +12,17 @@ messageReset = ':Reset'
 
 
 class BalancedWeaponClient:
-    def __init__(self): 
+    def __init__(self, port): 
         self.buffer = ''
         self.statics = {}
         #create socket object
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.port = 3742
+        self.port = port
         self.host = 'localhost'
 
         # connection to hostname on the port.
-        self.s.connect((self.host, self.port))   
+        self.s.connect((self.host, self.port))  
+        time.sleep(0.1) 
 
     def SendInit(self):
         #send to UDK server init message

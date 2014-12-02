@@ -16,24 +16,7 @@ var Actor currentAcceptor;
 
 event PostBeginPlay()
 {
-    local int res;
     super.PostBeginPlay();
-    // first bind the port you want to listen on
-    res = BindPort(ListenPort, false);
-    if (res == 0)
-    {
-        `log("[TcpLinkServer] Failed binding port "$ListenPort);
-    }
-    else {
-        // start listening for connections
-        if (Listen())
-        {
-            `log("[TcpLinkServer] Listening on port "$res$" for incoming connections");
-        }
-        else {
-            `log("[TcpLinkServer] Failed listening on port "$ListenPort);
-        }
-    }
 }
 
 event GainedChild( Actor C )
@@ -74,13 +57,31 @@ function SendPawnDied(Controller killed, Controller killer)
 	}
 }
 
-/*function CheckFinishGame()
+//Set the listen port of this server
+function SetListenPort(int port)
 {
-	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
-	{
-		TcpLinkServerAcceptor(currentAcceptor).CheckFinishGame();
-	}
-}*/
+	local int res;
+	
+	`log("[TcpLinkServer] set listen port "$string(port));
+	ListenPort = port;
+	
+	// first bind the port you want to listen on
+    res = BindPort(ListenPort, false);
+    if (res == 0)
+    {
+        `log("[TcpLinkServer] Failed binding port "$ListenPort);
+    }
+    else {
+        // start listening for connections
+        if (Listen())
+        {
+            `log("[TcpLinkServer] Listening on port "$res$" for incoming connections");
+        }
+        else {
+            `log("[TcpLinkServer] Failed listening on port "$ListenPort);
+        }
+    }
+}
 
 
 defaultproperties

@@ -6,6 +6,8 @@ var bool bGameStart;
 
 var int numPlayers;
 
+var int listenPort;
+
 /* holds the weapon parameters controlled by the genetic algorithm */
 struct PWParameters{
 	var float RoF;
@@ -33,19 +35,31 @@ struct BotParTriple{
 /* array of weapon parameters */
 var array<BotParTriple> mapBotPar;
 
+//Added functionality to set the listen port of tcpServer
+event InitGame( string Options, out string ErrorMessage )
+{
+	local string InOpt;
+	
+	super.InitGame(Options, ErrorMessage);
+	
+	InOpt = ParseOption( Options, "ServerListenPort");
+	if( InOpt != "" )
+	{
+		`log("ServerListenPort"@InOpt);
+		listenPort = int(InOpt);
+	}
+	
+}
+
 event PreBeginPlay()
 {
     super.PreBeginPlay();
     
     tcpServer = Spawn(class'TcpLinkServer');
-
-    //TODO fix server mode 
-	if(WorldInfo.NetMode == NM_Standalone)
-	{
-		`log("[ServerGame] standalone game");
-	}
     
-    SetGameSpeed(30);
+    tcpServer.SetListenPort(listenPort);
+    
+    SetGameSpeed(60);
 }
 
 function AddDefaultInventory( pawn Pawn ){

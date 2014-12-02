@@ -1,12 +1,5 @@
 class ProceduralProjectile extends UTProj_ShockBall;
 
-event PreBeginPlay()
-{
-    super.PreBeginPlay();
-    
-    Initialize();
-}
-
 function Initialize()
 {
 	local string playerName;

@@ -351,11 +351,11 @@ simulated function Projectile ProjectileFire()
     local Projectile SpawnedProjectile;
 
     SpawnedProjectile = super.ProjectileFire();
-    if (bLockedOnTarget && UTProj_SeekingRocket(SpawnedProjectile) != None)
+    /*if (bLockedOnTarget && UTProj_SeekingRocket(SpawnedProjectile) != None)
     {
         // Go after the target we are currently locked onto
         UTProj_SeekingRocket(SpawnedProjectile).SeekTarget = LockedTarget;
-    }
+    }*/
     return SpawnedProjectile;
 }
 
