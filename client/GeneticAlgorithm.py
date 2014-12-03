@@ -36,22 +36,22 @@ WEIGHT = 100
 ###############
 
 #default Rof = 100
-ROF_MIN, ROF_MAX = 1, 500
+ROF_MIN, ROF_MAX = 1, 1000
 #default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 50
+SPREAD_MIN, SPREAD_MAX = 0, 100
 #default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 1000
+AMMO_MIN, AMMO_MAX = 10, 1000
 #deafult ShotCost = 1
 SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
 #defualt Range 10000
-RANGE_MIN, RANGE_MAX = 100, 100000
+RANGE_MIN, RANGE_MAX = 1, 100000
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED_MIN, SPEED_MAX = 10, 10000
+SPEED_MIN, SPEED_MAX = 1, 10000
 #default damage = 1
 DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
@@ -129,26 +129,6 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def difference_from_population(individual, population):
-    sum = 0
-    pop = [x for x in population if x != individual]
-
-    for l in pop :
-        for i in range(0, len(l)):
-            sum += abs(individual[i] - l[i])
-
-
-    return sum/len(population)
-
-def difference_statics(index, statics):
-    sum = 0
-
-    for i in range(0, len(statics)):
-        if i != index :
-            sum += abs(statics[index][0] - statics[i][0]) + abs(statics[index][1] - statics[i][1])
-
-    return sum*WEIGHT/len(statics)
-
 # Run the simulation on the server side (UDK)
 def simulate_population(population, statics) :
 
@@ -208,6 +188,12 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
     entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
 
+    if total_kills == 0 :
+        entropy_kill = -0.5
+
+    if total_dies == 0 :
+        entropy_dies = -0.5
+
     return -(entropy_kill + entropy_dies)
     
 
@@ -220,11 +206,11 @@ def evaluate(index, population, statics):
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutGaussian, mu    = [100, 0 , 40, 1, 10000, 1000, 1, 10, 1], 
-                                              sigma = [ 10, 1,   1, 1,   100,   10, 1,  1, 1], 
+toolbox.register("mutate", tools.mutGaussian, mu    = 0, 
+                                              sigma = [ 100, 1,   40, 1,   1000,   100, 1,  10, 1], 
                                               indpb = 0.1)
 
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("select", tools.selTournament, tournsize = 2)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
@@ -256,6 +242,7 @@ def main():
     statics = {}
     clients = []
 
+    
     # workaround to initialize properly server mode of UDK
     client1 = BalancedWeaponClient(PORT1)
     client2 = BalancedWeaponClient(PORT2)
@@ -271,6 +258,7 @@ def main():
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
+    
 
     statics = simulate_population(pop, statics)
 
@@ -296,21 +284,26 @@ def main():
     for g in range(NGEN):
 
         # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
+        offspring = toolbox.select(pop, 1)
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
-        # Apply crossover and mutation on the offspring
-        for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < CXPB:
-                toolbox.mate(child1, child2)
-                del child1.fitness.values
-                del child2.fitness.values
+        while len(offspring) < len(pop) :
 
-        for mutant in offspring:
+            child1 = toolbox.clone(toolbox.select(pop, 1))
+            child2 = toolbox.clone(toolbox.select(pop, 1))
+
+            if random.random() < CXPB:
+                toolbox.mate(child1[0], child2[0])
+                del child1[0].fitness.values
+                del child2[0].fitness.values
+
             if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
+                toolbox.mutate(child1[0])
+                toolbox.mutate(child2[0])
+
+            offspring += child1
+            offspring += child2
 
         statics = simulate_population(offspring, statics)
 
@@ -362,10 +355,16 @@ def main():
 
     plt.show()
 
-    pop_string = str(pop)
     log_string = str(logbook)
 
-    pop_file.write(pop_string)
+    for ind in pop :
+        pop_file.write("Weapon "+ " Rof:" + str(ind[0]/100) + " Spread:" + str(ind[1]/10) + " MaxAmmo:" + str(ind[2]) 
+            + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
+        pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
+            + " Gravity:" + str(ind[8]) +"\n")
+        pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
+        pop_file.write("*********************************************************" + "\n")
+
     logbook_file.write(log_string)
 
     pop_file.close()

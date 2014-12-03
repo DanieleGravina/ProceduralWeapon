@@ -1,0 +1,36 @@
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4019.742041155374 Damage:4 DamageRadius:72 Gravity:16
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:16461
+Projectile  Speed:4019.742041155374 Damage:4 DamageRadius:72 Gravity:16
+fitness: (1.0,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4149 Damage:4 DamageRadius:72 Gravity:16.469113303885692
+fitness: (1.9709505944546688,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4149 Damage:4 DamageRadius:72 Gravity:16
+fitness: (1.9709505944546688,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:16461
+Projectile  Speed:4135.193943264289 Damage:4 DamageRadius:72 Gravity:16.469113303885692
+fitness: (1.811278124459133,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4019.742041155374 Damage:4 DamageRadius:72 Gravity:16.469113303885692
+fitness: (1.811278124459133,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:16461
+Projectile  Speed:4141.613044786397 Damage:2.9889647488352553 DamageRadius:72 Gravity:16
+fitness: (1.0,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4149 Damage:4 DamageRadius:72 Gravity:16
+fitness: (1.8365916681089791,)
+*********************************************************
+Weapon  Rof:4.4 Spread:0.4 MaxAmmo:344 ShotCost:1 Range:15616.126600758813
+Projectile  Speed:4135.193943264289 Damage:4 DamageRadius:72 Gravity:16
+fitness: (2.0,)
+*********************************************************
