@@ -71,7 +71,7 @@ class BalancedWeaponClient:
 
             for string in splitted:
 
-                print("Received %s" % string)
+                #print("Received %s" % string)
 
                 if  string == 'End' : 
                     finish = False
@@ -97,7 +97,7 @@ class BalancedWeaponClient:
             else :
                 i += 1
 
-         print(self.statics)
+         #print(self.statics)
 
          return self.statics       
 

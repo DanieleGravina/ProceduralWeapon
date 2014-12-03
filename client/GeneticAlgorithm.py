@@ -2,6 +2,8 @@ import random
 import matplotlib.pyplot as plt
 import numpy
 import pickle
+import threading
+import time
 
 from BalancedWeaponClient import BalancedWeaponClient
 
@@ -82,6 +84,49 @@ toolbox.register("individual", tools.initCycle, creator.Individual,
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
+class myThread (threading.Thread):
+    def __init__(self, threadID, name, population, statics, port):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.population = population
+        self.client = BalancedWeaponClient(port)
+        self.stats = {}
+        self.statics = statics
+
+    def run(self):
+        print("Starting " + self.name)
+
+        self.client.SendInit()
+
+        index =  self.threadID
+        population = self.population
+
+        if not population[index].fitness.valid or not population[index + 1].fitness.valid :
+
+            for i in range (index, NUM_BOTS + index):
+                self.client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
+
+            for i in range (index, NUM_BOTS + index):
+                self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
+
+            self.client.SendStartMatch()
+
+            self.client.WaitForBotStatics()
+
+            self.stats = self.client.GetStatics()
+
+            print(self.stats)
+
+        else :
+            self.stats[index] = self.statics[index]
+            self.stats[index + 1] = self.statics[index + 1]
+
+
+    def join(self):
+        threading.Thread.join(self)
+        return self.stats
+
 def check_param(param, min, max):
     if param < min :
         param = min
@@ -140,11 +185,34 @@ def difference_statics(index, statics):
     return sum*WEIGHT/len(statics)
 
 # Run the simulation on the server side (UDK)
-def simulate_population(population) :
+def simulate_population(population, statics) :
 
-    index = 0
-    result = {}
+    stats = {}
+    threads = []
 
+    # Create new threads
+    thread1 = myThread(0, "Thread-1", population, statics, PORT1)
+    thread2 = myThread(2, "Thread-2", population, statics, PORT2)
+    thread3 = myThread(4, "Thread-3", population, statics, PORT3)
+    thread4 = myThread(6, "Thread-4", population, statics, PORT4)
+
+    # Start new Threads
+    thread1.start()
+    thread2.start()
+    thread3.start()
+    thread4.start()
+
+    # Add threads to thread list
+    threads.append(thread1)
+    threads.append(thread2)
+    threads.append(thread3)
+    threads.append(thread4)
+
+    # Wait for all threads to complete
+    for t in threads:
+        stats.update(t.join())
+
+    '''
     while index < NUM_POP:
 
         client = BalancedWeaponClient(PORT1)
@@ -163,8 +231,9 @@ def simulate_population(population) :
         result.update(client.GetStatics())
 
         index += 2
+    '''
 
-    return result
+    return stats
 
 def entropy(index, statics) :
 
@@ -227,14 +296,13 @@ def evaluate(index, population, statics):
     return e,
 
 
-toolbox.register("mate", tools.cxPartialyMatched)
-#toolbox.register("mutate", tools.mutGaussian, mu = 0, sigma = 1, indpb = 0.1)
-toolbox.register("mutate", tools.selRoulette)
+toolbox.register("mate", tools.cxTwoPoint)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.1)
+toolbox.register("select", tools.selTournament, tournsize=3)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
 
-toolbox.register("select", tools.selTournament, tournsize = 3)
 toolbox.register("evaluate", evaluate)
 
 stats = tools.Statistics(key=lambda ind: ind.fitness.values)
@@ -252,23 +320,31 @@ def main():
     CXPB, MUTPB, NGEN = 0.5, 0.2, 20
 
     fitnesses = []
+    gen_fitnesses = []
     statics = {}
+    clients = []
 
     print(pop)
 
     # workaround to initialize properly server mode of UDK
     client1 = BalancedWeaponClient(PORT1)
     client2 = BalancedWeaponClient(PORT2)
+    client3 = BalancedWeaponClient(PORT3)
+    client4 = BalancedWeaponClient(PORT4)
 
-    client1.SendInit()
-    client1.SendStartMatch()
-    client1.SendClose()
+    clients.append(client1)
+    clients.append(client2)
+    clients.append(client3)
+    clients.append(client4)
 
-    client2.SendInit()
-    client2.SendStartMatch()
-    client2.SendClose()
+    for c in clients :
+        c.SendInit()
+        c.SendStartMatch()
+        c.SendClose()
 
-    statics = simulate_population(pop)
+    statics = simulate_population(pop, statics)
+
+    print(statics)
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -306,18 +382,17 @@ def main():
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
 
-        # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        statics = simulate_population(offspring, statics)
 
-        statics = simulate_population(offspring)
+        fit = 0,
 
-        for i in range(len(invalid_ind)) :
-            fitnesses += [toolbox.evaluate(i, offspring, statics)]
+        for i in range(len(offspring)) :
+            if not offspring[i].fitness.valid :
+                fit = toolbox.evaluate(i, offspring, statics)
+                fitnesses += [fit]
+                offspring[i].fitness.values = fit
 
         print(fitnesses)
-
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
 
         # The population is entirely replaced by the offspring
         pop[:] = offspring
@@ -355,7 +430,7 @@ def main():
 
     plt.show()
 
-    pickle.dump(logbook, open("logbook.pkl", "w"))
+    pickle.dump(str(logbook), open("logbook.txt", "w"))
 
 
 main()
