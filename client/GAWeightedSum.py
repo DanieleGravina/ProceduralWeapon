@@ -7,6 +7,7 @@ import time
 from Costants import NUM_BOTS
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
+from itertools import repeat
 
 from math import log
 
@@ -129,26 +130,6 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def difference_from_population(individual, population):
-    sum = 0
-    pop = [x for x in population if x != individual]
-
-    for l in pop :
-        for i in range(0, len(l)):
-            sum += abs(individual[i] - l[i])
-
-
-    return sum/len(population)
-
-def difference_statics(index, statics):
-    sum = 0
-
-    for i in range(0, len(statics)):
-        if i != index :
-            sum += abs(statics[index][0] - statics[i][0]) + abs(statics[index][1] - statics[i][1])
-
-    return sum*WEIGHT/len(statics)
-
 # Run the simulation on the server side (UDK)
 def simulate_population(population, statics) :
 
@@ -209,13 +190,35 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
     entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
 
     return -(entropy_kill + entropy_dies)
-    
+
+def evaluate_difference(index, population, entropy):
+
+    ind = int(index/NUM_BOTS)
+
+    p1 = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    p2 = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    e = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    if entropy == 0 :
+        return entropy
+
+    for i in range(len(population)):
+        if i >= ind and i < ind + NUM_BOTS :
+            for j in range(9):
+                p1[j] = population[i][j]/(population[i][j] + population[i+1][j])
+                p2[j] = population[i+1][j]/(population[i][j] + population[i+1][j])
+                e[j] = -( p1[j]*log(p1[j], 2) + p2[j]*log(p2[j], 2) )
+                if e[j] != 0 :
+                    entropy += (1/e[j])*1/18
+
+    return entropy
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
     e = entropy(index, statics)
     print('entropy :' + str(index) + " " + str(e))
-    return e,
+    result = evaluate_difference(index, population, e)
+    return result,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
@@ -224,7 +227,7 @@ toolbox.register("mutate", tools.mutGaussian, mu    = [100, 0 , 40, 1, 10000, 10
                                               sigma = [ 10, 1,   1, 1,   100,   10, 1,  1, 1], 
                                               indpb = 0.1)
 
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("select", tools.selTournament, tournsize=2)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
