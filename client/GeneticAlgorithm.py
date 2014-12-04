@@ -28,6 +28,7 @@ PORT1 = 3742
 PORT2 = 3743
 PORT3 = 3744
 PORT4 = 3745
+PORT5 = 3746
 
 WEIGHT = 100
 
@@ -62,7 +63,7 @@ GRAVITY_MIN, GRAVITY_MAX = 1, 100
 
 N_CYCLES = 1
 # size of the population
-NUM_POP = 8
+NUM_POP = 10
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -90,6 +91,15 @@ def printWeapon(pop):
             + " Gravity:" + str(ind[8]) )
         print("fitness: " + str(ind.fitness.values))
         print("*********************************************************")
+
+def writeWeapon(pop, pop_file):
+    for ind in pop :
+        pop_file.write("Weapon "+ " Rof:" + str(ind[0]/100) + " Spread:" + str(ind[1]/10) + " MaxAmmo:" + str(ind[2]) 
+            + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
+        pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
+            + " Gravity:" + str(ind[8]) +"\n")
+        pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
+        pop_file.write("*********************************************************" + "\n")
 
 
 def check_param(param, min, max):
@@ -129,6 +139,30 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
+def initialize_threads():
+    clients = []
+
+    
+    # workaround to initialize properly server mode of UDK
+    client1 = BalancedWeaponClient(PORT1)
+    client2 = BalancedWeaponClient(PORT2)
+    client3 = BalancedWeaponClient(PORT3)
+    client4 = BalancedWeaponClient(PORT4)
+    client5 = BalancedWeaponClient(PORT5)
+
+
+    clients.append(client1)
+    clients.append(client2)
+    clients.append(client3)
+    clients.append(client4)
+    clients.append(client5)
+
+    for c in clients :
+        c.SendInit()
+        c.SendStartMatch()
+        c.SendClose()
+
+
 # Run the simulation on the server side (UDK)
 def simulate_population(population, statics) :
 
@@ -140,18 +174,21 @@ def simulate_population(population, statics) :
     thread2 = myThread(2, "Thread-2", population, statics, PORT2)
     thread3 = myThread(4, "Thread-3", population, statics, PORT3)
     thread4 = myThread(6, "Thread-4", population, statics, PORT4)
+    thread5 = myThread(8, "Thread-5", population, statics, PORT5)
 
     # Start new Threads
     thread1.start()
     thread2.start()
     thread3.start()
     thread4.start()
+    thread5.start()
 
     # Add threads to thread list
     threads.append(thread1)
     threads.append(thread2)
     threads.append(thread3)
     threads.append(thread4)
+    threads.append(thread5)
 
     # Wait for all threads to complete
     for t in threads:
@@ -234,31 +271,15 @@ def main():
     pop = toolbox.population(n = NUM_POP)
 
     printWeapon(pop)
+    writeWeapon(pop, pop_file)
 
     CXPB, MUTPB, NGEN = 0.5, 0.2, 20
 
     fitnesses = []
     gen_fitnesses = []
     statics = {}
-    clients = []
 
-    
-    # workaround to initialize properly server mode of UDK
-    client1 = BalancedWeaponClient(PORT1)
-    client2 = BalancedWeaponClient(PORT2)
-    client3 = BalancedWeaponClient(PORT3)
-    client4 = BalancedWeaponClient(PORT4)
-
-    clients.append(client1)
-    clients.append(client2)
-    clients.append(client3)
-    clients.append(client4)
-
-    for c in clients :
-        c.SendInit()
-        c.SendStartMatch()
-        c.SendClose()
-    
+    initialize_threads()
 
     statics = simulate_population(pop, statics)
 
@@ -309,6 +330,9 @@ def main():
 
         fit = 0,
 
+        for individual in offspring:
+            del individual[0].fitness.values
+
         for i in range(len(offspring)) :
             if not offspring[i].fitness.valid :
                 fit = toolbox.evaluate(i, offspring, statics)
@@ -323,6 +347,8 @@ def main():
         record = stats.compile(pop)
 
         printWeapon(pop)
+
+        writeWeapon(pop, pop_file)
 
         logbook.record(gen = g + 1, **record)
 
@@ -357,13 +383,7 @@ def main():
 
     log_string = str(logbook)
 
-    for ind in pop :
-        pop_file.write("Weapon "+ " Rof:" + str(ind[0]/100) + " Spread:" + str(ind[1]/10) + " MaxAmmo:" + str(ind[2]) 
-            + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
-        pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
-            + " Gravity:" + str(ind[8]) +"\n")
-        pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
-        pop_file.write("*********************************************************" + "\n")
+    writeWeapon(pop, pop_file)
 
     logbook_file.write(log_string)
 

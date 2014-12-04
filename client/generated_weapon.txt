@@ -15,5 +15,14 @@ Rof 1.73, Spread 3.5, MaxAmmo 982, ShotCost 3, Range 37873
 Speed 9256, Damage 81, DamageRadius 31, Gravity 43
 
 4)
+Rof 4.38, Spread 6.7, MaxAmmo 250, ShotCost 9, Range 5663
+Speed 6808, Damage 72, DamageRadius 63, Gravity 59
+
+5)
+Rof 0.52, Spread 3.40, MaxAmmo 708, ShotCost 10, Range 68699
+Speed 3176, Damage 71, DamageRadius 74, Gravity 60
+
+5)
+4)
 Rof 4.4, Spread 0.4, MaxAmmo 344, ShotCost 1, Range 15616
 Speed 4135, Damage 4, DamageRadius 72, Gravity 16

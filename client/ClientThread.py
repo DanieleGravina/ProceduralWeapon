@@ -20,25 +20,19 @@ class myThread (threading.Thread):
         index =  self.threadID
         population = self.population
 
-        if not population[index].fitness.valid or not population[index + 1].fitness.valid :
+        for i in range (index, NUM_BOTS + index):
+            self.client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-            for i in range (index, NUM_BOTS + index):
-                self.client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
+        for i in range (index, NUM_BOTS + index):
+            self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
 
-            for i in range (index, NUM_BOTS + index):
-                self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
+        self.client.SendStartMatch()
 
-            self.client.SendStartMatch()
+        self.client.WaitForBotStatics()
 
-            self.client.WaitForBotStatics()
+        self.stats = self.client.GetStatics()
 
-            self.stats = self.client.GetStatics()
-
-            print(self.stats)
-
-        else :
-            self.stats[index] = self.statics[index]
-            self.stats[index + 1] = self.statics[index + 1]
+        print(self.stats)
 
     def join(self):
         threading.Thread.join(self)
