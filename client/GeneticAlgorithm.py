@@ -5,6 +5,8 @@ import pickle
 import time
 
 from Costants import NUM_BOTS
+from Costants import PORT1, PORT2, PORT3, PORT4, PORT5
+
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
 

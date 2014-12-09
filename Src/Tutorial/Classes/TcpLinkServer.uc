@@ -11,6 +11,7 @@ class TcpLinkServer extends TcpLink;
 var int ListenPort;
 var int MaxClients;
 var int NumClients;
+var float maxDuration;
 
 var Actor currentAcceptor;
 
@@ -33,6 +34,11 @@ event GainedChild( Actor C )
 	}
 	
 	currentAcceptor = C;
+	
+	if(TcpLinkServerAcceptor(currentAcceptor) != none)
+	{
+		TcpLinkServerAcceptor(currentAcceptor).SetMaxDuration(maxDuration);
+	}
 }
 
 event LostChild( Actor C )
@@ -83,9 +89,15 @@ function SetListenPort(int port)
     }
 }
 
+function SetMaxDuration(float time)
+{
+	maxDuration = time;
+}
+
 
 defaultproperties
 {
+	maxDuration = 3600
     ListenPort=3742
     MaxClients=1    
     AcceptClass=Class'TcpLinkServerAcceptor'

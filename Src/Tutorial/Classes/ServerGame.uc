@@ -7,6 +7,7 @@ var bool bGameStart;
 var int numPlayers;
 
 var int listenPort;
+var int maxDuration;
 
 /* holds the weapon parameters controlled by the genetic algorithm */
 struct PWParameters{
@@ -49,6 +50,13 @@ event InitGame( string Options, out string ErrorMessage )
 		listenPort = int(InOpt);
 	}
 	
+	InOpt = ParseOption( Options, "MaxDuration");
+	if( InOpt != "" )
+	{
+		`log("MaxDuration"@InOpt);
+		maxDuration = float(InOpt);
+	}
+	
 }
 
 event PreBeginPlay()
@@ -58,8 +66,8 @@ event PreBeginPlay()
     tcpServer = Spawn(class'TcpLinkServer');
     
     tcpServer.SetListenPort(listenPort);
-    
-    SetGameSpeed(60);
+    tcpServer.SetMaxDuration(maxDuration);
+   
 }
 
 function AddDefaultInventory( pawn Pawn ){
@@ -71,6 +79,8 @@ function AddDefaultInventory( pawn Pawn ){
 	{
 		PWPawn(Pawn).SetProceduralWeapon();
 	}
+	
+	`log("[ServerGame] Gamespeed "$string(WorldInfo.TimeDilation));
 }
 
 function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType )

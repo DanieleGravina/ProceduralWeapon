@@ -378,6 +378,12 @@ event Closed()
  	Destroy();
 }
 
+function SetMaxDuration(float time)
+{
+	`Log("[TcpLinkServerAcceptor] SetMaxDuration"$string(time));
+	MaxDuration = time;
+}
+
 defaultproperties
 {
 	weapInitialized = 0;
@@ -394,5 +400,5 @@ defaultproperties
 	SIMULATION = 2;
 	ENDGAME = 3;
 	
-	MaxDuration = 1200f;
+	MaxDuration = 3600f;
 }

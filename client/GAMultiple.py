@@ -399,6 +399,7 @@ def main():
     gen = logbook.select("gen")
     fit_max = logbook.chapters["entropy"].select("avg")
     size_avgs = logbook.chapters["entropy"].select("max")
+    fit_min = logbook.chapters["entropy"].select("min")
 
     fig, ax1 = plt.subplots()
     line1 = ax1.plot(gen, fit_max, "b-", label="Avg Fitness")
@@ -416,6 +417,11 @@ def main():
     lns = line1 + line2 
     labs = [l.get_label() for l in lns]
     ax1.legend(lns, labs, loc="center right")
+
+    plt.figure(1)
+
+    plt.plot(gen, fit_max, "b-", label="Max Fitness")
+
 
     plt.show()
 
