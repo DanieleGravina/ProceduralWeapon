@@ -39,3 +39,10 @@ Projectile  Speed:9034.00 Damage:32.00 DamageRadius:35.00 Gravity:6.00
 
 Weapon  Rof:1.23 Spread:4.20 MaxAmmo:208.00 ShotCost:1.00 Range:9070.00
 Projectile  Speed:582.00 Damage:32.00 DamageRadius:35.00 Gravity:6.00
+
+9)
+Weapon  Rof:5.23 Spread:0.1 MaxAmmo:49 ShotCost:7 Range:70199
+Projectile  Speed:9673 Damage:84 DamageRadius:44 Gravity:86
+
+Weapon  Rof:7.69 Spread:0.2 MaxAmmo:49 ShotCost:7 Range:70199
+Projectile  Speed:9673 Damage:84 DamageRadius:44 Gravity:86

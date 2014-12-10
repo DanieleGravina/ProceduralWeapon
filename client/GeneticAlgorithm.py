@@ -4,8 +4,12 @@ import numpy
 import pickle
 import time
 
+from functools import partial
+from operator import attrgetter
+
 from Costants import NUM_BOTS
-from Costants import PORT1, PORT2, PORT3, PORT4, PORT5
+from Costants import NUM_SERVER
+from Costants import PORT
 
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
@@ -22,15 +26,6 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 #initialization
 
 toolbox = base.Toolbox()
-
-messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
-
-PORT1 = 3742
-PORT2 = 3743
-PORT3 = 3744
-PORT4 = 3745
-PORT5 = 3746
 
 WEIGHT = 100
 
@@ -62,10 +57,13 @@ DMG_RAD_MIN, DMG_RAD_MAX = 1, 100
 #default gravity = 1
 GRAVITY_MIN, GRAVITY_MAX = 1, 100
 
+limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN, RANGE_MAX),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX)]
+
 
 N_CYCLES = 1
 # size of the population
-NUM_POP = 10
+NUM_POP = NUM_BOTS*NUM_SERVER
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -103,6 +101,35 @@ def writeWeapon(pop, pop_file):
         pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
         pop_file.write("*********************************************************" + "\n")
 
+def selRoulette(individuals, k):
+
+    for ind in individuals:
+        fit = ind.fitness.values[0]
+        fit += 1
+        del ind.fitness.values
+        ind.fitness.values = fit, 
+
+    s_inds = sorted(individuals, key=attrgetter("fitness"), reverse=True)
+    sum_fits = sum(ind.fitness.values[0] for ind in individuals)
+    
+    chosen = []
+    for i in range(k):
+        u = random.random() * sum_fits
+        sum_ = 0
+        for ind in s_inds:
+            sum_ += ind.fitness.values[0]
+            if sum_ > u:
+                chosen.append(ind)
+                break
+
+    for ind in individuals:
+        fit = ind.fitness.values[0]
+        fit -= 1
+        del ind.fitness.values
+        ind.fitness.values = fit,
+    
+    return chosen
+
 
 def check_param(param, min, max):
     if param < min :
@@ -111,24 +138,8 @@ def check_param(param, min, max):
         param = max
 
 def check(param, n) :
-    if n == 0:
-        check_param(param, ROF_MIN, ROF_MAX)
-    elif n == 1:
-        check_param(param, SPREAD_MIN, SPREAD_MAX)
-    elif n == 2:
-        check_param(param, AMMO_MIN, AMMO_MAX)
-    elif n == 3:
-        check_param(param, SHOT_COST_MIN, SHOT_COST_MAX)
-    elif n == 4:
-        check_param(param, RANGE_MIN, RANGE_MAX)
-    elif n == 5:
-        check_param(param, SPEED_MIN, SPEED_MAX)
-    elif n == 6:
-        check_param(param, DMG_MIN, DMG_MAX)
-    elif n == 7:
-        check_param(param, DMG_RAD_MIN, DMG_RAD_MAX)
-    elif n == 8:
-        check_param(param, GRAVITY_MIN, GRAVITY_MAX)
+
+    check_param(param, limits[n][0], limits[n][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -141,29 +152,16 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def initialize_threads():
+def initialize_server():
     clients = []
 
-    
-    # workaround to initialize properly server mode of UDK
-    client1 = BalancedWeaponClient(PORT1)
-    client2 = BalancedWeaponClient(PORT2)
-    client3 = BalancedWeaponClient(PORT3)
-    client4 = BalancedWeaponClient(PORT4)
-    client5 = BalancedWeaponClient(PORT5)
-
-
-    clients.append(client1)
-    clients.append(client2)
-    clients.append(client3)
-    clients.append(client4)
-    clients.append(client5)
+    for i in range(NUM_SERVER):
+        clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
-
 
 # Run the simulation on the server side (UDK)
 def simulate_population(population, statics) :
@@ -171,26 +169,11 @@ def simulate_population(population, statics) :
     stats = {}
     threads = []
 
-    # Create new threads
-    thread1 = myThread(0, "Thread-1", population, statics, PORT1)
-    thread2 = myThread(2, "Thread-2", population, statics, PORT2)
-    thread3 = myThread(4, "Thread-3", population, statics, PORT3)
-    thread4 = myThread(6, "Thread-4", population, statics, PORT4)
-    thread5 = myThread(8, "Thread-5", population, statics, PORT5)
+    for i in range(NUM_SERVER):
+        threads.append( myThread(i*2, "Thread-" + str(i), population, statics, PORT[i]) )
 
-    # Start new Threads
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-
-    # Add threads to thread list
-    threads.append(thread1)
-    threads.append(thread2)
-    threads.append(thread3)
-    threads.append(thread4)
-    threads.append(thread5)
+    for t in threads:
+        t.start()
 
     # Wait for all threads to complete
     for t in threads:
@@ -205,7 +188,7 @@ def entropy(index, statics) :
     total_kills = 0
     total_dies = 0
 
-    ind = int(index/NUM_BOTS)
+    ind = index if index % 2 == 0 else index - 1
 
     for key, val in statics.items():
         if key >= ind and key < ind + NUM_BOTS :
@@ -215,7 +198,7 @@ def entropy(index, statics) :
     for i in range(ind, ind + NUM_BOTS):
         e += evaluate_entropy(i, statics, total_kills, total_dies, NUM_BOTS)
 
-    return e 
+    return e
 
 
 def evaluate_entropy(index, statics, total_kills, total_dies, N) :
@@ -227,14 +210,7 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
     entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
 
-    if total_kills == 0 :
-        entropy_kill = -0.5
-
-    if total_dies == 0 :
-        entropy_dies = -0.5
-
     return -(entropy_kill + entropy_dies)
-    
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
@@ -245,11 +221,11 @@ def evaluate(index, population, statics):
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutGaussian, mu    = 0, 
-                                              sigma = [ 100, 1,   40, 1,   1000,   100, 1,  10, 1], 
-                                              indpb = 0.1)
+toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)],
+                                                up  = [limits[j][1] for j in range(9)], 
+                                                indpb = 0.1)
 
-toolbox.register("select", tools.selTournament, tournsize = 2)
+toolbox.register("select", selRoulette)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
@@ -260,15 +236,15 @@ stats = tools.Statistics(key=lambda ind: ind.fitness.values)
 
 stats.register("avg", numpy.mean)
 stats.register("std", numpy.std)
-stats.register("min", min)
-stats.register("max", max)
+stats.register("min", numpy.min)
+stats.register("max", numpy.max)
 
 logbook = tools.Logbook()
 
 def main():
 
-    pop_file = open("population.pkl", "w")
-    logbook_file = open("logbook.pkl", "w")
+    pop_file = open("population.txt", "w")
+    logbook_file = open("logbook.txt", "w")
 
     pop = toolbox.population(n = NUM_POP)
 
@@ -281,33 +257,28 @@ def main():
     gen_fitnesses = []
     statics = {}
 
-    initialize_threads()
+    initialize_server()
 
     statics = simulate_population(pop, statics)
-
-    print(statics)
 
     # Evaluate the entire population
     for i in range(len(pop)) :
         fitnesses += [toolbox.evaluate(i, pop, statics)]
 
-    print(fitnesses)
-
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
     record = stats.compile(pop)
-    print(record)
     logbook.record(gen = 0, **record)
 
     logbook.header = "gen", "avg", "std", "min", "max"
 
     print(logbook)
 
-    for g in range(NGEN):
+    for g in range(NGEN - 1):
 
         # Select the next generation individuals
-        offspring = toolbox.select(pop, 1)
+        offspring = toolbox.select(pop, 2)
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
@@ -333,15 +304,13 @@ def main():
         fit = 0,
 
         for individual in offspring:
-            del individual[0].fitness.values
+           del individual.fitness.values
 
         for i in range(len(offspring)) :
             if not offspring[i].fitness.valid :
                 fit = toolbox.evaluate(i, offspring, statics)
                 fitnesses += [fit]
                 offspring[i].fitness.values = fit
-
-        print(fitnesses)
 
         # The population is entirely replaced by the offspring
         pop[:] = offspring
@@ -358,28 +327,17 @@ def main():
 
         print(logbook)
 
-    print(pop)
+    plt.figure(1)
 
     gen = logbook.select("gen")
-    fit_max = logbook.select("avg")
-    size_avgs = logbook.select("max")
+    fit_avg = logbook.select("avg")
+    fit_max = logbook.select("max")
+    fit_min = logbook.select("min")
 
-    fig, ax1 = plt.subplots()
-    line1 = ax1.plot(gen, fit_max, "b-", label="Avg Fitness")
-    ax1.set_xlabel("Generation")
-    ax1.set_ylabel("Fitness", color="b")
-    for tl in ax1.get_yticklabels():
-        tl.set_color("b")
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
 
-    ax2 = ax1.twinx()
-    line2 = ax2.plot(gen, size_avgs, "r-", label="Max fitness")
-    ax2.set_ylabel("Max fitness", color="r")
-    for tl in ax2.get_yticklabels():
-        tl.set_color("r")
-
-    lns = line1 + line2 
-    labs = [l.get_label() for l in lns]
-    ax1.legend(lns, labs, loc="center right")
+    plt.xlabel("Generation")
+    plt.ylabel("Entropy")
 
     plt.show()
 

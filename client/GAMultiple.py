@@ -5,6 +5,8 @@ import pickle
 import time
 
 from Costants import NUM_BOTS
+from Costants import NUM_SERVER
+from Costants import PORT
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
 from itertools import repeat
@@ -18,18 +20,12 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, -1.0))
 creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
 
 toolbox = base.Toolbox()
-
-PORT1 = 3742
-PORT2 = 3743
-PORT3 = 3744
-PORT4 = 3745
-PORT5 = 3746
 
 WEIGHT = 100
 
@@ -67,7 +63,7 @@ limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (S
 
 N_CYCLES = 1
 # size of the population
-NUM_POP = 10
+NUM_POP = NUM_BOTS*NUM_SERVER
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -131,23 +127,11 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def initialize_threads():
+def initialize_server():
     clients = []
 
-    
-    # workaround to initialize properly server mode of UDK
-    client1 = BalancedWeaponClient(PORT1)
-    client2 = BalancedWeaponClient(PORT2)
-    client3 = BalancedWeaponClient(PORT3)
-    client4 = BalancedWeaponClient(PORT4)
-    client5 = BalancedWeaponClient(PORT5)
-
-
-    clients.append(client1)
-    clients.append(client2)
-    clients.append(client3)
-    clients.append(client4)
-    clients.append(client5)
+    for i in range(NUM_SERVER):
+        clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
         c.SendInit()
@@ -160,26 +144,11 @@ def simulate_population(population, statics) :
     stats = {}
     threads = []
 
-    # Create new threads
-    thread1 = myThread(0, "Thread-1", population, statics, PORT1)
-    thread2 = myThread(2, "Thread-2", population, statics, PORT2)
-    thread3 = myThread(4, "Thread-3", population, statics, PORT3)
-    thread4 = myThread(6, "Thread-4", population, statics, PORT4)
-    thread5 = myThread(8, "Thread-5", population, statics, PORT5)
+    for i in range(NUM_SERVER):
+        threads.append( myThread(i*2, "Thread-" + str(i), population, statics, PORT[i]) )
 
-    # Start new Threads
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-
-    # Add threads to thread list
-    threads.append(thread1)
-    threads.append(thread2)
-    threads.append(thread3)
-    threads.append(thread4)
-    threads.append(thread5)
+    for t in threads:
+        t.start()
 
     # Wait for all threads to complete
     for t in threads:
@@ -194,10 +163,7 @@ def entropy(index, statics) :
     total_kills = 0
     total_dies = 0
 
-    if index % 2 != 0 :
-        ind = index - 1
-    else :
-        ind = index
+    ind = index if index % 2 == 0 else index - 1
 
     for key, val in statics.items():
         if key >= ind and key < ind + NUM_BOTS :
@@ -215,12 +181,7 @@ def entropy(index, statics) :
 
         suicides = statics[index - 1][1] - statics[index][0]
 
-    e -= suicides*0.1
-
-    if e < 0 :
-        e = 0
-
-    return e 
+    return e, suicides
 
 
 def evaluate_entropy(index, statics, total_kills, total_dies, N) :
@@ -236,10 +197,7 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 def evaluate_difference(index, population):
 
-    if index % 2 != 0 :
-        ind = index - 1
-    else :
-        ind = index
+    ind = index if index % 2 == 0 else index - 1
 
     diff = 0
 
@@ -255,12 +213,15 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e = entropy(index, statics)
+    e, suicides = entropy(index, statics)
     #e = random.randint(0,2)
-    print('entropy :' + str(index) + " " + str(e))
     diff = evaluate_difference(index, population)
-    print(' difference :' + str(index) + " " + str(diff))
-    return e, diff
+    
+    print('entropy :' + str(index) + " " + str(e))
+    print('difference :' + str(index) + " " + str(diff))
+    print('suicides :' + str(index) + " " + str(suicides))
+
+    return e, diff, suicides
 
 
 toolbox.register("mate", tools.cxTwoPoint)
@@ -269,7 +230,7 @@ toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in ran
                                                 up  = [limits[j][1] for j in range(9)], 
                                                 indpb = 0.1)
 
-toolbox.register("select", tools.selTournament, tournsize = 2)
+toolbox.register("select", tools.selTournament, tournsize = 3)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
@@ -277,21 +238,28 @@ toolbox.decorate("mutate", checkBounds(0,1))
 toolbox.register("evaluate", evaluate)
 
 
-stats1 = tools.Statistics(key=lambda ind: ind.fitness.values[0])
+stats1 = tools.Statistics(key = lambda ind: ind.fitness.values[0])
 
 stats1.register("avg", numpy.mean)
 stats1.register("std", numpy.std)
 stats1.register("min", numpy.min)
 stats1.register("max", numpy.max)
 
-stats2 = tools.Statistics(key=lambda ind: ind.fitness.values[1])
+stats2 = tools.Statistics(key = lambda ind: ind.fitness.values[1])
 
 stats2.register("avg", numpy.mean)
 stats2.register("std", numpy.std)
 stats2.register("min", numpy.min)
 stats2.register("max", numpy.max)
 
-mstats = tools.MultiStatistics(entropy=stats1, diff=stats2)
+stats3 = tools.Statistics(key = lambda ind: ind.fitness.values[2])
+
+stats3.register("avg", numpy.mean)
+stats3.register("std", numpy.std)
+stats3.register("min", numpy.min)
+stats3.register("max", numpy.max)
+
+mstats = tools.MultiStatistics(entropy = stats1, diff = stats2, suicides = stats3)
 
 logbook = tools.Logbook()
 
@@ -305,12 +273,12 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 40 #20 is 1h
 
     fitnesses = []
     statics = {}
 
-    initialize_threads()
+    initialize_server()
 
     statics = simulate_population(pop, statics)
 
@@ -326,19 +294,21 @@ def main():
 
     logbook.record(gen = 0, **record)
 
-    logbook.header = "gen", "entropy", "diff"
-    logbook.chapters["entropy"].header = "min", "avg", "max"
-    logbook.chapters["diff"].header = "min", "avg", "max"
+    logbook.header = "gen", "entropy", "diff", "suicides"
+    logbook.chapters["entropy"].header = "avg", "max"
+    logbook.chapters["diff"].header = "avg", "max"
+    logbook.chapters["suicides"].header = "avg", "min"
 
     print(logbook)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    for g in range(NGEN):
+    for g in range(NGEN - 1):
 
-        # Select the next generation individuals
+        # Elitism : 2 individuals
         offspring = toolbox.select(pop, 2)
+
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
@@ -361,7 +331,7 @@ def main():
 
         statics = simulate_population(offspring, statics)
 
-        fit = 0, 0
+        fit = 0, 0, 0
 
         for individual in offspring:
            del individual.fitness.values
@@ -381,12 +351,19 @@ def main():
 
         logbook.record(gen = g + 1, **record)
 
-        logbook.header = "gen", "entropy", "diff"
-        logbook.chapters["entropy"].header = "min", "avg", "max"
-        logbook.chapters["diff"].header = "min", "avg", "max"
+        logbook.header = "gen", "entropy", "diff", "suicides"
+        logbook.chapters["entropy"].header = "avg", "max"
+        logbook.chapters["diff"].header = "avg", "max"
+        logbook.chapters["suicides"].header = "avg", "min"
 
         print(logbook)
 
+
+    logbook.header = "gen", "entropy", "diff", "suicides"
+    logbook.chapters["entropy"].header = "min", "avg", "max"
+    logbook.chapters["diff"].header = "min", "avg", "max"
+    logbook.chapters["suicides"].header = "min", "avg", "max"
+    
     log_string = str(logbook)
 
     writeWeapon(pop, pop_file)
@@ -396,32 +373,39 @@ def main():
     pop_file.close()
     logbook_file.close()
 
-    gen = logbook.select("gen")
-    fit_max = logbook.chapters["entropy"].select("avg")
-    size_avgs = logbook.chapters["entropy"].select("max")
-    fit_min = logbook.chapters["entropy"].select("min")
-
-    fig, ax1 = plt.subplots()
-    line1 = ax1.plot(gen, fit_max, "b-", label="Avg Fitness")
-    ax1.set_xlabel("Generation")
-    ax1.set_ylabel("Fitness", color="b")
-    for tl in ax1.get_yticklabels():
-        tl.set_color("b")
-
-    ax2 = ax1.twinx()
-    line2 = ax2.plot(gen, size_avgs, "r-", label="Max fitness")
-    ax2.set_ylabel("Max fitness", color="r")
-    for tl in ax2.get_yticklabels():
-        tl.set_color("r")
-
-    lns = line1 + line2 
-    labs = [l.get_label() for l in lns]
-    ax1.legend(lns, labs, loc="center right")
-
     plt.figure(1)
 
-    plt.plot(gen, fit_max, "b-", label="Max Fitness")
+    gen = logbook.select("gen")
+    fit_avg = logbook.chapters["entropy"].select("avg")
+    fit_max = logbook.chapters["entropy"].select("max")
+    fit_min = logbook.chapters["entropy"].select("min")
 
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+
+    plt.xlabel("Generation")
+    plt.ylabel("Entropy")
+
+    plt.figure(2)
+
+    fit_avg = logbook.chapters["diff"].select("avg")
+    fit_max = logbook.chapters["diff"].select("max")
+    fit_min = logbook.chapters["diff"].select("min")
+
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+
+    plt.xlabel("Generation")
+    plt.ylabel("Difference")
+
+    plt.figure(3)
+
+    fit_avg = logbook.chapters["suicides"].select("avg")
+    fit_max = logbook.chapters["suicides"].select("max")
+    fit_min = logbook.chapters["suicides"].select("min")
+
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+
+    plt.xlabel("Generation")
+    plt.ylabel("Suicides")
 
     plt.show()
 
