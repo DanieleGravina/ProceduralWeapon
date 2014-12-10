@@ -59,11 +59,11 @@ def simulate_population(iterations) :
     threads = []
 
     # Create new threads
-    thread1 = TestClientThread(0, "Thread-1", PORT1, iterations)
-    thread2 = TestClientThread(2, "Thread-2", PORT2, iterations*5)
-    thread3 = TestClientThread(4, "Thread-3", PORT3, iterations*10)
-    thread4 = TestClientThread(6, "Thread-4", PORT4, iterations*10)
-    thread5 = TestClientThread(8, "Thread-5", PORT5, iterations*10)
+    thread1 = TestClientThread(1, "Thread-1", PORT1, iterations)
+    thread2 = TestClientThread(2, "Thread-2", PORT2, iterations)
+    thread3 = TestClientThread(3, "Thread-3", PORT3, iterations)
+    thread4 = TestClientThread(4, "Thread-4", PORT4, iterations)
+    thread5 = TestClientThread(5, "Thread-5", PORT5, iterations)
 
     # Start new Threads
     thread1.start()
@@ -89,13 +89,18 @@ def simulate_population(iterations) :
 
 def main():
 
+    statics_file = open("statics.txt", "w")
+
     statics = {}
 
     initialize_threads()
 
-    statics = simulate_population(4)
+    statics = simulate_population(25)
 
     print(statics)
+
+    for key, val in statics.items() :
+        statics_file.write(str(key) + ":" + str(val) + "\n")
 
     l1 = []
     l2 = []
@@ -103,19 +108,20 @@ def main():
     l4 = []
 
     for key, val in statics.items() :
-        if key%2 == 0:
-            l1.append(val[0])
-            l2.append(val[1])
-            l3.append(val[2])
-            l4.append(val[3])
+        l1.append(val[0])
+        l2.append(val[1])
+        l3.append(val[2])
+        l4.append(val[3])
 
 
     plt.figure(1)
 
-    plt.boxplot([l1, l2, l3, l4], labels=list('ABCD'))
+    plt.boxplot([l1, l3, l2, l4], labels=list('ABCD'))
 
 
     plt.show()
+
+    statics_file.close()
 
 
 main()

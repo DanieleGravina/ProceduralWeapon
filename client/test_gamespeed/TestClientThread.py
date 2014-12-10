@@ -50,33 +50,21 @@ class TestClientThread (threading.Thread):
 
             result = self.client.GetStatics()
 
-            kills1.append(result[0][0])
-            dies1.append(result[0][1])
-
-            kills2.append(result[1][0])
-            dies2.append(result[1][1])
+            kills1.append(result[0][0] + result[1][0])
+            dies1.append(result[0][1] + result[1][1])
 
             self.client = BalancedWeaponClient(self.port)
             self.client.SendInit()
 
         avg1_k = sum(kills1)/len(kills1)
 
-        avg2_k = sum(kills2)/len(kills2)
-
         std1_k = statistics.stdev(kills1)
-
-        std2_k = statistics.stdev(kills2)
 
         avg1_d = sum(dies1)/len(dies1)
 
-        avg2_d = sum(dies2)/len(dies2)
-
         std1_d = statistics.stdev(dies1)
 
-        std2_d = statistics.stdev(dies2)
-
         self.stats.update( {self.threadID : [avg1_k, std1_k, avg1_d, std1_d] } )
-        self.stats.update( {(self.threadID + 1) : [avg2_k, std2_k, avg2_d, std2_d] } )
 
 
     def join(self):
