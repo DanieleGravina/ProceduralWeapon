@@ -4,7 +4,7 @@ var TcpLinkServer tcpServer;
 
 var bool bGameStart;
 
-var int numPlayers;
+var int numPlayer;
 
 var int listenPort;
 var int maxDuration;
@@ -73,14 +73,16 @@ event PreBeginPlay()
 function AddDefaultInventory( pawn Pawn ){
 	Super.AddDefaultInventory(Pawn);
 	
-	`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+	if( Pawn.IsHumanControlled() )
+	{
+		Pawn.CreateInventory(class'ProceduralWeapon',true);
+	}
 	
 	if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 	{
+		`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 		PWPawn(Pawn).SetProceduralWeapon();
 	}
-	
-	`log("[ServerGame] Gamespeed "$string(WorldInfo.TimeDilation));
 }
 
 function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType )
@@ -127,7 +129,7 @@ function int LevelRecommendedPlayers()
 
 function bool TooManyBots(Controller botToRemove)
 {
-	if(NumBots > numPlayers)
+	if(NumBots > numPlayer)
 	{
 		return true;
 	}
@@ -140,12 +142,12 @@ function bool TooManyBots(Controller botToRemove)
 defaultproperties
 {
 	DefaultInventory(0)=class'ProceduralWeapon'
-    DefaultInventory(1)=none
+	
     DefaultPawnClass=class'PWPawn'
     
     bChangeLevels = false
 
     bGameStart = false
     
-    numPlayers = 2
+    numPlayer = 2
 }

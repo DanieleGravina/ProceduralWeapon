@@ -16,9 +16,6 @@ simulated event PostBeginPlay()
     `Log("================");
     `Log("PWPawn up");
     
-    /** called from UTPawn, spawns the default controller */
-    //SpawnDefaultController();
-    
 }
 
 //Set the weapon with the parameters hold by the controller
@@ -26,9 +23,11 @@ function SetProceduralWeapon()
 {
 	local ProceduralWeapon myWeapon;
 	
+	`log("[PWPawn] before set weapon of "$Controller.PlayerReplicationInfo.playername);
+	
 	if(Weapon != none && ProceduralWeapon(Weapon) != none)
 	{
-		`Log("PWPawn set weapon of "$Controller.PlayerReplicationInfo.playername);
+		`log("[PWPawn] set weapon of "$Controller.PlayerReplicationInfo.playername);
 	
 		myWeapon = ProceduralWeapon(Weapon);
 	

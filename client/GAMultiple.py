@@ -173,13 +173,13 @@ def entropy(index, statics) :
     for i in range(ind, ind + NUM_BOTS):
         e += evaluate_entropy(i, statics, total_kills, total_dies, NUM_BOTS)
 
-    if index == ind :
+    if index % 2 == 0 :
 
         suicides = statics[index][1] - statics[index + 1][0]
 
     else :
 
-        suicides = statics[index - 1][1] - statics[index][0]
+        suicides = statics[index][1] - statics[index - 1][0]
 
     return e, suicides
 

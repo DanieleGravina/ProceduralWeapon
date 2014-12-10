@@ -64,12 +64,12 @@ function SendPawnDied(Controller killed, Controller killer)
 }
 
 //Set the listen port of this server
-function SetListenPort(int port)
+function SetListenPort(int p)
 {
 	local int res;
 	
-	`log("[TcpLinkServer] set listen port "$string(port));
-	ListenPort = port;
+	`log("[TcpLinkServer] set listen port "$string(p));
+	ListenPort = p;
 	
 	// first bind the port you want to listen on
     res = BindPort(ListenPort, false);

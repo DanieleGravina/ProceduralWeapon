@@ -52,7 +52,6 @@ event ReceivedBinary(int Count , byte B[255])
 	local int n;
 	local int i;
 	
-	local float value;
 	local array<string> parsedString;
 	
 	for( i = 0; i < Count; i++ )
@@ -135,7 +134,7 @@ event ReceivedBinary(int Count , byte B[255])
 function Initialize()
 {
 	
-	local AIController Aplayer;
+	local Controller Aplayer;
 	
 	`log("[TcpLinkServerAcceptor] initialize");
 	
@@ -149,7 +148,7 @@ function Initialize()
 		bIsGameInitialized = true;
 	}	
 	
-	foreach WorldInfo.AllControllers(class'AIController', Aplayer)
+	foreach WorldInfo.AllControllers(class 'Controller', Aplayer)
 	{
 		if (Aplayer.bIsPlayer && Aplayer.PlayerReplicationInfo != none && Aplayer.PlayerReplicationInfo.playername != "")
 		{
@@ -258,7 +257,6 @@ function SendPawnDied(Controller killed, Controller killer)
 {
 	local int i;
 	local string line;
-	local byte B[255];
 	
 	if(StateCurrent == SIMULATION && killed.PlayerReplicationInfo.playername != "Player")
 	{
