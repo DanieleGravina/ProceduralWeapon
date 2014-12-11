@@ -1,0 +1,4 @@
+5 server 12x
+2400 sec
+WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000
+ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1

@@ -16,12 +16,6 @@ from math import log
 messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
 messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
 
-PORT1 = 3742
-PORT2 = 3743
-PORT3 = 3744
-PORT4 = 3745
-PORT5 = 3746
-
 
 N_CYCLES = 1
 

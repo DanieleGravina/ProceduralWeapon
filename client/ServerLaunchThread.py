@@ -11,5 +11,5 @@ class ServerLaunchThread (threading.Thread):
         self.maxDuration = maxDuration
 
     def run(self):
-        os.system("UDK.exe server DM-Deck.udk?game=ServerGame?listen=false?bIsLanMatch=true?numplay=2?ServerListenPort=" + str(self.port)
+        os.system("UDK.exe server DM-Deck.udk?game=ServerGame?listen=false?bIsLanMatch=true?numplay=2?Difficulty=10?ServerListenPort=" + str(self.port)
             + "?GameSpeed=" + str(self.speed) + "?MaxDuration=" + str(self.maxDuration))

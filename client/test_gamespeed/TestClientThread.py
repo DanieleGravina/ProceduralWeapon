@@ -50,6 +50,8 @@ class TestClientThread (threading.Thread):
 
             result = self.client.GetStatics()
 
+            print(str(self.threadID) + " " + str(result))
+
             kills1.append(result[0][0] + result[1][0])
             dies1.append(result[0][1] + result[1][1])
 
