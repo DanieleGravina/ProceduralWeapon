@@ -1,30 +1,30 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
- 
-/** 
- * Defines a delay
- */ 
- 
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ **/
 class SoundNodeDelay extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
 
-var( Delay )			float					DelayMin<ToolTip=The lower bound of delay time in seconds>;
-var( Delay )			float					DelayMax<ToolTip=The upper bound of delay time in seconds>;
+var() rawdistributionfloat DelayDuration;
 
-var			deprecated	rawdistributionfloat	DelayDuration;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	DelayMin=0
-	DelayMax=0
-
-	// deprecated defaults
-	Begin Object Class=DistributionFloatUniform Name=DistributionDelayDuration
-		Min=0
-		Max=0
-	End Object
-	DelayDuration=(Distribution=DistributionDelayDuration)
+   DelayDuration=(Distribution=DistributionDelayDuration,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   Name="Default__SoundNodeDelay"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

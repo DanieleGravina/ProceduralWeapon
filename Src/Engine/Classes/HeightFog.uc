@@ -1,9 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class HeightFog extends Info
 	showcategories(Movement)
-	ClassGroup(Fog)
 	placeable;
 
 var() const editconst HeightFogComponent	Component;
@@ -72,18 +71,17 @@ simulated function OnToggle(SeqAct_Toggle action)
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	Begin Object Class=HeightFogComponent Name=HeightFogComponent0
-	End Object
-	Component=HeightFogComponent0
-	Components.Add(HeightFogComponent0)
-	
-	Begin Object Name=Sprite
-		SpriteCategoryName="Fog"
-	End Object
-
-	bStatic=FALSE
-	bNoDelete=true
-	DrawScale=5
+   Begin Object Class=HeightFogComponent Name=HeightFogComponent0 ObjName=HeightFogComponent0 Archetype=HeightFogComponent'Engine.Default__HeightFogComponent'
+      Name="HeightFogComponent0"
+      ObjectArchetype=HeightFogComponent'Engine.Default__HeightFogComponent'
+   End Object
+   Component=HeightFogComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=HeightFogComponent0
+   bNoDelete=True
+   Name="Default__HeightFog"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

@@ -4,19 +4,19 @@
  * A typical usage scenario would be to blend between 2 player idle animations.
  * This blend requires 2 AnimNodeSequence as childs, you cannot connect 2 blends nor any other node types.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class AnimNodeCrossfader extends AnimNodeBlend
 	native(Anim)
 	hidecategories(Object);
 
-cpptext
-{
-	// UAnimNode interface
-	virtual	void InitAnim( USkeletalMeshComponent* meshComp, UAnimNodeBlendBase* Parent );
-	virtual	void TickAnim(FLOAT DeltaSeconds);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //
 // Exposed (script modifable) parameters
@@ -89,7 +89,8 @@ native final function Name	GetAnimName();
 
 native final function AnimNodeSequence	GetActiveChild();
 
-
 defaultproperties
 {
+   Name="Default__AnimNodeCrossfader"
+   ObjectArchetype=AnimNodeBlend'Engine.Default__AnimNodeBlend'
 }

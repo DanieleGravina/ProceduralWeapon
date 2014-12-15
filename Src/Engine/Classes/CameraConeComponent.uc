@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CameraConeComponent extends PrimitiveComponent
 	native
@@ -7,5 +7,7 @@ class CameraConeComponent extends PrimitiveComponent
 
 defaultproperties
 {
-	AbsoluteScale=TRUE
+   AbsoluteScale=True
+   Name="Default__CameraConeComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

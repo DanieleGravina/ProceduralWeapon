@@ -2,18 +2,22 @@ class InterpTrackInstFaceFX extends InterpTrackInst
 	native(Interpolation);
 	
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
-cpptext
-{
-	virtual void InitTrackInst(UInterpTrack* Track);
-	virtual void TermTrackInst(UInterpTrack* Track);
-	virtual void SaveActorState(UInterpTrack* Track);
-	virtual void RestoreActorState(UInterpTrack* Track);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var	transient bool	bFirstUpdate;
 var	float			LastUpdatePosition;
- 
 
+defaultproperties
+{
+   Name="Default__InterpTrackInstFaceFX"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
+}

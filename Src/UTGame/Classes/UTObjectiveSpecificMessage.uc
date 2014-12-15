@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** base class for messages that get their text/sound from the objective actor passed to them */
@@ -22,7 +22,8 @@ static simulated function ClientReceive( PlayerController P, optional int Switch
 {
 	local UTPlayerController UTP;
 	local ObjectiveAnnouncementInfo Announcement;
-	
+	local UTWarfareBarricade B;
+
 	UTP = UTPlayerController(P);
 	if (UTP != None)
 	{
@@ -44,26 +45,17 @@ static simulated function ClientReceive( PlayerController P, optional int Switch
 				LocalPlayer(P.Player).ViewportClient.ViewportConsole.OutputText(Announcement.AnnouncementText);
 			}
 		}
+		if ( Switch == 1 )
+		{
+			// check if barricade disabled
+			B = UTWarfareBarricade(OptionalObject);
+			if ( B != None )
+			{
+				B.SetDestroyedTime();
+			}
+		}
 	}
-}
 
-
-static function string GetString(
-								 optional int Switch,
-								 optional bool bPRI1HUD,
-								 optional PlayerReplicationInfo RelatedPRI_1,
-								 optional PlayerReplicationInfo RelatedPRI_2,
-								 optional Object OptionalObject
-								 )
-{
-	local ObjectiveAnnouncementInfo Announcement;
-
-	if ( IsConsoleMessage(Switch) )
-	{
-		Announcement = GetObjectiveAnnouncement(Switch, OptionalObject, None);
-		return Announcement.AnnouncementText;
-	}
-	return "";
 }
 
 /** sets up whatever this message displays on the HUD */
@@ -72,7 +64,7 @@ static simulated function SetHUDDisplay( PlayerController P, int Switch, string 
 {
 	if (Text != "")
 	{
-		P.myHUD.LocalizedMessage( default.Class, RelatedPRI_1, RelatedPRI_2, Text, Switch,
+		P.myHUD.LocalizedMessage( default.Class, RelatedPRI_1, Text, Switch,
 				static.GetPos(Switch, P.MyHUD), static.GetLifeTime(Switch),
 				static.GetFontSize(Switch, RelatedPRI_1, RelatedPRI_2, P.PlayerReplicationInfo),
 				static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2), OptionalObject );
@@ -81,5 +73,7 @@ static simulated function SetHUDDisplay( PlayerController P, int Switch, string 
 
 defaultproperties
 {
-	MessageArea=6
+   MessageArea=6
+   Name="Default__UTObjectiveSpecificMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

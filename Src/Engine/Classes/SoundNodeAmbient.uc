@@ -1,83 +1,77 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
-/** 
- * Defines the parameters for an in world looping ambient sound e.g. a wind sound
- */
- 
 class SoundNodeAmbient extends SoundNode
-	native( Sound )
-	hidecategories( Object )
-	AutoExpandCategories( Attenuation, LowPassFilter, Modulation, Sounds, Spatialization )
-	DontSortCategories( Attenuation, LowPassFilter, Modulation, Sounds, Spatialization )
-	dependson( SoundNodeAttenuation )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
+	dependson(SoundNodeAttenuation)
 	editinlinenew;
 
-struct native AmbientSoundSlot
-{
-	var()	SoundNodeWave	Wave;
-	var()	float			PitchScale;
-	var()	float			VolumeScale;
-	var()	float			Weight;
 
-	structdefaultproperties
-	{
-		PitchScale=1.0
-		VolumeScale=1.0
-		Weight=1.0
-	}
-	
-	structcpptext
-	{
-		FAmbientSoundSlot( void )
-		{
-			PitchScale = 1.0f;
-			VolumeScale = 1.0f;
-			Weight = 1.0f;
-		}
-	}
-};
+var()								SoundDistanceModel		DistanceModel;
 
-/* The settings for attenuating. */
-var( Attenuation )		bool					bAttenuate<ToolTip=Enable attenuation via volume>;
-var( Attenuation )		bool					bSpatialize<ToolTip=Enable the source to be positioned in 3D>;
-var( Attenuation )		float					dBAttenuationAtMax<ToolTip=The volume at maximum distance in deciBels>;
+var()								rawdistributionfloat	MinRadius;
+var()								rawdistributionfloat	MaxRadius;
+var()								rawdistributionfloat	LPFMinRadius;
+var()								rawdistributionfloat	LPFMaxRadius;
 
-/** What kind of attenuation model to use */
-var( Attenuation )		SoundDistanceModel		DistanceModel<ToolTip=The type of volume versus distance algorithm to use>;
+var()								bool					bSpatialize;
+var()								bool					bAttenuate;
+var()								bool					bAttenuateWithLowPassFilter;
 
-var( Attenuation )		float					RadiusMin<ToolTip=The range at which the sound starts attenuating>;
-var( Attenuation )		float					RadiusMax<ToolTip=The range at which the sound has attenuated completely>;
+var()								SoundNodeWave			Wave;
 
-/* The settings for attenuating with a low pass filter. */
-var( LowPassFilter )	bool					bAttenuateWithLPF<ToolTip=Enable attenuation via low pass filter>;
-var( LowPassFilter )	float					LPFRadiusMin<ToolTip=The range at which to start applying a low passfilter>;
-var( LowPassFilter )	float					LPFRadiusMax<ToolTip=The range at which to apply the maximum amount of low pass filter>;
+var()								rawdistributionfloat		VolumeModulation;
+var()								rawdistributionfloat		PitchModulation;
 
-var( Modulation )		float					PitchMin<ToolTip=The lower bound of pitch (1.0 is no change)>;
-var( Modulation )		float					PitchMax<ToolTip=The upper bound of pitch (1.0 is no change)>;
 
-var( Modulation )		float					VolumeMin<ToolTip=The lower bound of volume (1.0 is no change)>;
-var( Modulation )		float					VolumeMax<ToolTip=The upper bound of volume (1.0 is no change)>;
-
-var( Sounds )			array<AmbientSoundSlot>	SoundSlots<ToolTip=Sounds to play>;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bAttenuate=true
-	bSpatialize=true
-	dBAttenuationAtMax=-60
-	RadiusMin=2000
-	RadiusMax=5000
-	DistanceModel=ATTENUATION_Linear
-	
-	LPFRadiusMin=3500
-	LPFRadiusMax=7000
-
-	VolumeMin=0.7
-	VolumeMax=0.7
-	PitchMin=1.0
-	PitchMax=1.0
+   MinRadius=(Distribution=DistributionMinRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(400.000000,400.000000,400.000000,400.000000,400.000000,400.000000))
+   MaxRadius=(Distribution=DistributionMaxRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(5000.000000,5000.000000,5000.000000,5000.000000,5000.000000,5000.000000))
+   LPFMinRadius=(Distribution=DistributionLPFMinRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(1500.000000,1500.000000,1500.000000,1500.000000,1500.000000,1500.000000))
+   LPFMaxRadius=(Distribution=DistributionLPFMaxRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(2500.000000,2500.000000,2500.000000,2500.000000,2500.000000,2500.000000))
+   bSpatialize=True
+   bAttenuate=True
+   VolumeModulation=(Distribution=DistributionVolume,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(1.000000,1.000000,1.000000,1.000000,1.000000,1.000000))
+   PitchModulation=(Distribution=DistributionPitch,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(1.000000,1.000000,1.000000,1.000000,1.000000,1.000000))
+   Name="Default__SoundNodeAmbient"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }
-

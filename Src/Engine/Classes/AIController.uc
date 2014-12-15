@@ -4,43 +4,37 @@
 // Controllers are non-physical actors that can be attached to a pawn to control
 // its actions.  AIControllers implement the artificial intelligence for the pawns they control.
 //
-//Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+//Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class AIController extends Controller
 	native(AI);
 
-/** auto-adjust around corners, with no hitwall notification for controller or pawn
-	if wall is hit during a MoveTo() or MoveToward() latent execution. */
-var		bool		bAdjustFromWalls;	
+var		bool		bHunting;			// tells navigation code that pawn is hunting another pawn,
+										//	so fall back to finding a path to a visible pathnode if none
+										//	are reachable
+var		bool		bAdjustFromWalls;	// auto-adjust around corners, with no hitwall notification for controller or pawn
+										// if wall is hit during a MoveTo() or MoveToward() latent execution.
 
-/** skill, scaled by game difficulty (add difficulty to this value) */
-var     float		Skill;
+var     float		Skill;				// skill, scaled by game difficulty (add difficulty to this value)
 
 /** Move target from last scripted action */
 var Actor ScriptedMoveTarget;
-
 /** Route from last scripted action; if valid, sets ScriptedMoveTarget with the points along the route */
 var Route ScriptedRoute;
-
 /** if true, we're following the scripted route in reverse */
 var bool bReverseScriptedRoute;
-
 /** if ScriptedRoute is valid, the index of the current point we're moving to */
 var int ScriptedRouteIndex;
-
 /** view focus from last scripted action */
 var Actor ScriptedFocus;
 
-cpptext
-{
-	INT AcceptNearbyPath(AActor *goal);
-	void AdjustFromWall(FVector HitNormal, AActor* HitActor);
-	virtual void SetAdjustLocation(FVector NewLoc,UBOOL bAdjust,UBOOL bOffsetFromBase=FALSE);
-	virtual FVector DesiredDirection();
-	
-	/** Called when the AIController is destroyed via script */
-	virtual void PostScriptDestroyed();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 event PreBeginPlay()
 {
@@ -58,6 +52,7 @@ reset actor to initial state - used when restarting level without reloading.
 */
 function Reset()
 {
+	bHunting = false;
 	Super.Reset();
 }
 
@@ -89,7 +84,7 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 		out_YPos += out_YL;
 		Canvas.SetPos(4,out_YPos);
 
-		Canvas.DrawText("      Destination "$GetDestinationPosition()$" Focus "$GetItemName(string(Focus))$" Preparing Move "$bPreparingMove, false);
+		Canvas.DrawText("      Destination "$Destination$" Focus "$GetItemName(string(Focus))$" Preparing Move "$bPreparingMove, false);
 		out_YPos += out_YL;
 		Canvas.SetPos(4,out_YPos);
 
@@ -113,6 +108,23 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 		out_YPos += out_YL;
 		Canvas.SetPos(4,out_YPos);
 	}
+}
+
+function SetOrders(name NewOrders, Controller OrderGiver);
+
+function actor GetOrderObject()
+{
+	return None;
+}
+
+function name GetOrders()
+{
+	return 'None';
+}
+
+function bool PriorityObjective()
+{
+	return false;
 }
 
 event SetTeam(int inTeamIdx)
@@ -145,7 +157,15 @@ function OnAIMoveToActor(SeqAct_AIMoveToActor Action)
 	// abort any previous latent moves
 	ClearLatentAction(class'SeqAct_AIMoveToActor',true,Action);
 	// pick a destination
-	DestActor = Action.PickDestination(Pawn);
+	foreach Action.LinkedVariables(class'SeqVar_Object', ObjVar, "Destination")
+	{
+		// use the first valid actor
+		DestActor = Actor(ObjVar.GetObjectValue());
+		if (DestActor != None)
+		{
+			break;
+		}
+	}
 	// if we found a valid destination
 	if (DestActor != None)
 	{
@@ -153,9 +173,9 @@ function OnAIMoveToActor(SeqAct_AIMoveToActor Action)
 		ScriptedRoute = Route(DestActor);
 		if (ScriptedRoute != None)
 		{
-			if (ScriptedRoute.RouteList.length == 0)
+			if (ScriptedRoute.NavList.length == 0)
 			{
-				`warn("Invalid route with empty MoveList for scripted move");
+				WarnInternal("Invalid route with empty MoveList for scripted move");
 			}
 			else
 			{
@@ -187,7 +207,7 @@ function OnAIMoveToActor(SeqAct_AIMoveToActor Action)
 	}
 	else
 	{
-		`warn("Invalid destination for scripted move");
+		WarnInternal("Invalid destination for scripted move");
 	}
 }
 
@@ -243,7 +263,7 @@ Begin:
 			else
 			{
 				// abort the move
-				`warn("Failed to find path to"@ScriptedMoveTarget);
+				WarnInternal("Failed to find path to"@ScriptedMoveTarget);
 				ScriptedMoveTarget = None;
 			}
 		}
@@ -264,14 +284,14 @@ state ScriptedRouteMove
 	}
 
 Begin:
-	while (Pawn != None && ScriptedRoute != None && ScriptedRouteIndex < ScriptedRoute.RouteList.length && ScriptedRouteIndex >= 0)
+	while (Pawn != None && ScriptedRoute != None && ScriptedRouteIndex < ScriptedRoute.NavList.length && ScriptedRouteIndex >= 0)
 	{
-		ScriptedMoveTarget = ScriptedRoute.RouteList[ScriptedRouteIndex].Actor;
+		ScriptedMoveTarget = ScriptedRoute.NavList[ScriptedRouteIndex].Nav;
 		if (ScriptedMoveTarget != None)
 		{
 			PushState('ScriptedMove');
 		}
-		if (Pawn != None && Pawn.ReachedDestination(ScriptedRoute.RouteList[ScriptedRouteIndex].Actor))
+		if (Pawn != None && Pawn.ReachedDestination(ScriptedRoute.NavList[ScriptedRouteIndex].Nav))
 		{
 			if (bReverseScriptedRoute)
 			{
@@ -284,13 +304,13 @@ Begin:
 		}
 		else
 		{
-			`warn("Aborting scripted route");
+			WarnInternal("Aborting scripted route");
 			ScriptedRoute = None;
 			PopState();
 		}
 	}
 
-	if (Pawn != None && ScriptedRoute != None && ScriptedRoute.RouteList.length > 0)
+	if (Pawn != None && ScriptedRoute != None && ScriptedRoute.NavList.length > 0)
 	{
 		switch (ScriptedRoute.RouteType)
 		{
@@ -315,7 +335,7 @@ Begin:
 				Goto('Begin');
 				break;
 			default:
-				`warn("Unknown route type");
+				WarnInternal("Unknown route type");
 				ScriptedRoute = None;
 				PopState();
 				break;
@@ -328,20 +348,25 @@ Begin:
 	}
 
 	// should never get here
-	`warn("Reached end of state execution");
+	WarnInternal("Reached end of state execution");
 	ScriptedRoute = None;
 	PopState();
 }
 
 function NotifyWeaponFired(Weapon W, byte FireMode);
 function NotifyWeaponFinishedFiring(Weapon W, byte FireMode);
-
-function bool CanFireWeapon( Weapon Wpn, byte FireModeNum ) { return TRUE; }
-
+function bool ShouldRefire();
+function bool ShouldAutoReload();
 
 defaultproperties
 {
-	 bAdjustFromWalls=true
-	 bCanDoSpecial=true
-	 MinHitWall=-0.5f
+   bAdjustFromWalls=True
+   bCanDoSpecial=True
+   MinHitWall=-0.500000
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Controller:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Controller:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__AIController"
+   ObjectArchetype=Controller'Engine.Default__Controller'
 }

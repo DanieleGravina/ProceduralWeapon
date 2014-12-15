@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CurveEdPreset_SineWave extends CurveEdPresetBase
 	native
@@ -114,14 +114,16 @@ function bool GenerateCurve(out array<float> RequiredKeyInTimes, out array<Prese
 }
 
 /** */
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** */
+
 defaultproperties
 {
-	Frequency=1.0
-	Scale=1.0
-	Offset=0.0
+   Frequency=1.000000
+   Scale=1.000000
+   Name="Default__CurveEdPreset_SineWave"
+   ObjectArchetype=CurveEdPresetBase'UnrealEd.Default__CurveEdPresetBase'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CullDistanceVolume extends Volume
 	native
@@ -28,50 +28,49 @@ var() array<CullDistanceSizePair> CullDistances;
  */
 var() bool bEnabled;
 
-cpptext
-{
-	/**
-	 * Called after change has occured - used to force update of affected primitives.
-	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	/**
-	 * bFinished is FALSE while the actor is being continually moved, and becomes TRUE on the last call.
-	 * This can be used to defer computationally intensive calculations to the final PostEditMove call of
-	 * eg a drag operation.
-	 */
-	virtual void PostEditMove(UBOOL bFinished);
-
-	/**
-	 * Returns whether the passed in primitive can be affected by cull distance volumes.
-	 *
-	 * @param	PrimitiveComponent	Component to test
-	 * @return	TRUE if tested component can be affected, FALSE otherwise
-	 */
-	static UBOOL CanBeAffectedByVolumes( UPrimitiveComponent* PrimitiveComponent );
-
-	/**
-	 * Get the set of primitives and new max draw distances defined by this volume.
-	 */
-	void GetPrimitiveMaxDrawDistances(TMap<UPrimitiveComponent*,FLOAT>& OutCullDistances);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=BrushComponent0
-		CollideActors=False
-		BlockActors=False
-		BlockZeroExtent=False
-		BlockNonZeroExtent=False
-		BlockRigidBody=False
-	End Object
-
-	CullDistances(0)=(Size=0,CullDistance=0)
-	CullDistances(1)=(Size=10000,CullDistance=0)
-	bEnabled=TRUE
-
-	bCollideActors=False
-	bBlockActors=False
-	bProjTarget=False
-	SupportedEvents.Empty
+   CullDistances(0)=
+   CullDistances(1)=(Size=10000.000000)
+   bEnabled=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      CollideActors=False
+      BlockNonZeroExtent=False
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bCollideActors=False
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__CullDistanceVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

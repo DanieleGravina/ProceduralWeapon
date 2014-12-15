@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class BrushComponent extends PrimitiveComponent
 	native
@@ -31,17 +31,12 @@ var native private const transient noimport KCachedConvexData_Mirror	CachedPhysB
  */
 var private const int				CachedPhysBrushDataVersion;
 
-/** 
- *	Normally a blocking volume is considered 'pure simplified collision', so when tracing for complex collision, never collide 
- *	This flag overrides that behaviour
- */
-var() bool	bBlockComplexCollisionTrace;
-
 defaultproperties
 {
-	HiddenGame=True
-	bAcceptsLights=false
-	AlwaysLoadOnClient=false
-	AlwaysLoadOnServer=false
-	bUseAsOccluder=TRUE
+   HiddenGame=True
+   bUseAsOccluder=True
+   AlwaysLoadOnClient=False
+   AlwaysLoadOnServer=False
+   Name="Default__BrushComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

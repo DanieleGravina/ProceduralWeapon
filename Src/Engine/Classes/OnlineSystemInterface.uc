@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -140,11 +140,12 @@ function AddStorageDeviceChangeDelegate(delegate<OnStorageDeviceChange> StorageD
 /**
  * Removes the delegate from the notify list
  *
- * @param StorageDeviceChangeDelegate the delegate to remove
+ * @param ConnectionStatusDelegate the delegate to remove
  */
 function ClearStorageDeviceChangeDelegate(delegate<OnStorageDeviceChange> StorageDeviceChangeDelegate);
 
-/**
- * Determine the locale (country code) for the player
- */
-function int GetLocale();
+defaultproperties
+{
+   Name="Default__OnlineSystemInterface"
+   ObjectArchetype=Interface'Core.Default__Interface'
+}

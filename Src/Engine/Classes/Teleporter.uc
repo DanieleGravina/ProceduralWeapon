@@ -1,18 +1,16 @@
 ///=============================================================================
 // Teleports actors either between different teleporters within a level
 // or to matching teleporters on other levels, or to general Internet URLs.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Teleporter extends NavigationPoint
 	placeable
 	native;
 
-cpptext
-{
-#if WITH_EDITOR
-	void addReachSpecs(AScout *Scout, UBOOL bOnlyChanged=0);
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //-----------------------------------------------------------------------------
 // Teleporter URL can be one of the following forms:
@@ -114,7 +112,7 @@ simulated event bool Accept( actor Incoming, Actor Source )
 
 		if ( !Pawn(Incoming).SetLocation(Location) )
 		{
-			`log(self$" Teleport failed for "$Incoming);
+			LogInternal(self$" Teleport failed for "$Incoming);
 			return false;
 		}
 		if ( (Role == ROLE_Authority)
@@ -240,24 +238,45 @@ event Actor SpecialHandling(Pawn Other)
 
 		return self;
 	}
+	// FIXMESTEVE - need to tell bot how to enable me
 	return None;
 }
 
-
 defaultproperties
 {
-	Begin Object NAME=CollisionCylinder
-		CollisionRadius=+00040.000000
-		CollisionHeight=+00080.000000
-		CollideActors=true
-	End Object
-
-	Begin Object NAME=Sprite
-		Sprite=Texture2D'EditorResources.S_Teleport'
-	End Object
-
-	RemoteRole=ROLE_SimulatedProxy
-	bChangesYaw=true
-	bEnabled=true
-	bCollideActors=true
+   bChangesYaw=True
+   bEnabled=True
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+      CollisionHeight=80.000000
+      CollisionRadius=40.000000
+      CollideActors=True
+      ObjectArchetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+      Sprite=Texture2D'EngineResources.S_Teleport'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   RemoteRole=ROLE_SimulatedProxy
+   bCollideActors=True
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Teleporter"
+   ObjectArchetype=NavigationPoint'Engine.Default__NavigationPoint'
 }

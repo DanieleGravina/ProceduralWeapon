@@ -1,7 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTPickupFactory_HealthVial extends UTHealthPickupFactory;
+class UTPickupFactory_HealthVial extends UTHealthPickupFactory
+	native;
 
 /** list of adjacent vials; used to adjust AI ratings for vial groups */
 var array<UTPickupFactory_HealthVial> AdjacentVials;
@@ -32,7 +33,7 @@ function FindAdjacentVials(out array<UTPickupFactory_HealthVial> InAdjacentVials
 	{
 		if (PathList[i] != None && PathList[i].Distance < 150 && AdvancedReachSpec(PathList[i]) == None)
 		{
-			OtherVial = UTPickupFactory_HealthVial(PathList[i].GetEnd());
+			OtherVial = UTPickupFactory_HealthVial(PathList[i].End.Nav);
 			if (OtherVial != None && OtherVial != InitialCaller && InAdjacentVials.Find(OtherVial) == INDEX_NONE)
 			{
 				InAdjacentVials.AddItem(OtherVial);
@@ -56,6 +57,12 @@ function SpawnCopyFor( Pawn Recipient )
 	if ( PlayerController(Recipient.Controller) != None )
 	{
 		PlayerController(Recipient.Controller).ReceiveLocalizedMessage(MessageClass,,,,class);
+	}
+
+	// not sure why this didn't call the super, but I need the pickflags to update and it looks like that stat would never update
+	if ( UTPlayerReplicationInfo(Recipient.PlayerReplicationInfo) != None )
+	{
+		UTPlayerReplicationInfo(Recipient.PlayerReplicationInfo).IncrementPickupStat(GetPickupStatName());
 	}
 }
 
@@ -97,30 +104,43 @@ auto state Pickup
 
 defaultproperties
 {
-	bSuperHeal=true
-	bIsSuperItem=false
-	RespawnTime=30.000000
-	MaxDesireability=0.3
-	HealingAmount=5
-	PickupSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Small_Cue_Modulated'
-
-	bRotatingPickup=true
-	YawRotationRate=32000
-
-	bFloatingPickup=true
-	bRandomStart=true
-	BobSpeed=4.0
-	BobOffset=5.0
-
-	Begin Object Name=HealthPickUpMesh
-		StaticMesh=StaticMesh'Pickups.Health_Small.Mesh.S_Pickups_Health_Small'
-		Scale3D=(X=1.0,Y=1.0,Z=1.0)
-	End Object
-
-
-	Begin Object NAME=CollisionCylinder
-		CollisionRadius=+00030.000000
-		CollisionHeight=+00020.000000
-		CollideActors=true
-	End Object
+   HealingAmount=5
+   bSuperHeal=True
+   PickupSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Small_Cue_Modulated'
+   PickupMessage="Fiala di energia"
+   bRotatingPickup=True
+   bFloatingPickup=True
+   bRandomStart=True
+   YawRotationRate=32000.000000
+   BobOffset=5.000000
+   BobSpeed=4.000000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHealthPickupFactory:PickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHealthPickupFactory:PickupLightEnvironment'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   MaxDesireability=0.300000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTHealthPickupFactory:CollisionCylinder'
+      CollisionHeight=20.000000
+      CollisionRadius=30.000000
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTHealthPickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTHealthPickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTHealthPickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:BaseMeshComp'
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:BaseMeshComp'
+   End Object
+   Components(3)=BaseMeshComp
+   Begin Object Class=StaticMeshComponent Name=HealthPickUpMesh ObjName=HealthPickUpMesh Archetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:HealthPickUpMesh'
+      StaticMesh=StaticMesh'PICKUPS.Health_Small.Mesh.S_Pickups_Health_Small'
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:HealthPickUpMesh'
+   End Object
+   Components(4)=HealthPickUpMesh
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTPickupFactory_HealthVial"
+   ObjectArchetype=UTHealthPickupFactory'UTGame.Default__UTHealthPickupFactory'
 }

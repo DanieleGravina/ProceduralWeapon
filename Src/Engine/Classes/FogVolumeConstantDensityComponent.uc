@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class FogVolumeConstantDensityComponent extends FogVolumeDensityComponent
 	native(FogVolume)
@@ -8,16 +8,18 @@ class FogVolumeConstantDensityComponent extends FogVolumeDensityComponent
 	editinlinenew;
 
 /** The constant density coefficient */
-var()	interp	float	Density;
+var()	const	interp	float	Density;
 
-cpptext
-{
-public:
-	// FogVolumeDensityComponent interface.
-	virtual class FFogVolumeDensitySceneInfo* CreateFogVolumeDensityInfo(const UPrimitiveComponent* MeshComponent) const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Density=0.0005
+   Density=0.000500
+   Name="Default__FogVolumeConstantDensityComponent"
+   ObjectArchetype=FogVolumeDensityComponent'Engine.Default__FogVolumeDensityComponent'
 }

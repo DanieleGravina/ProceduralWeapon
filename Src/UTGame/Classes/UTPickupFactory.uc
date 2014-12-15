@@ -1,11 +1,53 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTPickupFactory extends UDKPickupFactory
-	abstract;
+class UTPickupFactory extends PickupFactory
+	abstract
+	native
+	nativereplication
+	hidecategories(Display,Collision,PickupFactory);
 
+var		bool			bRotatingPickup;	// if true, the pickup mesh rotates
+var		float			YawRotationRate;
 var		Controller		TeamOwner[4];		// AI controller currently going after this pickup (for team coordination)
 
+/**  pickup base mesh */
+var transient StaticMeshComponent BaseMesh;
+
+/** Used to pulse the emissive on the base */
+var MaterialInstanceConstant BaseMaterialInstance;
+
+/** The baseline material colors */
+var LinearColor BaseBrightEmissive;		// When the pickup is on the base
+var LinearColor	BaseDimEmissive;		// When the pickup isn't on the base
+
+/** When set to true, this base will begin pulsing it's emissive */
+var repnotify bool bPulseBase;
+
+/** How fast does the base pulse */
+var float BasePulseRate;
+
+/** How much time left in the current pulse */
+var float BasePulseTime;
+
+/** This pickup base will begin pulsing when there are PulseThreshold seconds left
+    before respawn. */
+var float PulseThreshold;
+
+/** The TargetEmissive Color */
+var LinearColor BaseTargetEmissive;
+var LinearColor BaseEmissive;
+
+/** This material instance parameter for adjusting the emissive */
+var name BaseMaterialParamName;
+
+// Used when floating
+var	bool	bFloatingPickup;	// if true, the pickup mesh floats (bobs) slightly
+var(floating)	bool	bRandomStart;		// if true, this pickup will start at a random height
+var				float 	BobTimer;			// Tracks the bob time.  Used to create the position
+var				float 	BobOffset;			// How far to bob.  It will go from +/- this number
+var				float 	BobSpeed;			// How fast should it bob
+var				float	BobBaseOffset;		// The base offset (Translation.Y) cached
 
 /** sound played when the pickup becomes available */
 var SoundCue RespawnSound;
@@ -16,9 +58,35 @@ var AudioComponent PickupReadySound;
 /** The pickup's light environment */
 var DynamicLightEnvironmentComponent LightEnvironment;
 
+/** In disabled state */
+var repnotify bool bIsDisabled;
+
+/** whether this pickup is updating */
+var bool bUpdatingPickup;
+
+/** Translation of pivot point */
+var vector PivotTranslation;
+
 /** Name used for the stats system */
 var name PickupStatName;
 
+/**
+ * This determines whether this health pickup fades in or not.
+ *
+ * NOTE:  need to move this up to the highest pickup factory so all items will fade in
+ **/
+var bool bDoVisibilityFadeIn;
+var name VisibilityParamName;
+
+/** holds the pickups material so parameters can be set **/
+var MaterialInstanceConstant MIC_Visibility;
+/** holds the pickups 2nd material so parameters can be set **/
+var MaterialInstanceConstant MIC_VisibilitySecondMaterial;
+
+var repnotify bool bIsRespawning;
+
+var ParticleSystemComponent Glow; // the glowing effect that comes from the base on spawn
+var name GlowEmissiveParam;
 
 var bool bHasLocationSpeech;
 
@@ -27,6 +95,26 @@ var Array<SoundNodeWave> LocationSpeech;
 var float LastSeekNotificationTime;
 
 var	ForceFeedbackWaveform	PickUpWaveForm;
+
+var bool bTrackPickup;
+var int PickupIndex;
+
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+replication
+{
+	if ( bNetDirty && (Role == Role_Authority) )
+		bPulseBase,bIsRespawning;
+	if (bNetInitial && ROLE==ROLE_Authority )
+		bIsDisabled;
+}
 
 simulated function PostBeginPlay()
 {
@@ -65,6 +153,12 @@ simulated function PostBeginPlay()
 	if ( WorldInfo.bUseConsoleInput )
 	{
 		SetCollisionSize(1.5*CylinderComponent.CollisionRadius, CylinderComponent.CollisionHeight);
+	}
+
+	if ( bTrackPickup == true && WorldInfo.NetMode != NM_Client)
+	{
+		PickupIndex = UTGame(WorldInfo.Game).GetNextPickupIndex();
+		//`log("Assigning PickupIndex "$PickupIndex$" to "$self);
 	}
 }
 
@@ -128,7 +222,10 @@ function bool ShouldCamp(UTBot B, float MaxWait)
 /* UpdateHUD()
 Called for the HUD of the player that picked it up
 */
-simulated static function UpdateHUD(UTHUD H);
+simulated static function UpdateHUD(UTHUD H)
+{
+	H.LastPickupTime = H.WorldInfo.TimeSeconds;
+}
 
 simulated function RespawnEffect()
 {
@@ -228,6 +325,7 @@ simulated function SetPickupMesh()
 	Super.SetPickupMesh();
 
 	InitPickupMeshEffects();
+
 }
 
 /**
@@ -235,7 +333,29 @@ simulated function SetPickupMesh()
  */
 function name GetPickupStatName()
 {
-	return (Default.PickupStatName != '') ? Default.PickupStatName : 'INVALID_PICKUPSTAT';
+/*	local UTItemPickupFactory myType;
+
+	//TEMP
+	MyType = UTItemPickupFactory(self);
+	if (MyType != none)
+	{
+		//A non inventory things (like Ammo/Health/Powerup)
+		`log("Pickedup:"@class.name);
+	}
+	else
+	{
+		//Actual inventory (like weapons)
+		`log("Pickedup Inv:"@InventoryType.name);
+	}
+	//ENDTEMP
+*/
+	if ( Default.PickupStatName != '' )
+	{
+		//`log("Returning:"@Default.PickupStatName);
+		return Default.PickupStatName;
+	}
+
+	return 'INVALID_PICKUPSTAT';
 }
 
 /** split out from SetPickupMesh() for subclasses that don't want to do the base PickupFactory implementation */
@@ -321,9 +441,9 @@ function PickedUpBy(Pawn P)
 
 	PC = PlayerController(P.Controller);
 	if(PC != None)
-	{
-		PC.ClientPlayForceFeedbackWaveform(PickUpWaveForm);
-	}
+   	{
+      		UTPlayerReplicationInfo(P.PlayerReplicationInfo).UpdatePickupFlags(PickupIndex);
+   	}
 }
 
 State Disabled
@@ -336,59 +456,57 @@ State Disabled
 
 defaultproperties
 {
-	Components.Remove(Sprite)
-	Components.Remove(Sprite2)
-	Components.Remove(Arrow)
-	GoodSprite=None
-	BadSprite=None
-
-	// setting bMovable=FALSE will break pickups and powerups that are on movers.
-	// I guess once we get the LightEnvironment brightness issues worked out and if this is needed maybe turn this on?
-	// will need to look at all maps and change the defaults for the pickups that move tho.
-	bMovable=FALSE
-    bStatic=FALSE
-
-	RespawnSound=SoundCue'A_Pickups.Generic.Cue.A_Pickups_Generic_ItemRespawn_Cue'
-
-	YawRotationRate=32768
-
-	Begin Object NAME=CollisionCylinder
-		CollisionRadius=+00040.000000
-		CollisionHeight=+00044.000000
-		CollideActors=true
-	End Object
-
-	// define here as lot of sub classes which have moving parts will utilize this
- 	Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment
- 	    bDynamic=FALSE
- 	    bCastShadows=FALSE
- 	End Object
-  	LightEnvironment=PickupLightEnvironment
-  	Components.Add(PickupLightEnvironment)
-
-	BasePulseRate=0.5
-	PulseThreshold=5.0
-	BaseMaterialParamName=BaseEmissiveControl
-
-	Begin Object Class=StaticMeshComponent Name=BaseMeshComp
-		CastShadow=FALSE
-		bCastDynamicShadow=FALSE
-		bAcceptsLights=TRUE
-		bForceDirectLightMap=TRUE
-		LightEnvironment=PickupLightEnvironment
-
-		CollideActors=false
-		MaxDrawDistance=7000
-	End Object
-	BaseMesh=BaseMeshComp
-	Components.Add(BaseMeshComp)
-
-	GlowEmissiveParam=LightStrength
-	bDoVisibilityFadeIn=TRUE
-	VisibilityParamName=ResIn
-
-	Begin Object Class=ForceFeedbackWaveform Name=ForceFeedbackWaveformPickUp
-		Samples(0)=(LeftAmplitude=80,RightAmplitude=30,LeftFunction=WF_LinearDecreasing,RightFunction=WF_LinearIncreasing,Duration=0.20)
-	End Object
-	PickUpWaveForm=ForceFeedbackWaveformPickUp
+   bDoVisibilityFadeIn=True
+   YawRotationRate=32768.000000
+   BaseBrightEmissive=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   BaseDimEmissive=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   BasePulseRate=0.500000
+   PulseThreshold=5.000000
+   BaseTargetEmissive=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   BaseEmissive=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   BaseMaterialParamName="BaseEmissiveControl"
+   RespawnSound=SoundCue'A_Pickups.Generic.Cue.A_Pickups_Generic_ItemRespawn_Cue'
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+      AmbientGlow=(R=0.300000,G=0.300000,B=0.300000,A=1.000000)
+      bCastShadows=False
+      bDynamic=False
+      Name="PickupLightEnvironment"
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   VisibilityParamName="ResIn"
+   GlowEmissiveParam="LightStrength"
+   PickUpWaveForm=ForceFeedbackWaveform'UTGame.Default__UTPickupFactory:ForceFeedbackWaveformPickUp'
+   PickupIndex=-1
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__PickupFactory:CollisionCylinder'
+      CollisionHeight=44.000000
+      ObjectArchetype=CylinderComponent'Engine.Default__PickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   GoodSprite=None
+   BadSprite=None
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__PickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__PickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      LightEnvironment=DynamicLightEnvironmentComponent'UTGame.Default__UTPickupFactory:PickupLightEnvironment'
+      CullDistance=7000.000000
+      CachedCullDistance=7000.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      LightingChannels=(BSP=True,Static=True)
+      CollideActors=False
+      Name="BaseMeshComp"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   Components(3)=BaseMeshComp
+   bMovable=False
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTPickupFactory"
+   ObjectArchetype=PickupFactory'Engine.Default__PickupFactory'
 }

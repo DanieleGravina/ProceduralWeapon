@@ -1,7 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTWeapon extends UDKWeapon
+class UTWeapon extends GameWeapon
+	native
+	nativereplication
 	dependson(UTPlayerController)
 	config(Weapon)
 	abstract;
@@ -10,6 +12,8 @@ class UTWeapon extends UDKWeapon
  * (abstract classes are skipped even if this flag is set)
  */
 var bool bExportMenuData;
+/** whether having this weapon in a weapon locker should generate a map check warning */
+var bool bWarnIfInLocker;
 
 /*********************************************************************************************
  Ammo / Pickups / Inventory
@@ -17,14 +21,17 @@ var bool bExportMenuData;
 
 var class<UTAmmoPickupFactory> AmmoPickupClass;
 
+/** Current ammo count */
+var databinding	repnotify int AmmoCount;
+
 /** Initial ammo count if in weapon locker */
-var int LockerAmmoCount;
+var databinding	int LockerAmmoCount;
 
 /** Max ammo count */
-var int MaxAmmoCount;
+var databinding	int MaxAmmoCount;
 
 /** Holds the amount of ammo used for a given shot */
-var array<int> ShotCost;
+var databinding	array<int> ShotCost;
 
 /** Holds the min. amount of reload time that has to pass before you can switch */
 var array<float> MinReloadPct;
@@ -41,10 +48,6 @@ var int IconX, IconY, IconWidth, IconHeight;
 
 /** used when aborting a weapon switch (WeaponAbortEquip and WeaponAbortPutDown) */
 var float SwitchAbortTime;
-
-/*********************************************************************************************
- Crosshair
-********************************************************************************************* */
 
 var UIRoot.TextureCoordinates IconCoordinates;
 var UIRoot.TextureCoordinates CrossHairCoordinates;
@@ -73,6 +76,9 @@ var float LockedStartTime;
 
 var bool bWasLocked;
 
+/** Replicated flag set when hitscan hits enemy */
+var repnotify byte HitEnemy;
+
 /** Used to decide whether to red color crosshair */
 var float LastHitEnemyTime;
 
@@ -81,19 +87,15 @@ var config color CrosshairColor;
 
 var float CrosshairScaling;
 
-var config bool bUseCustomCoordinates;
-
-var config UIRoot.TextureCoordinates CustomCrosshairCoordinates;
-
-/*********************************************************************************************
- Misc
-********************************************************************************************* */
-
 /** If true, use smaller 1st person weapons */
-var globalconfig bool bSmallWeapons;
+var globalconfig databinding bool bSmallWeapons;
 
 /** offset for dropped pickup mesh */
 var float DroppedPickupOffsetZ;
+
+var config bool bUseCustomCoordinates;
+
+var config UIRoot.TextureCoordinates CustomCrosshairCoordinates;
 
 /*********************************************************************************************
  Zooming
@@ -138,11 +140,17 @@ var bool bSuperWeapon;
 var vector	PivotTranslation;
 
 /*********************************************************************************************
+ Overlays
+********************************************************************************************* */
+
+/** mesh for overlay - Each weapon will need to add its own overlay mesh in its default props */
+var protected MeshComponent OverlayMesh;
+/*********************************************************************************************
  Inventory Grouping/etc.
 ********************************************************************************************* */
 
 /** The weapon/inventory set, 0-9. */
-var byte InventoryGroup;
+var databinding	byte InventoryGroup;
 
 /** position within inventory group. (used by prevweapon and nextweapon) */
 var float GroupWeight;
@@ -152,6 +160,13 @@ var float InventoryWeight;
 
 /** If true, this will will never accept a forwarded pending fire */
 var bool bNeverForwardPendingFire;
+
+
+/** The index in to the Quick Pick radial menu to use */
+var int QuickPickGroup;
+
+/** Used to sort it within a group */
+var float QuickPickWeight;
 
 /*********************************************************************************************
  Animations and Sounds
@@ -228,7 +243,7 @@ var bool bPendingShow;
 ********************************************************************************************* */
 
 /** The Color used when drawing the Weapon's Name on the Hud */
-var color WeaponColor;
+var databinding	color WeaponColor;
 
 /** Percent (from right edge) of screen space taken by weapon on x axis. */
 var float WeaponCanvasXPct;
@@ -259,10 +274,10 @@ var color					MuzzleFlashColor;
 var bool					bMuzzleFlashPSCLoops;
 
 /** dynamic light */
-var	UDKExplosionLight		MuzzleFlashLight;
+var	UTExplosionLight		MuzzleFlashLight;
 
 /** dynamic light class */
-var class<UDKExplosionLight> MuzzleFlashLightClass;
+var class<UTExplosionLight> MuzzleFlashLightClass;
 
 /** How long the Muzzle Flash should be there */
 var() float					MuzzleFlashDuration;
@@ -301,6 +316,13 @@ var		bool	bSplashJump;
 var		bool	bRecommendSplashDamage;
 var 	bool	bSniping;
 
+/** This weapon can be used to destroy barricades */
+var		bool	bCanDestroyBarricades;
+
+/** Lead targets with this weapon (true by default, ignored for instant hit - set false for special cases like targeting with AVRiL */
+var		bool	bLeadTarget;
+/** Whether should consider projectile acceleration when leading targets */
+var		bool	bConsiderProjectileAcceleration;
 /** Whether bots should consider this a spray/fast firing weapon */
 var		bool	bFastRepeater;
 /** set for weapons that lock weapon rotation while firing, so bots know to retarget after each shot when shooting moving targets */
@@ -314,6 +336,8 @@ var float AimError;
 
 var ObjectiveAnnouncementInfo NeedToPickUpAnnouncement;
 
+var bool bDebugWeapon;
+
 /** Distance from target collision box to accept near miss when aiming help is enabled */
 var float AimingHelpRadius[2];
 
@@ -322,6 +346,18 @@ var bool bUsingAimingHelp;
 
 /** whether to allow this weapon to fire by uncontrolled pawns */
 var bool bAllowFiringWithoutController;
+
+/** If true, weapon auto recharges ammo */
+var bool bAutoCharge;
+
+/** recharge rate in ammo per second */
+var float AmmoRechargeRate;
+
+/** partial (less than 1) ammo charge */
+var float PartialCharge;
+
+/** timeseconds when last fired */
+var float LastWeaponFireTime;
 
 enum AmmoWidgetDisplayStyle
 {
@@ -334,6 +370,7 @@ enum AmmoWidgetDisplayStyle
 var AmmoWidgetDisplayStyle AmmoDisplayType;
 
 //// start of adhesion friction vars
+// all this needs to move to the GameWeapon
 
 /** When the weapon is zoomed in then the turn speed is reduced by this much **/
 var() config float ZoomedTurnSpeedScalePct;
@@ -404,10 +441,47 @@ var Array<SoundNodeWave> LocationSpeech;
 /*********************************************************************************************
  * Hint strings
  ********************************************************************************************* */
+var localized string PrimaryFireHintString;
+var localized string SecondaryFireHintString;
+var localized string JumpHintString;
+var localized string CrouchHintString;
 var localized string UseHintString;
+var localized string AdditionalHintString;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+replication
+{
+	// Server->Client properties
+	if ( bNetOwner )
+		AmmoCount, HitEnemy;
+}
+
+/** Util that makes sure the overlay component is last in the AllComponents/Components array. */
+native function EnsureWeaponOverlayComponentLast();
+
+simulated function StartFire(byte FireModeNum)
+{
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".StartFire("$FireModeNum$")");
+		ScriptTrace();
+	}
+	Super.StartFire(FireModeNum);
+}
 
 reliable server function ServerStartFire(byte FireModeNum)
 {
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".ServerStartFire("$FireModeNum$")");
+		ScriptTrace();
+	}
 	// don't allow firing if no controller (generally, because player entered/exited a vehicle while simultaneously pressing fire)
 	if (Instigator == None || Instigator.Controller != None || bAllowFiringWithoutController)
 	{
@@ -498,9 +572,9 @@ simulated function CreateOverlayMesh()
 			OverlayMesh.SetDepthPriorityGroup(SDPG_Foreground);
 			OverlayMesh.CastShadow = false;
 
-			SKM_Target = SkeletalMeshComponent(OverlayMesh);
-			if ( SKM_Target != none )
+			if ( SkeletalMeshComponent(OverlayMesh) != none )
 			{
+				SKM_Target = SkeletalMeshComponent(OverlayMesh);
 				SKM_Source = SkeletalMeshComponent(Mesh);
 
 				SKM_Target.SetSkeletalMesh(SKM_Source.SkeletalMesh);
@@ -509,9 +583,9 @@ simulated function CreateOverlayMesh()
 				SKM_Target.bUpdateSkelWhenNotRendered = false;
 				SKM_Target.bIgnoreControllersWhenNotRendered = true;
 
-				if (UDKSkeletalMeshComponent(SKM_Target) != none)
+				if (UTSkeletalMeshComponent(SKM_Target) != none)
 				{
-					UDKSkeletalMeshComponent(SKM_Target).SetFOV(UDKSkeletalMeshComponent(SKM_Source).FOV);
+					UTSkeletalMeshComponent(SKM_Target).SetFOV(UTSkeletalMeshComponent(SKM_Source).FOV);
 				}
 			}
 			else if ( StaticMeshComponent(OverlayMesh) != none )
@@ -526,7 +600,7 @@ simulated function CreateOverlayMesh()
 		}
 		else
 		{
-			`Warn("Could not create Weapon Overlay mesh for" @ self @ Mesh);
+			WarnInternal("Could not create Weapon Overlay mesh for" @ self @ Mesh);
 		}
 	}
 }
@@ -549,6 +623,7 @@ simulated event ReplicatedEvent(name VarName)
 		Super.ReplicatedEvent(VarName);
 	}
 }
+
 
 /**
  * Each Weapon needs to have a unique InventoryWeight in order for weapon switching to
@@ -655,15 +730,12 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 {
 	local vector2d CrosshairSize;
 	local float x,y,PickupScale, ScreenX, ScreenY;
-	local UTHUDBase	H;
+	local UTHUD	H;
+	local UTPlayerController PC;
 
-	local float TargetDist;
-
-	H = UTHUDBase(HUD);
+	H = UTHUD(HUD);
 	if ( H == None )
 		return;
-
-	TargetDist = GetTargetDistance();
 
 	// Apply pickup scaling
 	if ( H.LastPickupTime > WorldInfo.TimeSeconds - 0.3 )
@@ -682,8 +754,17 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 		PickupScale = 1.0;
 	}
 
- 	CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * CrossHairCoordinates.VL * PickupScale * H.Canvas.ClipY/720;
-  	CrosshairSize.X = CrosshairSize.Y * ( CrossHairCoordinates.UL / CrossHairCoordinates.VL );
+	PC = UTPlayerController(Instigator.Controller);
+	if ( PC.bSimpleCrosshair )
+	{
+ 		CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * CrossHairCoordinates.VL * PickupScale * H.Canvas.ClipY/768;
+  		CrosshairSize.X = CrosshairSize.Y * ( CrossHairCoordinates.UL / CrossHairCoordinates.VL ) * H.Canvas.ClipX/1024;
+	}
+	else
+	{
+ 		CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * CrossHairCoordinates.VL * PickupScale * H.Canvas.ClipY/768;
+  		CrosshairSize.X = CrosshairSize.Y * ( CrossHairCoordinates.UL / CrossHairCoordinates.VL );
+	}
 
 	X = H.Canvas.ClipX * 0.5;
 	Y = H.Canvas.ClipY * 0.5;
@@ -693,12 +774,12 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 	{
 		// crosshair drop shadow
 		H.Canvas.DrawColor = H.BlackColor;
-		H.Canvas.SetPos( ScreenX+1, ScreenY+1, TargetDist );
+		H.Canvas.SetPos( ScreenX+1, ScreenY+1 );
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, CrossHairCoordinates.U, CrossHairCoordinates.V, CrossHairCoordinates.UL,CrossHairCoordinates.VL);
 
 		CrosshairColor = H.bGreenCrosshair ? H.Default.LightGreenColor : Default.CrosshairColor;
 		H.Canvas.DrawColor = (WorldInfo.TimeSeconds - LastHitEnemyTime < 0.3) ? H.RedColor : CrosshairColor;
-		H.Canvas.SetPos(ScreenX, ScreenY, TargetDist);
+		H.Canvas.SetPos(ScreenX, ScreenY);
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, CrossHairCoordinates.U, CrossHairCoordinates.V, CrossHairCoordinates.UL,CrossHairCoordinates.VL);
 	}
 }
@@ -709,9 +790,7 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 simulated function DrawLockedOn( HUD H )
 {
 	local vector2d CrosshairSize;
-	local float x, y, ScreenX, ScreenY, LockedOnTime, TargetDist;
-
-	TargetDist = GetTargetDistance();
+	local float x, y, ScreenX, ScreenY, LockedOnTime;
 
 	if ( !bWasLocked )
 	{
@@ -724,7 +803,7 @@ simulated function DrawLockedOn( HUD H )
 		LockedOnTime = WorldInfo.TimeSeconds - LockedStartTime;
 		CurrentLockedScale = (LockedOnTime > LockedScaleTime) ? FinalLockedScale : (StartLockedScale * (LockedScaleTime - LockedOnTime) + FinalLockedScale * LockedOnTime)/LockedScaleTime;
 	}
- 	CrosshairSize.Y = UTHUDBase(H).ConfiguredCrosshairScaling * CurrentLockedScale * CrosshairScaling * LockedCrossHairCoordinates.VL * H.Canvas.ClipY/720;
+ 	CrosshairSize.Y = UTHUD(H).ConfiguredCrosshairScaling * CurrentLockedScale * CrosshairScaling * LockedCrossHairCoordinates.VL * H.Canvas.ClipY/768;
   	CrosshairSize.X = CrosshairSize.Y * ( LockedCrossHairCoordinates.UL / LockedCrossHairCoordinates.VL );
 
 	X = H.Canvas.ClipX * 0.5;
@@ -735,11 +814,11 @@ simulated function DrawLockedOn( HUD H )
 	{
 		// crosshair drop shadow
 		H.Canvas.DrawColor = class'UTHUD'.default.BlackColor;
-		H.Canvas.SetPos( ScreenX+1, ScreenY+1, TargetDist );
+		H.Canvas.SetPos( ScreenX+1, ScreenY+1 );
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, LockedCrossHairCoordinates.U, LockedCrossHairCoordinates.V, LockedCrossHairCoordinates.UL,LockedCrossHairCoordinates.VL);
 
 		H.Canvas.DrawColor = CrosshairColor;
-		H.Canvas.SetPos(ScreenX, ScreenY, TargetDist);
+		H.Canvas.SetPos(ScreenX, ScreenY);
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, LockedCrossHairCoordinates.U, LockedCrossHairCoordinates.V, LockedCrossHairCoordinates.UL,LockedCrossHairCoordinates.VL);
 	}
 }
@@ -877,7 +956,7 @@ simulated function ShakeView()
 	PC = UTPlayerController(Instigator.Controller);
 	if (PC != None && LocalPlayer(PC.Player) != None && CurrentFireMode < FireCameraAnim.length && FireCameraAnim[CurrentFireMode] != None)
 	{
-		PC.PlayCameraAnim(FireCameraAnim[CurrentFireMode], (GetZoomedState() > ZST_ZoomingOut) ? PC.GetFOVAngle() / PC.DefaultFOV : 1.0);
+		PC.PlayCameraAnim(FireCameraAnim[CurrentFireMode], (GetZoomedState() > ZST_ZoomingOut) ? PC.FOVAngle / PC.DefaultFOV : 1.0);
 	}
 
 	// Play controller vibration
@@ -888,28 +967,11 @@ simulated function ShakeView()
 	}
 }
 
-/**
- * WeaponCalcCamera allows a weapon to adjust the pawn's controller's camera.  Should be subclassed
- */
-simulated function WeaponCalcCamera(float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot);
-
-/**
- * This function handles playing sounds for weapons.  How it plays the sound depends on the following:
- *
- * If we are a listen server, then this sound is played and replicated as normal
- * If we are a remote client, but locally controlled (ie: we are on the client) we play the sound and don't replicate it
- * If we are a dedicated server, play the sound and replicate it to everyone BUT the owner (he will play it locally).
- *
- *
- * @param	SoundCue	- The Source Cue to play
- */
 simulated function WeaponPlaySound(SoundCue Sound, optional float NoiseLoudness)
 {
-	// if we are a listen server, just play the sound.  It will play locally
-	// and be replicated to all other clients.
-	if( Sound != None && Instigator != None && !bSuppressSounds  )
+	if (!bSuppressSounds)
 	{
-		Instigator.PlaySound(Sound, false, true);
+		Super.WeaponPlaySound(Sound, NoiseLoudness);
 	}
 }
 
@@ -945,11 +1007,8 @@ simulated event MuzzleFlashTimer()
  */
 simulated event CauseMuzzleFlashLight()
 {
-	// don't do muzzle flashes when running too slow, except on mobile, where we need it to show off dynamic lighting
-	if ( WorldInfo.bDropDetail && !WorldInfo.IsConsoleBuild(CONSOLE_Mobile) )
-	{
+	if ( WorldInfo.bDropDetail )
 		return;
-	}
 
 	if ( MuzzleFlashLight != None )
 	{
@@ -1116,6 +1175,11 @@ simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name
 {
 	local UTPawn UTP;
 
+	if ( bDebugWeapon && Instigator != none && Instigator.Controller != none && PlayerController(Instigator.Controller) != none )
+	{
+		LogInternal("###"@self$"."$GetOwnerName()@".AttachWeaponTo"@MeshCpnt@Instigator.IsFirstPerson());
+	}
+
 	UTP = UTPawn(Instigator);
 	// Attach 1st Person Muzzle Flashes, etc,
 	if ( Instigator.IsFirstPerson() )
@@ -1129,6 +1193,11 @@ simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name
 		{
 			UTP.ArmsMesh[0].SetHidden(true);
 			UTP.ArmsMesh[1].SetHidden(true);
+			if (UTP.ArmsOverlay[0] != None)
+			{
+				UTP.ArmsOverlay[0].SetHidden(true);
+				UTP.ArmsOverlay[1].SetHidden(true);
+			}
 		}
 	}
 	else
@@ -1139,6 +1208,11 @@ simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name
 			Mesh.SetLightEnvironment(UTP.LightEnvironment);
 			UTP.ArmsMesh[0].SetHidden(true);
 			UTP.ArmsMesh[1].SetHidden(true);
+			if (UTP.ArmsOverlay[0] != None)
+			{
+				UTP.ArmsOverlay[0].SetHidden(true);
+				UTP.ArmsOverlay[1].SetHidden(true);
+			}
 		}
 	}
 
@@ -1155,11 +1229,13 @@ simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name
 	}
 
 	SetSkin(UTPawn(Instigator).ReplicatedBodyMaterial);
+
 }
 
 /**
  * Allows a child to setup custom parameters on the muzzle flash
  */
+
 simulated function SetMuzzleFlashParams(ParticleSystemComponent PSC)
 {
 	PSC.SetColorParameter('MuzzleFlashColor', MuzzleFlashColor);
@@ -1184,11 +1260,12 @@ simulated function AttachMuzzleFlash()
 			MuzzleFlashPSC = new(Outer) class'UTParticleSystemComponent';
 			MuzzleFlashPSC.bAutoActivate = false;
 			MuzzleFlashPSC.SetDepthPriorityGroup(SDPG_Foreground);
-			MuzzleFlashPSC.SetFOV(UDKSkeletalMeshComponent(SKMesh).FOV);
+			MuzzleFlashPSC.SetFOV(UTSkeletalMeshComponent(SKMesh).FOV);
 			SKMesh.AttachComponentToSocket(MuzzleFlashPSC, MuzzleFlashSocket);
 		}
 	}
 }
+
 
 /**
  * Detach weapon from skeletal mesh
@@ -1218,6 +1295,7 @@ simulated function DetachWeapon()
 				P.WeaponAttachmentChanged();
 			}
 		}
+		P.bDualWielding = false;
 	}
 
 	SetBase(None);
@@ -1246,6 +1324,7 @@ simulated function DetachMuzzleFlash()
 /**
  * This function is called from the pawn when the visibility of the weapon changes
  */
+
 simulated function ChangeVisibility(bool bIsVisible)
 {
 	local UTPawn UTP;
@@ -1275,6 +1354,10 @@ simulated function ChangeVisibility(bool bIsVisible)
 		if (UTP != None && UTP.ArmsMesh[0] != None)
 		{
 			UTP.ArmsMesh[0].SetHidden(!bIsVisible);
+			if (UTP.ArmsOverlay[0] != None)
+			{
+				UTP.ArmsOverlay[0].SetHidden(!bIsVisible);
+			}
 		}
 	}
 
@@ -1316,11 +1399,11 @@ simulated function GetViewAxes( out vector xaxis, out vector yaxis, out vector z
 	}
 	else if ( Instigator.Controller == None )
 	{
-		GetAxes( Instigator.Rotation, xaxis, yaxis, zaxis );
+	GetAxes( Instigator.Rotation, xaxis, yaxis, zaxis );
     }
     else
     {
-		GetAxes( Instigator.Controller.Rotation, xaxis, yaxis, zaxis );
+	GetAxes( Instigator.Controller.Rotation, xaxis, yaxis, zaxis );
     }
 }
 
@@ -1359,14 +1442,14 @@ simulated function EWeaponHand GetHand()
 /**
  * This function aligns the gun model in the world
  */
-simulated event SetPosition(UDKPawn Holder)
+simulated event SetPosition(UTPawn Holder)
 {
 	local vector DrawOffset, ViewOffset, FinalSmallWeaponsOffset, FinalLocation;
 	local EWeaponHand CurrentHand;
 	local rotator NewRotation, FinalRotation, SpecRotation;
 	local PlayerController PC;
 	local vector2D ViewportSize;
-	local bool bIsWideScreen;
+	local bool bIsWideScreen, bIsClientDemo;
 	local vector SpecViewLoc;
 
 	if ( !Holder.IsFirstPerson() )
@@ -1379,6 +1462,11 @@ simulated event SetPosition(UDKPawn Holder)
 		Mesh.SetHidden(True);
 		Holder.ArmsMesh[0].SetHidden(true);
 		Holder.ArmsMesh[1].SetHidden(true);
+		if (Holder.ArmsOverlay[0] != None)
+		{
+			Holder.ArmsOverlay[0].SetHidden(true);
+			Holder.ArmsOverlay[1].SetHidden(true);
+		}
 		NewRotation = Holder.GetViewRotation();
 		SetLocation(Instigator.GetPawnViewLocation() + (HiddenWeaponsOffset >> NewRotation));
 		SetRotation(NewRotation);
@@ -1405,11 +1493,6 @@ simulated event SetPosition(UDKPawn Holder)
 	ViewOffset = PlayerViewOffset;
 	FinalSmallWeaponsOffset = SmallWeaponsOffset;
 
-	if (class'Engine'.static.IsRealDStereoEnabled())
-	{
-		ViewOffset.X -= 30;
-	}
-
 	switch ( CurrentHand )
 	{
 		case HAND_Left:
@@ -1419,6 +1502,11 @@ simulated event SetPosition(UDKPawn Holder)
 			{
 				Holder.ArmsMesh[0].SetScale3D(Holder.default.ArmsMesh[0].Scale3D * vect(1,-1,1));
 				Holder.ArmsMesh[1].SetScale3D(Holder.default.ArmsMesh[1].Scale3D * vect(1,-1,1));
+				if (Holder.ArmsOverlay[0] != None)
+				{
+					Holder.ArmsOverlay[0].SetScale3D(Holder.ArmsMesh[0].Scale3D);
+					Holder.ArmsOverlay[1].SetScale3D(Holder.ArmsMesh[1].Scale3D);
+				}
 			}
 			ViewOffset.Y *= -1.0;
 			FinalSmallWeaponsOffset.Y *= -1.0;
@@ -1436,6 +1524,11 @@ simulated event SetPosition(UDKPawn Holder)
 			{
 				Holder.ArmsMesh[0].SetScale3D(Holder.default.ArmsMesh[0].Scale3D);
 				Holder.ArmsMesh[1].SetScale3D(Holder.default.ArmsMesh[1].Scale3D);
+				if (Holder.ArmsOverlay[0] != None)
+				{
+					Holder.ArmsOverlay[0].SetScale3D(Holder.ArmsMesh[0].Scale3D);
+					Holder.ArmsOverlay[1].SetScale3D(Holder.ArmsMesh[1].Scale3D);
+				}
 			}
 			break;
 		default:
@@ -1455,14 +1548,16 @@ simulated event SetPosition(UDKPawn Holder)
 		ViewOffset += FinalSmallWeaponsOffset;
 	}
 
+	bIsClientDemo = WorldInfo.bWithinDemoPlayback && PlayerController(Holder.Controller) != None;
+
 	// Calculate the draw offset
-	if ( Holder.Controller == None )
+	if ( (Holder.Controller == None) || bIsClientDemo )
 	{
-		if ( DemoRecSpectator(PC) != None )
+		if ( bIsClientDemo || (DemoRecSpectator(PC) != None) )
 		{
 			PC.GetPlayerViewPoint(SpecViewLoc, SpecRotation);
 			DrawOffset = ViewOffset >> SpecRotation;
-			DrawOffset += UTPawn(Holder).WeaponBob(BobDamping, JumpDamping);
+			DrawOffset += 0.1 * Holder.WeaponBob(BobDamping, JumpDamping);
 			FinalLocation = SpecViewLoc + DrawOffset;
 			SetLocation(FinalLocation);
 			SetBase(Holder);
@@ -1482,13 +1577,13 @@ simulated event SetPosition(UDKPawn Holder)
 		}
 		else
 		{
-		DrawOffset = (ViewOffset >> Holder.GetBaseAimRotation()) + UTPawn(Holder).GetEyeHeight() * vect(0,0,1);
-	}
+			DrawOffset = (ViewOffset >> Holder.GetBaseAimRotation()) + Holder.GetEyeHeight() * vect(0,0,1);
+		}
 	}
 	else
 	{
-		DrawOffset.Z = UTPawn(Holder).GetEyeHeight();
-		DrawOffset += UTPawn(Holder).WeaponBob(BobDamping, JumpDamping);
+		DrawOffset.Z = Holder.GetEyeHeight();
+		DrawOffset += Holder.WeaponBob(BobDamping, JumpDamping);
 
 		if ( UTPlayerController(Holder.Controller) != None )
 		{
@@ -1507,6 +1602,11 @@ simulated event SetPosition(UDKPawn Holder)
 	{
 		Holder.ArmsMesh[0].SetTranslation(DrawOffset);
 		Holder.ArmsMesh[1].SetTranslation(DrawOffset);
+		if (Holder.ArmsOverlay[0] != None)
+		{
+			Holder.ArmsOverlay[0].SetTranslation(DrawOffset);
+			Holder.ArmsOverlay[1].SetTranslation(DrawOffset);
+		}
 	}
 
 	NewRotation = (Holder.Controller == None) ? Holder.GetBaseAimRotation() : Holder.Controller.Rotation;
@@ -1534,6 +1634,11 @@ simulated event SetPosition(UDKPawn Holder)
 	{
 		Holder.ArmsMesh[0].SetRotation(FinalRotation);
 		Holder.ArmsMesh[1].SetRotation(FinalRotation);
+		if (Holder.ArmsOverlay[0] != None)
+		{
+			Holder.ArmsOverlay[0].SetRotation(FinalRotation);
+			Holder.ArmsOverlay[1].SetRotation(FinalRotation);
+		}
 	}
 }
 
@@ -1625,14 +1730,6 @@ function AdjustPlayerDamage( out int Damage, Controller InstigatedBy, Vector Hit
  *********************************************************************************************/
 
 /**
-  *  How good weapon is at damaging Pawn P
-  */
-function float RelativeStrengthVersus(Pawn P, float Dist)
-{
-	return 0;
-}
-
-/**
  * Returns a weight reflecting the desire to use the
  * given weapon, used for AI and player best weapon
  * selection.
@@ -1678,7 +1775,22 @@ function bool CanAttack(Actor Other)
 
 	// check that can see target
 	B = UTBot(Instigator.Controller);
-	if (Instigator.Controller.LineOfSightTo(Other, projStart))
+	if ( UTOnslaughtPowerNode(Other) != None )
+	{
+		if ( FastTrace(Other.GetTargetLocation(B.Pawn, false), projStart) )
+		{
+			B.bTargetAlternateLoc = false;
+		}
+		else if ( Instigator.Controller.LineOfSightTo(Other, projStart) )
+		{
+			B.bTargetAlternateLoc = true;
+		}	
+		else
+		{
+			return false;
+		}		
+	}
+	else if (Instigator.Controller.LineOfSightTo(Other, projStart))
 	{
 		if (B != None && B.Focus == Other)
 		{
@@ -1714,7 +1826,7 @@ function bool CanAttack(Actor Other)
 		}
 		if (ProjClass == None)
 		{
-			`warn("No projectile class for "$self);
+			WarnInternal("No projectile class for "$self);
 			CheckDist = 300;
 		}
 		else
@@ -1823,22 +1935,6 @@ static function float BotDesireability(Actor PickupHolder, Pawn P, Controller C)
 	return desire;
 }
 
-
-/**
- * Returns the DamageRadius of projectiles being shot
- */
-function float GetDamageRadius()
-{
-	local class<Projectile> CurrentProjectileClass;
-
-	CurrentProjectileClass = GetProjectileClass();
-	if( CurrentProjectileClass == None )
-	{
-		return 0;
-	}
-	return CurrentProjectileClass.default.DamageRadius;
-}
-
 /**
  * CanHeal()
  * used by bot AI should return true if this weapon is able to heal Other
@@ -1856,40 +1952,14 @@ function float GetOptimalRangeFor(Actor Target)
 	return MaxRange();
 }
 
+function FireHack();
+
 /**
  * tells AI that it needs to release the fire button for this weapon to do anything
  */
 function bool FireOnRelease()
 {
 	return ( ShouldFireOnRelease[CurrentFireMode] != 0 );
-}
-
-
-function bool FocusOnLeader(bool bLeaderFiring)
-{
-	return false;
-}
-
-function bool RecommendRangedAttack()
-{
-	return false;
-}
-
-// tells bot whether to charge or back off while using this weapon
-function float SuggestAttackStyle()
-{
-	return 0.0;
-}
-
-// tells bot whether to charge or back off while defending against this weapon
-function float SuggestDefenseStyle()
-{
-	return 0.0;
-}
-
-function float RangedAttackTime()
-{
-	return 0;
 }
 
 /**
@@ -1967,6 +2037,8 @@ simulated function bool StillFiring(byte FireMode)
  */
 function ConsumeAmmo( byte FireModeNum )
 {
+	LastWeaponFireTime = WorldInfo.TimeSeconds;
+
 	// Subtract the Ammo
 	AddAmmo(-ShotCost[FireModeNum]);
 }
@@ -2070,10 +2142,7 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 		{
 			// add the ammo that the pickup should give us, then tell it to respawn
 			AddAmmo(default.AmmoCount);
-			if ( PickupFactory(Pickup) != None )
-			{
-				PickupFactory(Pickup).PickedUpBy(Instigator);
-			}
+			Pickup.PickedUpBy(Instigator);
 			AnnouncePickup(Instigator);
 		}
 		return true;
@@ -2088,6 +2157,14 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
  */
 simulated function WeaponEmpty()
 {
+
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".WeaponEmpty()"@IsFiring()@Instigator@Instigator.IsLocallyControlled());
+		ScriptTrace();
+	}
+
+
 	// If we were firing, stop
 	if ( IsFiring() )
 	{
@@ -2195,12 +2272,21 @@ simulated function ImpactInfo InstantAimHelp(vector StartTrace, vector EndTrace,
 	local UTPlayerController UTPC;
 	local float AimHelpDist;
 	local vector ClosestPoint;
+	local bool bProvidedAimingHelp;
+	local UTPawn UTP;
+	local int i;
+	local UTProj_SpiderMineBase Spider;
 
 	NearImpact.HitActor = None;
 	UTPC = (Instigator != None) ? UTPlayerController(Instigator.Controller) : None;
-	if ( (UTPC != None) && (UTPC.ShotTarget != None) && UTPC.AimingHelp(true) && (AimingHelpRadius[Min(CurrentFireMode,1)] > 0.0) )
+	if ( (UTPC != None) && UTPC.AimingHelp(true) && (AimingHelpRadius[Min(CurrentFireMode,1)] > 0.0) )
+	{
+		if ( UTPC.ShotTarget != None ) 
 	{
 		ShotTarget = UTPC.ShotTarget;
+			// no aiming help shooting at giants
+			if ( (UTPawn(ShotTarget) == None) || !UTPawn(ShotTarget).IsHero() )
+			{
 		if ( RealImpact.HitActor != None )
 		{
 			EndTrace = RealImpact.HitLocation;
@@ -2208,7 +2294,7 @@ simulated function ImpactInfo InstantAimHelp(vector StartTrace, vector EndTrace,
 		if ( ((EndTrace - ShotTarget.Location) Dot (ShotTarget.Location - StartTrace)) > 0 )
 		{
 			PointDistToLine(ShotTarget.Location, EndTrace - StartTrace, StartTrace, ClosestPoint);
-			AimHelpDist = UTPC.AimHelpModifier() * AimingHelpRadius[Min(CurrentFireMode,1)] * class'UTProjectile'.Default.GlobalCheckRadiusTweak;
+			AimHelpDist = UTPC.AimHelpModifier() * AimingHelpRadius[Min(CurrentFireMode,1)];
 
 			// reduce help if target isn't moving
 			if ( ShotTarget.Velocity == vect(0,0,0) )
@@ -2221,6 +2307,42 @@ simulated function ImpactInfo InstantAimHelp(vector StartTrace, vector EndTrace,
 				NearImpact.HitActor = ShotTarget;
 				NearImpact.HitLocation = ClosestPoint;
 				NearImpact.HitNormal = Normal(EndTrace - StartTrace);
+						bProvidedAimingHelp = true;
+					}
+				}
+			}
+		}
+		if ( !bProvidedAimingHelp )
+		{
+			UTP = UTPawn(Instigator);
+			if ( (UTP != None) && (UTP.SpiderChasers.Length > 0) )
+			{
+				for ( i=0; i<UTP.SpiderChasers.Length; i++ )
+				{
+					Spider = UTP.SpiderChasers[i];
+					if ( (Spider != None) && !Spider.bDeleteMe && (Spider.TargetPawn == UTP) )
+					{
+						if ( RealImpact.HitActor != None )
+						{
+							EndTrace = RealImpact.HitLocation;
+						}
+						if ( ((EndTrace - Spider.Location) Dot (Spider.Location - StartTrace)) > 0 )
+						{
+							PointDistToLine(Spider.Location, EndTrace - StartTrace, StartTrace, ClosestPoint);
+							AimHelpDist = UTPC.AimHelpModifier() * AimingHelpRadius[Min(CurrentFireMode,1)];
+
+							// accept near miss if within AimHelpDist
+							if ( (abs(ClosestPoint.Z - Spider.Location.Z) < Spider.CylinderComponent.CollisionHeight + AimHelpDist)
+								&& (VSize2D(ClosestPoint - Spider.Location) < Spider.CylinderComponent.CollisionRadius + AimHelpDist) )
+							{
+								NearImpact.HitActor = Spider;
+								NearImpact.HitLocation = ClosestPoint;
+								NearImpact.HitNormal = Normal(EndTrace - StartTrace);
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -2259,46 +2381,29 @@ simulated function Projectile ProjectileFire()
 	return None;
 }
 
-simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optional int NumHits)
+simulated function ProcessInstantHit( byte FiringMode, ImpactInfo Impact )
 {
 	local bool bFixMomentum;
-	local KActorFromStatic NewKActor;
-	local StaticMeshComponent HitStaticMesh;
 
-	if ( Impact.HitActor != None )
+	if (Impact.HitActor != None && !Impact.HitActor.bStatic && (Impact.HitActor != Instigator) )
 	{
-		if ( Impact.HitActor.bWorldGeometry )
+		if ( Impact.HitActor.Role == ROLE_Authority && Impact.HitActor.bProjTarget
+			&& !WorldInfo.GRI.OnSameTeam(Instigator, Impact.HitActor)
+			&& Impact.HitActor.Instigator != Instigator
+			&& PhysicsVolume(Impact.HitActor) == None )
 		{
-			HitStaticMesh = StaticMeshComponent(Impact.HitInfo.HitComponent);
-			if ( (HitStaticMesh != None) && HitStaticMesh.CanBecomeDynamic() )
-			{
-				NewKActor = class'KActorFromStatic'.Static.MakeDynamic(HitStaticMesh);
-				if ( NewKActor != None )
-				{
-					Impact.HitActor = NewKActor;
-				}
-			}
+			HitEnemy++;
+			LastHitEnemyTime = WorldInfo.TimeSeconds;
 		}
-		if ( !Impact.HitActor.bStatic && (Impact.HitActor != Instigator) )
+		if ( (UTPawn(Impact.HitActor) == None) && (InstantHitMomentum[FiringMode] == 0) )
 		{
-			if ( Impact.HitActor.Role == ROLE_Authority && Impact.HitActor.bProjTarget
-				&& !WorldInfo.GRI.OnSameTeam(Instigator, Impact.HitActor)
-				&& Impact.HitActor.Instigator != Instigator
-				&& PhysicsVolume(Impact.HitActor) == None )
-			{
-				HitEnemy++;
-				LastHitEnemyTime = WorldInfo.TimeSeconds;
-			}
-			if ( (UTPawn(Impact.HitActor) == None) && (InstantHitMomentum[FiringMode] == 0) )
-			{
-				InstantHitMomentum[FiringMode] = 1;
-				bFixMomentum = true;
-			}
-			Super.ProcessInstantHit(FiringMode, Impact, NumHits);
-			if (bFixMomentum)
-			{
-				InstantHitMomentum[FiringMode] = 0;
-			}
+			InstantHitMomentum[FiringMode] = 1;
+			bFixMomentum = true;
+		}
+		Super.ProcessInstantHit(FiringMode, Impact);
+		if (bFixMomentum)
+		{
+			InstantHitMomentum[FiringMode] = 0;
 		}
 	}
 }
@@ -2310,18 +2415,19 @@ simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optiona
 /**
  * Returns true if we are currently zoomed
  */
+
 simulated function EZoomState GetZoomedState()
 {
 	local PlayerController PC;
 	PC = PlayerController(Instigator.Controller);
-	if ( PC != none && PC.GetFOVAngle() != PC.DefaultFOV )
+	if ( PC != none && PC.FOVAngle != PC.DefaultFOV )
 	{
-		if ( PC.GetFOVAngle() == PC.DesiredFOV )
+		if ( PC.FOVAngle == PC.DesiredFOV )
 		{
 			return ZST_Zoomed;
 		}
 
-		return ( PC.GetFOVAngle() < PC.DesiredFOV ) ? ZST_ZoomingOut : ZST_ZoomingIn;
+		return ( PC.FOVAngle < PC.DesiredFOV ) ? ZST_ZoomingOut : ZST_ZoomingIn;
 	}
 	return ZST_NotZoomed;
 }
@@ -2343,6 +2449,7 @@ simulated function bool CheckZoom(byte FireModeNum)
 		{
 			EndZoom(PC);
 			EndFire(FireModeNum);		// Kill this fire command
+			DemoEndFire(FireModeNum);
 			return true;
 		}
 		else if ( GetZoomedState() == ZST_NotZoomed )
@@ -2380,12 +2487,17 @@ client reliable simulated function ClientEndFire(byte FireModeNum)
 	{
 		ClearPendingFire(FireModeNum);
 		EndFire(FireModeNum);
+
+		// If this function was called locally, instead of replicated, then the demorec driver needs to record it
+		if (GetNetFuncName() != 'ClientEndFire')
+			DemoEndFire(FireModeNum);
 	}
 }
 
 /**
  * We Override endfire to add support for zooming
  */
+
 simulated function EndFire(Byte FireModeNum)
 {
 	local UTPlayerController PC;
@@ -2408,29 +2520,45 @@ simulated function EndFire(Byte FireModeNum)
  */
 simulated function SendToFiringState( byte FireModeNum )
 {
+
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".SendToFiringState()");
+		ScriptTrace();
+	}
+
 	// Don't send if it's a zoomed firemode
 
 	if (FireModeNum < bZoomedFireMode.Length && bZoomedFireMode[FireModeNum] != 0 )
 	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".SendToFiringState() Quick Exit");
+		}
 		return;
 	}
 
 	super.SendToFiringState(FireModeNum);
 }
 
-reliable client function ClientWeaponSet( bool bOptionalSet, optional bool bDoNotActivate )
+reliable client function ClientWeaponSet( bool bOptionalSet )
 {
 	local PlayerController PC;
+
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".ClientWeaponSet()");
+	}
 
 	if (Instigator != None)
 	{
 		PC = PlayerController(Instigator.Controller);
 		if ( PC != None && LocalPlayer(PC.Player) != none )
 		{
-			PC.SetFOV(PC.DefaultFOV);
+			PC.FOVAngle = PC.DefaultFOV;
 		}
 	}
-	Super.ClientWeaponSet(bOptionalSet, bDoNotActivate);
+	Super.ClientWeaponSet(bOptionalSet);
 }
 
 /**
@@ -2440,9 +2568,6 @@ simulated function FireAmmunition()
 {
 	if (CurrentFireMode >= bZoomedFireMode.Length || bZoomedFireMode[CurrentFireMode] == 0)
 	{
-		// if this is the local player, play the firing effects
-		PlayFiringSound();
-
 		Super.FireAmmunition();
 
 		if (UTPawn(Instigator) != None)
@@ -2450,7 +2575,7 @@ simulated function FireAmmunition()
 			UTPawn(Instigator).DeactivateSpawnProtection();
 		}
 
-		UTInventoryManager(InvManager).OwnerEvent('FiredWeapon');
+		InvManager.OwnerEvent('FiredWeapon');
 	}
 }
 
@@ -2466,16 +2591,31 @@ auto simulated state Inactive
 	{
 		local PlayerController PC;
 
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".BeginState("$PreviousStateName$")");
+		}
+
 		if ( Instigator != None )
 		{
 		  PC = PlayerController(Instigator.Controller);
 		  if ( PC != None && LocalPlayer(PC.Player)!= none )
 		  {
-			  PC.SetFOV(PC.DefaultFOV);
+			  PC.FOVAngle = PC.DefaultFOV;
 		  }
 		}
 
 		Super.BeginState(PreviousStateName);
+	}
+
+	simulated function EndState(Name NextStateName)
+	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".EndState("$NextStateName$")");
+		}
+
+		Super.EndState(NextStateName);
 	}
 
 	/**
@@ -2494,6 +2634,24 @@ auto simulated state Inactive
  *********************************************************************************************/
 simulated state WeaponFiring
 {
+	simulated function EndState(Name NextStateName)
+	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".EndState("$NextStateName$")");
+		}
+		super.EndState(NextStateName);
+	}
+
+	simulated function BeginState(Name PrevStateName)
+	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".BeginState("$PrevStateName$")");
+		}
+		super.BeginState(PrevStateName);
+	}
+
 	simulated event ReplicatedEvent(name VarName)
 	{
 		if ( VarName == 'AmmoCount' && !HasAnyAmmo() )
@@ -2533,6 +2691,8 @@ simulated state WeaponFiring
 	{
 		return true;
 	}
+
+
 }
 
 /*********************************************************************************************
@@ -2570,6 +2730,12 @@ simulated state WeaponEquipping
 
 	simulated function EndState(Name NextStateName)
 	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".EndState("$NextStateName$")");
+		}
+
+
 		if (SkeletalMeshComponent(Mesh) == none || WeaponEquipAnim == '')
 		{
 			Mesh.SetRotation(Default.Mesh.Rotation);
@@ -2584,6 +2750,12 @@ simulated state WeaponAbortEquip
 	{
 		local AnimNodeSequence AnimNode;
 		local float Rate;
+
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".EndState("$PrevStateName$")");
+		}
+
 
 		// Time the abort
 		SetTimer(FMax(SwitchAbortTime, 0.01),, 'WeaponEquipAborted');
@@ -2630,6 +2802,11 @@ simulated state WeaponAbortEquip
 
 	simulated function EndState(Name NextStateName)
 	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".EndState("$NextStateName$")");
+		}
+
 		ClearTimer('WeaponEquipAborted');
 		Super.EndState(NextStateName);
 	}
@@ -2641,9 +2818,9 @@ simulated state WeaponAbortEquip
   */
 simulated function PreloadTextures(bool bForcePreload)
 {
-	if ( UDKSkeletalMeshComponent(Mesh) != None )
+	if ( UTSkeletalMeshComponent(Mesh) != None )
 	{
-		UDKSkeletalMeshComponent(Mesh).PreloadTextures(bForcePreload, WorldInfo.TimeSeconds + 2);
+		UTSkeletalMeshComponent(Mesh).PreloadTextures(bForcePreload, WorldInfo.TimeSeconds + 2);
 	}
 }
 
@@ -2673,6 +2850,13 @@ simulated function bool TryPutDown()
 	{
 		MinTimerTarget = GetTimerRate('RefireCheckTimer') * MinReloadPct[CurrentFireMode];
 		TimerCount = GetTimerCount('RefireCheckTimer');
+
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".TryPutDown"@TimerCount@MinTimerTarget);
+			ScriptTrace();
+		}
+
 
 		if (TimerCount >= MinTimerTarget)
 		{
@@ -2804,11 +2988,20 @@ simulated function SetupArmsAnim()
 			UTP.ArmsMesh[0].AnimSets[1] = ArmsAnimSet;
 			UTP.ArmsMesh[0].SetHidden(false);
 			UTP.ArmsMesh[0].SetLightEnvironment(UTP.LightEnvironment);
+			if (UTP.ArmsOverlay[0] != None)
+			{
+				UTP.ArmsOverlay[0].SetHidden(false);
+			}
 		}
 		else
 		{
 			UTP.ArmsMesh[0].SetHidden(true);
 			UTP.ArmsMesh[1].SetHidden(true);
+			if (UTP.ArmsOverlay[0] != None)
+			{
+				UTP.ArmsOverlay[0].SetHidden(true);
+				UTP.ArmsOverlay[1].SetHidden(true);
+			}
 		}
 	}
 }
@@ -2817,6 +3010,12 @@ simulated state WeaponPuttingDown
 	simulated function BeginState( Name PreviousStateName )
 	{
 		local UTPlayerController PC;
+
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".BeginState("$PreviousStateName$")");
+		}
+
 
 		PC = UTPlayerController(Instigator.Controller);
 		if (PC != None && LocalPlayer(PC.Player) != none )
@@ -2830,6 +3029,12 @@ simulated state WeaponPuttingDown
 
 	simulated function EndState(Name NextStateName)
 	{
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self$"."$GetStateName()$".BeginState("$NextStateName$")");
+		}
+
+
 		Super.EndState(NextStateName);
 		if (SkeletalMeshComponent(Mesh) == none || WeaponEquipAnim == '')
 		{
@@ -2861,6 +3066,16 @@ simulated function AnimNodeSequence GetArmAnimNodeSeq()
 	return None;
 }
 
+function GivenTo(Pawn NewOwner, bool bDoNotActivate)
+{
+	super(Inventory).GivenTo(NewOwner, bDoNotActivate);
+
+	if (bDebugWeapon)
+	{
+		LogInternal("---"@self$"."$GetStateName()$".GivenTo("$NewOwner@bDoNotActivate$")");
+	}
+}
+
 simulated event Destroyed()
 {
 	if (Instigator != None && Instigator.IsHumanControlled() && Instigator.IsLocallyControlled())
@@ -2887,7 +3102,7 @@ simulated state Active
 		Super.BeginFire(FireModeNum);
 	}
 
-	simulated event OnAnimEnd(AnimNodeSequence SeqNode, float PlayedTime, float ExcessTime)
+	simulated event OnAnimEnd(optional AnimNodeSequence SeqNode, optional float PlayedTime, optional float ExcessTime)
 	{
 		local int IdleIndex;
 
@@ -2935,10 +3150,10 @@ simulated state Active
 		// client to reset
 		if (Instigator != none && Instigator.Weapon != self)
 		{
-			`Log("########## WARNING: Server Received ServerStartFire on "$self$" while in the active state but not current weapon.  Attempting Realignment");
-			`log("##########        : "$Instigator.PlayerReplicationInfo.PlayerName);
-			`log("##########        : "$Instigator.Weapon@Instigator.Weapon.GetStateName());
-			UTInventoryManager(InvManager).ClientSyncWeapon(Instigator.Weapon);
+			LogInternal("########## WARNING: Server Received ServerStartFire on "$self$" while in the active state but not current weapon.  Attempting Realignment");
+			LogInternal("##########        : "$Instigator.PlayerReplicationInfo.PlayerName);
+			LogInternal("##########        : "$Instigator.Weapon@Instigator.Weapon.GetStateName());
+			InvManager.ClientSyncWeapon(Instigator.Weapon);
 			Global.ServerStartFire(FireModeNum);
 		}
 		else
@@ -2947,10 +3162,24 @@ simulated state Active
 		}
 	}
 
+	simulated function EndState(Name NextStateName)
+	{
+		Super.EndState(NextStateName);
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self@"has left the Active State"@NextStateName);
+		}
+	}
+
 	/** Initialize the weapon as being active and ready to go. */
 	simulated function BeginState( Name PreviousStateName )
 	{
 		OnAnimEnd(none, 0.f, 0.f);
+
+		if (bDebugWeapon)
+		{
+			LogInternal("---"@self@"has entered the Active State"@PreviousStateName);
+		}
 
 		if ( UTBot(Instigator.Controller) != None )
 		{
@@ -3043,11 +3272,6 @@ static function float DetourWeight(Pawn Other, float PathWeight)
 	}
 }
 
-function bool RecommendLongRangedAttack()
-{
-	return false;
-}
-
 /**
  * Allow the weapon to adjust the turning speed of the pawn
  * @FIXME: Add support for validation on a server
@@ -3061,6 +3285,11 @@ simulated function Activate()
 {
 	SetupArmsAnim();
 	super.Activate();
+}
+
+simulated function string GetOwnerName()
+{
+	return (Instigator==none) ? "None" : Instigator.PlayerReplicationInfo.GetPlayerAlias();
 }
 
 /**
@@ -3141,147 +3370,138 @@ simulated function bool EnableFriendlyWarningCrosshair()
 
 defaultproperties
 {
-	Begin Object Class=UDKSkeletalMeshComponent Name=FirstPersonMesh
-		DepthPriorityGroup=SDPG_Foreground
-		bOnlyOwnerSee=true
-		bOverrideAttachmentOwnerVisibility=true
-	End Object
-	Mesh=FirstPersonMesh
-
-	Begin Object Class=SkeletalMeshComponent Name=PickupMesh
-		bOnlyOwnerSee=false
-		CastShadow=false
-		bForceDirectLightMap=true
-		bCastDynamicShadow=false
-		CollideActors=false
-		BlockRigidBody=false
-		MaxDrawDistance=6000
-		bForceRefPose=1
-		bUpdateSkelWhenNotRendered=false
-		bIgnoreControllersWhenNotRendered=true
-		bAcceptsStaticDecals=FALSE
-		bAcceptsDynamicDecals=FALSE
-	End Object
-	DroppedPickupMesh=PickupMesh
-	PickupFactoryMesh=PickupMesh
-	PivotTranslation=(Y=-25.0)
-
-	MessageClass=class'UTPickupMessage'
-	DroppedPickupClass=class'UTDroppedPickup'
-
-	ShotCost(0)=1
-	ShotCost(1)=1
-
-	MaxAmmoCount=1
-
-	FiringStatesArray(0)=WeaponFiring
-	FiringStatesArray(1)=WeaponFiring
-
-	WeaponFireTypes(0)=EWFT_InstantHit
-	WeaponFireTypes(1)=EWFT_InstantHit
-
-	WeaponProjectiles(0)=none
-	WeaponProjectiles(1)=none
-
-	FireInterval(0)=+1.0
-	FireInterval(1)=+1.0
-
-	Spread(0)=0.0
-	Spread(1)=0.0
-
-	InstantHitDamage(0)=0.0
-	InstantHitDamage(1)=0.0
-	InstantHitMomentum(0)=0.0
-	InstantHitMomentum(1)=0.0
-	InstantHitDamageTypes(0)=class'DamageType'
-	InstantHitDamageTypes(1)=class'DamageType'
-	WeaponRange=22000
-
-	EffectSockets(0)=MuzzleFlashSocket
-	EffectSockets(1)=MuzzleFlashSocket
-	MuzzleFlashDuration=0.33
-
-	WeaponFireSnd(0)=none
-	WeaponFireSnd(1)=none
-
-	MinReloadPct(0)=0.6
-	MinReloadPct(1)=0.6
-
-	MuzzleFlashSocket=MuzzleFlashSocket
-
-	ShouldFireOnRelease(0)=0
-	ShouldFireOnRelease(1)=0
-
-	LockerRotation=(Pitch=16384)
-
-	WeaponColor=(R=255,G=255,B=255,A=255)
-	BobDamping=0.85000
-	JumpDamping=1.0
-	AimError=525
-	CurrentRating=+0.5
-	MaxDesireability=0.5
-
-	WeaponFireAnim(0)=WeaponFire
-	WeaponFireAnim(1)=WeaponFire
-	ArmFireAnim(0)=WeaponFire
-	ArmFireAnim(1)=WeaponFire
-
-	WeaponPutDownAnim=WeaponPutDown
-	ArmsPutDownAnim=WeaponPutDown
-	WeaponEquipAnim=WeaponEquip
-	ArmsEquipAnim=WeaponEquip
-	WeaponIdleAnims(0)=WeaponIdle
-	ArmIdleAnims(0)=WeaponIdle
-	DefaultAnimSpeed=0.9
-
-	IconX=458
-	IconY=83
-	IconWidth=31
-	IconHeight=45
-
-	EquipTime=+0.45
-	PutDownTime=+0.33
-
-	MaxPitchLag=600
-	MaxYawLag=800
-	RotChgSpeed=3.0
-	ReturnChgSpeed=3.0
-	AimingHelpRadius[0]=20.0
-	AimingHelpRadius[1]=20.0
-
-	CrosshairImage=Texture2D'UI_HUD.HUD.UTCrossHairs'
-	CrossHairCoordinates=(U=192,V=64,UL=64,VL=64)
-	IconCoordinates=(U=600,V=341,UL=111,VL=58)
-	CrosshairScaling=1.0
-
-	LockedCrossHairCoordinates=(U=406,V=320,UL=76,VL=77)
-	StartLockedScale=2.0
-	FinalLockedScale=1.0
-	LockedScaleTime=0.15
-	CurrentLockedScale=1.0
-
- 	ZoomInSound=SoundCue'A_Weapon_Sniper.Sniper.A_Weapon_Sniper_ZoomIn_Cue'
-	ZoomOutSound=SoundCue'A_Weapon_Sniper.Sniper.A_Weapon_Sniper_ZoomOut_Cue'
-
-	WeaponCanvasXPct=0.35
-	WeaponCanvasYPct=0.35
-
-	bExportMenuData=true
-	LockerOffset=(X=0.0,Z=-15.0)
-
-	bUsesOffhand=false
-
-	WidescreenRotationOffset=(Pitch=900)
-	HiddenWeaponsOffset=(Y=-50.0,Z=-50.0)
-	ProjectileSpawnOffset=20.0
-	LastHitEnemyTime=-1000.0
-
-	SmallWeaponsOffset=(X=16.0,Y=6.0,Z=-6.0)
-	WideScreenOffsetScaling=0.8
-	SimpleCrossHairCoordinates=(U=276,V=84,UL=22,VL=25)
-
-	Begin Object Class=ForceFeedbackWaveform Name=ForceFeedbackWaveformShooting1
-		Samples(0)=(LeftAmplitude=30,RightAmplitude=20,LeftFunction=WF_Constant,RightFunction=WF_Constant,Duration=0.100)
-	End Object
-	WeaponFireWaveForm=ForceFeedbackWaveformShooting1
+   bExportMenuData=True
+   bLeadTarget=True
+   bConsiderProjectileAcceleration=True
+   MaxAmmoCount=1
+   ShotCost(0)=1
+   ShotCost(1)=1
+   MinReloadPct(0)=0.600000
+   MinReloadPct(1)=0.600000
+   WeaponFireWaveForm=ForceFeedbackWaveform'UTGame.Default__UTWeapon:ForceFeedbackWaveformShooting1'
+   EffectSockets(0)="MuzzleFlashSocket"
+   EffectSockets(1)="MuzzleFlashSocket"
+   IconX=458
+   IconY=83
+   IconWidth=31
+   IconHeight=45
+   IconCoordinates=(U=600.000000,V=341.000000,UL=111.000000,VL=58.000000)
+   CrossHairCoordinates=(U=192.000000,V=64.000000,UL=64.000000,VL=64.000000)
+   SimpleCrossHairCoordinates=(U=276.000000,V=84.000000,UL=22.000000,VL=25.000000)
+   CrosshairImage=Texture2D'UI_HUD.HUD.UTCrossHairs'
+   LockedCrossHairCoordinates=(U=406.000000,V=320.000000,UL=76.000000,VL=77.000000)
+   CurrentLockedScale=1.000000
+   StartLockedScale=2.000000
+   FinalLockedScale=1.000000
+   LockedScaleTime=0.150000
+   LastHitEnemyTime=-1000.000000
+   CrosshairColor=(B=255,G=255,R=255,A=255)
+   CrosshairScaling=1.000000
+   ZoomInSound=SoundCue'A_Weapon_Sniper.Sniper.A_Weapon_Sniper_ZoomIn_Cue'
+   ZoomOutSound=SoundCue'A_Weapon_Sniper.Sniper.A_Weapon_Sniper_ZoomOut_Cue'
+   PivotTranslation=(X=0.000000,Y=-25.000000,Z=0.000000)
+   QuickPickGroup=-1
+   WeaponFireAnim(0)="WeaponFire"
+   WeaponFireAnim(1)="WeaponFire"
+   ArmFireAnim(0)="WeaponFire"
+   ArmFireAnim(1)="WeaponFire"
+   WeaponPutDownAnim="WeaponPutDown"
+   ArmsPutDownAnim="WeaponPutDown"
+   WeaponEquipAnim="WeaponEquip"
+   ArmsEquipAnim="WeaponEquip"
+   WeaponIdleAnims(0)="WeaponIdle"
+   ArmIdleAnims(0)="WeaponIdle"
+   WeaponFireSnd(0)=None
+   WeaponFireSnd(1)=None
+   BobDamping=0.850000
+   JumpDamping=1.000000
+   MaxPitchLag=600.000000
+   MaxYawLag=800.000000
+   RotChgSpeed=3.000000
+   ReturnChgSpeed=3.000000
+   WeaponColor=(B=255,G=255,R=255,A=255)
+   WeaponCanvasXPct=0.350000
+   WeaponCanvasYPct=0.350000
+   MuzzleFlashSocket="MuzzleFlashSocket"
+   MuzzleFlashDuration=0.330000
+   SmallWeaponsOffset=(X=16.000000,Y=6.000000,Z=-6.000000)
+   WideScreenOffsetScaling=0.800000
+   WidescreenRotationOffset=(Pitch=900,Yaw=0,Roll=0)
+   HiddenWeaponsOffset=(X=0.000000,Y=-50.000000,Z=-50.000000)
+   ProjectileSpawnOffset=20.000000
+   LockerRotation=(Pitch=16384,Yaw=0,Roll=0)
+   LockerOffset=(X=0.000000,Y=0.000000,Z=-15.000000)
+   CurrentRating=0.500000
+   aimerror=525.000000
+   NeedToPickUpAnnouncement=(AnnouncementText="Prendi la Super Arma!")
+   AimingHelpRadius(0)=20.000000
+   AimingHelpRadius(1)=20.000000
+   AmmoRechargeRate=1.200000
+   ZoomedTurnSpeedScalePct=0.850000
+   TargetFrictionDistanceMin=320.000000
+   TargetFrictionDistancePeak=1500.000000
+   TargetFrictionDistanceMax=3000.000000
+   TargetFrictionDistanceCurve=(Points=(,(InVal=320.000000),(InVal=1500.000000,OutVal=1.000000),(InVal=3000.000000,OutVal=0.300000),(InVal=7000.000000)))
+   TargetFrictionMultiplierRange=(X=0.300000,Y=0.400000)
+   TargetFrictionPeakRadiusScale=1.000000
+   TargetFrictionPeakHeightScale=0.200000
+   TargetFrictionOffset=(X=0.000000,Y=0.000000,Z=32.000000)
+   TargetFrictionZoomedBoostValue=0.250000
+   TargetAdhesionDistanceMax=2000.000000
+   TargetAdhesionAimDistY=128.000000
+   TargetAdhesionAimDistZ=96.000000
+   TargetAdhesionScaleRange=(X=0.300000,Y=2.850000)
+   TargetAdhesionZoomedBoostValue=0.250000
+   PrimaryFireHintString="attiva il fuoco primario di quest'arma."
+   SecondaryFireHintString="attiva il fuoco secondario di quest'arma."
+   ShouldFireOnRelease(0)=0
+   ShouldFireOnRelease(1)=0
+   WeaponFireTypes(0)=EWFT_InstantHit
+   WeaponFireTypes(1)=EWFT_InstantHit
+   FiringStatesArray(0)="WeaponFiring"
+   FiringStatesArray(1)="WeaponFiring"
+   WeaponProjectiles(0)=None
+   WeaponProjectiles(1)=None
+   FireInterval(0)=1.000000
+   FireInterval(1)=1.000000
+   Spread(0)=0.000000
+   Spread(1)=0.000000
+   InstantHitDamage(0)=0.000000
+   InstantHitDamage(1)=0.000000
+   InstantHitMomentum(0)=0.000000
+   InstantHitMomentum(1)=0.000000
+   InstantHitDamageTypes(0)=Class'Engine.DamageType'
+   InstantHitDamageTypes(1)=Class'Engine.DamageType'
+   EquipTime=0.450000
+   WeaponRange=22000.000000
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTSkeletalMeshComponent'
+      bOverrideAttachmentOwnerVisibility=True
+      DepthPriorityGroup=SDPG_Foreground
+      bOnlyOwnerSee=True
+      CastShadow=False
+      Name="FirstPersonMesh"
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTSkeletalMeshComponent'
+   End Object
+   Mesh=FirstPersonMesh
+   DefaultAnimSpeed=0.900000
+   MaxDesireability=0.500000
+   DroppedPickupClass=Class'UTGame.UTDroppedPickup'
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+      bForceRefpose=1
+      bUpdateSkelWhenNotRendered=False
+      bIgnoreControllersWhenNotRendered=True
+      CullDistance=6000.000000
+      CachedCullDistance=6000.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      Name="PickupMesh"
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   MessageClass=Class'UTGame.UTPickupMessage'
+   Name="Default__UTWeapon"
+   ObjectArchetype=GameWeapon'GameFramework.Default__GameWeapon'
 }

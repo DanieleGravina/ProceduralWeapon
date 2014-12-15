@@ -1,25 +1,25 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_DivideFloat extends SeqAct_SetSequenceVariable
 	native(Sequence);
 
-cpptext
-{
-	void Activated()
-	{
-		if( ValueB == 0.0f )
-		{
-			ValueB = 1.0f;
-		}
-		
-		FloatResult = ValueA / ValueB;
-		OutputLinks(0).bHasImpulse = TRUE;
-		
-		// Round the float result into the integer result
-		IntResult = appRound( FloatResult );
-	}
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() float ValueA;
 var() float ValueB;
@@ -28,15 +28,12 @@ var int IntResult;
 
 defaultproperties
 {
-	ObjName="Divide Float"
-	ObjCategory="Math"
-
-	InputLinks(0)=(LinkDesc="In")
-	
-	OutputLinks(0)=(LinkDesc="Out")
-
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Float',LinkDesc="A",PropertyName=ValueA)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Float',LinkDesc="B",PropertyName=ValueB)
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Float',LinkDesc="FloatResult",bWriteable=true,PropertyName=FloatResult)
-	VariableLinks(3)=(ExpectedType=class'SeqVar_Int',LinkDesc="IntResult",bWriteable=true,PropertyName=IntResult)
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="A",PropertyName="ValueA")
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="B",PropertyName="ValueB",MinVars=1,MaxVars=255)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="FloatResult",PropertyName="FloatResult",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(3)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="IntResult",PropertyName="IntResult",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Divide Float"
+   ObjCategory="Math"
+   Name="Default__SeqAct_DivideFloat"
+   ObjectArchetype=SeqAct_SetSequenceVariable'Engine.Default__SeqAct_SetSequenceVariable'
 }

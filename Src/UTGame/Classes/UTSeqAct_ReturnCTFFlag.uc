@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -27,9 +27,9 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjName="Return CTF Flag"
-	ObjCategory="Objective"
-
-	VariableLinks.Empty()
+   bCallHandler=False
+   ObjName="Return CTF Flag"
+   ObjCategory="Objective"
+   Name="Default__UTSeqAct_ReturnCTFFlag"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

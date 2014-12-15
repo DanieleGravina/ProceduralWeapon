@@ -1,16 +1,22 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimTreeEdSkelComponent extends SkeletalMeshComponent
 	native;
 
 var transient native const pointer	AnimTreeEdPtr;
 
-cpptext
-{
-	// UPrimitiveComponent interface.
-	virtual void Render(const FSceneView* View, class FPrimitiveDrawInterface* PDI);
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-	// USkeletalMeshComponent interface.
-	virtual UBOOL LegLineCheck(const FVector& Start, const FVector& End, FVector& HitLocation, FVector& HitNormal, const FVector& Extent = FVector(0.f));
+defaultproperties
+{
+   Name="Default__AnimTreeEdSkelComponent"
+   ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
 }

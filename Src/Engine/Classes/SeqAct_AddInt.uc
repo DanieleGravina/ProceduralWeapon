@@ -1,21 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
 class SeqAct_AddInt extends SeqAct_SetSequenceVariable
 	native(Sequence);
 
-cpptext
-{
-	void Activated()
-	{
-		FloatResult = ValueA + ValueB;
-		OutputLinks(0).bHasImpulse = TRUE;
-		
-		// Round the float result into the integer result
-		IntResult = appRound( FloatResult );
-	}
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() int ValueA;
 var() int ValueB;
@@ -24,15 +24,12 @@ var int IntResult;
 
 defaultproperties
 {
-	ObjName="Add Int"
-	ObjCategory="Math"
-
-	InputLinks(0)=(LinkDesc="In")
-	
-	OutputLinks(0)=(LinkDesc="Out")
-
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Int',LinkDesc="A",PropertyName=ValueA)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Int',LinkDesc="B",PropertyName=ValueB)
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Int',LinkDesc="IntResult",bWriteable=true,PropertyName=IntResult)
-	VariableLinks(3)=(ExpectedType=class'SeqVar_Float',LinkDesc="FloatResult",bWriteable=true,PropertyName=FloatResult)
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="A",PropertyName="ValueA")
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="B",PropertyName="ValueB",MinVars=1,MaxVars=255)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="IntResult",PropertyName="IntResult",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(3)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="FloatResult",PropertyName="FloatResult",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Add Int"
+   ObjCategory="Math"
+   Name="Default__SeqAct_AddInt"
+   ObjectArchetype=SeqAct_SetSequenceVariable'Engine.Default__SeqAct_SetSequenceVariable'
 }

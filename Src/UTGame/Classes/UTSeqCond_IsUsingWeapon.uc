@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqCond_IsUsingWeapon extends SequenceCondition;
@@ -14,6 +14,9 @@ var() bool bAllowSubclass;
 /** Ii this is true, the weapon must be the Impact Hammer */
 var() bool bMustBeImpactHammer;
 
+/** Ii this is true, the weapon must be the Impact Hammer */
+var() bool bMustBeTranslocator;
+
 event Activated()
 {
 	local Pawn P;
@@ -27,7 +30,11 @@ event Activated()
 
 			if ( bMustBeImpactHAmmer )
 			{
-				bHasItem = false;
+				bHasItem = ClassIsChildOf(P.Weapon.Class,class'UTWeap_ImpactHAmmer');
+			}
+			else if ( bMustBeTranslocator )
+			{
+				bHasItem = ClassIsChildOf(P.Weapon.Class,class'UTWeap_Translocator');
 			}
 			else
 			{
@@ -41,8 +48,10 @@ event Activated()
 
 defaultproperties
 {
-	ObjName="Is Using Weapon"
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Target",PropertyName=Target,MinVars=1,MaxVars=1)
-	OutputLinks[0]=(LinkDesc="Using It")
-	OutputLinks[1]=(LinkDesc="Not Using It")
+   OutputLinks(0)=(LinkDesc="Using It")
+   OutputLinks(1)=(LinkDesc="Not Using It")
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Target",PropertyName="Target",MinVars=1,MaxVars=1)
+   ObjName="Is Using Weapon"
+   Name="Default__UTSeqCond_IsUsingWeapon"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

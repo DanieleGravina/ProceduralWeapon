@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTSimpleDestroyable extends DynamicSMActor
 	abstract
@@ -186,27 +186,33 @@ state IgnoreItAll
 
 defaultproperties
 {
-	bCollideActors=TRUE
-	bProjTarget=TRUE
-	bPathColliding=FALSE
-	bNoDelete=TRUE
-
-	Begin Object Name=MyLightEnvironment
-		bEnabled=TRUE
-		bDynamic=FALSE
-	End Object
-
-	Begin Object Name=StaticMeshComponent0
-		BlockRigidBody=FALSE
-		CollideActors=TRUE
-		BlockActors=FALSE
-		CastShadow=FALSE
-	End Object
-
-	RespawnTime=30.0
-
-	SpawnPhysMeshLifeSpan=5.0
-	bDestroyOnDamage=TRUE
-	bDestroyOnPlayerTouch=TRUE
-	bDestroyOnVehicleTouch=TRUE
+   bDestroyOnDamage=True
+   bDestroyOnPlayerTouch=True
+   bDestroyOnVehicleTouch=True
+   SpawnPhysMeshLifeSpan=5.000000
+   RespawnTime=30.000000
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0 ObjName=StaticMeshComponent0 Archetype=StaticMeshComponent'Engine.Default__DynamicSMActor:StaticMeshComponent0'
+      LightEnvironment=DynamicLightEnvironmentComponent'UTGame.Default__UTSimpleDestroyable:MyLightEnvironment'
+      bUseAsOccluder=False
+      CastShadow=False
+      BlockActors=False
+      ObjectArchetype=StaticMeshComponent'Engine.Default__DynamicSMActor:StaticMeshComponent0'
+   End Object
+   StaticMeshComponent=StaticMeshComponent0
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicSMActor:MyLightEnvironment'
+      bDynamic=False
+      bEnabled=True
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicSMActor:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   Components(0)=MyLightEnvironment
+   Components(1)=StaticMeshComponent0
+   bNoDelete=True
+   bCollideActors=True
+   bProjTarget=True
+   bPathColliding=False
+   CollisionComponent=StaticMeshComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTSimpleDestroyable"
+   ObjectArchetype=DynamicSMActor'Engine.Default__DynamicSMActor'
 }

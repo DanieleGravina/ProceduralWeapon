@@ -2,9 +2,10 @@
  * UTInventoryManager
  * UT inventory definition
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTInventoryManager extends InventoryManager
+	native
 	config(Game);
 
 /** if true, all weapons use no ammo */
@@ -33,76 +34,6 @@ replication
 {
 	if (bNetDirty)
 		bInfiniteAmmo;
-}
-
-
-/**
- * If the server detects that the client's weapon is out of sync, it will use this function to realign them.
- * Network: LocalPlayer
- *
- * @Param	NewWeapon	The weapon the server wishes to force the client to
- */
-reliable client function ClientSyncWeapon(Weapon NewWeapon)
-{
-	local Weapon OldWeapon;
-
-	if ( NewWeapon == Instigator.Weapon )
-	{
-		// FIXME: Remove this log.  It's here only to see how often this occurs.
-
-		`log(Self@"(Owned by"@Owner@") is trying to Sync to the currently active weapon ("$NewWeapon$")");
-		return;
-	}
-
-	`LogInv("Forcing weapon:" @ NewWeapon @ "from:" @ Instigator.Weapon);
-
-	OldWeapon = Instigator.Weapon;
-
-	// switch to the new Weapon
-	Instigator.Weapon = NewWeapon;
-
-	// Play any Weapon Switch Animations
-	Instigator.PlayWeaponSwitch(OldWeapon, NewWeapon);
-
-	// If we are going to an actual weapon, activate it.
-	if( NewWeapon != None )
-	{
-		// Setup the Weapon
-		Instigator.Weapon.Instigator = Instigator;
-
-		// Make some noise
-		if( WorldInfo.Game != None )
-		{
-			Instigator.MakeNoise(0.1, 'ChangedWeapon' );
-		}
-
-		// Activate the Weapon
-		Instigator.Weapon.Activate();
-	}
-
-	// Notify of a weapon change
-	if( Instigator.Controller != None )
-	{
-		Instigator.Controller.NotifyChangedWeapon(OldWeapon, Instigator.Weapon);
-	}
-}
-
-/**
- * Used to inform inventory when owner event occurs (for example jumping or weapon change)
- *
- * @param	EventName	Name of event to forward to inventory items.
- */
-simulated function OwnerEvent(name EventName)
-{
-	local UTInventory	Inv;
-
-	ForEach InventoryActors(class'UTInventory', Inv)
-	{
-		if( Inv.bReceiveOwnerEvents )
-		{
-			Inv.OwnerEvent(EventName);
-		}
-	}
 }
 
 /**
@@ -234,15 +165,19 @@ simulated function AdjustWeapon(int NewOffset)
 		}
 	}
 
-	Index += NewOffset;
-	if (Index < 0)
+	do
 	{
-		Index = WeaponList.Length - 1;
-	}
-	else if (Index >= WeaponList.Length)
-	{
-		Index = 0;
-	}
+	   	Index += NewOffset;
+		if (Index < 0)
+		{
+			Index = WeaponList.Length - 1;
+		}
+		else if (Index >= WeaponList.Length)
+		{
+			Index = 0;
+		}
+	// on console, prevweapon/nextweapon skips inventory groups 0 and 1 because they have their own buttons
+	} until (!WorldInfo.bUseConsoleInput || Index == WeaponList.length - 1 || WeaponList[Index].InventoryGroup > 1);
 
 	if (Index >= 0)
 	{
@@ -302,6 +237,7 @@ reliable client function SetCurrentWeapon( Weapon DesiredWeapon )
 
 	if( Role < Role_Authority )
 	{
+		//`log("SET CURRENT WEAPON "$DesiredWeapon@" hero "$UTHeroPawn(Owner).IsHero());
 		ServerSetCurrentWeapon(DesiredWeapon);
 	}
 
@@ -329,6 +265,22 @@ reliable client function ClientSetCurrentWeapon(Weapon DesiredWeapon)
  */
 
 reliable server function ServerSetCurrentWeapon(Weapon DesiredWeapon)
+{
+	local UTPawn PawnOwner;
+	
+	PawnOwner = UTPawn(Owner);
+	if ( (DesiredWeapon != None) || (PawnOwner == None) || !PawnOwner.IsHero() )
+	{
+		DemoSetCurrentWeapon(DesiredWeapon);
+		SetPendingWeapon(DesiredWeapon);
+	}
+	//else `log("DON'T CLEAR WEAPON");
+}
+
+/**
+ * Routes weapon switch events to demos
+ */
+reliable demorecording function DemoSetCurrentWeapon(Weapon DesiredWeapon)
 {
 	SetPendingWeapon(DesiredWeapon);
 }
@@ -422,32 +374,32 @@ simulated function SetPendingWeapon( Weapon DesiredWeapon )
  * Network: LocalPlayer
  * Called from Weapon.ClientWeaponSet()
  */
-simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet, optional bool bDoNotActivate)
+simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet)
 {
 	local Weapon OldWeapon;
 
 	OldWeapon = Instigator.Weapon;
 
-		// If no current weapon, then set this one
-		if ( OldWeapon == None || OldWeapon.bDeleteMe || OldWeapon.IsInState('Inactive') )
-		{
-			SetCurrentWeapon(NewWeapon);
-			return;
-		}
+	// If no current weapon, then set this one
+	if ( OldWeapon == None || OldWeapon.bDeleteMe || OldWeapon.IsInState('Inactive') )
+	{
+		SetCurrentWeapon(NewWeapon);
+		return;
+	}
 
-		if ( OldWeapon == NewWeapon )
-		{
-			return;
-		}
+	if ( OldWeapon == NewWeapon )
+	{
+		return;
+	}
 
-		if (!bOptionalSet)
-		{
-			SetCurrentWeapon(NewWeapon);
-			return;
-		}
+	if (!bOptionalSet)
+	{
+		SetCurrentWeapon(NewWeapon);
+		return;
+	}
 
-		if (Instigator.IsHumanControlled() && PlayerController(Instigator.Controller).bNeverSwitchOnPickup)
-		{
+	if (Instigator.IsHumanControlled() && PlayerController(Instigator.Controller).bNeverSwitchOnPickup)
+	{
 		NewWeapon.GotoState('Inactive');
 		return;
 	}
@@ -456,16 +408,16 @@ simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet, optional
 	{
 		NewWeapon.GotoState('Inactive');
 		RetrySwitchTo(UTWeapon(NewWeapon));
-			return;
-		}
+		return;
+	}
 
-		// Compare switch priority and decide if we should switch to new weapon
-		if ( (PendingWeapon == None || !PendingWeapon.HasAnyAmmo() || PendingWeapon.GetWeaponRating() < NewWeapon.GetWeaponRating()) &&
-			(!Instigator.Weapon.HasAnyAmmo() || Instigator.Weapon.GetWeaponRating() < NewWeapon.GetWeaponRating()) )
-		{
-			SetCurrentWeapon(NewWeapon);
-			return;
-		}
+	// Compare switch priority and decide if we should switch to new weapon
+	if ( (PendingWeapon == None || !PendingWeapon.HasAnyAmmo() || PendingWeapon.GetWeaponRating() < NewWeapon.GetWeaponRating()) &&
+		(!Instigator.Weapon.HasAnyAmmo() || Instigator.Weapon.GetWeaponRating() < NewWeapon.GetWeaponRating()) )
+	{
+		SetCurrentWeapon(NewWeapon);
+		return;
+	}
 
 	NewWeapon.GotoState('Inactive');
 }
@@ -478,6 +430,34 @@ simulated function Inventory CreateInventory(class<Inventory> NewInventoryItemCl
 		return Super.CreateInventory(NewInventoryItemClass, bDoNotActivate);
 	}
 	return none;
+}
+
+/** force switch to deployable after getting out of vehicle. 
+  *  (In case didn't switch for some reason before getting in vehicle)
+  */
+function ForceDeployableSwitch()
+{
+	local UTDeployable NewDeployable;
+	local Inventory Inv;
+
+	if ( (UTWeapon(Instigator.Weapon) != None) && (UTDeployable(Instigator.Weapon) == None) )
+	{
+		inv = InventoryChain;
+		while( inv!=none )
+		{
+			NewDeployable = UTDeployable(Inv);
+			if ( NewDeployable != None )
+			{
+				break;
+			}
+
+			Inv = Inv.Inventory;
+		}
+		if ( (NewDeployable != None) && (NewDeployable.AmmoCount > 0) )
+		{
+			RetrySwitchTo(NewDeployable);
+		}
+	}
 }
 
 /** timer function set by RetrySwitchTo() to actually retry the switch */
@@ -582,10 +562,11 @@ function bool NeedsAmmo(class<UTWeapon> TestWeapon)
 	local int i;
 
 	// Check the list of weapons
-	GetWeaponList(WeaponList);
+
+   	GetWeaponList(WeaponList);
 	for (i=0;i<WeaponList.Length;i++)
 	{
-		if ( ClassIsChildOf(WeaponList[i].Class, TestWeapon) )	// The Pawn has this weapon
+		if ( WeaponList[i].Class == TestWeapon )	// The Pawn has this weapon
 		{
 			if ( WeaponList[i].AmmoCount < WeaponList[i].MaxAmmoCount )
 				return true;
@@ -595,9 +576,10 @@ function bool NeedsAmmo(class<UTWeapon> TestWeapon)
 	}
 
 	// Check our stores.
+
 	for (i=0;i<AmmoStorage.Length;i++)
 	{
-		if ( ClassIsChildOf(WeaponList[i].Class, TestWeapon) )
+		if (AmmoStorage[i].WeaponClass == TestWeapon)
 		{
 			if ( AmmoStorage[i].Amount < TestWeapon.default.MaxAmmoCount )
 				return true;
@@ -622,7 +604,7 @@ function AddAmmoToWeapon(int AmountToAdd, class<UTWeapon> WeaponClassToAddTo)
 
 	// Get the list of weapons
 
-	GetWeaponList(WeaponList);
+   	GetWeaponList(WeaponList);
 	for (i=0;i<WeaponList.Length;i++)
 	{
 		if ( ClassIsChildOf(WeaponList[i].Class, WeaponClassToAddTo) )	// The Pawn has this weapon
@@ -682,6 +664,7 @@ function Inventory HasInventoryOfClass(class<Inventory> InvClass)
 
 simulated function ChangedWeapon()
 {
+	local int i;
 	local UTWeapon Wep;
 	local UTPawn UTP;
 
@@ -694,7 +677,10 @@ simulated function ChangedWeapon()
 
 	if ( Wep!=none && Wep.bNeverForwardPendingFire )
 	{
-		ClearAllPendingFire(Wep);
+		for (i=0;i<PendingFire.Length;i++)
+		{
+			PendingFire[i] = 0;
+		}
 	}
 
 	UTP = UTPawn(Instigator);
@@ -712,18 +698,24 @@ simulated function SwitchToPreviousWeapon()
 	}
 }
 
-
-/**
- * Hook called from HUD actor. Gives access to HUD and Canvas
- *
- * @param	H	HUD
- */
 simulated function DrawHud(HUD H)
 {
-	// Send ActiveRenderOverlays event to active weapon
-	if( UTWeapon(Instigator.Weapon) != None )
+	local Vehicle V;
+	local Inventory Inv;
+
+	Super.DrawHud(H);
+
+	// if we're a vehicle, send RenderOverlays event to any of the driver's inventory that is requesting it
+	V = Vehicle(Instigator);
+	if (V != None && V.Driver != None && V.Driver.InvManager != None)
 	{
-		UTWeapon(Instigator.Weapon).ActiveRenderOverlays(H);
+		foreach V.Driver.InvManager.InventoryActors(class'Inventory', Inv)
+		{
+			if (Inv.bRenderOverlays)
+			{
+				Inv.RenderOverlays(H);
+			}
+		}
 	}
 }
 
@@ -765,9 +757,46 @@ simulated function SwitchToBestWeapon( optional bool bForceADifferentWeapon )
 	}
 }
 
+function bool DisruptInventory()
+{
+	local UTInventory Inv;
+	local bool bHasDrop;
+	local UTPawn P;
+	local UTDroppedItemPickup DroppedBelt;
+
+	P = UTPawn(Instigator);
+
+	// heroes can't be disrupted
+	if ( P.IsHero() )
+	{
+		return false;
+	}
+	bHasDrop = false;
+	ForEach InventoryActors(class'UTInventory', Inv)
+	{
+		if (Inv.bDropOnDisrupt)
+		{
+			Inv.DropFrom(Instigator.Location, Vect(0,0,0));
+			bHasDrop = true;
+		}
+	}
+	// also throw out shield belt
+	if (P != None && P.ShieldBeltArmor > 0 && P.ShieldBeltPickupClass != None)
+	{
+		DroppedBelt = Spawn(P.ShieldBeltPickupClass,,, Instigator.Location, Instigator.Rotation);
+		DroppedBelt.SetPhysics(PHYS_Falling);
+		DroppedBelt.DroppedFrom(P);
+		bHasDrop = true;
+	}
+
+	return bHasDrop;
+}
+
 defaultproperties
 {
-	bMustHoldWeapon=true
-	PendingFire(0)=0
-	PendingFire(1)=0
+   bMustHoldWeapon=True
+   PendingFire(0)=0
+   PendingFire(1)=0
+   Name="Default__UTInventoryManager"
+   ObjectArchetype=InventoryManager'Engine.Default__InventoryManager'
 }

@@ -6,13 +6,14 @@
 * to apply that to the gamepad. It does this by evaluating the function
 * defined in the waveform sample data.
 *
-* Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+* Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 */
 
 class ForceFeedbackManager extends Object within PlayerController
 	native
 	abstract
 	transient;
+
 
 /** Whether the player has disabled gamepad rumble or not (TCR C5-3) */
 var bool bAllowsForceFeedback;
@@ -32,31 +33,33 @@ var float ElapsedTime;
 /** The amount to scale all waveforms by (user settable) (TCR C5-3) */
 var float ScaleAllWaveformsBy;
 
-/** Used with max waveform distance on the waveform to determine waveform attenuation */
-var Actor WaveformInstigator;
-
 /**
  * Sets the waveform to play for the gamepad
  *
  * @param ForceFeedbackWaveform The waveform data to play
- * @param Instigator the actor causing the rumble
  */
-simulated function PlayForceFeedbackWaveform(ForceFeedbackWaveform Waveform,Actor WaveInstigator)
+simulated function PlayForceFeedbackWaveform(ForceFeedbackWaveform Waveform)
 {
+	// If there is already a waveform playing, only switch if the new one has a longer duration
+	if ((Waveform != None) && (FFWaveform != None) && (Waveform.Samples.Length > 0) && (Waveform.Samples[0].Duration < FFWaveform.Samples[0].Duration))
+	{
+		return;
+	}
+
 	// Zero out the current sample and duration and unpause if paused
 	CurrentSample = 0;
 	ElapsedTime = 0.0;
 	bIsPaused = false;
-	FFWaveform = None;
-	WaveformInstigator = None;
 	// Make sure the waveform is valid
-	if (Waveform != None &&
-		Waveform.Samples.Length > 0 &&
+	if (Waveform != None && Waveform.Samples.Length > 0 &&
 		bAllowsForceFeedback == true)
 	{
 		// Set the wave form to play
 		FFWaveform = Waveform;
-		WaveformInstigator = WaveInstigator;
+	}
+	else
+	{
+		FFWaveform = None;
 	}
 }
 
@@ -69,7 +72,6 @@ simulated function StopForceFeedbackWaveform(optional ForceFeedbackWaveform Wave
 	{
 		// Remove the current waveform
 		FFWaveform = None;
-		WaveformInstigator = None;
 	}
 }
 
@@ -84,32 +86,34 @@ simulated function PauseWaveform(optional bool bPause)
 	bIsPaused = bPause;
 }
 
-cpptext
-{
-protected:
-	/**
-	 * Update the currently playing waveform sample
-	 *
-	 * @param DeltaTime The amount of elapsed time since the last update
-	 */
-	virtual void UpdateWaveformData(FLOAT DeltaTime);
-
-public:
-	/**
-	 * Applies the current waveform data to the gamepad/mouse/etc
-	 * This function is platform specific
-	 *
-	 * @param DeviceID The device that needs updating
-	 * @param DeltaTime The amount of elapsed time since the last update
-	 */
-	virtual void ApplyForceFeedback(INT DeviceID,FLOAT DeltaTime) {}
-
-	/** Clear any vibration going on this device right away. */
-	virtual void ForceClearWaveformData(INT DeviceID) {}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bAllowsForceFeedback=true
-	ScaleAllWaveformsBy=1.0
+   bAllowsForceFeedback=True
+   ScaleAllWaveformsBy=1.000000
+   Name="Default__ForceFeedbackManager"
+   ObjectArchetype=Object'Core.Default__Object'
 }

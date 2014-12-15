@@ -2,14 +2,16 @@
  * Event which is activated by the physics system when a joint is broken.
  * Originator: the actor that owns the join which was broken
  * Instigator: the Actor that owns the joint which was broken.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqEvent_ConstraintBroken extends SequenceEvent
 	native(Sequence);
 
 defaultproperties
 {
-	ObjName="Constraint Broken"
-	ObjCategory="Physics"
-	bPlayerOnly=false
+   bPlayerOnly=False
+   ObjName="Constraint Broken"
+   ObjCategory="Physics"
+   Name="Default__SeqEvent_ConstraintBroken"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

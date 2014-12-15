@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqAct_PlayAnnouncement extends SequenceAction
@@ -17,8 +17,9 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjName="Play Announcement"
-	ObjCategory="Voice/Announcements"
-	VariableLinks.Empty
+   bCallHandler=False
+   ObjName="Play Announcement"
+   ObjCategory="Voice/Announcements"
+   Name="Default__UTSeqAct_PlayAnnouncement"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawSphereComponent extends PrimitiveComponent
 	native
@@ -14,14 +14,14 @@ var()	float			SphereRadius;
 var()	int				SphereSides;
 var()	bool			bDrawWireSphere;
 var()	bool			bDrawLitSphere;
-var()	bool			bDrawOnlyIfSelected;
 
 defaultproperties
 {
-	SphereColor=(R=255,G=0,B=0,A=255)
-	SphereRadius=100.0
-	SphereSides=16
-	bDrawWireSphere=true
-
-	HiddenGame=True
+   SphereColor=(B=0,G=0,R=255,A=255)
+   SphereRadius=100.000000
+   SphereSides=16
+   bDrawWireSphere=True
+   HiddenGame=True
+   Name="Default__DrawSphereComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

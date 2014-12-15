@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -10,31 +10,19 @@ class DynamicPhysicsVolume extends PhysicsVolume
 	showcategories(Movement)
 	placeable;
 
-/** Is the volume enabled by default? */
-var() bool bEnabled;
-
-/**
- * Overriden to set the default collision state. 
- */
-simulated event PostBeginPlay()
-{
-	Super.PostBeginPlay();
-
-	SetCollision(bEnabled, bBlockActors);
-}
-
 defaultproperties
 {
-	Physics=PHYS_Interpolating
-	bStatic=false
-
-	bAlwaysRelevant=true
-	bReplicateMovement=true
-	bOnlyDirtyReplication=true
-	RemoteRole=ROLE_None
-
-	bColored=true
-	BrushColor=(R=100,G=255,B=255,A=255)
-
-	bEnabled=true
+   BrushColor=(B=255,G=255,R=100,A=255)
+   bColored=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   Physics=PHYS_Interpolating
+   bStatic=False
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__DynamicPhysicsVolume"
+   ObjectArchetype=PhysicsVolume'Engine.Default__PhysicsVolume'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleSpriteEmitter extends ParticleEmitter
 	native(Particle)
@@ -15,10 +15,17 @@ enum EParticleScreenAlignment
 	PSA_TypeSpecific
 };
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual void PostLoad();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual FParticleEmitterInstance* CreateInstance(UParticleSystemComponent* InComponent);
-	virtual void SetToSensibleDefaults();
+   SpawnRate=(Distribution=DistributionSpawnRate)
+   Name="Default__ParticleSpriteEmitter"
+   ObjectArchetype=ParticleEmitter'Engine.Default__ParticleEmitter'
 }

@@ -1,8 +1,4 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
-
-/**
  * SoundNodeDistanceCrossFade
  * 
  * This node's purpose is to play different sounds based on the distance to the listener.  
@@ -27,11 +23,14 @@
  *                         /                   \
  *                        /                     \
  * FadeInDistance.Min -->/                       \ <-- FadeOutDistance.Max
- */
+ *
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ **/
 
 class SoundNodeDistanceCrossFade extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
 
 struct native DistanceDatum
@@ -39,21 +38,16 @@ struct native DistanceDatum
 	/** 
 	 * The FadeInDistance at which to start hearing this sound.  If you want to hear the sound 
 	 * up close then setting this to 0 might be a good option.
-	 */
-	var()					float					FadeInDistanceStart<ToolTip=The distance at which this sound starts fading in>;
-	var()					float					FadeInDistanceEnd<ToolTip=The distance at which this sound has faded in completely>;
+	 **/
+	var() rawdistributionfloat FadeInDistance;
 
 	/**
 	 * The FadeOutDistance is where hearing this sound will end.
-	 */
-	var()					float					FadeOutDistanceStart<ToolTip=The distance at which this sound starts fading out>;
-	var()					float					FadeOutDistanceEnd<ToolTip=The distance at which this sound is no longer audible>;
+	 **/
+	var() rawdistributionfloat FadeOutDistance;
 
 	/** The volume for which this Input should be played **/
-	var()					float					Volume;
-
-	var			deprecated	rawdistributionfloat	FadeInDistance;
-	var			deprecated	rawdistributionfloat	FadeOutDistance;
+	var() float Volume;
 
 	structdefaultproperties
 	{
@@ -64,9 +58,29 @@ struct native DistanceDatum
 /**
  * Each input needs to have the correct data filled in so the SoundNodeDistanceCrossFade is able
  * to determine which sounds to play
- */
+ **/
 var() export editfixedsize array<DistanceDatum>	CrossFadeInput;
+
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__SoundNodeDistanceCrossFade"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

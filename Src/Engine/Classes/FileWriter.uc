@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * This is a simple class that allows for secure writing of output files from within Script.  The directory to which it writes
  * files is determined by the file type member variable.
@@ -15,6 +15,7 @@ var const native pointer ArchivePtr{FArchive};
 var const string Filename;
 
 /** Type of file */
+
 enum FWFileType
 {
 	FWFT_Log,				// Created in %GameDir%/Logs
@@ -24,33 +25,18 @@ enum FWFileType
 	FWFT_Debug,				// Created in %GameDir%/Debug
 };
 
-/** Holds the file type for this file. */
-var const FWFileType FileType;
-
-/**
- * Whether we should flush to disk every time something is written.
- * if false, only flush when the memory buffer is full or when the file is closed
- */
-var bool bFlushEachWrite;
-
-/** Whether to use async writes (if available) or not. Overrides bFlushEachWrite */
-var bool bWantsAsyncWrites;
-
-cpptext
-{
-	virtual void BeginDestroy();
-}
+var const FWFileType FileType;	// Holds the file type for this file.
 
 /**
  * Opens the actual file using the specified name.
  *
- * @param InFilename name of file to open
- * @param InFileType the type of file being written
- * @param InExtension optional file extension to use, defaults to .txt if none is specified
- * @param bUnique whether to make unique or not
- * @param bIncludeTimeStamp whether to include timestamps or not
+ * @param	fileName - name of file to open
+ *
+ * @param	extension - optional file extension to use, defaults to
+ * 			.txt if none is specified
  */
-native final function bool OpenFile(coerce string InFilename, optional FWFileType InFileType,
+
+native final function bool OpenFile(coerce string InFilename, optional FWFileType InFileType, 
 									optional string InExtension, optional bool bUnique, optional bool bIncludeTimeStamp);
 
 /**
@@ -75,6 +61,11 @@ event Destroyed()
 
 defaultproperties
 {
-	bFlushEachWrite=true
-	bTickIsDisabled=true
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__FileWriter"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

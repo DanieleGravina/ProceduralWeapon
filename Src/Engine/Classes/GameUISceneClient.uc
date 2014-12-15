@@ -1,12 +1,154 @@
 /**
  * UISceneClient used when playing a game.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class GameUISceneClient extends UISceneClient
 	within UIInteraction
 	native(UIPrivate)
 	config(UI);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 11
+
+/**
+ * the list of scenes currently open.  A scene corresponds to a top-level UI construct, such as a menu or HUD
+ * There is always at least one scene in the stack - the transient scene.  The transient scene is used as the
+ * container for all widgets created by unrealscript and is always rendered last.
+ */
+var	const	transient 							array<UIScene>		ActiveScenes;
+
+/**
+ * The mouse cursor that is currently being used.  Updated by scenes & widgets as they change states by calling ChangeMouseCursor.
+ */
+var	const	transient							UITexture			CurrentMouseCursor;
+
+/**
+ * Determines whether the cursor should be rendered.  Set by UpdateMouseCursor()
+ */
+var	const	transient							bool				bRenderCursor;
 
 /** Cached DeltaTime value from the last Tick() call */
 var	const	transient							float				LatestDeltaTime;
@@ -19,6 +161,9 @@ var	const	transient							double				DoubleClickStartTime;
  * event.
  */
 var const	transient							IntPoint			DoubleClickStartPosition;
+
+/** Textures for general use by the UI */
+var	const	transient							Texture				DefaultUITexture[EUIDefaultPenColor];
 
 /**
  * map of controllerID to list of keys which were pressed when the UI began processing input
@@ -33,162 +178,383 @@ var	const	transient	native					Map_Mirror			InitialPressedKeys{TMap<INT,TArray<F
 var	const	transient							bool				bUpdateInputProcessingStatus;
 
 /**
- * Indicates that the viewport size being used by one or more scenes is out of date; triggers a call to NotifyViewportResized during the
- * next tick.
- */
-var			transient							bool				bUpdateSceneViewportSizes;
+* Indicates that the input processing status of the UI has potentially changed; causes UpdateCursorRenderStatus to be called
+* in the next Tick().
+*/
+var const	transient							bool				bUpdateCursorRenderStatus;
 
 /** Controls whether debug input commands are accepted */
 var			config								bool				bEnableDebugInput;
 /** Controls whether debug information about the scene is rendered */
 var			config								bool				bRenderDebugInfo;
+/** Controls whether debug information is rendered at the top or bottom of the screen */
+var	globalconfig								bool				bRenderDebugInfoAtTop;
+/** Controls whether debug information is rendered about the active control */
+var	globalconfig								bool				bRenderActiveControlInfo;
+/** Controls whether debug information is rendered about the currently focused control */
+var	globalconfig								bool				bRenderFocusedControlInfo;
+/** Controls whether debug information is rendered about the targeted control */
+var	globalconfig								bool				bRenderTargetControlInfo;
+/** Controls whether a widget must be visible to become the debug target */
+var	globalconfig								bool				bSelectVisibleTargetsOnly;
+var	globalconfig								bool				bInteractiveMode;
+var	globalconfig								bool				bDisplayFullPaths;
+var	globalconfig								bool				bShowWidgetPath;
+var	globalconfig								bool				bShowRenderBounds;
+var	globalconfig								bool				bShowCurrentState;
+var	globalconfig								bool				bShowMousePos;
 
 /**
- * Controls whether the UI system should prevent the game from recieving input whenever it's active.  For games with
- * interactive menus that remain on-screen during gameplay, you'll want to change this value to FALSE.
+ * A multiplier value (between 0.0 and 1.f) used for adjusting the transparency of scenes rendered behind scenes which have
+ * bRenderParentScenes set to TRUE.  The final alpha used for rendering background scenes is cumulative.
  */
-var	const	config								bool				bCaptureUnprocessedInput;
+var	config										float				OverlaySceneAlphaModulation;
 
-/** The list of navigation aliases to check input support for */
-var const transient array<name> NavAliases;
+/**
+ * Controls whether a widget can become the scene client's ActiveControl if it isn't in the top-most/focused scene.
+ * False allows widgets in background scenes to become the active control.
+ */
+var	config										bool				bRestrictActiveControlToFocusedScene;
 
-/** The list of axis input keys to check input support for */
-var const transient array<name> AxisInputKeys;
+/**
+ * For debugging - the widget that is currently being watched.
+ */
+var	const	transient							UIScreenObject		DebugTarget;
 
-cpptext
-{
-	/* =======================================
-		FExec interface
-	======================================= */
-	virtual UBOOL Exec(const TCHAR* Cmd,FOutputDevice& Ar);
+/** Holds a list of all available animations for an object */
+var transient array<UIAnimationSeq> AnimSequencePool;
 
-	/* =======================================
-		UUISceneClient interface
-	======================================= */
-	/**
-	 * Called when the UI controller receives a CALLBACK_ViewportResized notification.
-	 *
-	 * @param	SceneViewport	the viewport that was resized
-	 */
-	virtual void NotifyViewportResized( FViewport* SceneViewport );
+/** Holds a list of UIObjects that have animations being applied to them */
+var transient array<UIObject> AnimSubscribers;
 
-	/**
-	 * Process an input event which interacts with the in-game scene debugging overlays
-	 *
-	 * @param	Key		the key that was pressed
-	 * @param	Event	the type of event received
-	 *
-	 * @return	TRUE if the input event was processed; FALSE otherwise.
-	 */
-	UBOOL DebugInputKey( FName Key, EInputEvent Event );
+/** Will halt the restoring of the menu progression */
+var transient bool bKillRestoreMenuProgression;
 
-	/**
-	 * Check a key event received by the viewport.
-	 *
-	 * @param	Viewport - The viewport which the key event is from.
-	 * @param	ControllerId - The controller which the key event is from.
-	 * @param	Key - The name of the key which an event occured for.
-	 * @param	Event - The type of event which occured.
-	 * @param	AmountDepressed - For analog keys, the depression percent.
-	 * @param	bGamepad - input came from gamepad (ie xbox controller)
-	 *
-	 * @return	True to consume the key event, false to pass it on.
-	 */
-	virtual UBOOL InputKey(INT ControllerId,FName Key,EInputEvent Event,FLOAT AmountDepressed=1.f,UBOOL bGamepad=FALSE);
-
-	/**
-	 * Check an axis movement received by the viewport.
-	 *
-	 * @param	Viewport - The viewport which the axis movement is from.
-	 * @param	ControllerId - The controller which the axis movement is from.
-	 * @param	Key - The name of the axis which moved.
-	 * @param	Delta - The axis movement delta.
-	 * @param	DeltaTime - The time since the last axis update.
-	 *
-	 * @return	True to consume the axis movement, false to pass it on.
-	 */
-	virtual UBOOL InputAxis(INT ControllerId,FName Key,FLOAT Delta,FLOAT DeltaTime, UBOOL bGamepad=FALSE);
-
-	/**
-	 * Check a character input received by the viewport.
-	 *
-	 * @param	Viewport - The viewport which the axis movement is from.
-	 * @param	ControllerId - The controller which the axis movement is from.
-	 * @param	Character - The character.
-	 *
-	 * @return	True to consume the character, false to pass it on.
-	 */
-	virtual UBOOL InputChar(INT ControllerId,TCHAR Character);
-
-	/* =======================================
-		UGameUISceneClient interface
-	======================================= */
-
-	/**
-	 * Resets the time and mouse position values used for simulating double-click events to the current value or invalid values.
-	 */
-	void ResetDoubleClickTracking( UBOOL bClearValues );
-
-	/**
-	 * Checks the current time and mouse position to determine whether a double-click event should be simulated.
-	 */
-	UBOOL ShouldSimulateDoubleClick() const;
-
-	/**
-	 * Determines whether the any active scenes process axis input.
-	 *
-	 * @param	bProcessAxisInput	receives the flags for whether axis input is needed for each player.
-	 */
-	virtual void CheckAxisInputSupport( UBOOL* bProcessAxisInput[UCONST_MAX_SUPPORTED_GAMEPADS] ) const;
-
-	/**
-	 * Called once a frame to update the UI's state.
-	 *
-	 * @param	DeltaTime - The time since the last frame.
-	 */
-	virtual void Tick(FLOAT DeltaTime);
-
-private:
-
-	#if WITH_GFx
-	/**
-	 * @return	TRUE if the scene meets the conditions defined by the bitmask specified.
-	 */
-	UBOOL GFxMovieMatchesFilter( DWORD FilterFlagMask, class FGFxMovie* TestMovie ) const;
-	#endif //WITH_GFx
-public:
-	/**
-	 * Returns true if there is an unhidden fullscreen UI active
-	 *
-	 * @param	Flags	modifies the logic which determines whether the UI is active
-	 *
-	 * @return TRUE if the UI is currently active
-	 */
-	virtual UBOOL IsUIActive( DWORD Flags=SCENEFILTER_Any ) const;
-
-protected:
-
-	/**
-	 * Updates the value of UIInteraction.bProcessingInput to reflect whether any scenes are capable of processing input.
-	 */
-	void UpdateInputProcessingStatus();
-
-	/**
-	 * Clears the arrays of pressed keys for all local players in the game; used when the UI begins processing input.  Also
-	 * updates the InitialPressedKeys maps for all players.
-	 */
-	void FlushPlayerInput();
-
-public:
-	/**
-	 * Ensures that the game's paused state is appropriate considering the state of the UI.  If any scenes are active which require
-	 * the game to be paused, pauses the game...otherwise, unpauses the game.
-	 *
-	 * @param	PlayerIndex		the index of the player that owns the scene that was just added or removed, or 0 if the scene didn't have
-	 *							a player owner.
-	 */
-	virtual void UpdatePausedState( INT PlayerIndex );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /* == Delegates == */
 
@@ -199,9 +565,56 @@ public:
 native static final function WorldInfo.ENetMode GetCurrentNetMode();
 
 /**
+ * Get a reference to the transient scene, which is used to contain transient widgets that are created by unrealscript
+ *
+ * @return	pointer to the UIScene that owns transient widgets
+ */
+native final function UIScene GetTransientScene() const;
+
+/**
+ * Creates an instance of the scene class specified.  Used to create scenes from unrealscript.  Does not initialize
+ * the scene - you must call OpenScene, passing in the result of this function as the scene to be opened.
+ *
+ * @param	SceneClass		the scene class to open
+ * @param	SceneTag		if specified, the scene will be given this tag when created
+ * @param	SceneTemplate	if specified, will be used as the template for the newly created scene if it is a subclass of SceneClass
+ *
+ * @return	a UIScene instance of the class specified
+ */
+native final noexport function coerce UIScene CreateScene( class<UIScene> SceneClass, optional name SceneTag, optional UIScene SceneTemplate );
+
+/**
+ * Create a temporary widget for presenting data from unrealscript
+ *
+ * @param	WidgetClass		the widget class to create
+ * @param	WidgetTag		the tag to assign to the widget.
+ * @param	Owner			the UIObject that should contain the widget
+ *
+ * @return	a pointer to a fully initialized widget of the class specified, contained within the transient scene
+ * @todo - add support for metacasting using a property flag (i.e. like spawn auto-casts the result to the appropriate type)
+ */
+native final function coerce UIObject CreateTransientWidget( class<UIObject> WidgetClass, Name WidgetTag, optional UIObject Owner );
+
+/**
+ * Searches through the ActiveScenes array for a UIScene with the tag specified
+ *
+ * @param	SceneTag	the name of the scene to locate
+ * @param	SceneOwner	if specified, only scenes that have the specified SceneOwner will be considered.
+ *
+ * @return	pointer to the UIScene that has a SceneName matching SceneTag, or NULL if no scenes in the ActiveScenes
+ *			stack have that name
+ */
+native final function UIScene FindSceneByTag( name SceneTag, optional LocalPlayer SceneOwner ) const;
+
+/**
  * Triggers a call to UpdateInputProcessingStatus on the next Tick().
  */
 native final function RequestInputProcessingUpdate();
+
+/**
+ * Triggers a call to UpdateCursorRenderStatus on the next Tick().
+ */
+native final function RequestCursorRenderUpdate();
 
 /**
  * Callback which allows the UI to prevent unpausing if scenes which require pausing are still active.
@@ -209,47 +622,150 @@ native final function RequestInputProcessingUpdate();
  */
 native final function bool CanUnpauseInternalUI();
 
+/**
+ * Changes this scene client's ActiveControl to the specified value, which might be NULL.  If there is already an ActiveControl
+ *
+ * @param	NewActiveControl	the widget that should become to ActiveControl, or NULL to clear the ActiveControl.
+ *
+ * @return	TRUE if the ActiveControl was updated successfully.
+ */
+native function bool SetActiveControl( UIObject NewActiveControl );
+
 /* == Events == */
 
 /**
- * Wrapper for pausing the game.
+ * Toggles the game's paused state if it does not match the desired pause state.
  *
  * @param	bDesiredPauseState	TRUE indicates that the game should be paused.
- * @param	PlayerIndex			the index [into Engine GamePlayers array] for the player that should be used for pausing the game; can
- *								affect whether the game is actually paused or not (i.e. if the player is an admin in a multi-player match,
- *								for example).
  */
-event PauseGame( bool bDesiredPauseState, optional int PlayerIndex=0 )
+event ConditionalPause( bool bDesiredPauseState )
 {
 	local PlayerController PlayerOwner;
 
 	if ( GamePlayers.Length > 0 )
 	{
-		PlayerIndex = Clamp(PlayerIndex, 0, GamePlayers.Length - 1);
-		PlayerOwner = GamePlayers[PlayerIndex].Actor;
+		PlayerOwner = GamePlayers[0].Actor;
 		if ( PlayerOwner != None )
 		{
-			PlayerOwner.SetPause(bDesiredPauseState, CanUnpauseInternalUI);
+			if ( bDesiredPauseState != PlayerOwner.IsPaused() )
+			{
+				PlayerOwner.SetPause(bDesiredPauseState, CanUnpauseInternalUI);
+			}
 		}
 	}
 }
 
 /**
- * Called when the local player is about to travel to a new URL.  This callback should be used to perform any preparation
- * tasks, such as updating status text and such.  All cleanup should be done from NotifyGameSessionEnded, as that function
- * will be called in some cases where NotifyClientTravel is not.
- *
- * @param	TravellingPlayer	the player that received the call to ClientTravel
- * @param	TravelURL			a string containing the mapname (or IP address) to travel to, along with option key/value pairs
- * @param	TravelType			indicates whether the player will clear previously added URL options or not.
- * @param	bIsSeamlessTravel	indicates whether seamless travelling will be used.
+ * Returns whether widget tooltips should be displayed.
  */
-function NotifyClientTravel( PlayerController TravellingPlayer, string TravelURL, ETravelType TravelType, bool bIsSeamlessTravel );
+event bool CanShowToolTips()
+{
+	// if tooltips are disabled globally, can't show them
+	if ( bDisableToolTips )
+		return false;
+
+	// the we're currently dragging a slider or resizing a list column or something, don't display tooltips
+//	if ( ActivePage != None && ActivePage.bCaptureMouse )
+//		return false;
+//
+	// if we're currently in the middle of a drag-n-drop operation, don't show tooltips
+//	if ( DropSource != None || DropTarget != None )
+//		return false;
+
+	return true;
+}
+
+/* == Unrealscript == */
 
 /**
  * Called when the current map is being unloaded.  Cleans up any references which would prevent garbage collection.
  */
-function NotifyGameSessionEnded();
+function NotifyGameSessionEnded()
+{
+	local int i;
+	local array<UIScene> CurrentlyActiveScenes;
+	local string OutStringValue;
+	local OnlineSubsystem OnlineSub;
+	local OnlineGameSettings GameSettings;
+	local bool bIsLanClient;
+
+	// Determine if we are a client in a LAN game
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None && OnlineSub.GameInterface != None)
+	{
+		GameSettings = OnlineSub.GameInterface.GetGameSettings();
+		if (GetDataStoreStringValue("<Registry:LanClient>", OutStringValue) && OutStringValue == "1")
+		{
+			SetDataStoreStringValue("<Registry:LanClient>", "0");
+			bIsLanClient = GameSettings.bIsLanMatch;
+		}
+	}
+	
+	// Do not save menu progression if we are a LAN client - doing so
+	// would bring us back to the Internet Game search after disconnecting
+	if ( !bIsLanClient )
+	{
+		SaveMenuProgression();
+	}
+
+	// copy the list of active scenes into a temporary array in case scenes start removing themselves when
+	// they receive this notification
+	CurrentlyActiveScenes = ActiveScenes;
+
+	// starting with the most recently opened scene (or the top-most, anyway), notify them all that the
+	// map is about to change
+	for ( i = CurrentlyActiveScenes.Length - 1; i >= 0; i-- )
+	{
+		if ( CurrentlyActiveScenes[i] != None )
+		{
+			CurrentlyActiveScenes[i].NotifyGameSessionEnded();
+		}
+		else
+		{
+			CurrentlyActiveScenes.Remove(i,1);
+		}
+	}
+
+	// if any scenes are still open (usually due to not calling Super.NotifyGameSessionEnded()) try to close them again
+	for ( i = CurrentlyActiveScenes.Length - 1; i >= 0; i-- )
+	{
+		if ( CurrentlyActiveScenes[i].bCloseOnLevelChange )
+		{
+			CurrentlyActiveScenes[i].CloseScene(CurrentlyActiveScenes[i], true, true);
+		}
+	}
+}
+
+
+/**
+ * Called when a system level connection change notification occurs.
+ *
+ * @param ConnectionStatus the new connection status.
+ */
+function NotifyOnlineServiceStatusChanged( EOnlineServerConnectionStatus NewConnectionStatus )
+{
+	local UIScene Scene;
+
+	Scene = GetActiveScene();
+	if ( Scene != None )
+	{
+		Scene.NotifyOnlineServiceStatusChanged(NewConnectionStatus);
+	}
+}
+
+/**
+ * Called when the status of the platform's network connection changes.
+ */
+function NotifyLinkStatusChanged( bool bConnected )
+{
+	local UIScene Scene;
+
+	Scene = GetActiveScene();
+	if ( Scene != None )
+	{
+		Scene.NotifyLinkStatusChanged(bConnected);
+	}
+}
 
 /**
  * Called when a new player has been added to the list of active players (i.e. split-screen join)
@@ -259,9 +775,12 @@ function NotifyGameSessionEnded();
  */
 function NotifyPlayerAdded( int PlayerIndex, LocalPlayer AddedPlayer )
 {
-	if ( IsUIActive(SCENEFILTER_InputProcessorOnly) )
+	local int SceneIndex;
+
+	// notify all currently active scenes about the new player
+	for ( SceneIndex = 0; SceneIndex < ActiveScenes.Length; SceneIndex++ )
 	{
-		RequestInputProcessingUpdate();
+		ActiveScenes[SceneIndex].CreatePlayerData(PlayerIndex, AddedPlayer);
 	}
 }
 
@@ -273,56 +792,495 @@ function NotifyPlayerAdded( int PlayerIndex, LocalPlayer AddedPlayer )
  */
 function NotifyPlayerRemoved( int PlayerIndex, LocalPlayer RemovedPlayer )
 {
-	if ( IsUIActive(SCENEFILTER_InputProcessorOnly) )
+	local int SceneIndex;
+
+	// notify all currently active scenes about the player removal
+	for ( SceneIndex = 0; SceneIndex < ActiveScenes.Length; SceneIndex++ )
 	{
-		RequestInputProcessingUpdate();
+		ActiveScenes[SceneIndex].RemovePlayerData(PlayerIndex, RemovedPlayer);
 	}
 }
 
 /**
- * Helper function to deduce the PlayerIndex of a Player
- * 
- * @param P - The LocalPlayer for whom you wish to deduce their PlayerIndex
- * 
- * @return Returns the index into the GamePlayers array that references this Player. If it cannot find the player, it returns 0.
+ * Returns the currently active scene
  */
-function int FindLocalPlayerIndex(Player P)
+function UIScene GetActiveScene()
 {
-	local Engine Engine;
-	local int i;
+	local UIScene TopmostScene;
 
-	Engine = class'Engine'.static.GetEngine();
-	for (i = 0; i < Engine.GamePlayers.length; i++)
+	if (ActiveScenes.Length > 0)
 	{
-		if (Engine.GamePlayers[i] == P)
-		{
-			return i;
-		}
+		TopmostScene = ActiveScenes[ActiveScenes.Length-1];
 	}
-	return 0;
+
+	return TopmostScene;
 }
 
-DefaultProperties
+/**
+ * Stores the list of currently active scenes which are restorable to the Registry data store for retrieval when
+ * returning back to the front end menus.
+ */
+function SaveMenuProgression()
 {
-	NavAliases(0)="UIKEY_NavFocusUp"
-	NavAliases(1)="UIKEY_NavFocusDown"
-	NavAliases(2)="UIKEY_NavFocusLeft"
-	NavAliases(3)="UIKEY_NavFocusRight"
+	local DataStoreClient DSClient;
+	local UIDataStore_Registry RegistryDS;
+	local UIDynamicFieldProvider RegistryProvider;
+	local int i;
+	local UIScene SceneResource, CurrentScene, NextScene;
+	local string ScenePathName;
 
-	AxisInputKeys(0)="KEY_Gamepad_LeftStick_Up"
-	AxisInputKeys(1)="KEY_Gamepad_LeftStick_Down"
-	AxisInputKeys(2)="KEY_Gamepad_LeftStick_Right"
-	AxisInputKeys(3)="KEY_Gamepad_LeftStick_Left"
-	AxisInputKeys(4)="KEY_Gamepad_RightStick_Up"
-	AxisInputKeys(5)="KEY_Gamepad_RightStick_Down"
-	AxisInputKeys(6)="KEY_Gamepad_RightStick_Right"
-	AxisInputKeys(7)="KEY_Gamepad_RightStick_Left"
-	AxisInputKeys(8)="KEY_SIXAXIS_AccelX"
-	AxisInputKeys(9)="KEY_SIXAXIS_AccelY"
-	AxisInputKeys(10)="KEY_SIXAXIS_AccelZ"
-	AxisInputKeys(11)="KEY_SIXAXIS_Gyro"
-	AxisInputKeys(12)="KEY_XboxTypeS_LeftX"
-	AxisInputKeys(13)="KEY_XboxTypeS_LeftY"
-	AxisInputKeys(14)="KEY_XboxTypeS_RightX"
-	AxisInputKeys(15)="KEY_XboxTypeS_RightY"
+	// can only restore menu progression in the front-end
+	if ( class'UIInteraction'.static.IsMenuLevel() )
+	{
+		DSClient = class'UIInteraction'.static.GetDataStoreClient();
+		if ( DSClient != None )
+		{
+			RegistryDS = UIDataStore_Registry(DSClient.FindDataStore('Registry'));
+			if ( RegistryDS != None )
+			{
+				RegistryProvider = RegistryDS.GetDataProvider();
+				if ( RegistryProvider != None )
+				{
+					// clear out any existing values.
+					RegistryProvider.ClearCollectionValueArray('MenuProgression');
+
+					LogInternal("Storing menu progression (" $ ActiveScenes.Length @ "open scenes)",'DevUI');
+					for ( i = 0; i < ActiveScenes.Length - 1; i++ )
+					{
+						// for each open scene, check to see if the next scene in the stack is configured to be restored
+						//@todo - this assumes that the scene stack is completely linear; this code may need to be altered
+						// if your game doesn't have a linear scene progression.
+						CurrentScene = ActiveScenes[i];
+						NextScene = ActiveScenes[i + 1];
+
+						if ( CurrentScene != None && NextScene != None && CurrentScene != NextScene )
+						{
+							// for each scene, we use the scene's tag as the "key" or CellTag in the Registry's 'MenuProgression'
+							// collection array.  if the next scene in the stack can be restored, store the path name of its
+							// archetype as the value for this scene's entry in the menu progression.  Basically we just want to
+							// remember which scene should be opened next when this scene is opened.
+							if ( NextScene.bMenuLevelRestoresScene )
+							{
+								SceneResource = UIScene(NextScene.ObjectArchetype);
+								if ( SceneResource != None )
+								{
+									ScenePathName = PathName(SceneResource);
+									if ( RegistryProvider.InsertCollectionValue(
+										'MenuProgression', ScenePathName, INDEX_NONE, false, false, CurrentScene.SceneTag) )
+									{
+										LogInternal("Storing" @ ScenePathName @ "as next menu in progression for" @ CurrentScene.SceneTag,'DevUI');
+
+										//@todo - call a function in NextScene to notify it that it has been placed in the list of
+										// scenes that will be restored.  This allows the scene to store additional information,
+										// such as the currently active tab page [for scenes which have tab controls].
+									}
+									else
+									{
+										WarnInternal("Failed to store scene '" $ ScenePathName $ "' menu progression in Registry");
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+ * Clears out any existing stored menu progression values.
+ */
+function ClearMenuProgression()
+{
+	local DataStoreClient DSClient;
+	local UIDataStore_Registry RegistryDS;
+	local UIDynamicFieldProvider RegistryProvider;
+
+	DSClient = class'UIInteraction'.static.GetDataStoreClient();
+	if ( DSClient != None )
+	{
+		RegistryDS = UIDataStore_Registry(DSClient.FindDataStore('Registry'));
+		if ( RegistryDS != None )
+		{
+			RegistryProvider = RegistryDS.GetDataProvider();
+			if ( RegistryProvider != None )
+			{
+				// clear out the stored menu progression
+				RegistryProvider.ClearCollectionValueArray('MenuProgression');
+			}
+		}
+	}
+}
+
+/**
+ * Re-opens the scenes which were saved off to the Registry data store.  Should be called from your game's main front-end
+ * menu.
+ *
+ * @param	BaseScene	the scene to use as the starting point for restoring scenes; if not specified, uses the currently
+ *						active scene.
+ */
+function RestoreMenuProgression( optional UIScene BaseScene )
+{
+	local DataStoreClient DSClient;
+	local UIDataStore_Registry RegistryDS;
+	local UIDynamicFieldProvider RegistryProvider;
+	local UIScene CurrentScene, NextSceneTemplate, SceneInstance;
+	local string ScenePathName;
+	local bool bHasValidNetworkConnection;
+
+	bKillRestoreMenuProgression = false;
+
+	// can only restore menu progression in the front-end
+	if ( class'UIInteraction'.static.IsMenuLevel() )
+	{
+		// if no BaseScene was specified, use the currently active scene.
+		if ( BaseScene == None && IsUIActive() )
+		{
+			BaseScene = ActiveScenes[ActiveScenes.Length - 1];
+		}
+
+		if ( BaseScene != None )
+		{
+			DSClient = class'UIInteraction'.static.GetDataStoreClient();
+			if ( DSClient != None )
+			{
+				RegistryDS = UIDataStore_Registry(DSClient.FindDataStore('Registry'));
+				if ( RegistryDS != None )
+				{
+					RegistryProvider = RegistryDS.GetDataProvider();
+					if ( RegistryProvider != None )
+					{
+						LogInternal("Restoring menu progression from '" $ PathName(BaseScene) $ "'",'DevUI');
+						bHasValidNetworkConnection = class'UIInteraction'.static.HasLinkConnection();
+
+						CurrentScene = BaseScene;
+						while ( CurrentScene != None && !bKillRestoreMenuProgression )
+						{
+							ScenePathName = "";
+
+							// get the path name of the scene that should come after CurrentScene
+							if ( RegistryProvider.GetCollectionValue('MenuProgression', 0, ScenePathName, false, CurrentScene.SceneTag) )
+							{
+								if ( ScenePathName != "" )
+								{
+									// found it - open the scene.
+									NextSceneTemplate = UIScene(DynamicLoadObject(ScenePathName, class'UIScene'));
+									if ( NextSceneTemplate != None )
+									{
+										// if this scene requires a network connection and we don't have one,
+										if ( NextSceneTemplate.bRequiresNetwork && !bHasValidNetworkConnection )
+										{
+											break;
+										}
+
+										SceneInstance = CurrentScene.OpenScene(NextSceneTemplate, true);
+										if ( SceneInstance != None )
+										{
+											CurrentScene = SceneInstance;
+
+											//@todo - notify the scene that it has been restored.  This allows the scene to perform
+											// additional custom initialization, such as activating a specific page in a tab control, for example.
+										}
+										else
+										{
+											WarnInternal("Failed to restore scene '" $ PathName(NextSceneTemplate) $ "': call to OpenScene failed.");
+											break;
+										}
+									}
+									else
+									{
+										WarnInternal("Failed to restore scene '" $ ScenePathName $ "' by name: call to DynamicLoadObject() failed.");
+										break;
+									}
+								}
+								else
+								{
+									LogInternal(Name$"::"$GetFuncName()@"'MenuProgression' value was empty for '" $ PathName(CurrentScene) $ "'",'DevUI');
+									break;
+								}
+							}
+							else
+							{
+								LogInternal(Name$"::"$GetFuncName()@"No 'MenuProgression' found in the Registry data store for '" $ CurrentScene.SceneTag $ "'",'DevUI');
+								break;
+							}
+						}
+
+						// clear out the stored menu progression
+						RegistryProvider.ClearCollectionValueArray('MenuProgression');
+					}
+				}
+			}
+		}
+	}
+}
+
+exec function ShowDockingStacks()
+{
+	local int i;
+
+	for ( i = 0; i < ActiveScenes.Length; i++ )
+	{
+		ActiveScenes[i].LogDockingStack();
+	}
+}
+
+exec function ShowRenderBounds()
+{
+	local int i;
+
+	for ( i = 0; i < ActiveScenes.Length; i++ )
+	{
+		ActiveScenes[i].LogRenderBounds(0);
+	}
+}
+
+exec function ShowMenuStates()
+{
+	local int i;
+
+	for ( i = 0; i < ActiveScenes.Length; i++ )
+	{
+		ActiveScenes[i].LogCurrentState(0);
+	}
+}
+
+exec function ToggleDebugInput( optional bool bEnable=!bEnableDebugInput )
+{
+	bEnableDebugInput = bEnable;
+	LogInternal((bEnableDebugInput ? "Enabling" : "Disabling") @ "debug input processing");
+}
+
+
+exec function CreateMenu( class<UIScene> SceneClass, optional int PlayerIndex=INDEX_NONE )
+{
+	local UIScene Scene;
+	local LocalPlayer SceneOwner;
+
+	LogInternal("Attempting to create script menu '" $ SceneClass $"'");
+
+	Scene = CreateScene(SceneClass);
+	if ( Scene != None )
+	{
+		if ( PlayerIndex != INDEX_NONE )
+		{
+			SceneOwner = GamePlayers[PlayerIndex];
+		}
+
+		OpenScene(Scene, SceneOwner);
+	}
+	else
+	{
+		LogInternal("Failed to create menu '" $ SceneClass $"'");
+	}
+}
+
+exec function OpenMenu( string MenuPath, optional int PlayerIndex=INDEX_NONE )
+{
+	local UIScene Scene;
+	local LocalPlayer SceneOwner;
+
+	LogInternal("Attempting to load menu by name '" $ MenuPath $"'");
+	Scene = UIScene(DynamicLoadObject(MenuPath, class'UIScene'));
+	if ( Scene != None )
+	{
+		if ( PlayerIndex != INDEX_NONE )
+		{
+			SceneOwner = GamePlayers[PlayerIndex];
+		}
+
+		OpenScene(Scene,SceneOwner);
+	}
+	else
+	{
+		LogInternal("Failed to load menu '" $ MenuPath $"'");
+	}
+}
+
+exec function CloseMenu( name SceneName )
+{
+	local int i;
+	for ( i = 0; i < ActiveScenes.Length; i++ )
+	{
+		if ( ActiveScenes[i].SceneTag == SceneName )
+		{
+			LogInternal("Closing scene '"$ ActiveScenes[i].GetWidgetPathName() $ "'");
+			CloseScene(ActiveScenes[i]);
+			return;
+		}
+	}
+
+	LogInternal("No scenes found in ActiveScenes array with name matching '"$SceneName$"'");
+}
+
+exec function ShowDataStoreField( string DataStoreMarkup )
+{
+	local string Value;
+
+	if ( class'UIRoot'.static.GetDataStoreStringValue(DataStoreMarkup, Value) )
+	{
+		LogInternal("Successfully retrieved value for markup string (" $ DataStoreMarkup $ "): '" $ Value $ "'");
+	}
+	else
+	{
+		LogInternal("Failed to resolve value for data store markup (" $ DataStoreMarkup $ ")");
+	}
+}
+
+exec function RefreshFormatting()
+{
+	local UIScene ActiveScene;
+
+	ActiveScene = GetActiveScene();
+	if ( ActiveScene != None )
+	{
+		LogInternal("Forcing a formatting update and scene refresh for" @ ActiveScene);
+		ActiveScene.RequestFormattingUpdate();
+	}
+}
+
+/**
+ * Debug console command for dumping all registered data stores to the log
+ *
+ * @param	bFullDump	specify TRUE to show detailed information about each registered data store.
+ */
+exec function ShowDataStores( optional bool bVerbose )
+{
+	LogInternal("Dumping data store info to log - if you don't see any results, you probably need to unsuppress DevDataStore");
+
+	if ( DataStoreManager != None )
+	{
+		DataStoreManager.DebugDumpDataStoreInfo(bVerbose);
+	}
+	else
+	{
+		LogInternal(Self @ "has a NULL DataStoreManager!",'DevDataStore');
+	}
+}
+
+
+exec function ShowMenuProgression()
+{
+	local DataStoreClient DSClient;
+	local UIDataStore_Registry RegistryDS;
+	local UIDynamicFieldProvider RegistryProvider;
+	local array<string> Values;
+	local array<name> SceneTags;
+	local int SceneIndex, MenuIndex;
+
+	LogInternal("Current stored menu progression:");
+	DSClient = class'UIInteraction'.static.GetDataStoreClient();
+	if ( DSClient != None )
+	{
+		RegistryDS = UIDataStore_Registry(DSClient.FindDataStore('Registry'));
+		if ( RegistryDS != None )
+		{
+			RegistryProvider = RegistryDS.GetDataProvider();
+			if ( RegistryProvider != None )
+			{
+				if ( RegistryProvider.GetCollectionValueSchema('MenuProgression', SceneTags) )
+				{
+					for ( SceneIndex = 0; SceneIndex < SceneTags.Length; SceneIndex++ )
+					{
+						if ( RegistryProvider.GetCollectionValueArray('MenuProgression', Values, false, SceneTags[SceneIndex]) )
+						{
+							for ( MenuIndex = 0; MenuIndex < Values.Length; MenuIndex++ )
+							{
+								LogInternal("    Scene:" @ SceneTags[SceneIndex] @ "Menu" @ MenuIndex $ ":" @ Values[MenuIndex]);
+							}
+						}
+						else
+						{
+							LogInternal("No menu progression data found for scene" @ SceneIndex $ ":" @ SceneTags[SceneIndex]);
+						}
+					}
+				}
+				else
+				{
+					LogInternal("No menu progression data found in the Registry data store");
+				}
+			}
+		}
+	}
+}
+
+// ===============================================
+// ANIMATIONS
+// ===============================================
+
+
+/**
+ * Subscribes a UIObject so that it will receive TickAnim calls
+ */
+function AnimSubscribe(UIObject Target)
+{
+	local int i;
+	i = AnimSubscribers.Find(Target);
+	if (i == INDEX_None )
+	{
+		LogInternal(">>> Subscribing"@ PathName(Target) @ "at index" @ AnimSubscribers.Length - 1 @ "(" $ AnimSubscribers.Length $ ")",'DevUIAnimation');
+		AnimSubscribers[AnimSubscribers.Length] = Target;
+	}
+	else
+	{
+		LogInternal(">>> Subscribing " $ PathName(Target) @ "failed because it was already in the stack at" @ i @ "(" $ AnimSubscribers.Length $ ")",'DevUIAnimation');
+	}
+}
+
+/**
+ * UnSubscribe a UIObject so that it will receive TickAnim calls
+ */
+function AnimUnSubscribe(UIObject Target)
+{
+	local int i;
+	i = AnimSubscribers.Find(Target);
+	if (i != INDEX_None )
+	{
+		LogInternal("<<< UnSubscribing"@ PathName(Target) @ "from position" @ i @ "(" $ AnimSubscribers.Length $ ")",'DevUIAnimation');
+		AnimSubscribers.Remove(i,1);
+	}
+	else
+	{
+		LogInternal("<<< UnSubscribing" @ PathName(Target) @ "failed because it wasn't in the AnimSubscribers list" @ "(" $ AnimSubscribers.Length $ ")",'DevUIAnimation');
+	}
+}
+
+/**
+ * Attempt to find an animation in the AnimSequencePool.
+ *
+ * @Param SequenceName		The sequence to find
+ * @returns the sequence if it was found otherwise returns none
+ */
+function UIAnimationSeq AnimLookupSequence(name SequenceName)
+{
+	local int i;
+	for (i=0;i<AnimSequencePool.Length;i++)
+	{
+		if ( AnimSequencePool[i].SeqName == SequenceName )
+		{
+			return AnimSequencePool[i];
+		}
+	}
+	return none;
+}
+
+defaultproperties
+{
+   bEnableDebugInput=True
+   bRenderDebugInfoAtTop=True
+   bRenderActiveControlInfo=True
+   bRenderFocusedControlInfo=True
+   bRenderTargetControlInfo=True
+   bSelectVisibleTargetsOnly=True
+   bDisplayFullPaths=True
+   bShowWidgetPath=True
+   bShowRenderBounds=True
+   bShowCurrentState=True
+   bShowMousePos=True
+   bRestrictActiveControlToFocusedScene=True
+   OverlaySceneAlphaModulation=0.450000
+   Name="Default__GameUISceneClient"
+   ObjectArchetype=UISceneClient'Engine.Default__UISceneClient'
 }

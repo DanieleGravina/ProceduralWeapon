@@ -1,16 +1,20 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNotify_Scripted extends AnimNotify
 	native(Anim)
 	abstract;
 
 event Notify( Actor Owner, AnimNodeSequence AnimSeqInstigator );
-event NotifyEnd( Actor Owner, AnimNodeSequence AnimSeqInstigator );
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	// AnimNotify interface.
-	virtual void Notify( class UAnimNodeSequence* NodeSeq );
-	virtual void NotifyEnd( class UAnimNodeSequence* NodeSeq, FLOAT AnimCurrentTime );
+   Name="Default__AnimNotify_Scripted"
+   ObjectArchetype=AnimNotify'Engine.Default__AnimNotify'
 }

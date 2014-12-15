@@ -1,11 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTActorFactoryUTKActor extends ActorFactoryRigidBody;
 
 defaultproperties
 {
-	MenuName="Add UT Rigid Body"
-	NewActorClass=class'UTGame.UTKActor'
+   MenuName="Add UT Rigid Body"
+   NewActorClass=Class'UTGame.UTKActor'
+   Name="Default__UTActorFactoryUTKActor"
+   ObjectArchetype=ActorFactoryRigidBody'Engine.Default__ActorFactoryRigidBody'
 }

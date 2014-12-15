@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetPhysics extends SequenceAction
 	native(Sequence);
@@ -7,14 +7,12 @@ class SeqAct_SetPhysics extends SequenceAction
 /** Action for changing the physics mode of an Actor. */
 
 /** Physics mode to change the Actor to. */
-var()	Actor.EPhysics	NewPhysics<autocomment=true>;
+var()	Actor.EPhysics	NewPhysics;
 
 defaultproperties
 {
-	bSuppressAutoComment=false
-
-	ObjName="Set Physics"
-	ObjCategory="Physics"
-
-	NewPhysics=PHYS_None
+   ObjName="Set Physics"
+   ObjCategory="Physics"
+   Name="Default__SeqAct_SetPhysics"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

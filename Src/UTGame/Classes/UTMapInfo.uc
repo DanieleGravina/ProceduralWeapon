@@ -1,15 +1,22 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTMapInfo extends UDKMapInfo
-	dependson(UTMapMusicInfo);
+class UTMapInfo extends MapInfo
+	dependson(UTMapMusicInfo)
+	native;
 
 /** recommended player count range - for display on the UI and the auto number of bots setting */
 var() int RecommendedPlayersMin, RecommendedPlayersMax;
 
 /** This is stored in a content package and then pointed to by the map **/
 var() UTMapMusicInfo MapMusicInfo;
+
+/** whether the path builder should build translocator/lowgrav/jumpboot paths for this level */
+var() bool bBuildTranslocatorPaths;
+
+/** modifier to visibility/range calculations for AI (0 to 1) */
+var() float VisibilityModifier;
 
 /*********************  Map Rendering ***********************/
 
@@ -74,9 +81,14 @@ var transient MaterialInstanceConstant GreenIconMaterialInstance;
 var texturecoordinates PlayerIconCoords;
 
 // show up to 2 key vehicles on minimap
-var UDKVehicle KeyVehicles[2];
+var UTVehicle KeyVehicles[2];
 
 var array<UTGameObjective> Sensors;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /******************************************************
  * Map Rendering
@@ -91,7 +103,7 @@ simulated function VerifyMapExtent()
 
 	if ( MapExtent == 0 )
 	{
-		`log("NO VALID MINIMAP INFO IN MAPINFO!!!");
+		LogInternal("NO VALID MINIMAP INFO IN UTONSLAUGHTMAPINFO!!!");
 		WI = WorldInfo(Outer);
 		MapCenter = vect(0,0,0);
 		ForEach WI.AllActors(class'UTGameObjective', O)
@@ -99,15 +111,13 @@ simulated function VerifyMapExtent()
 			MapCenter += O.Location;
 			NumNodes++;
 		}
-		if ( NumNodes > 0 )
-		{
-			MapCenter = MapCenter/NumNodes;
 
-			// Calculate the radar range and reset the nodes as not having been rendered
-			ForEach WI.AllActors(class'UTGameObjective', O)
-			{
-				MapExtent = FMax(MapExtent, 2.75 * vsize2D(MapCenter - O.Location));
-			}
+		MapCenter = MapCenter/NumNodes;
+
+		// Calculate the radar range and reset the nodes as not having been rendered
+		ForEach WI.AllActors(class'UTGameObjective', O)
+		{
+			MapExtent = FMax(MapExtent, 2.75 * vsize2D(MapCenter - O.Location));
 		}
 	}
 }
@@ -133,88 +143,17 @@ function FindObjectives()
 /**
   *  Tell all the nodes to render themselves
   */
-simulated function RenderLinks(Canvas Canvas, UTPlayerController PlayerOwner)
-{
-	local int i;
-	local LinearColor NodeColor;
-	local float AttackScale, CurrentScale;
-	
-	for ( i=0; i<Objectives.Length; i++ )
-	{
-		if ( (Objectives[i] != None) && (Objectives[i].IconHudTexture != None) && !Objectives[i].bIsDisabled )
-		{
-			// draw attack icons
-			if ( Objectives[i].bUnderAttack )
-			{
-				AttackScale = 0.03 * Canvas.ClipX * (1.5 + 0.5*Sin(6.0*PlayerOwner.WorldInfo.TimeSeconds));
-				Canvas.SetPos(Objectives[i].HUDLocation.X - 0.5*AttackScale, Objectives[i].HUDLocation.Y - 0.5*AttackScale);
-				Objectives[i].AttackLinearColor.B = ColorPercent;
-				Canvas.DrawTile(Objectives[i].IconHudTexture, AttackScale, AttackScale * Objectives[i].IconCoords.VL/Objectives[i].IconCoords.UL, Objectives[i].AttackCoords.U, Objectives[i].AttackCoords.V, Objectives[i].AttackCoords.UL, Objectives[i].AttackCoords.VL, Objectives[i].AttackLinearColor);
-			}
-
-			// draw node icons
-			NodeColor = Objectives[i].ControlColor[Min(Objectives[i].DefenderTeamIndex, 2)];
-			if ( Objectives[i].bIsConstructing )
-			{
-				NodeColor.R *= ColorPercent;
-				NodeColor.G *= ColorPercent;
-				NodeColor.B *= ColorPercent;
-				NodeColor.R += Objectives[i].ControlColor[2].R * (1.0 - ColorPercent);
-				NodeColor.G += Objectives[i].ControlColor[2].G * (1.0 - ColorPercent);
-				NodeColor.B += Objectives[i].ControlColor[2].B * (1.0 - ColorPercent);
-			}
-			if ( Objectives[i].HighlightScale > 1.0 )
-			{
-				CurrentScale = (PlayerOwner.WorldInfo.TimeSeconds - Objectives[i].LastHighlightUpdate)/Objectives[i].HighlightSpeed;
-				Objectives[i].HighlightScale = FMax(1.0, Objectives[i].HighlightScale - CurrentScale * Objectives[i].MaxHighlightScale);
-				Objectives[i].DrawIcon(Canvas, Objectives[i].HUDLocation, Objectives[i].MinimapIconScale * Objectives[i].HighlightScale * MapScale, 1.0, PlayerOwner, NodeColor);
-			}
-			else
-			{
-				Objectives[i].DrawIcon(Canvas, Objectives[i].HUDLocation, Objectives[i].MinimapIconScale * MapScale, 1.0, PlayerOwner, NodeColor);
-			}
-		}
-	}
-}
+simulated native function RenderLinks(Canvas Canvas, UTPlayerController PlayerOwner);
 
 /**
   * Give objectives a chance to add information to minimap
   */
-simulated function RenderAdditionalInformation(Canvas Canvas, UTPlayerController PlayerOwner)
-{
-	local int i;
-	
-	// draw extra info
-	for ( i=0; i<Objectives.Length; i++ )
-	{
-		if ( (Objectives[i] != None) && Objectives[i].bScriptRenderAdditionalMinimap && !Objectives[i].bIsDisabled )
-		{
-			Objectives[i].RenderMinimap(self, Canvas, PlayerOwner, ColorPercent);
-		}
-	}
-}
+simulated native function RenderAdditionalInformation(Canvas Canvas, UTPlayerController PlayerOwner);
 
 /**
   * Update Node positions and sensor array
   */
-simulated function UpdateNodes(UTPlayerController PlayerOwner)
-{
-	local int i;
-	
-	Sensors.Length = 0;
-	for ( i=0; i < Objectives.Length; i++ )
-	{
-		if ( Objectives[i] != None )
-		{
-			Objectives[i].bAlreadyRendered = FALSE;
-			Objectives[i].SetHUDLocation(UpdateHUDLocation(Objectives[i].Location)); 
-			if (  Objectives[i].bHasSensor && (Objectives[i].WorldInfo.GRI != None) && Objectives[i].WorldInfo.GRI.OnSameTeam(Objectives[i], PlayerOwner) )
-			{
-				Sensors.AddItem(Objectives[i]);
-			}
-		}
-	}
-}
+simulated native function UpdateNodes(UTPlayerController PlayerOwner);
 
 /**
  * Draw a map on a canvas.
@@ -231,12 +170,14 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 	local float MinRadarRange, hw,hh,DotScale;
 	local Pawn PawnOwner, P, SecondPawn;
 	local linearcolor FinalColor, TC;
-	local bool bInSensorRange, bIsSplitScreen;
+	local bool bInSensorRange, bDrawAutoObjective, bIsSplitScreen;
 	local UTPawn UTP;
 	local UTPlayerController PC;
 	local UTVehicle V;
 	local UTTeamInfo Team;
+	local UTGameObjective SpawnObjective;
 	local rotator MapRot;
+	local UTWarfareBarricade BarricadeObjective;
 	local WorldInfo WI;
 
 	// If we aren't rendering for anyone, exit
@@ -268,6 +209,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 	ColorPercent = 0.5f + Cos((WI.RealTimeSeconds * 4.0) * 3.14159 * 0.5f) * 0.5f;
 
 	PawnOwner = Pawn(PlayerOwner.ViewTarget);
+	SpawnObjective = UTPlayerReplicationInfo(PlayerOwner.PlayerReplicationInfo).StartObjective;
 
 	// Refresh all Positional Data
 	CenterPos.Y = YPos + (Height * 0.5);		//0.5*Canvas.ClipY;
@@ -279,7 +221,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 
 	// determine player position on minimap
 	ScreenLocation = (PawnOwner != None) ? PawnOwner.Location : PlayerOwner.Location;
-	PlayerYaw = PlayerOwner.Rotation.Yaw & 65535;
+	PlayerYaw = (UTRemoteRedeemer(PawnOwner) == None) ? PlayerOwner.Rotation.Yaw & 65535 : PawnOwner.Rotation.Yaw & 65535;
 
 	RadarRange = MapExtent;
 	MapRot.Yaw = (MapYaw * 182.04444444);
@@ -312,19 +254,19 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 
 	// UL
     Canvas.SetPos(XPos,YPos);
-    Canvas.DrawTile(class'UTHUD'.default.IconHudTexture, hw, hh, 215,579,347,347,TC);
+    Canvas.DrawColorizedTile(class'UTHUD'.default.IconHudTexture, hw, hh, 215,579,347,347,TC);
 
     // UR
     Canvas.SetPos(XPos+hw,YPos);
-    Canvas.DrawTile(class'UTHUD'.default.IconHudTexture, hw, hh, 562,579,-347,347,TC);
+    Canvas.DrawColorizedTile(class'UTHUD'.default.IconHudTexture, hw, hh, 562,579,-347,347,TC);
 
 	// LL
     Canvas.SetPos(XPos,YPos+hh);
-    Canvas.DrawTile(class'UTHUD'.default.IconHudTexture, hw, hh, 215,926,347,-347,TC);
+    Canvas.DrawColorizedTile(class'UTHUD'.default.IconHudTexture, hw, hh, 215,926,347,-347,TC);
 
     // LR
     Canvas.SetPos(XPos+hw,YPos+hh);
-    Canvas.DrawTile(class'UTHUD'.default.IconHudTexture, hw, hh, 562,926,-347,-347,TC);
+    Canvas.DrawColorizedTile(class'UTHUD'.default.IconHudTexture, hw, hh, 562,926,-347,-347,TC);
 
 	// North indicator
     DotScale = hw / 347;
@@ -345,7 +287,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 	else
 	{
 		Canvas.SetPos(XPos + hw - (29.5 * DotScale), YPos - (5 * DotScale));    // 42-37 = 5 :)
-		Canvas.DrawTile(class'UTHUD'.default.IconHudTexture, 59*DotScale, 67*DotScale, 725,175,59,67,TC);
+		Canvas.DrawColorizedTile(class'UTHUD'.default.IconHudTexture, 59*DotScale, 67*DotScale, 725,175,59,67,TC);
 	}
 
 	ChangeMapRotation(MapRot);
@@ -376,7 +318,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 
 			// draw second player
 			SecondScreenLocation = SecondPawn.Location;
-			SecondPlayerYaw = PC.Rotation.Yaw & 65535;
+			SecondPlayerYaw = (UTRemoteRedeemer(SecondPawn) == None) ? PC.Rotation.Yaw & 65535 : SecondPawn.Rotation.Yaw & 65535;
 			SecondPlayerLocation = UpdateHUDLocation(SecondScreenLocation);
 			Canvas.DrawColor = class'UTTeamInfo'.Default.BaseTeamColor[2];
 			DrawRotatedTile(Canvas, class'UTHUD'.default.IconHudTexture, SecondPlayerLocation, SecondPlayerYaw + 16384, 2.0, PlayerIconCoords, MakeLinearColor(1.0,1.0,0.4,1.0));
@@ -419,6 +361,14 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 			Canvas.SetDrawColor(255,255,255,128);
 			Canvas.DrawTile(class'UTHUD'.default.AltHudTexture,31*MapScale,31*MapScale,273,494,12,13);
 		}
+
+		if ( SpawnObjective != none )
+		{
+			// TEMP - Need a icon or background
+			Canvas.SetPos(SpawnObjective.HUDLocation.X - 11 * MapScale, SpawnObjective.HUDLocation.Y - 11 * MapScale * AspectRatio); // * Canvas.ClipY / Canvas.ClipX);
+			Canvas.SetDrawColor(64,255,64,128);
+			Canvas.DrawTile(class'UTHUD'.default.AltHudTexture,31*MapScale,31*MapScale,273,494,12,13);
+		}
 	}
 
 	RenderLinks(Canvas, PlayerOwner);
@@ -430,6 +380,38 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 			Objectives[i].RenderExtraDetails(self, Canvas, PlayerOwner, ColorPercent, Objectives[i] == CurrentActor);
 		}
 
+		// If the selected actor is a vehicle, highlight it as we would an objective
+		V = UTVehicle(CurrentActor);
+		if ( V != None )
+		{
+			Canvas.SetPos(V.HUDLocation.X - 12 * MapScale, V.HUDLocation.Y - 12 * MapScale * Canvas.ClipY / Canvas.ClipX);
+			Canvas.SetDrawColor(255,255,0,255);
+			Canvas.DrawTile(class'UTHUD'.default.AltHudTexture,25*MapScale,25*MapScale,273,494,12,13);
+		}
+
+		if ( bIsSplitScreen )
+		{
+			// draw "key vehicles" on minimap
+			for ( i=0; i<2; i++ )
+			{
+				if ( KeyVehicles[i] == None )
+				{
+					continue;
+				}
+
+				if ( !KeyVehicles[i].bKeyVehicle || (KeyVehicles[i].Health <=0) || KeyVehicles[i].bDeleteMe )
+				{
+					KeyVehicles[i] = None;
+					continue;
+				}
+
+				KeyVehicles[i].SetHUDLocation(UpdateHUDLocation(KeyVehicles[i].Location));
+				class'UTHud'.static.GetTeamColor(KeyVehicles[i].Team, FinalColor);
+				KeyVehicles[i].RenderMapIcon(self, Canvas, PlayerOwner, FinalColor);
+			}
+		}
+		else
+		{
 		// Draw all vehicles in sensor range that aren't locked (locked vehicles handled by vehicle factory)
 		ForEach WI.AllPawns(class'Pawn', P)
 		{
@@ -491,6 +473,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 			}
 		}
 	}
+	}
 	else
 	{
 		// draw "key vehicles" on minimap
@@ -501,7 +484,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 				continue;
 			}
 
-			if ( !UTVehicle(KeyVehicles[i]).bKeyVehicle || (KeyVehicles[i].Health <=0) || KeyVehicles[i].bDeleteMe )
+			if ( !KeyVehicles[i].bKeyVehicle || (KeyVehicles[i].Health <=0) || KeyVehicles[i].bDeleteMe )
 			{
 				KeyVehicles[i] = None;
 				continue;
@@ -509,7 +492,7 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 
 			KeyVehicles[i].SetHUDLocation(UpdateHUDLocation(KeyVehicles[i].Location));
 			class'UTHud'.static.GetTeamColor(KeyVehicles[i].Team, FinalColor);
-			UTVehicle(KeyVehicles[i]).RenderMapIcon(self, Canvas, PlayerOwner, FinalColor);
+			KeyVehicles[i].RenderMapIcon(self, Canvas, PlayerOwner, FinalColor);
 		}
 	}
 
@@ -556,10 +539,31 @@ simulated function DrawMap(Canvas Canvas, UTPlayerController PlayerOwner, float 
 	// highlight current objective
 	if ( PlayerOwner.LastAutoObjective != None )
 	{
-		CurrentObjectiveHUDLocation = UpdateHUDLocation(PlayerOwner.LastAutoObjective.Location);
-		Canvas.SetPos(CurrentObjectiveHUDLocation.X - 12*MapScale, CurrentObjectiveHUDLocation.Y - 12*MapScale);//*AspectRatio);
-		Canvas.SetDrawColor(255,255,0,255 * (1.0-ColorPercent));
-		Canvas.DrawTile(class'UTHUD'.default.IconHudTexture,23*MapScale, 23*MapScale, 669,266,75,75);
+		bDrawAutoObjective = true;
+		if ( UTOnslaughtNodeObjective(PlayerOwner.LastAutoObjective) != None )
+		{
+			bDrawAutoObjective = UTOnslaughtNodeObjective(PlayerOwner.LastAutoObjective).IsKeyBeaconObjective(PlayerOwner);
+		}
+		else if ( UTOnslaughtFlag(PlayerOwner.LastAutoObjective) != None )
+		{
+			bDrawAutoObjective = (UTOnslaughtFlag(PlayerOwner.LastAutoObjective).HolderPRI == None);
+		}
+		else
+		{
+			BarricadeObjective = UTWarfareBarricade(PlayerOwner.LastAutoObjective);
+			if ( BarricadeObjective != None )
+			{
+				bDrawAutoObjective = !BarricadeObjective.bDisabled && BarricadeObjective.ValidTargetFor(PlayerOwner);
+			}
+		}
+
+		if ( bDrawAutoObjective )
+		{
+			CurrentObjectiveHUDLocation = UpdateHUDLocation(PlayerOwner.LastAutoObjective.Location);
+			Canvas.SetPos(CurrentObjectiveHUDLocation.X - 12*MapScale, CurrentObjectiveHUDLocation.Y - 12*MapScale);//*AspectRatio);
+			Canvas.SetDrawColor(255,255,0,255 * (1.0-ColorPercent));
+			Canvas.DrawTile(class'UTHUD'.default.IconHudTexture,23*MapScale, 23*MapScale, 669,266,75,75);
+		}
 	}
 	Canvas.SetDrawColor(255,255,255,255);
 }
@@ -617,26 +621,7 @@ function DrawRotatedMaterialTile(Canvas Canvas, MaterialInstanceConstant M, vect
 /**
  * Updates the Map Location for a given world location
  */
-function vector UpdateHUDLocation( Vector InLocation )
-{
-	local vector ScreenLocation, NewHUDLocation;
-	local float Scaling;
-	
-    ScreenLocation = InLocation - ActualMapCenter;
-
-	if ( VSizeSq(ScreenLocation) > Square(0.55*RadarRange) )
-	{
-		// draw on circle if extends past edge
-		ScreenLocation = 0.55*RadarRange * Normal(ScreenLocation);
-	}
-
-	Scaling = RadarWidth/RadarRange;
-	NewHUDLocation.X = CenterPos.X + (ScreenLocation dot MapRotX) * Scaling;
-	NewHUDLocation.Y = CenterPos.Y + (ScreenLocation dot MapRotY) * Scaling;
-	NewHUDLocation.Z = 0.0;
-
-	return NewHUDLocation;
-}
+native function vector UpdateHUDLocation( Vector InLocation );
 
 function ChangeMapRotation(Rotator NewMapRotation)
 {
@@ -695,22 +680,27 @@ function vector GetActorHudLocation(Actor CActor)
 	{
 		return UTVehicle(CActor).HudLocation;
 	}
+	else if ( UTDeployedActor(CActor) != none )
+	{
+		return UTDeployedActor(CActor).HudLocation;
+	}
 
 	return vect(0,0,0);
 }
 
 defaultproperties
 {
-	RecommendedPlayersMin=6
-	RecommendedPlayersMax=10
-	HUDIcons=Material'UI_HUD.Icons.M_UI_HUD_Icons01'
-	HUDIconsT=Texture2D'UI_HUD.Icons.T_UI_HUD_Icons01'
-	UseableRadius=0.3921
-	MapMaterialReference=material'UI_HUD.Materials.MapRing_Mat'
-	DefaultMapSize=255
-	MapRotX=(X=1,Y=0,Z=0)
-	MapRotY=(X=0,Y=1,Z=0)
-	CurrentMapRotYaw=0
-	RotatingMiniMapRange=12000
-	PlayerIconCoords=(U=657,V=129,UL=68,VL=106)
+   RecommendedPlayersMin=6
+   RecommendedPlayersMax=10
+   bBuildTranslocatorPaths=True
+   VisibilityModifier=1.000000
+   RotatingMiniMapRange=12000.000000
+   DefaultMapSize=255.000000
+   MapRotX=(X=1.000000,Y=0.000000,Z=0.000000)
+   MapRotY=(X=0.000000,Y=1.000000,Z=0.000000)
+   MapMaterialReference=Material'UI_HUD.Materials.MapRing_Mat'
+   UseableRadius=0.392100
+   PlayerIconCoords=(U=657.000000,V=129.000000,UL=68.000000,VL=106.000000)
+   Name="Default__UTMapInfo"
+   ObjectArchetype=MapInfo'Engine.Default__MapInfo'
 }

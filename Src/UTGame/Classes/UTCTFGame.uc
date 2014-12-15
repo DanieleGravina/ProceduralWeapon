@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFGame extends UTTeamGame
 	abstract;
@@ -17,8 +17,8 @@ function PostBeginPlay()
 	for ( i=0; i<2; i++ )
 	{
 		Flags[i].Team = Teams[i];
-		Teams[i].HomeBase = UTGameObjective(Flags[i].HomeBase);
-		Teams[i].TeamFlag = Flags[i];
+		Teams[i].HomeBase = Flags[i].HomeBase;
+		Flags[i].Team.TeamFlag = Flags[i];
 		UTCTFTeamAI(Teams[i].AI).FriendlyFlag = Flags[i];
 		UTCTFTeamAI(Teams[i].AI).EnemyFlag = Flags[1-i];
 	}
@@ -68,7 +68,7 @@ function int GetHandicapNeed(Pawn Other)
 function bool GetLocationFor(Pawn StatusPawn, out Actor LocationObject, out int MessageIndex, int LocationSpeechOffset)
 {
 	local UTPickupFactory F;
-	local UDKGameObjective Best;
+	local UTGameObjective Best;
 	local UTBot B;
 
 	// see if it's a bot heading for an objective or a power up
@@ -90,7 +90,7 @@ function bool GetLocationFor(Pawn StatusPawn, out Actor LocationObject, out int 
 				? Flags[0].HomeBase
 				: Flags[1].HomeBase;
 
-		MessageIndex = UTGameObjective(Best).GetLocationMessageIndex(B, StatusPawn);
+		MessageIndex = Best.GetLocationMessageIndex(B, StatusPawn);
 		LocationObject = Best;
 		return true;
 	}
@@ -159,7 +159,7 @@ function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
 		if ( Teams[1].Score == Teams[0].Score )
 		{
 			// Don't allow overtime with automated perf testing.
-			if( IsAutomatedPerfTesting() )
+			if( bAutomatedPerfTesting )
 			{
 				GameReplicationInfo.Winner = Teams[0];
 			}
@@ -223,6 +223,7 @@ function ScoreFlag(Controller Scorer, UTCTFFlag theFlag)
 
 		BroadcastLocalizedMessage( AnnouncerMessageClass, 1+7*TheFlag.Team.TeamIndex, ScorerPRI, None, TheFlag.Team );
 		ScorerPRI.IncrementEventStat('EVENT_RETURNEDFLAG');
+		ScorerPRI.IncrementHeroMeter(1.0);
 		if (Dist>1024)
 		{
 			// figure out who's closer
@@ -254,6 +255,8 @@ function ScoreFlag(Controller Scorer, UTCTFFlag theFlag)
 	// Guy who caps gets 5
 	ScorerPRI.bForceNetUpdate = TRUE;
 	ScorerPRI.Score += 5;
+	ScorerPRI.IncrementHeroMeter(6.0);
+	ScorerPRI.CheckHeroMeter();
 	GoalsScored = ScorerPRI.IncrementEventStat('EVENT_SCOREDFLAG');
 	PC = UTPlayerController(Scorer);
 	if ( GoalsScored == 3 )
@@ -335,6 +338,7 @@ State MatchOver
 	}
 }
 
+
 function ViewObjective(PlayerController PC)
 {
 	local actor a;
@@ -359,11 +363,51 @@ function ViewObjective(PlayerController PC)
 	}
 }
 
+function string TeamColorText(int TeamNum)
+{
+	if (TeamNum==1)
+	{
+		return "Blue";
+	}
+	else
+	{
+		return "Red";
+	}
+}
+
+function string DecodeEvent(name EventType, int TeamNo, string InstigatorName, string AdditionalName, class<object> AdditionalObj)
+{
+	if (EventType == 'flag_returned')
+	{
+		return InstigatorName@"returned his team's flag ("$TeamColorText(TeamNo)$")";
+	}
+	else if (EventType == 'flag_returned_friendly')
+	{
+		return InstigatorName@"made a quick return of team's flag ("$TeamColorText(TeamNo)$")";
+	}
+	else if (EventType == 'flag_returned')
+	{
+		return InstigatorName@"saved the day by returning his team's flag deep in the enemy zone ("$TeamColorText(TeamNo)$")";
+	}
+	else if (EventType == 'flag_captured')
+	{
+		return InstigatorName@"captured the enemy flag scoring a point for the"@TeamColorText(TeamNo)@"team!";
+	}
+	else if (EventType == 'flag_taken')
+	{
+		return InstigatorName@"grabbed the "$TeamColorText(TeamNo)$"flag!";
+	}
+	else
+	{
+		return super.DecodeEvent(EventType, TeamNo, InstigatorName, AdditionalName, AdditionalObj);
+	}
+}
+
 function Actor GetAutoObjectiveFor(UTPlayerController PC)
 {
 	if (UTTeamInfo(PC.PlayerReplicationInfo.Team) != None)
 	{
-		if ( UTPlayerReplicationInfo(PC.PlayerReplicationInfo).bHasFlag )
+		if (PC.PlayerReplicationInfo.bHasFlag)
 		{
 			return UTTeamInfo(PC.PlayerReplicationInfo.Team).HomeBase;
 		}
@@ -380,22 +424,27 @@ function Actor GetAutoObjectiveFor(UTPlayerController PC)
 
 defaultproperties
 {
-	bUndrivenVehicleDamage=true
-	bSpawnInTeamArea=true
-	bScoreTeamKills=False
-	MapPrefixes[0]="CTF"
-	Acronym="CTF"
-	TeamAIType(0)=class'UTGame.UTCTFTeamAI'
-	TeamAIType(1)=class'UTGame.UTCTFTeamAI'
-	bScoreVictimsTarget=true
-	DeathMessageClass=class'UTTeamDeathMessage'
-	FlagKillMessageName=FLAGKILL
-
-	OnlineGameSettingsClass=class'UTGameSettingsCTF'
-
-	bScoreDeaths=false
-	MidgameScorePanelTag=CTFPanel
-
-	OnlineStatsWriteClass=Class'UTStatsWriteCTF'
+   bScoreTeamKills=False
+   bSpawnInTeamArea=True
+   bScoreVictimsTarget=True
+   TeamAIType(0)=Class'UTGame.UTCTFTeamAI'
+   TeamAIType(1)=Class'UTGame.UTCTFTeamAI'
+   FlagKillMessageName="FLAGKILL"
+   bUndrivenVehicleDamage=True
+   bAllowTranslocator=True
+   bScoreDeaths=False
+   Acronym="CTF"
+   Description="La tua squadra deve segnare punti prendendo la bandiera nemica dalla base nemica e riportandola alla loro bandiera.  Se il portatore della bandiera viene ucciso, la bandiera cade a terra e può essere raccolta.  Se la bandiera della tua squadra viene presa, deve essere riportata indietro (toccandola dopo che è caduta a terra) prima che la tua squadra possa segnare un punto."
+   MapPrefixes(0)="CTF"
+   EndOfMatchRulesTemplateStr_Scoring="Chi segna `g volte vince"
+   EndOfMatchRulesTemplateStr_ScoringSingle="Chi segna per primo vince"
+   EndOfMatchRulesTemplateStr_Time="Chi segna di più in `t min. vince"
+   MidgameScorePanelTag="CTFPanel"
+   GameName="Cattura La Bandiera"
+   GoalScore=3
+   DeathMessageClass=Class'UTGame.UTTeamDeathMessage'
+   OnlineStatsWriteClass=Class'UTGame.UTLeaderboardWriteCTF'
+   OnlineGameSettingsClass=Class'UTGame.UTGameSettingsCTF'
+   Name="Default__UTCTFGame"
+   ObjectArchetype=UTTeamGame'UTGame.Default__UTTeamGame'
 }
-

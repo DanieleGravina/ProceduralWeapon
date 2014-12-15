@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTVWeap_CicadaMissileLauncher extends UTVehicleWeapon
 	HideDropDown;
@@ -74,7 +74,7 @@ function vector FindInitialTarget(bool bAdjustUp, vector AdjustLoc)
 
 	if (AIController(MyVehicle.Controller) != None)
 	{
-		return MyVehicle.Controller.GetFocalPoint();
+		return MyVehicle.Controller.FocalPoint;
 	}
 	else
 	{
@@ -309,7 +309,7 @@ simulated state WeaponLoadAmmo
 
 	}
 
-	simulated function DrawBrackets(UTHudBase H, float CX, float CY)
+	simulated function DrawBrackets(UTHud H, float CX, float CY)
 	{
 		local float X,Y;
 		local Color TileColor;
@@ -334,7 +334,7 @@ simulated state WeaponLoadAmmo
 		Global.DrawWeaponCrosshair(Hud);
 	}
 
-	simulated function DrawTarget(UTHudBase H)
+	simulated function DrawTarget(UTHud H)
 	{
 		local Vector TV2D;
 		local Rotator Rot;
@@ -363,13 +363,14 @@ simulated state WeaponLoadAmmo
 		TV2D = H.Canvas.Project(LockedTargetVect);
 
 		// make sure not clipped out
-		if (TV2D.X >= 0 &&
-			TV2D.X < H.Canvas.ClipX &&
-			TV2D.Y >= 0 &&
-			TV2D.Y < H.Canvas.ClipY)
+		if (TV2D.X < 0 ||
+			TV2D.X >= H.Canvas.ClipX ||
+			TV2D.Y < 0 ||
+			TV2D.Y >= H.Canvas.ClipY)
 		{
-			H.DrawShadowedRotatedTile(CrosshairImage,Rot,TV2D.X - 32 * H.ResolutionScale, TV2D.Y - 32 * H.ResolutionScale, 64,64, 384,256,64,64,H.GoldColor,true);
+			return;
 		}
+		H.DrawShadowedRotatedTile(CrosshairImage,Rot,TV2D.X - 32 * H.ResolutionScale, TV2D.Y - 32 * H.ResolutionScale, 64,64, 384,256,64,64,H.GoldColor,true);
 
 		// restore the canvas parameters
 		H.Canvas.OrgX = OldOrgX;
@@ -398,7 +399,7 @@ simulated state WeaponFiringLoad
 		{
 			if (RocketsLoaded < 0)
 			{
-				`Warn("Extra rockets fired! RocketsLoaded:" @ RocketsLoaded);
+				WarnInternal("Extra rockets fired! RocketsLoaded:" @ RocketsLoaded);
 				// ScriptTrace();
 			}
 
@@ -426,7 +427,7 @@ simulated state WeaponFiringLoad
 	}
 
 
-	simulated function DrawBrackets(UTHudBase H, float CX, float CY)
+	simulated function DrawBrackets(UTHud H, float CX, float CY)
 	{
 		local float X,Y;
 		local Color TileColor;
@@ -459,17 +460,17 @@ Begin:
 	TimeLoadedFiring();
 }
 
-simulated function DrawBrackets(UTHudBase H, float CX, float CY);
-simulated function DrawTarget(UTHudBase H);
+simulated function DrawBrackets(UTHud H, float CX, float CY);
+simulated function DrawTarget(UTHud H);
 
 simulated function DrawLoadedCrosshair( Hud HUD )
 {
 	local float CX,CY, CenterSize, XAdj, Alpha, X, Y,U,V;
-	local UTHudBase H;
+	local UTHud H;
 	local int i;
 	local Color Gray;
 
-	H = UTHUDBase(Hud);
+	H = UTHUD(Hud);
 
     CenterSize = 20.0*HUD.Canvas.ClipX/1024;
 
@@ -520,69 +521,55 @@ simulated function DrawLoadedCrosshair( Hud HUD )
 	DrawTarget(H);
 }
 
-
-
-
 defaultproperties
 {
-	WeaponFireTypes(0)=EWFT_Custom
-	WeaponProjectiles(0)=class'UTProj_CicadaRocket'
-	WeaponProjectiles(1)=class'UTProj_CicadaRocket'
-
-	WeaponFireSnd[0]=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_Fire'
-	WeaponFireSnd[1]=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileEject'
-
-	LockAcquiredSound=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock'
-	WeaponLoadSnd=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileLoad'
-
-	FireInterval(0)=0.25
-	FireInterval(1)=0.5
-	FiringStatesArray(1)=WeaponLoadAmmo
-
-	ShotCost(0)=0
-	ShotCost(1)=0
-
-	bFastRepeater=true
-	bInstantHit=false
-	bSplashJump=false
-	bRecommendSplashDamage=false
-	bSniping=false
-	ShouldFireOnRelease(0)=0
-	ShouldFireOnRelease(1)=0
-
-	FireTriggerTags=(CicadaWeapon01,CicadaWeapon02)
-	AltFireTriggerTags=(CicadaWeapon01,CicadaWeapon02)
-
-	MaxRockets=16
-	AccelRate=1500
-	LoadedFireTime=0.1
-
-	VehicleClass=class'UTVehicle_Cicada_Content'
-	AltCrosshairBounceInTime=0.5
-	AltCrosshairBounceOutTime=0.33
-
-	CrosshairSlots(0)=(u=24,ul=12,v=322,vl=10,xofst=-24,yofst=-21,gx=7,gy=5)
-	CrosshairSlots(1)=(u=36,ul=-12,v=322,vl=10,xofst=12,yofst=-21,gx=5,gy=5)
-
-	CrosshairSlots(2)=(u=24,ul=9,v=332,vl=11,xofst=-24,yofst=-11,gx=4,gy=6)
-	CrosshairSlots(3)=(u=33,ul=-9,v=332,vl=11,xofst=15,yofst=-11,gx=5,gy=6)
-
-	CrosshairSlots(4)=(u=24,ul=9,v=343,vl=12,xofst=-24,yofst=0,gx=4,gy=6)
-	CrosshairSlots(5)=(u=33,ul=-9,v=343,vl=12,xofst=15,yofst=0,gx=5,gy=6)
-
-	CrosshairSlots(6)=(u=24,ul=12,v=355,vl=10,xofst=-24,yofst=12,gx=7,gy=5)
-	CrosshairSlots(7)=(u=36,ul=-12,v=355,vl=10,xofst=12,yofst=12,gx=5,gy=5)
-
-
-	CrosshairSlots(8)=(u=36,ul=12,v=322,vl=10,xofst=-12,yofst=-21,gx=6,gy=5)
-	CrosshairSlots(9)=(u=48,ul=-12,v=322,vl=10,xofst=0,yofst=-21,gx=7,gy=5)
-
-	CrosshairSlots(10)=(u=33,ul=10,v=332,vl=11,xofst=-14,yofst=-11,gx=5,gy=6)
-	CrosshairSlots(11)=(u=43,ul=-10,v=332,vl=11,xofst=5,yofst=-11,gx=6,gy=6)
-
-	CrosshairSlots(12)=(u=33,ul=10,v=343,vl=12,xofst=-14,yofst=0,gx=5,gy=6)
-	CrosshairSlots(13)=(u=33,ul=-9,v=343,vl=12,xofst=5,yofst=0,gx=5,gy=6)
-
-	CrosshairSlots(14)=(u=36,ul=12,v=355,vl=10,xofst=-12,yofst=12,gx=6,gy=6)
-	CrosshairSlots(15)=(u=48,ul=-12,v=355,vl=10,xofst=0,yofst=12,gx=7,gy=6)
+   MaxRockets=16
+   WeaponLoadSnd=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileLoad'
+   AccelRate=1500.000000
+   LoadedFireTime=0.100000
+   LockAcquiredSound=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock'
+   AltCrosshairBounceInTime=0.500000
+   AltCrosshairBounceOutTime=0.330000
+   CrosshairSlots(0)=(U=24.000000,V=322.000000,UL=12.000000,VL=10.000000,xOfst=-24.000000,yOfst=-21.000000,gx=7.000000,gy=5.000000)
+   CrosshairSlots(1)=(U=36.000000,V=322.000000,UL=-12.000000,VL=10.000000,xOfst=12.000000,yOfst=-21.000000,gx=5.000000,gy=5.000000)
+   CrosshairSlots(2)=(U=24.000000,V=332.000000,UL=9.000000,VL=11.000000,xOfst=-24.000000,yOfst=-11.000000,gx=4.000000,gy=6.000000)
+   CrosshairSlots(3)=(U=33.000000,V=332.000000,UL=-9.000000,VL=11.000000,xOfst=15.000000,yOfst=-11.000000,gx=5.000000,gy=6.000000)
+   CrosshairSlots(4)=(U=24.000000,V=343.000000,UL=9.000000,VL=12.000000,xOfst=-24.000000,gx=4.000000,gy=6.000000)
+   CrosshairSlots(5)=(U=33.000000,V=343.000000,UL=-9.000000,VL=12.000000,xOfst=15.000000,gx=5.000000,gy=6.000000)
+   CrosshairSlots(6)=(U=24.000000,V=355.000000,UL=12.000000,VL=10.000000,xOfst=-24.000000,yOfst=12.000000,gx=7.000000,gy=5.000000)
+   CrosshairSlots(7)=(U=36.000000,V=355.000000,UL=-12.000000,VL=10.000000,xOfst=12.000000,yOfst=12.000000,gx=5.000000,gy=5.000000)
+   CrosshairSlots(8)=(U=36.000000,V=322.000000,UL=12.000000,VL=10.000000,xOfst=-12.000000,yOfst=-21.000000,gx=6.000000,gy=5.000000)
+   CrosshairSlots(9)=(U=48.000000,V=322.000000,UL=-12.000000,VL=10.000000,yOfst=-21.000000,gx=7.000000,gy=5.000000)
+   CrosshairSlots(10)=(U=33.000000,V=332.000000,UL=10.000000,VL=11.000000,xOfst=-14.000000,yOfst=-11.000000,gx=5.000000,gy=6.000000)
+   CrosshairSlots(11)=(U=43.000000,V=332.000000,UL=-10.000000,VL=11.000000,xOfst=5.000000,yOfst=-11.000000,gx=6.000000,gy=6.000000)
+   CrosshairSlots(12)=(U=33.000000,V=343.000000,UL=10.000000,VL=12.000000,xOfst=-14.000000,gx=5.000000,gy=6.000000)
+   CrosshairSlots(13)=(U=33.000000,V=343.000000,UL=-9.000000,VL=12.000000,xOfst=5.000000,gx=5.000000,gy=6.000000)
+   CrosshairSlots(14)=(U=36.000000,V=355.000000,UL=12.000000,VL=10.000000,xOfst=-12.000000,yOfst=12.000000,gx=6.000000,gy=6.000000)
+   CrosshairSlots(15)=(U=48.000000,V=355.000000,UL=-12.000000,VL=10.000000,yOfst=12.000000,gx=7.000000,gy=6.000000)
+   FireTriggerTags(0)="CicadaWeapon01"
+   FireTriggerTags(1)="CicadaWeapon02"
+   AltFireTriggerTags(0)="CicadaWeapon01"
+   AltFireTriggerTags(1)="CicadaWeapon02"
+   VehicleClass=Class'UTGameContent.UTVehicle_Cicada_Content'
+   bFastRepeater=True
+   WeaponFireSnd(0)=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_Fire'
+   WeaponFireSnd(1)=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileEject'
+   WeaponFireTypes(0)=EWFT_Custom
+   FiringStatesArray(1)="WeaponLoadAmmo"
+   WeaponProjectiles(0)=Class'UTGameContent.UTProj_CicadaRocket'
+   WeaponProjectiles(1)=Class'UTGameContent.UTProj_CicadaRocket'
+   FireInterval(0)=0.250000
+   FireInterval(1)=0.500000
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   ItemName="Cicada"
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTVWeap_CicadaMissileLauncher"
+   ObjectArchetype=UTVehicleWeapon'UTGame.Default__UTVehicleWeapon'
 }

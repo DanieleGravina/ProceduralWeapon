@@ -5,7 +5,7 @@
 // are allowed to exist in this game type, and who may enter the game.  While the
 // GameInfo class is the public interface, much of this functionality is delegated
 // to several classes to allow easy modification of specific game components.  These
-// classes include GameInfo, AccessControl, Mutator, and BroadcastHandler.
+// classes include GameInfo, AccessControl, Mutator, BroadcastHandler, and GameRules.
 // A GameInfo actor is instantiated when the level is initialized for gameplay (in
 // C++ UGameEngine::LoadMap() ).  The class of this GameInfo actor is determined by
 // (in order) either the URL ?game=xxx, or the
@@ -14,12 +14,11 @@
 // The GameType used can be overridden in the GameInfo script event SetGameType(), called
 // on the game class picked by the above process.
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class GameInfo extends Info
 	config(Game)
-	native
-	dependson(OnlineSubsystem);
+	native;
 
 //-----------------------------------------------------------------------------
 // Variables.
@@ -33,16 +32,23 @@ var bool					  bDelayedStart;
 var bool					  bWaitingToStartMatch;
 var globalconfig bool		  bChangeLevels;
 var		bool				  bAlreadyChanged;
+var bool						bLoggingGame;           // Does this gametype log?
 var globalconfig bool			bAdminCanPause;
 var bool						bGameRestarted;
 var bool						bLevelChange;			// level transition in progress
 var globalconfig	bool		bKickLiveIdlers;		// if true, even playercontrollers with pawns can be kicked for idling
+
+/** If the server doesn't hear a response regarding a cd hash key request, kick them */
+var globalconfig bool bKickMissingCDHashKeys;
+/** Timeout value while waiting for a response to teh cd hash key request */
+var globalconfig float TimeToWaitForHashKey;
 
 /** Whether this match is going to use arbitration or not */
 var bool bUsingArbitration;
 
 /**
  * Whether the arbitrated handshaking has occurred or not.
+ *
  * NOTE: The code will reject new connections once handshaking has started
  */
 var bool bHasArbitratedHandshakeBegun;
@@ -59,13 +65,29 @@ var bool bHasEndGameHandshakeBegun;
 /** Whether the game expects a fixed player start for profiling. */
 var bool bFixedPlayerStart;
 
-/** The causeevent= string that the game passed in This is separate from automatedPerfTesting which is going to probably spawn bots / effects **/
-var string CauseEventCommand;
+/** Whether the game is currently in automated perf test mode. */
+var bool bAutomatedPerfTesting;
+/** Amount of time remaining before match ends -- used for auto performance test shutdown */
+var int AutomatedPerfRemainingTime;
+/** This will auto continue to the next round.  Very useful doing soak testing and testing traveling to next level **/
+var bool bAutoContinueToNextRound;
+
+/** Whether game is doing a fly through or not.  This is separate from automatedPerfTesting which is going to probably spawn bots / effects **/
+var bool bDoingAFlyThrough;
+
+/**
+ * Whether or not this game should check for fragmentation.  This can be used to have a specific game type check for fragmentation at some point
+ * (e.g. start/end of match, time period)
+ **/
+var bool bCheckingForFragmentation;
+/**
+ * Whether or not this game should check for memory leaks
+ **/
+var bool bCheckingForMemLeaks;
 
 /** This is the BugIt String Data. Other info should be stored here  **/
 /** Currently stores the location string form **/
 var string BugLocString;
-
 /** Currently stores the rotation in string form **/
 var string BugRotString;
 
@@ -93,17 +115,16 @@ var   float					  GameSpeed;				// Scale applied to game rate.
 var   class<Pawn>			  DefaultPawnClass;
 
 // user interface
+var   class<Scoreboard>       ScoreBoardType;           // Type of class<Menu> to use for scoreboards.
 var	  class<HUD>			  HUDType;					// HUD class this game uses.
-var	  class<HUD>			  SecondaryHUDType;			// Secondary HUD class this game uses.
 
 var   globalconfig int	      MaxSpectators;			// Maximum number of spectators allowed by this server.
 var	  int					  MaxSpectatorsAllowed;		// Maximum number of spectators ever allowed (MaxSpectators is clamped to this in initgame()
 var	  int					  NumSpectators;			// Current number of spectators.
 var   globalconfig int		  MaxPlayers;				// Maximum number of players allowed by this server.
-var	  int					  MaxPlayersAllowed;		// Maximum number of players ever allowed (MaxPlayers is clamped to this in initgame()
+var	  int					  MaxPlayersAllowed;		// Maximum number of players ever allowed (MaxSPlayers is clamped to this in initgame()
 var   int					  NumPlayers;				// number of human players
 var	  int					  NumBots;					// number of non-human players (AI controlled but participating as a player)
-
 /** number of players that are still travelling from a previous map */
 var int NumTravellingPlayers;
 var   int					  CurrentID;				// used to assign unique PlayerIDs to each PlayerReplicationInfo
@@ -125,34 +146,29 @@ var class<GameMessage>		  GameMessageClass;
 var Mutator BaseMutator;				// linked list of Mutators (for modifying actors as they enter the game)
 var class<AccessControl> AccessControlClass;
 var AccessControl AccessControl;		// AccessControl controls whether players can enter and/or become admins
+var GameRules GameRulesModifiers;		// linked list of modifier classes which affect game rules
 var class<BroadcastHandler> BroadcastHandlerClass;
 var BroadcastHandler BroadcastHandler;	// handles message (text and localized) broadcasts
 
-/** Class of automated test manager used by this game class */
-var class<AutoTestManager> AutoTestManagerClass;
-
-/** Instantiated AutoTestManager - only exists if requested by command-line */
-var AutoTestManager	MyAutoTestManager;
-
 var class<PlayerController> PlayerControllerClass;	// type of player controller to spawn for players logging in
 var class<PlayerReplicationInfo> 		PlayerReplicationInfoClass;
+
+/** Name of DialogueManager class */
+var String			DialogueManagerClass;
+/** Pointer to Manager */
+var DialogueManager DialogueManager;
 
 // ReplicationInfo
 var() class<GameReplicationInfo> GameReplicationInfoClass;
 var GameReplicationInfo GameReplicationInfo;
 
-var CrowdPopulationManagerBase PopulationManager;
-var class<CrowdPopulationManagerBase> PopulationManagerClass;
-
 var globalconfig float MaxIdleTime;		// maximum time players are allowed to idle before being kicked
+/** if > 0, maximum time in seconds players are allowed to take travelling to a new map before they are kicked */
+var globalconfig float MaxClientTravelTime;
 
-/** Max interval that client clock is allowed to get ahead of server clock before triggering speed hack detection */
+// speed hack detection
 var globalconfig	float					MaxTimeMargin;
-
-/** How fast we allow client clock to drift from server clock over time without ever triggering speed hack detection */
 var globalconfig	float					TimeMarginSlack;
-
-/** Clamps how far behind server clock we let time margin get.  Used to prevent speedhacks where client slows their clock down for a while then speeds it up. */
 var globalconfig	float					MinTimeMargin;
 
 var		array<PlayerReplicationInfo> InactivePRIArray;	/** PRIs of players who have left game (saved in case they reconnect) */
@@ -166,19 +182,18 @@ var OnlineSubsystem OnlineSub;
 /** Cached online game interface variable */
 var OnlineGameInterface GameInterface;
 
+/** Cached online game settings object */
+var OnlineGameSettings GameSettings;
+
 /** Class sent to clients to use to create and hold their stats */
 var class<OnlineStatsWrite> OnlineStatsWriteClass;
-
-/** The leaderboard to write the stats to for skill/scoring */
-var int LeaderboardId;
-
-/** The arbitrated leaderboard to write the stats to for skill/scoring */
-var int ArbitratedLeaderboardId;
 
 /** perform map travels using SeamlessTravel() which loads in the background and doesn't disconnect clients
  * @see WorldInfo::SeamlessTravel()
  */
 var bool bUseSeamlessTravel;
+
+var globalconfig bool bForceNoSeamlessTravel;
 
 /** Base copy of cover changes that need to be replicated to clients on join */
 var protected CoverReplicator CoverReplicatorBase;
@@ -195,8 +210,11 @@ var const class<OnlineGameSettings> OnlineGameSettingsClass;
 /** The options to apply for dedicated server when it starts to register */
 var string ServerOptions;
 
+/** Contains the friend id of the currently logging in player as a workaround for ChangeTeams function prototype */
+var UniqueNetId CurrentFriendId;
+
 /** Current adjusted net speed - Used for dynamically managing netspeed for listen servers*/
-var int AdjustedNetSpeed;
+var int AdjustedNetSpeed;	
 
 /**  Last time netspeed was updated for server (by client entering or leaving) */
 var float LastNetSpeedUpdateTime;
@@ -210,126 +228,79 @@ var globalconfig int MinDynamicBandwidth;
 /** Maximum bandwidth dynamically set per connection */
 var globalconfig int MaxDynamicBandwidth;
 
-/** Standby cheat detection vars */
-/** Used to determine if checking for standby cheats should occur */
-var config bool bIsStandbyCheckingEnabled;
-/** Tracks standby checking status */
-var bool bIsStandbyCheckingOn;
-/** Used to determine whether we've already caught a cheat or not */
-var bool bHasStandbyCheatTriggered;
-/** The amount of time without packets before triggering the cheat code */
-var config float StandbyRxCheatTime;
-/** The amount of time without packets before triggering the cheat code */
-var config float StandbyTxCheatTime;
-/** The point we determine the server is either delaying packets or has bad upstream */
-var config int BadPingThreshold;
-/** The percentage of clients missing RX data before triggering the standby code */
-var config float PercentMissingForRxStandby;
-/** The percentage of clients missing TX data before triggering the standby code */
-var config float PercentMissingForTxStandby;
-/** The percentage of clients with bad ping before triggering the standby code */
-var config float PercentForBadPing;
-/** The amount of time to wait before checking a connection for standby issues */
-var config float JoinInProgressStandbyWaitTime;
+/** Prevents excessive log spam from the Gamespy auto-reconnect code */
+var float LastAutoReconnectMessageTime;
+var bool bDisableGamespyLogs;
 
-/** Material used for drawing a streaming pause icon. */
-var Material StreamingPauseIcon;
+/** Whether or not to accept additional splitscreen players */
+var globalconfig bool bAllowSplitscreenPlayers;
 
-/** Describes which standby detection event occured so the game can take appropriate action */
-enum EStandbyType
-{
-	STDBY_Rx,
-	STDBY_Tx,
-	STDBY_BadPing
-};
-/** End standby cheat vars */
+/** The maximum numer of additional splitscreen connections per-player */
+var globalconfig int MaxChildConnections;
 
-struct native GameClassShortName
-{
-	var string ShortName;
-	var string GameClassName;
-};
-var() protected config const array<GameClassShortName> GameInfoClassAliases;
-
-/**
- *	GameTypePrefix helper structure.
- *	Used to find valid gametypes for a map via its prefix.
- */
-struct native GameTypePrefix
-{
-	/** map prefix, e.g. "DM" */
-	var string Prefix;
-	/** if TRUE, generate a common package for the gametype */
-	var bool bUsesCommonPackage;
-	/** gametype used if none specified on the URL */
-	var string GameType;
-	/** additional gametypes supported by this map prefix via the URL (used for cooking) */
-	var array<string> AdditionalGameTypes;
-	/** forced objects (and classes) that should go into the common package to avoid cooking into every map */
-	var array<string> ForcedObjects;
-};
-
-/** The default game type to use on a map */
-var config string					DefaultGameType;
-/** Used for loading appropriate game type if non-specified in URL */
-var config array<GameTypePrefix>	DefaultMapPrefixes;
-/** Used for loading appropriate game type if non-specified in URL */
-var config array<GameTypePrefix>	CustomMapPrefixes;
-
-
-/** Size of the AnimTree pool. System will keep this number of extra AnimTrees around per Template */
-var config int AnimTreePoolSize;
-
-/**
- *	Retrieve the FGameTypePrefix struct for the given map filename.
- *
- *	@param	InFilename		The map file name
- *	@param	OutGameType		The gametype prefix struct to fill in
- *	@param	bCheckExt		Optional parameter to check the extension of the InFilename to ensure it is a map
- *
- *	@return	UBOOL			TRUE if successful, FALSE if map prefix not found.
- *							NOTE: FALSE will fill in with the default gametype.
- */
-function native bool GetSupportedGameTypes(const out string InFilename, out GameTypePrefix OutGameType, optional bool bCheckExt = false) const;
-
-/**
- *	Retrieve the name of the common package (if any) for the given map filename.
- *
- *	@param	InFilename		The map file name
- *	@param	OutCommonPackageName	The nane of the common package for the given map
- *
- *	@return	UBOOL			TRUE if successful, FALSE if map prefix not found.
- */
-function native bool GetMapCommonPackageName(const out string InFilename, out string OutCommonPackageName) const;
-
-cpptext
-{
-	/** called on the default object of the class specified by DefaultGame in the [Engine.GameInfo] section of Game.ini
-	 * whenever worlds are saved.
-	 * Gives the game a chance to add supported gametypes to the WorldInfo's GameTypesSupportedOnThisMap array
-	 * (used for console cooking)
-	 * @param Info: the WorldInfo of the world being saved
-	 */
-	virtual void AddSupportedGameTypes(AWorldInfo* Info, const TCHAR* WorldFilename, TArray<FString>& AdditionalPackagesToCook) const
-	{
-	}
-
-	/** Allows for game classname remapping and/or aliasing (e.g. for shorthand names) */
-	static FString StaticGetRemappedGameClassName(FString const& GameClassName);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //------------------------------------------------------------------------------
 // Engine notifications.
 
 event PreBeginPlay()
 {
+	if (GameInterface != None)
+	{
+		// Grab the current game settings object out
+		GameSettings = GameInterface.GetGameSettings();
+		if (GameSettings != None)
+		{
+			// Check for an arbitrated match
+			bUsingArbitration = GameSettings.bUsesArbitration;
+		}
+	}
+
 	AdjustedNetSpeed = MaxDynamicBandwidth;
 	SetGameSpeed(GameSpeed);
 	GameReplicationInfo = Spawn(GameReplicationInfoClass);
 	WorldInfo.GRI = GameReplicationInfo;
+	// Send over whether this is an arbitrated match or not
+	GameReplicationInfo.bIsArbitrated = bUsingArbitration;
 
 	InitGameReplicationInfo();
-	InitCrowdPopulationManager();
+
+	if( DialogueManagerClass != "" )
+	{
+		DialogueManager = Spawn( class<DialogueManager>(DynamicLoadObject( DialogueManagerClass, class'Class' )) );
+	}
+}
+
+function BeginPlay()
+{
+	// Save modified URL values as defaults
+	SaveConfig();
+}
+
+function string FindPlayerByID( int PlayerID )
+{
+    local PlayerReplicationInfo PRI;
+
+	PRI = GameReplicationInfo.FindPlayerByID(PlayerID);
+	if ( PRI != None )
+		return PRI.PlayerName;
+    return "";
+}
+
+static function bool UseLowGore(WorldInfo WI)
+{
+	return (Default.GoreLevel > 0) && (WI.NetMode != NM_DedicatedServer);
 }
 
 function CoverReplicator GetCoverReplicator()
@@ -348,34 +319,12 @@ event PostBeginPlay()
 		MaxIdleTime = FMax(MaxIdleTime, 20);
 	}
 
-	if (WorldInfo.NetMode == NM_DedicatedServer)
+	if (WorldInfo.NetMode == NM_DedicatedServer || WorldInfo.NetMode == NM_ListenServer)
 	{
 		// Update any online advertised settings
 		UpdateGameSettings();
 	}
 }
-
-/**
-  *  Use 'ShowGameDebug' console command to show this debug info
-  *  Useful to show general debug info not tied to a particular actor physically in the level.
-  */
-simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
-{
-	local Canvas	Canvas;
-
-	Canvas = HUD.Canvas;
-	Canvas.SetDrawColor(255,255,255);
-
-	Canvas.DrawText("Game:" $GameName );
-	out_YPos += out_YL;
-	Canvas.SetPos(4,out_YPos);
-
-	if ( WorldInfo.PopulationManager != None )
-	{
-		WorldInfo.PopulationManager.DisplayDebug(HUD, out_YL, out_YPos);
-	}
-}
-
 
 /* Reset() - reset actor to initial state - used when restarting level without reloading.
 	@note: GameInfo::Reset() called after all other actors have been reset */
@@ -403,10 +352,9 @@ function ResetLevel()
 	local Actor A;
 	local Sequence GameSeq;
 	local array<SequenceObject> AllSeqEvents;
-	local array<int> ActivateIndices;
 	local int i;
 
-	`Log("Reset" @ self);
+	LogInternal("Reset" @ self);
 	// Reset ALL controllers first
 	foreach WorldInfo.AllControllers(class'Controller', C)
 	{
@@ -436,14 +384,13 @@ function ResetLevel()
 		// reset the game sequence
 		GameSeq.Reset();
 
-		// find any Level Loaded events that exist
-		GameSeq.FindSeqObjectsByClass(class'SeqEvent_LevelLoaded', true, AllSeqEvents);
+		// find any Level Reset events that exist
+		GameSeq.FindSeqObjectsByClass(class'SeqEvent_LevelReset', true, AllSeqEvents);
 
 		// activate them
-		ActivateIndices[0] = 2;
 		for (i = 0; i < AllSeqEvents.Length; i++)
 		{
-			SeqEvent_LevelLoaded(AllSeqEvents[i]).CheckActivate(WorldInfo, None, false, ActivateIndices);
+			SeqEvent_LevelReset(AllSeqEvents[i]).CheckActivate(WorldInfo, None);
 		}
 	}
 }
@@ -458,21 +405,17 @@ event Timer()
 	{
 		DoNavFearCostFallOff();
 	}
-}
 
-/**
- *	Check to see if we should start in cinematic mode (e.g. matinee movie capture).
- *
- * 	@param	OutHidePlayer		Whether to hide the player
- *	@param	OutHideHud		Whether to hide the HUD		
- *	@param	OutDisableMovement	Whether to disable movement
- * 	@param	OutDisableTurning	Whether to disable turning
- *	@param	OutDisableInput		Whether to disable input
- *
- *	@return	UBOOL			TRUE if we should turn on cinematic mode, 
- *					FALSE if if we should not.
- */
-final native function bool ShouldStartInCinematicMode(out int OutHidePlayer, out int OutHideHud, out int OutDisableMovement, out int OutDisableTurning, out int OutDisableInput);
+	if( ( bAutomatedPerfTesting ) && ( AutomatedPerfRemainingTime > 0 ) && ( bAutoContinueToNextRound == FALSE ) )
+	{
+		AutomatedPerfRemainingTime--;
+		if( AutomatedPerfRemainingTime <= 0 )
+		{
+			// Exit at the end of the match if automated perf testing is enabled.
+			ConsoleCommand("EXIT");
+		}
+	}
+}
 
 /** Update navigation point fear cost fall off. */
 final native function DoNavFearCostFallOff();
@@ -483,14 +426,13 @@ function NotifyNavigationChanged(NavigationPoint N);
 // Called when game shutsdown.
 event GameEnding()
 {
-	if (AccessControl != none)
+	if (OnlineSub != None)
 	{
-		AccessControl.NotifyGameEnding();
+		if (OnlineSub.SystemInterface != None)
+		{
+			OnlineSub.SystemInterface.ClearConnectionStatusChangeDelegate(OnConnectionStatusChange);
+		}
 	}
-
-	ClearOnlineDelegates();
-
-	EndLogging("serverquit");
 }
 
 /* KickIdler() called if
@@ -504,15 +446,8 @@ event GameEnding()
 */
 event KickIdler(PlayerController PC)
 {
-	`log("Kicking idle player "$PC.PlayerReplicationInfo.PlayerName);
+	LogInternal("Kicking idle player "$PC.PlayerReplicationInfo.GetPlayerAlias());
 	AccessControl.KickPlayer(PC, AccessControl.IdleKickReason);
-}
-
-// This will kick any player, even if they are an admin.
-event ForceKickPlayer(PlayerController PC, string KickReason)
-{
-	`log("Force kicking player "$PC.PlayerReplicationInfo.PlayerName);
-	AccessControl.ForceKickPlayer(PC, KickReason);
 }
 
 //------------------------------------------------------------------------------
@@ -521,7 +456,7 @@ event ForceKickPlayer(PlayerController PC, string KickReason)
 function InitGameReplicationInfo()
 {
 	GameReplicationInfo.GameClass = Class;
-	GameReplicationInfo.ReceivedGameClass();
+    GameReplicationInfo.MaxLives = MaxLives;
 }
 
 native function string GetNetworkNumber();
@@ -531,8 +466,23 @@ function int GetNumPlayers()
 	return NumPlayers + NumTravellingPlayers;
 }
 
+native function int CurrentPlayerCount();
+
 //------------------------------------------------------------------------------
 // Misc.
+
+// Return the server's port number.
+function int GetServerPort()
+{
+	local string S;
+	local int i;
+
+	// Figure out the server's port.
+	S = WorldInfo.GetAddressURL();
+	i = InStr( S, ":" );
+	assert(i>=0);
+	return int(Mid(S,i+1));
+}
 
 /**
  * Default delegate that provides an implementation for those that don't have
@@ -551,11 +501,13 @@ delegate bool CanUnpause()
  * @param PC the player controller to check for admin privs
  * @param CanUnpauseDelegate the delegate to query when checking for unpause
  */
-function bool SetPause(PlayerController PC, optional delegate<CanUnpause> CanUnpauseDelegate=CanUnpause)
+function bool SetPause(PlayerController PC, optional delegate<CanUnpause> CanUnpauseDelegate)
 {
 	local int FoundIndex;
 
-	if ( AllowPausing(PC) )
+    if (bPauseable ||
+		(bAdminCanPause && AccessControl.IsAdmin(PC)) ||
+		WorldInfo.NetMode == NM_Standalone)
 	{
 		// Don't add the delegate twice (no need)
 		FoundIndex = Pausers.Find(CanUnpauseDelegate);
@@ -582,41 +534,26 @@ function bool SetPause(PlayerController PC, optional delegate<CanUnpause> CanUnp
  * and the rest are checked. The game is considered unpaused when the list is
  * empty.
  */
-event ClearPause()
+function ClearPause()
 {
 	local int Index;
 	local delegate<CanUnpause> CanUnpauseCriteriaMet;
-
-	if ( !AllowPausing() && Pausers.Length > 0 )
-	{
-		`log("Clearing list of UnPause delegates for" @ Name @ "because game type is not pauseable");
-		Pausers.Length = 0;
-	}
 
 	for (Index = 0; Index < Pausers.Length; Index++)
 	{
 		CanUnpauseCriteriaMet = Pausers[Index];
 		if (CanUnpauseCriteriaMet())
 		{
-			Pausers.Remove(Index--,1);
+			Pausers.Remove(Index,1);
+			Index--;
 		}
 	}
-
 	// Clear the pause state if the list is empty
-	if ( Pausers.Length == 0 )
+	if (Pausers.Length == 0)
 	{
 		WorldInfo.Pauser = None;
 	}
 }
-
-/**
- * Forcibly removes an object's CanUnpause delegates from the list of pausers.  If any of the object's CanUnpause delegate
- * handlers were in the list, triggers a call to ClearPause().
- *
- * Called when the player controller is being destroyed to prevent the game from being stuck in a paused state when a PC that
- * paused the game is destroyed before the game is unpaused.
- */
-native final function ForceClearUnpauseDelegates( Actor PauseActor );
 
 /**
  * Dumps the pause delegate list to track down who has the game paused
@@ -631,11 +568,11 @@ function DebugPause()
 		CanUnpauseCriteriaMet = Pausers[Index];
 		if (CanUnpauseCriteriaMet())
 		{
-			`Log("Pauser in index "$Index$" thinks it's ok to unpause:" @ CanUnpauseCriteriaMet);
+			LogInternal("Pauser in index "$Index$" thinks it's ok to unpause");
 		}
 		else
 		{
-			`Log("Pauser in index "$Index$" thinks the game should remain paused:" @ CanUnpauseCriteriaMet);
+			LogInternal("Pauser in index "$Index$" thinks the game should remain paused");
 		}
 	}
 }
@@ -648,7 +585,7 @@ function DebugPause()
 //
 function SetGameSpeed( Float T )
 {
-	GameSpeed = FMax(T, 0.00001);
+	GameSpeed = FMax(T, 0.1);
 	WorldInfo.TimeDilation = GameSpeed;
 	SetTimer(WorldInfo.TimeDilation, true);
 }
@@ -739,19 +676,8 @@ static function int GetIntOption( string Options, string ParseString, int Curren
 	return CurrentValue;
 }
 
-/** @return the full path to the optimal GameInfo class to use for the specified map and options
- * this is used for preloading cooked packages, etc. and therefore doesn't need to include any fallbacks
- * as SetGameType() will be called later to actually find/load the desired class
- */
-static event string GetDefaultGameClassPath(string MapName, string Options, string Portal)
-{
-	return PathName(Default.Class);
-}
 
-/** @return the class of GameInfo to spawn for the game on the specified map and the specified options
- * this function should include any fallbacks in case the desired class can't be found
- */
-static event class<GameInfo> SetGameType(string MapName, string Options, string Portal)
+static event class<GameInfo> SetGameType(string MapName, string Options)
 {
 	return Default.Class;
 }
@@ -767,8 +693,6 @@ event InitGame( string Options, out string ErrorMessage )
 	local string InOpt, LeftOpt;
 	local int pos;
 	local class<AccessControl> ACClass;
-	local AccessControl CurAC;
-	local OnlineGameSettings GameSettings;
 
     MaxPlayers = Clamp(GetIntOption( Options, "MaxPlayers", MaxPlayers ),0,MaxPlayersAllowed);
     MaxSpectators = Clamp(GetIntOption( Options, "MaxSpectators", MaxSpectators ),0,MaxSpectatorsAllowed);
@@ -777,11 +701,12 @@ event InitGame( string Options, out string ErrorMessage )
 	InOpt = ParseOption( Options, "GameSpeed");
 	if( InOpt != "" )
 	{
-		`log("GameSpeed"@InOpt);
+		LogInternal("GameSpeed"@InOpt);
 		SetGameSpeed(float(InOpt));
 	}
 
 	TimeLimit = Max(0,GetIntOption( Options, "TimeLimit", TimeLimit ));
+	AutomatedPerfRemainingTime = 60 * TimeLimit;
 
 	BroadcastHandler = spawn(BroadcastHandlerClass);
 
@@ -803,25 +728,10 @@ event InitGame( string Options, out string ErrorMessage )
 	*/
 
 	// Only spawn access control if we are a server
-	if (WorldInfo.NetMode == NM_ListenServer || WorldInfo.NetMode == NM_DedicatedServer)
+	if (WorldInfo.NetMode == NM_ListenServer || WorldInfo.NetMode == NM_DedicatedServer )
 	{
-		// If we are coming out of seamless travel, and there is an access control carried over from the previous level,
-		//	use that instead of creating a new one
-		if (WorldInfo.IsInSeamlessTravel())
-		{
-			foreach DynamicActors(Class'AccessControl', CurAC)
-			{
-				AccessControl = CurAC;
-				break;
-			}
-		}
-
-		if (AccessControl == none)
-		{
-			AccessControl = Spawn(ACClass);
-		}
-
-		if (AccessControl != None && InOpt != "")
+		AccessControl = Spawn(ACClass);
+		if ( AccessControl != None && InOpt != "" )
 		{
 			AccessControl.SetAdminPassword(InOpt);
 		}
@@ -830,7 +740,7 @@ event InitGame( string Options, out string ErrorMessage )
 	InOpt = ParseOption( Options, "Mutator");
 	if ( InOpt != "" )
 	{
-		`log("Mutators"@InOpt);
+		LogInternal("Mutators"@InOpt);
 		while ( InOpt != "" )
 		{
 			pos = InStr(InOpt,",");
@@ -852,21 +762,14 @@ event InitGame( string Options, out string ErrorMessage )
     if( InOpt != "" && AccessControl != None)
 	{
 		AccessControl.SetGamePassWord(InOpt);
-		`log( "GamePassword" @ InOpt );
+		LogInternal("GamePassword" @ InOpt);
 	}
 
+	bAutomatedPerfTesting = ( ParseOption( Options, "AutomatedPerfTesting" ) ~= "1" );
 	bFixedPlayerStart = ( ParseOption( Options, "FixedPlayerStart" ) ~= "1" );
-	CauseEventCommand = ( ParseOption( Options, "causeevent" ) );
-
-	if ( ParseOption( Options, "AutoTests" ) ~= "1" )
-	{
-		if ( MyAutoTestManager == None )
-		{
-			MyAutoTestManager = spawn(AutoTestManagerClass);
-		}
-		MyAutoTestManager.InitializeOptions(Options);
-	}
-
+	bDoingAFlyThrough = ( ParseOption( Options, "causeevent" ) ~= "FlyThrough" );
+	bCheckingForFragmentation = ( ParseOption( Options, "CheckingForFragmentation" ) ~= "1" );
+	bCheckingForMemLeaks = ( ParseOption( Options, "CheckingForMemLeaks" ) ~= "1" );
 	BugLocString = ParseOption(Options, "BugLoc");
 	BugRotString = ParseOption(Options, "BugRot");
 
@@ -881,36 +784,24 @@ event InitGame( string Options, out string ErrorMessage )
 	{
 		// And grab one for the game interface since it will be used often
 		GameInterface = OnlineSub.GameInterface;
-		if (GameInterface != None)
-		{
-			// Grab the current game settings object out
-			GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-			if (GameSettings != None)
-			{
-				// Check for an arbitrated match
-				bUsingArbitration = GameSettings.bUsesArbitration;
-			}
-		}
 	}
 
-	if ((WorldInfo.IsConsoleBuild(CONSOLE_Any) == false) &&
-		(WorldInfo.NetMode != NM_Standalone) &&
+	// Cache this so it can be used later by async processes
+	ServerOptions = Options;
+	if (WorldInfo.NetMode != NM_Standalone &&
 		// Don't register the session if the UI already has
-		(GameSettings == None))
+		OnlineSub != None &&
+		OnlineSub.GameInterface != None &&
+		GameInterface.GetGameSettings() == None)
 	{
-		// Cache this so it can be used later by async processes
-		ServerOptions = Options;
 		// If there isn't a login to process, immediately register the server
 		// Otherwise the server will be registered when the login completes
-		if (!ProcessServerLogin())
+		if (ProcessServerLogin() == false)
 		{
 			RegisterServer();
 		}
 	}
 }
-
-/** Called when a connection closes before getting to PostLogin() */
-event NotifyPendingConnectionLost();
 
 function AddMutator(string mutname, optional bool bUserAdded)
 {
@@ -934,7 +825,7 @@ function AddMutator(string mutname, optional bool bUserAdded)
 			{
 				if (mutClass.default.GroupNames.Find(mut.GroupNames[i]) != INDEX_NONE)
 				{
-					`log("Not adding "$mutClass$" because already have a mutator in the same group - "$mut);
+					LogInternal("Not adding "$mutClass$" because already have a mutator in the same group - "$mut);
 					return;
 				}
 			}
@@ -945,7 +836,7 @@ function AddMutator(string mutname, optional bool bUserAdded)
 	for ( mut=BaseMutator; mut!=None; mut=mut.NextMutator )
 		if ( mut.Class == mutClass )
 		{
-			`log("Not adding "$mutClass$" because this mutator is already added - "$mut);
+			LogInternal("Not adding "$mutClass$" because this mutator is already added - "$mut);
 			return;
 		}
 
@@ -964,6 +855,17 @@ function AddMutator(string mutname, optional bool bUserAdded)
 	else
 	{
 		BaseMutator.AddMutator(mut);
+	}
+}
+
+function AddGameRules(class<GameRules> GRClass)
+{
+	if ( GRClass != None )
+	{
+		if ( GameRulesModifiers == None )
+			GameRulesModifiers = Spawn(GRClass);
+		else
+			GameRulesModifiers.AddGameRules(Spawn(GRClass));
 	}
 }
 
@@ -992,22 +894,36 @@ function RemoveMutator( Mutator MutatorToRemove )
 	}
 }
 
+//
+// Return beacon text for serverbeacon.
+//
+event string GetBeaconText()
+{
+	return
+		WorldInfo.ComputerName
+    $   " "
+    $   Left(WorldInfo.Title,24)
+    $   "\\t"
+    $   GetNumPlayers()
+	$	"/"
+	$	MaxPlayers;
+}
+
 /* ProcessServerTravel()
  Optional handling of ServerTravel for network games.
 */
 function ProcessServerTravel(string URL, optional bool bAbsolute)
 {
-	local PlayerController LocalPlayer;
+	local PlayerController P, LocalPlayer;
 	local bool bSeamless;
 	local string NextMap;
 	local Guid NextMapGuid;
 	local int OptionStart;
 
 	bLevelChange = true;
-	EndLogging("mapchange");
 
 	// force an old style load screen if the server has been up for a long time so that TimeSeconds doesn't overflow and break everything
-	bSeamless = (bUseSeamlessTravel && WorldInfo.TimeSeconds < 172800.0f); // 172800 seconds == 48 hours
+	bSeamless = (!bForceNoSeamlessTravel && bUseSeamlessTravel && WorldInfo.TimeSeconds < 172800.0f); // 172800 seconds == 48 hours
 
 	if (InStr(Caps(URL), "?RESTART") != INDEX_NONE)
 	{
@@ -1028,27 +944,34 @@ function ProcessServerTravel(string URL, optional bool bAbsolute)
 	NextMapGuid = GetPackageGuid(name(NextMap));
 
 	// Notify clients we're switching level and give them time to receive.
-	LocalPlayer = ProcessClientTravel(URL, NextMapGuid, bSeamless, bAbsolute);
+	// We call PreClientTravel directly on any local PlayerPawns (ie listen server)
+	LogInternal("ProcessServerTravel:"@URL);
+	foreach WorldInfo.AllControllers(class'PlayerController', P)
+	{
+		if (NetConnection(P.Player) != None)
+		{
+			P.ClientSetTravelGuid(NextMapGuid);
 
-	`log("ProcessServerTravel:"@URL);
-	WorldInfo.NextURL = URL;
+			if (bSeamless)
+				P.ClientSeamlessTravel(NextMap);
+			else
+				P.ClientTravel(NextMap, TRAVEL_Relative, False);
+		}
+		else
+		{
+			LocalPlayer = P;
+			P.PreClientTravel();
+		}
+	}
+
 	if (WorldInfo.NetMode == NM_ListenServer && LocalPlayer != None)
 	{
-		WorldInfo.NextURL $= "?Team="$LocalPlayer.GetDefaultURL("Team")
-							$"?Name="$LocalPlayer.GetDefaultURL("Name")
-							$"?Class="$LocalPlayer.GetDefaultURL("Class")
-							$"?Character="$LocalPlayer.GetDefaultURL("Character");
+		WorldInfo.NextURL = WorldInfo.NextURL
+					$"?Team="$LocalPlayer.GetDefaultURL("Team")
+					$"?Name="$LocalPlayer.GetDefaultURL("Name")
+					$"?Class="$LocalPlayer.GetDefaultURL("Class")
+					$"?Character="$LocalPlayer.GetDefaultURL("Character");
 	}
-
-
-	// Notify access control, to cleanup online subsystem references
-	if (AccessControl != none)
-	{
-		AccessControl.NotifyServerTravel(bSeamless);
-	}
-
-	// Trigger cleanup of online delegates
-	ClearOnlineDelegates();
 
 	if (bSeamless)
 	{
@@ -1063,35 +986,9 @@ function ProcessServerTravel(string URL, optional bool bAbsolute)
 }
 
 /**
- * Notifies all clients to travel to the specified URL.
- *
- * @param	URL				a string containing the mapname (or IP address) to travel to, along with option key/value pairs
- * @param	NextMapGuid		the GUID of the server's version of the next map
- * @param	bSeamless		indicates whether the travel should use seamless travel or not.
- * @param	bAbsolute		indicates which type of travel the server will perform (i.e. TRAVEL_Relative or TRAVEL_Absolute)
+ * Called from the WorldInfo when travelling fails
  */
-function PlayerController ProcessClientTravel( out string URL, Guid NextMapGuid, bool bSeamless, bool bAbsolute )
-{
-	local PlayerController P, LP;
-
-	// We call PreClientTravel directly on any local PlayerPawns (ie listen server)
-	foreach WorldInfo.AllControllers(class'PlayerController', P)
-	{
-		if ( NetConnection(P.Player) != None )
-		{
-			// remote player
-			P.ClientTravel(URL, TRAVEL_Relative, bSeamless, NextMapGuid);
-		}
-		else
-		{
-			// local player
-			LP = P;
-			P.PreClientTravel(URL, bAbsolute ? TRAVEL_Absolute : TRAVEL_Relative, bSeamless);
-		}
-	}
-
-	return LP;
-}
+function TravelFailed(string TravelURL, string Error, optional string ErrorCode);
 
 function bool RequiresPassword()
 {
@@ -1101,9 +998,8 @@ function bool RequiresPassword()
 //
 // Accept or reject a player on the server.
 // Fails login if you set the Error to a non-empty string.
-// NOTE: UniqueId should not be trusted at this stage, it requires authentication
 //
-event PreLogin(string Options, string Address, const UniqueNetId UniqueId, bool bSupportsAuth, out string ErrorMessage)
+event PreLogin(string Options, string Address, out string ErrorMessage)
 {
 	local bool bSpectator;
 	local bool bPerfTesting;
@@ -1111,57 +1007,20 @@ event PreLogin(string Options, string Address, const UniqueNetId UniqueId, bool 
 	// Check for an arbitrated match in progress and kick if needed
 	if (WorldInfo.NetMode != NM_Standalone && bUsingArbitration && bHasArbitratedHandshakeBegun)
 	{
-		ErrorMessage = PathName(WorldInfo.Game.GameMessageClass) $ ".ArbitrationMessage";
+		//@todo joeg -- Put proper error message in here
+		ErrorMessage = GameMessageClass.Default.ArbitrationMessage;
 		return;
 	}
-
-	// If this player is banned, reject him
-	if (AccessControl != none && AccessControl.IsIDBanned(UniqueId))
-	{
-		`log(Address@"is banned, rejecting...");
-		ErrorMessage = "Engine.AccessControl.SessionBanned";
-		return;
-	}
-
 
 	bPerfTesting = ( ParseOption( Options, "AutomatedPerfTesting" ) ~= "1" );
-	bSpectator = bPerfTesting || ( ParseOption( Options, "SpectatorOnly" ) ~= "1" ) || ( ParseOption( Options, "CauseEvent" ) ~= "FlyThrough" );
+	bSpectator = bPerfTesting || ( ParseOption( Options, "SpectatorOnly" ) ~= "1" );
 
 	if (AccessControl != None)
 	{
-		AccessControl.PreLogin(Options, Address, UniqueId, bSupportsAuth, ErrorMessage, bSpectator);
+		AccessControl.PreLogin(Options, Address, ErrorMessage, bSpectator);
 	}
 }
 
-/**
- * If called from within PreLogin, pauses the login process for the currently connecting client (usually to delay login for authentication)
- *
- * @return		A reference to the Player/NetConnection representing the connecting client; used to resume the login process
- */
-native static final function Player PauseLogin();
-
-/**
- * Resumes the login process for the specified client Player/NetConnection
- *
- * @param InPlayer	The Player/NetConnection to resume logging in
- */
-native static final function ResumeLogin(Player InPlayer);
-
-/**
- * Rejects login for the specified client/NetConnection, with the specified error message
- * NOTE: Error is the same error format PreLogin would take in OutError
- * NOTE: Not restricted to clients at login; can be used on any valid NetConnection to disconnect a client
- *
- * @param InPlayer	The Player/NetConnection to reject from the server
- * @param Error		The error message to give the player
- */
-native static final function RejectLogin(Player InPlayer, string Error);
-
-/* 
- * Is the server currently at capacity?
- * @param bSpectator - Whether we should check against player or spectator limits
- * @return TRUE if the server is full, FALSE otherwise
- */
 function bool AtCapacity(bool bSpectator)
 {
 	if ( WorldInfo.NetMode == NM_Standalone )
@@ -1176,35 +1035,35 @@ function bool AtCapacity(bool bSpectator)
 
 native final function int GetNextPlayerID();
 
-/** spawns a PlayerController at the specified location; split out from Login()/HandleSeamlessTravelPlayer() for easier overriding */
-function PlayerController SpawnPlayerController(vector SpawnLocation, rotator SpawnRotation)
-{
-	return Spawn(PlayerControllerClass,,, SpawnLocation, SpawnRotation);
-}
-
 //
 // Log a player in.
 // Fails login if you set the Error string.
 // PreLogin is called before Login, but significant game time may pass before
 // Login is called, especially if content is downloaded.
-// NOTE: If the AccessControl utilizes PauseLogin, UniqueID should be fully authenticated here
 //
-event PlayerController Login(string Portal, string Options, const UniqueNetID UniqueID, out string ErrorMessage)
+event PlayerController Login
+(
+	string Portal,
+	string Options,
+	out string ErrorMessage
+)
 {
 	local NavigationPoint StartSpot;
 	local PlayerController NewPlayer;
-	local string InName, InCharacter/*, InAdminName*/, InPassword;
-	local byte InTeam;
-	local bool bSpectator, bAdmin, bPerfTesting;
+    local string          InName, InCharacter/*, InAdminName*/, InPassword;
+	local byte            InTeam;
+    local bool bSpectator, bAdmin, bPerfTesting;
 	local rotator SpawnRotation;
-	local UniqueNetId ZeroId;
+
+	local string FriendOptStr;
+	local UniqueNetId FriendNetId, ZeroNetId;
 
 	bAdmin = false;
 
 	// Kick the player if they joined during the handshake process
 	if (bUsingArbitration && bHasArbitratedHandshakeBegun)
 	{
-		ErrorMessage = PathName(WorldInfo.Game.GameMessageClass) $ ".ArbitrationMessage";
+		ErrorMessage = "Engine.GameMessage.MaxedOutMessage";
 		return None;
 	}
 
@@ -1217,7 +1076,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	// Get URL options.
 	InName     = Left(ParseOption ( Options, "Name"), 20);
 	InTeam     = GetIntOption( Options, "Team", 255 ); // default to "no team"
-	//InAdminName= ParseOption ( Options, "AdminName");
+    //InAdminName= ParseOption ( Options, "AdminName");
 	InPassword = ParseOption ( Options, "Password" );
 	//InChecksum = ParseOption ( Options, "Checksum" );
 
@@ -1227,17 +1086,9 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	}
 
 	// Make sure there is capacity except for admins. (This might have changed since the PreLogin call).
-	if ( !bAdmin && AtCapacity(bSpectator) )
+    if ( !bAdmin && AtCapacity(bSpectator) )
 	{
-		ErrorMessage = PathName(WorldInfo.Game.GameMessageClass) $ ".MaxedOutMessage";
-		return None;
-	}
-
-	// if this player is banned, kick him
-	if( ( WorldInfo.Game.AccessControl != none ) && (WorldInfo.Game.AccessControl.IsIDBanned(UniqueId)) )
-	{
-		`Log(InName @ "is banned, rejecting...");
-		ErrorMessage = "Engine.AccessControl.SessionBanned";
+		ErrorMessage = "Engine.GameMessage.MaxedOutMessage";
 		return None;
 	}
 
@@ -1247,26 +1098,44 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 		bSpectator = true;
 	}
 
-	// Pick a team (if need teams)
-	InTeam = PickTeam(InTeam,None);
+	//UT3G - Friend Following, put a friend on the same team if specified
+	FriendOptStr = ParseOption( Options, "Friend" );
+	if (FriendOptStr != "")
+	{
+		class'OnlineSubsystem'.static.StringToUniqueNetId(FriendOptStr, FriendNetId);
+		if (FriendNetId != ZeroNetId)
+		{
+			InTeam = PickFriendTeam(InTeam,None,FriendNetId);
+			CurrentFriendId = FriendNetId;
+		}
+		else
+		{
+			InTeam = PickTeam(InTeam,None);
+		}	
+	}
+	else
+	{
+		// Pick a team (if need teams)
+		InTeam = PickTeam(InTeam,None);
+	}
 
 	// Find a start spot.
 	StartSpot = FindPlayerStart( None, InTeam, Portal );
 
 	if( StartSpot == None )
 	{
-		ErrorMessage = PathName(WorldInfo.Game.GameMessageClass) $ ".FailedPlaceMessage";
+		ErrorMessage = GameMessageClass.Default.FailedPlaceMessage;
 		return None;
 	}
 
 	SpawnRotation.Yaw = StartSpot.Rotation.Yaw;
-	NewPlayer = SpawnPlayerController(StartSpot.Location, SpawnRotation);
+	NewPlayer = spawn(PlayerControllerClass,,,StartSpot.Location,SpawnRotation);
 
 	// Handle spawn failure.
 	if( NewPlayer == None )
 	{
-		`log("Couldn't spawn player controller of class "$PlayerControllerClass);
-		ErrorMessage = PathName(WorldInfo.Game.GameMessageClass) $ ".FailedSpawnMessage";
+		LogInternal("Couldn't spawn player controller of class "$PlayerControllerClass);
+		ErrorMessage = GameMessageClass.Default.FailedSpawnMessage;
 		return None;
 	}
 
@@ -1275,21 +1144,11 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 	// Set the player's ID.
 	NewPlayer.PlayerReplicationInfo.PlayerID = GetNextPlayerID();
 
-	// If the access control is currently authenticating the players UID, don't store the UID until it is authenticated
-	if (AccessControl == none || !AccessControl.IsPendingAuth(UniqueId))
+	// Store the friend net id, if around
+	if (FriendNetId != ZeroNetId)
 	{
-		NewPlayer.PlayerReplicationInfo.SetUniqueId(UniqueId);
+		NewPlayer.PlayerReplicationInfo.FriendFollowedId = FriendNetId;
 	}
-
-	if (OnlineSub != None && 
-		OnlineSub.GameInterface != None &&
-		UniqueId != ZeroId)
-	{
-		// Go ahead and register the player as part of the session
-		WorldInfo.Game.OnlineSub.GameInterface.RegisterPlayer(PlayerReplicationInfoClass.default.SessionName, UniqueId, HasOption(Options, "bIsFromInvite"));
-	}
-	// Now that the unique id is replicated, this player can contribute to skill
-	RecalculateSkillRating();
 
 	// Init player's name
 	if( InName=="" )
@@ -1311,36 +1170,31 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 		return NewPlayer;
 	}
 
+	//always reset this back to zero
+	CurrentFriendId = ZeroNetId;
+
 	// perform auto-login if admin password/name was passed on the url
 	if ( AccessControl != None && AccessControl.AdminLogin(NewPlayer, InPassword) )
 	{
 		AccessControl.AdminEntered(NewPlayer);
 	}
 
-
 	// if delayed start, don't give a pawn to the player yet
 	// Normal for multiplayer games
 	if ( bDelayedStart )
 	{
-		// @todo ib2merge: Chair had this commented out
 		NewPlayer.GotoState('PlayerWaiting');
 		return NewPlayer;
 	}
 
 	return newPlayer;
 }
-
 /* StartMatch()
 Start the game - inform all actors that the match is starting, and spawn player pawns
 */
 function StartMatch()
 {
 	local Actor A;
-
-	if ( MyAutoTestManager != None )
-	{
-		MyAutoTestManager.StartMatch();
-	}
 
 	// tell all actors the game is starting
 	ForEach AllActors(class'Actor', A)
@@ -1364,27 +1218,16 @@ function StartMatch()
 
 /**
  * Tells the online system to start the game and waits for the callback. Tells
- * each connected client to mark their session as in progress
+ * each connected client to register their
  */
 function StartOnlineGame()
 {
-	local PlayerController PC;
-
 	if (GameInterface != None)
 	{
-		// Tell clients to mark their game as started
-		foreach WorldInfo.AllControllers(class'PlayerController',PC)
-		{
-			// Skip notifying local PCs as they are handled automatically
-			if (!PC.IsLocalPlayerController())
-			{
-				PC.ClientStartOnlineGame();
-			}
-		}
 		// Register the start callback so that the stat guid can be read
 		GameInterface.AddStartOnlineGameCompleteDelegate(OnStartOnlineGameComplete);
 		// Start the game locally and wait for it to complete
-		GameInterface.StartOnlineGame(PlayerReplicationInfoClass.default.SessionName);
+		GameInterface.StartOnlineGame();
 	}
 	else
 	{
@@ -1396,10 +1239,9 @@ function StartOnlineGame()
 /**
  * Callback when the start completes
  *
- * @param SessionName the name of the session this is for
  * @param bWasSuccessful true if it worked, false otherwise
  */
-function OnStartOnlineGameComplete(name SessionName,bool bWasSuccessful)
+function OnStartOnlineGameComplete(bool bWasSuccessful)
 {
 	local PlayerController PC;
 	local string StatGuid;
@@ -1421,7 +1263,6 @@ function OnStartOnlineGameComplete(name SessionName,bool bWasSuccessful)
 			}
 		}
 	}
-
 	// Notify all clients that the match has begun
 	GameReplicationInfo.StartMatch();
 }
@@ -1474,12 +1315,10 @@ function RestartPlayer(Controller NewPlayer)
 	local int TeamNum, Idx;
 	local array<SequenceObject> Events;
 	local SeqEvent_PlayerSpawned SpawnedEvent;
-	local LocalPlayer LP; 
-	local PlayerController PC; 
 
 	if( bRestartLevel && WorldInfo.NetMode!=NM_DedicatedServer && WorldInfo.NetMode!=NM_ListenServer )
 	{
-		`warn("bRestartLevel && !server, abort from RestartPlayer"@WorldInfo.NetMode);
+		WarnInternal("bRestartLevel && !server, abort from RestartPlayer"@WorldInfo.NetMode);
 		return;
 	}
 	// figure out the team number and find the start spot
@@ -1493,12 +1332,12 @@ function RestartPlayer(Controller NewPlayer)
 		if (NewPlayer.StartSpot != None)
 		{
 			StartSpot = NewPlayer.StartSpot;
-			`warn("Player start not found, using last start spot");
+			WarnInternal("Player start not found, using last start spot");
 		}
 		else
 		{
 			// otherwise abort
-			`warn("Player start not found, failed to restart player");
+			WarnInternal("Player start not found, failed to restart player");
 			return;
 		}
 	}
@@ -1509,7 +1348,7 @@ function RestartPlayer(Controller NewPlayer)
 	}
 	if (NewPlayer.Pawn == None)
 	{
-		`log("failed to spawn player at "$StartSpot);
+		LogInternal("failed to spawn player at "$StartSpot);
 		NewPlayer.GotoState('Dead');
 		if ( PlayerController(NewPlayer) != None )
 		{
@@ -1529,7 +1368,7 @@ function RestartPlayer(Controller NewPlayer)
 		NewPlayer.Pawn.LastStartTime = WorldInfo.TimeSeconds;
 		NewPlayer.Possess(NewPlayer.Pawn, false);
 		NewPlayer.Pawn.PlayTeleportEffect(true, true);
-		NewPlayer.ClientSetRotation(NewPlayer.Pawn.Rotation, TRUE);
+		NewPlayer.ClientSetRotation(NewPlayer.Pawn.Rotation);
 
 		if (!WorldInfo.bNoDefaultInventoryForPlayer)
 		{
@@ -1552,22 +1391,6 @@ function RestartPlayer(Controller NewPlayer)
 				}
 			}
 		}
-	}
-
-	// To fix custom post processing chain when not running in editor or PIE.
-	PC = PlayerController(NewPlayer);
-	if (PC != none)
-	{
-		LP = LocalPlayer(PC.Player); 
-		if(LP != None) 
-		{ 
-			LP.RemoveAllPostProcessingChains(); 
-			LP.InsertPostProcessingChain(LP.Outer.GetWorldPostProcessChain(),INDEX_NONE,true); 
-			if(PC.myHUD != None)
-			{
-				PC.myHUD.NotifyBindPostProcessEffects();
-			}
-		} 
 	}
 }
 
@@ -1593,7 +1416,7 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 	ResultPawn = Spawn(DefaultPlayerClass,,,StartSpot.Location,StartRotation);
 	if ( ResultPawn == None )
 	{
-		`log("Couldn't spawn player of type "$DefaultPlayerClass$" at "$StartSpot);
+		LogInternal("Couldn't spawn player of type "$DefaultPlayerClass$" at "$StartSpot);
 	}
 	return ResultPawn;
 }
@@ -1621,10 +1444,13 @@ function ReplicateStreamingStatus(PlayerController PC)
 	if (LocalPlayer(PC.Player) == None && ChildConnection(PC.Player) == None)
 	{
 		// if we've loaded levels via CommitMapChange() that aren't normally in the StreamingLevels array, tell the client about that
-		if (WorldInfo.CommittedPersistentLevelName != 'None')
+		if (WorldInfo.CommittedLevelNames.length > 0)
 		{
-			PC.ClientPrepareMapChange(WorldInfo.CommittedPersistentLevelName, true, true);
-			// tell the client to commit the level immediately
+			for (LevelIndex = 0; LevelIndex < WorldInfo.CommittedLevelNames.length; LevelIndex++)
+			{
+				PC.ClientPrepareMapChange(WorldInfo.CommittedLevelNames[LevelIndex], LevelIndex == 0, LevelIndex == WorldInfo.CommittedLevelNames.length - 1);
+			}
+			// tell the client to commit the levels immediately
 			PC.ClientCommitMapChange();
 		}
 
@@ -1638,13 +1464,13 @@ function ReplicateStreamingStatus(PlayerController PC)
 
 				if( TheLevel != none )
 				{
-					`log( "levelStatus: " $ TheLevel.PackageName $ " "
+					LogInternal("levelStatus: " $ TheLevel.PackageName $ " "
 						$ TheLevel.bShouldBeVisible  $ " "
 						$ TheLevel.bIsVisible  $ " "
 						$ TheLevel.bShouldBeLoaded  $ " "
 						$ TheLevel.LoadedLevel  $ " "
 						$ TheLevel.bHasLoadRequestPending  $ " "
-						) ;
+) ;
 
 	 				PC.ClientUpdateLevelStreamingStatus(
 	 					TheLevel.PackageName,
@@ -1668,127 +1494,15 @@ function ReplicateStreamingStatus(PlayerController PC)
 	}
 }
 
-/** handles all player initialization that is shared between the travel methods
- * (i.e. called from both PostLogin() and HandleSeamlessTravelPlayer())
- */
-function GenericPlayerInitialization(Controller C)
-{
-	local PlayerController PC;
-
-	PC = PlayerController(C);
-	if (PC != None)
-	{
-		// Keep track of the best host to migrate to in case of a disconnect
-		UpdateBestNextHosts();
-
-		// Notify the game that we can now be muted and mute others
-		UpdateGameplayMuteList(PC);
-
-		// tell client what hud class to use
-		PC.ClientSetHUD(HudType);
-
-		// tell client what secondary hud class to use
-		PC.ClientSetSecondaryHUD(SecondaryHudType);
-
-		ReplicateStreamingStatus(PC);
-
-		// see if we need to spawn a CoverReplicator for this player
-		if (CoverReplicatorBase != None)
-		{
-			PC.SpawnCoverReplicator();
-		}
-
-		// Set the rich presence strings on the client (has to be done there)
-		PC.ClientSetOnlineStatus();
-	}
-
-	if (BaseMutator != None)
-	{
-		BaseMutator.NotifyLogin(C);
-	}
-}
-
-/**
- * Sort the list of best hosts. Clients with the most peer connections come first.
- * Then sort based on time of join so that newest players are preferred.
- *
- * @param A first item to compare
- * @param B second item to compare
- * @return 0 if A==B, < 0 if A < B, > 0 if A > B
- */
-function int BestNextHostSort(PlayerController A, PlayerController B)
-{
-	local int Result;
-
-	if (A.ConnectedPeers.Length == B.ConnectedPeers.Length &&
-		A.PlayerReplicationInfo != None && B.PlayerReplicationInfo != None)
-	{
-		// sort by newest start time
-		Result = FCeil(B.PlayerReplicationInfo.StartTime) - FCeil(A.PlayerReplicationInfo.StartTime);
-	}
-	else
-	{
-		// sort by largest connected peers
-		Result = A.ConnectedPeers.Length - B.ConnectedPeers.Length;
-	}
-
-	return Result;
-}
-
-/**
- * Updates the list of best next hosts on the current server and also replicates this list to all clients.
- */
-function UpdateBestNextHosts()
-{
-	local PlayerController PC;
-	local array<PlayerController> SortedPCList;
-	local UniqueNetId SortedPlayerIdList[10];
-	local UniqueNetId ZeroId;
-	local int Idx,NumEntries;
-
-	// copy list of remote PCs
-	foreach WorldInfo.AllControllers(class'PlayerController',PC)
-	{
-		if (!PC.IsLocalPlayerController() && 
-			PC.PlayerReplicationInfo != None &&
-			PC.PlayerReplicationInfo.UniqueId != ZeroId &&
-			PC.IsPrimaryPlayer())
-		{
-			SortedPCList.AddItem(PC);
-		}
-	}
-	// sort list of PCs from best to worst host
-	SortedPCList.Sort(BestNextHostSort);
-
-	// copy to list of unique net ids
-	NumEntries = Min(SortedPCList.Length,10);
-	for (Idx=0; Idx < NumEntries; Idx++)
-	{
-		SortedPlayerIdList[Idx] = SortedPCList[Idx].PlayerReplicationInfo.UniqueId;
-	}
-
-	// send list of best hosts to clients
-	foreach WorldInfo.AllControllers(class'PlayerController',PC)
-	{
-		if (!PC.IsLocalPlayerController())
-		{
-			PC.ClientUpdateBestNextHosts(SortedPlayerIdList,NumEntries);
-		}
-	}
-}
-
 //
 // Called after a successful login. This is the first place
 // it is safe to call replicated functions on the PlayerController.
 //
 event PostLogin( PlayerController NewPlayer )
 {
-	local string Address, StatGuid;
-	local int pos, i;
-	local Sequence GameSeq;
-	local array<SequenceObject> AllInterpActions;
-
-	local int HidePlayer, HideHud, DisableMovement, DisableTurning, DisableInput;
+	local string Address;
+	local string StatGuid;
+	local int pos;
 
 	// update player count
 	if (NewPlayer.PlayerReplicationInfo.bOnlySpectator)
@@ -1826,15 +1540,31 @@ event PostLogin( PlayerController NewPlayer )
 		bRestartLevel = Default.bRestartLevel;
 	}
 
-	if (NewPlayer.Pawn != None)
-	{
+	// tell client what hud and scoreboard to use
+	NewPlayer.SetHUD( HudType, ScoreboardType );
+
+	if ( NewPlayer.Pawn != None )
 		NewPlayer.Pawn.ClientSetRotation(NewPlayer.Pawn.Rotation);
-	}
 
 	NewPlayer.ClientCapBandwidth(NewPlayer.Player.CurrentNetSpeed);
 	UpdateNetSpeeds();
 
-	GenericPlayerInitialization(NewPlayer);
+	if ( BaseMutator != None )
+		BaseMutator.NotifyLogin(NewPlayer);
+
+	ReplicateStreamingStatus(NewPlayer);
+
+	// tell the player about the music, if any
+	NewPlayer.ServerSendMusicInfo();
+
+	// see if we need to spawn a CoverReplicator for this player
+	if (CoverReplicatorBase != None)
+	{
+		NewPlayer.SpawnCoverReplicator();
+	}
+
+	// Set the rich presence strings on the client (has to be done there)
+	NewPlayer.ClientSetOnlineStatus();
 
 	// Tell the new player the stat guid
 	if (GameReplicationInfo.bMatchHasBegun && OnlineSub != None && OnlineSub.StatsInterface != None)
@@ -1861,67 +1591,36 @@ event PostLogin( PlayerController NewPlayer )
 	{
 		NewPlayer.ClientGotoState('Spectating');
 	}
-
-	// add the player to any matinees running so that it gets in on any cinematics already running, etc
-	GameSeq = WorldInfo.GetGameSequence();
-	if (GameSeq != None)
-	{
-		// find any matinee actions that exist
-		GameSeq.FindSeqObjectsByClass(class'SeqAct_Interp', true, AllInterpActions);
-
-		// tell them all to add this PC to any running Director tracks
-		for (i = 0; i < AllInterpActions.Length; i++)
-		{
-			SeqAct_Interp(AllInterpActions[i]).AddPlayerToDirectorTracks(NewPlayer);
-		}
-	}
-
-	//Check to see if we should start in cinematic mode (matinee movie capture)
-	if(ShouldStartInCinematicMode(HidePlayer, HideHud, DisableMovement, DisableTurning, DisableInput))
-	{
-		NewPlayer.SetCinematicMode(true, HidePlayer == 1, HideHud == 1, DisableMovement == 1, DisableTurning == 1, DisableInput == 1);
-	}
-
-	// Pass on to access control
-	if (AccessControl != none)
-	{
-		AccessControl.PostLogin(NewPlayer);
-	}
 }
 
 function UpdateNetSpeeds()
 {
 	local int NewNetSpeed;
 	local PlayerController PC;
-	local OnlineGameSettings GameSettings;
 
-	if (GameInterface != None)
-	{
-		GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-	}
-
-	if ( (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_Standalone) || (GameSettings != None && GameSettings.bIsLanMatch) )
+	if ( (WorldInfo.NetMode == NM_DedicatedServer) || (WorldInfo.NetMode == NM_Standalone) 
+		|| ((OnlineSub != None) && (OnlineSub.GameInterface != None) && (OnlineSub.GameInterface.GetGameSettings() != None)&& OnlineSub.GameInterface.GetGameSettings().bIsLanMatch) )
 	{
 		return;
 	}
 
 	if ( WorldInfo.TimeSeconds - LastNetSpeedUpdateTime < 1.0 )
 	{
-		SetTimer( 1.0, false, nameof(UpdateNetSpeeds) );
+		SetTimer(1.0, false, 'UpdateNetSpeeds');
 		return;
 	}
 
 	LastNetSpeedUpdateTime = WorldInfo.TimeSeconds;
 
 	NewNetSpeed = CalculatedNetSpeed();
-	`log("New Dynamic NetSpeed "$NewNetSpeed$" vs old "$AdjustedNetSpeed,,'DevNet');
+	LogInternal("New Dynamic NetSpeed "$NewNetSpeed$" vs old "$AdjustedNetSpeed);
 
 	if ( AdjustedNetSpeed != NewNetSpeed )
 	{
 		AdjustedNetSpeed = NewNetSpeed;
 		ForEach WorldInfo.AllControllers(class'PlayerController', PC)
 		{
-			PC.SetNetSpeed(AdjustedNetSpeed);
+			PC.SetNetSpeed(Min(AdjustedNetSpeed, PC.MaxClientNetSpeed));
 		}
 	}
 }
@@ -1934,15 +1633,7 @@ function int CalculatedNetSpeed()
 /**
  * Engine is shutting down.
  */
-event PreExit()
-{
-	if (AccessControl != none)
-	{
-		AccessControl.NotifyExit();
-	}
-
-	ClearOnlineDelegates();
-}
+event PreExit();
 
 //
 // Player exits.
@@ -1955,11 +1646,8 @@ function Logout( Controller Exiting )
 	PC = PlayerController(Exiting);
 	if ( PC != None )
 	{
-		if (AccessControl != None &&
-			AccessControl.AdminLogout( PlayerController(Exiting) ))
-		{
-			AccessControl.AdminExited( PlayerController(Exiting) );
-		}
+		//FIXMESTEVE		if ( AccessControl.AdminLogout( PlayerController(Exiting) ) )
+		//			AccessControl.AdminExited( PlayerController(Exiting) );
 
 		if ( PC.PlayerReplicationInfo.bOnlySpectator )
 		{
@@ -1981,10 +1669,16 @@ function Logout( Controller Exiting )
 		// This person has left during an arbitration period
 		if (bUsingArbitration && bHasArbitratedHandshakeBegun && !bHasEndGameHandshakeBegun)
 		{
-			`Log("Player "$PC.PlayerReplicationInfo.PlayerName$" has dropped");
+			LogInternal("Player "$PC.PlayerReplicationInfo.GetPlayerAlias()$" has dropped");
 		}
-		// Unregister the player from the online layer
-		UnregisterPlayer(PC);
+		// If there is a game unregister this remote player
+		if (WorldInfo.NetMode != NM_Standalone &&
+			GameInterface != None &&
+			GameInterface.GetGameSettings() != None)
+		{
+			// Unregister the player from the session
+			GameInterface.UnregisterPlayer(PC.PlayerReplicationInfo.UniqueId);
+		}
 		// Remove from the arbitrated PC list if in an arbitrated match
 		if (bUsingArbitration)
 		{
@@ -2001,30 +1695,7 @@ function Logout( Controller Exiting )
 	{
 		BaseMutator.NotifyLogout(Exiting);
 	}
-	if ( PC != None )
-	{
-		UpdateNetSpeeds();
-	}
-}
-
-/**
- * Removes the player from the named session when they leave
- *
- * @param PC the player controller that just left
- */
-function UnregisterPlayer(PlayerController PC)
-{
-	local UniqueNetId ZeroId;
-
-	// If there is a session that matches the name, unregister this remote player
-	if (WorldInfo.NetMode != NM_Standalone &&
-		GameInterface != None &&
-		PC.PlayerReplicationInfo.UniqueId != ZeroId &&
-		GameInterface.GetGameSettings(PC.PlayerReplicationInfo.SessionName) != None)
-	{
-		// Unregister the player from the session
-		GameInterface.UnregisterPlayer(PC.PlayerReplicationInfo.SessionName,PC.PlayerReplicationInfo.UniqueId);
-	}
+	UpdateNetSpeeds();
 }
 
 //
@@ -2053,7 +1724,7 @@ event AddDefaultInventory(Pawn P)
 
 	if ( P.InvManager == None )
 	{
-		`warn("GameInfo::AddDefaultInventory - P.InvManager == None");
+		WarnInternal("GameInfo::AddDefaultInventory - P.InvManager == None");
 	}
 }
 
@@ -2085,13 +1756,13 @@ function SetPlayerDefaults(Pawn PlayerPawn)
 	PlayerPawn.PhysicsVolume.ModifyPlayer(PlayerPawn);
 }
 
-function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType )
+function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 {
 	local Controller C;
 
 	foreach WorldInfo.AllControllers(class'Controller', C)
 	{
-		C.NotifyKilled(Killer, Killed, KilledPawn, damageType);
+		C.NotifyKilled(Killer, Killed, KilledPawn);
 	}
 }
 
@@ -2099,7 +1770,7 @@ function Killed( Controller Killer, Controller KilledPlayer, Pawn KilledPawn, cl
 {
     if( KilledPlayer != None && KilledPlayer.bIsPlayer )
 	{
-		KilledPlayer.PlayerReplicationInfo.IncrementDeaths();
+		KilledPlayer.PlayerReplicationInfo.Deaths += 1;
 		KilledPlayer.PlayerReplicationInfo.SetNetUpdateTime(FMin(KilledPlayer.PlayerReplicationInfo.NetUpdateTime, WorldInfo.TimeSeconds + 0.3 * FRand()));
 		BroadcastDeathMessage(Killer, KilledPlayer, damageType);
 	}
@@ -2110,14 +1781,14 @@ function Killed( Controller Killer, Controller KilledPlayer, Pawn KilledPawn, cl
 	}
 
 	DiscardInventory(KilledPawn, Killer);
-    NotifyKilled(Killer, KilledPlayer, KilledPawn, damageType);
+    NotifyKilled(Killer, KilledPlayer, KilledPawn);
 }
 
-function bool PreventDeath(Pawn KilledPawn, Controller Killer, class<DamageType> DamageType, vector HitLocation)
+function bool PreventDeath(Pawn KilledPawn, Controller Killer, class<DamageType> damageType, vector HitLocation)
 {
-	if ( BaseMutator == None )
+	if ( GameRulesModifiers == None )
 		return false;
-	return BaseMutator.PreventDeath(KilledPawn, Killer, DamageType, HitLocation);
+	return GameRulesModifiers.PreventDeath(KilledPawn,Killer, damageType,HitLocation);
 }
 
 function BroadcastDeathMessage(Controller Killer, Controller Other, class<DamageType> damageType)
@@ -2132,6 +1803,14 @@ function BroadcastDeathMessage(Controller Killer, Controller Other, class<Damage
 	}
 }
 
+
+// `k = Owner's PlayerName (Killer)
+// `o = Other's PlayerName (Victim)
+static function string ParseKillMessage( string KillerName, string VictimName, string DeathMessage )
+{
+	return Repl(Repl(DeathMessage,"`k",KillerName),"`o",VictimName);
+}
+
 function Kick( string S )
 {
 	if (AccessControl != None)
@@ -2142,6 +1821,12 @@ function KickBan( string S )
 {
 	if (AccessControl != None)
 		AccessControl.KickBan(S);
+}
+
+function SessionBan(string S)
+{
+	if (AccessControl != none)
+		AccessControl.SessionBan(S);
 }
 
 //-------------------------------------------------------------------------------------
@@ -2158,7 +1843,7 @@ function bool CanSpectate( PlayerController Viewer, PlayerReplicationInfo ViewTa
 
 /* ReduceDamage:
 	Use reduce damage for teamplay modifications, etc. */
-function ReduceDamage(out int Damage, pawn injured, Controller instigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
+function ReduceDamage( out int Damage, pawn injured, Controller instigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType )
 {
 	local int OriginalDamage;
 
@@ -2169,11 +1854,11 @@ function ReduceDamage(out int Damage, pawn injured, Controller instigatedBy, vec
 		Damage = 0;
 		return;
 	}
+	else if ( (damage > 0) && (injured.InvManager != None) ) // then check if carrying items that can reduce damage
+		injured.InvManager.ModifyDamage( Damage, instigatedBy, HitLocation, Momentum, DamageType );
 
-	if (BaseMutator != None)
-	{
-		BaseMutator.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
-	}
+	if ( GameRulesModifiers != None )
+		GameRulesModifiers.NetDamage( OriginalDamage, Damage,injured,instigatedBy,HitLocation,Momentum,DamageType );
 }
 
 /* CheckRelevance()
@@ -2187,15 +1872,15 @@ function bool CheckRelevance(Actor Other)
 	return BaseMutator.CheckRelevance(Other);
 }
 
-/**
-  * Return whether an item should respawn.  Default implementation allows item respawning in multiplayer games.
-  */
+//
+// Return whether an item should respawn.
+//
 function bool ShouldRespawn( PickupFactory Other )
 {
 	return ( WorldInfo.NetMode != NM_Standalone );
 }
 
-/**
+/** PickupQuery:
  *	Called when pawn has a chance to pick Item up (i.e. when
  *	the pawn touches a weapon pickup). Should return true if
  *	he wants to pick it up, false if he does not want it.
@@ -2208,7 +1893,7 @@ function bool PickupQuery(Pawn Other, class<Inventory> ItemClass, Actor Pickup)
 {
 	local byte bAllowPickup;
 
-	if (BaseMutator != None && BaseMutator.OverridePickupQuery(Other, ItemClass, Pickup, bAllowPickup))
+	if (GameRulesModifiers != None && GameRulesModifiers.OverridePickupQuery(Other, ItemClass, Pickup, bAllowPickup))
 	{
 		return bool(bAllowPickup);
 	}
@@ -2223,9 +1908,8 @@ function bool PickupQuery(Pawn Other, class<Inventory> ItemClass, Actor Pickup)
 	}
 }
 
-/**
-  *	Discard a player's inventory after he dies.
-  */
+/* DiscardInventory:
+	Discard a player's inventory after he dies. */
 function DiscardInventory( Pawn Other, optional controller Killer )
 {
 	if ( Other.InvManager != None )
@@ -2258,6 +1942,11 @@ function byte PickTeam(byte Current, Controller C)
 	return Current;
 }
 
+function byte PickFriendTeam(byte Current, Controller C, UniqueNetId FriendNetId)
+{
+	return Current;
+}
+
 /* Send a player to a URL.
 */
 function SendPlayer( PlayerController aPlayer, string URL )
@@ -2281,10 +1970,6 @@ function bool GetTravelType()
 function RestartGame()
 {
 	local string NextMap;
-	local string TransitionMapCmdLine;
-	local string URLString;
-	local int URLMapLen;
-	local int MapNameLen;
 
 	// If we are using arbitration and haven't done the end game handshaking,
 	// do that process first and then come back here afterward
@@ -2298,15 +1983,11 @@ function RestartGame()
 		return;
 	}
 
-	if (BaseMutator != None && BaseMutator.HandleRestartGame())
-	{
+	if ( (GameRulesModifiers != None) && GameRulesModifiers.HandleRestartGame() )
 		return;
-	}
 
-	if (bGameRestarted)
-	{
+	if ( bGameRestarted )
 		return;
-	}
 	bGameRestarted = true;
 
 	// these server travels should all be relative to the current URL
@@ -2315,46 +1996,11 @@ function RestartGame()
 		// get the next map and start the transition
 		bAlreadyChanged = true;
 
-		if ( (MyAutoTestManager != None) && MyAutoTestManager.bUsingAutomatedTestingMapList)
-		{
-			NextMap = MyAutoTestManager.GetNextAutomatedTestingMap();
-		}
-		else
-		{
-			NextMap = GetNextMap();
-		}
+		NextMap = GetNextMap();
 
 		if (NextMap != "")
 		{
-			if ( (MyAutoTestManager == None) || !MyAutoTestManager.bUsingAutomatedTestingMapList )
-			{
-				WorldInfo.ServerTravel(NextMap,GetTravelType());
-			}
-			else
-			{
-				if ( !MyAutoTestManager.bAutomatedTestingWithOpen )
-				{
-					URLString = WorldInfo.GetLocalURL();
-					URLMapLen = Len(URLString);
-
-					MapNameLen = InStr(URLString, "?");
-					if (MapNameLen != -1)
-					{
-						URLString = Right(URLString, URLMapLen - MapNameLen);
-					}
-
-					// The ENTIRE url needs to be recreated here...
-					TransitionMapCmdLine = NextMap$URLString$"?AutomatedTestingMapIndex="$MyAutoTestManager.AutomatedTestingMapIndex;
-					`log(">>> Issuing server travel on " $ TransitionMapCmdLine);
-					WorldInfo.ServerTravel(TransitionMapCmdLine,GetTravelType());
-				}
-				else
-				{
-					TransitionMapCmdLine = "?AutomatedTestingMapIndex="$MyAutoTestManager.AutomatedTestingMapIndex$"?NumberOfMatchesPlayed="$MyAutoTestManager.NumberOfMatchesPlayed$"?NumMapListCyclesDone="$MyAutoTestManager.NumMapListCyclesDone;
-					`log(">>> Issuing open command on " $ NextMap $ TransitionMapCmdLine);
-					ConsoleCommand( "open " $ NextMap $ TransitionMapCmdLine);
-				}
-			}
+			WorldInfo.ServerTravel(NextMap,GetTravelType());
 			return;
 		}
 	}
@@ -2398,7 +2044,7 @@ event BroadcastLocalizedTeam( int TeamIndex, actor Sender, class<LocalMessage> M
 //==========================================================================
 function bool CheckModifiedEndGame(PlayerReplicationInfo Winner, string Reason)
 {
-	return (BaseMutator != None && !BaseMutator.CheckEndGame(Winner, Reason));
+	return ( (GameRulesModifiers != None) && !GameRulesModifiers.CheckEndGame(Winner, Reason) );
 }
 
 function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
@@ -2408,7 +2054,7 @@ function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
 	if ( CheckModifiedEndGame(Winner, Reason) )
 		return false;
 
-	// all player cameras focus on winner or final scene (picked by mutator)
+	// all player cameras focus on winner or final scene (picked by gamerules)
 	foreach WorldInfo.AllControllers(class'Controller', P)
 	{
 		P.GameHasEnded();
@@ -2417,67 +2063,40 @@ function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
 }
 
 /**
- * Tells all clients to write stats and then handles writing local stats
+ * Overload this method so that your game writes out stats
  */
-function WriteOnlineStats()
-{
-	local PlayerController PC;
-	local OnlineGameSettings CurrentSettings;
-
-	if (GameInterface != None)
-	{
-		// Make sure that we are recording stats
-		CurrentSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-		if (CurrentSettings != None && CurrentSettings.bUsesStats)
-		{
-			// Iterate through the controllers telling them to write stats
-			foreach WorldInfo.AllControllers(class'PlayerController',PC)
-			{
-				if (PC.IsLocalPlayerController() == false)
-				{
-					PC.ClientWriteLeaderboardStats(OnlineStatsWriteClass);
-				}
-			}
-			// Iterate through local controllers telling them to write stats
-			foreach WorldInfo.AllControllers(class'PlayerController',PC)
-			{
-				if (PC.IsLocalPlayerController())
-				{
-					PC.ClientWriteLeaderboardStats(OnlineStatsWriteClass);
-				}
-			}
-		}
-	}
-}
+function WriteOnlineStats();
 
 /**
- * If the match is arbitrated, tells all clients to write out their copies
- * of the player scores. If not arbitrated, it only has the first local player
- * write the scores.
+ * Overload this method so that your game writes out player scores
  */
 function WriteOnlinePlayerScores()
 {
-	local PlayerController PC;
+	local int Index;
+	local array<OnlinePlayerScore> PlayerScores;
 
-	if (bUsingArbitration)
+	if (OnlineSub != None && OnlineSub.StatsInterface != None)
 	{
-		// Iterate through the controllers telling them to write stats
-		foreach WorldInfo.AllControllers(class'PlayerController',PC)
+		// Allocate an entry for all players
+		PlayerScores.Length = GameReplicationInfo.PRIArray.Length;
+		// Iterate through the players building their score data
+		for (Index = 0; Index < GameReplicationInfo.PRIArray.Length; Index++)
 		{
-			PC.ClientWriteOnlinePlayerScores(ArbitratedLeaderboardId);
-		}
-	}
-	else
-	{
-		// Find the first local player and have them write the data
-		foreach WorldInfo.AllControllers(class'PlayerController',PC)
-		{
-			if (PC.IsLocalPlayerController())
+			// Build the skill data for this player
+			PlayerScores[Index].PlayerId = GameReplicationInfo.PRIArray[Index].UniqueId;
+			if (bTeamGame)
 			{
-				PC.ClientWriteOnlinePlayerScores(LeaderboardId);
-				break;
+				PlayerScores[Index].TeamId = GameReplicationInfo.PRIArray[Index].Team.TeamIndex;
+				PlayerScores[Index].Score = GameReplicationInfo.PRIArray[Index].Team.Score;
+			}
+			else
+			{
+				PlayerScores[Index].TeamId = Index;
+				PlayerScores[Index].Score = GameReplicationInfo.PRIArray[Index].Score;
 			}
 		}
+		// Now write out the scores
+		OnlineSub.StatsInterface.WriteOnlinePlayerScores(PlayerScores);
 	}
 }
 
@@ -2485,6 +2104,8 @@ function WriteOnlinePlayerScores()
 */
 function EndGame( PlayerReplicationInfo Winner, string Reason )
 {
+	local int Index;
+
 	// don't end game if not really ready
 	if ( !CheckEndGame(Winner, Reason) )
 	{
@@ -2492,63 +2113,41 @@ function EndGame( PlayerReplicationInfo Winner, string Reason )
 		return;
 	}
 
-	// Allow replication to happen before reporting scores, stats, etc.
-	SetTimer( 1.5,false,nameof(PerformEndGameHandling) );
-
-	bGameEnded = true;
-	EndLogging(Reason);
-}
-
-/** Does end of game handling for the online layer */
-function PerformEndGameHandling()
-{
-	if (GameInterface != None)
+	// The non-arbitrated route, the server writes all stats
+	if (!bUsingArbitration)
 	{
 		// Write out any online stats
 		WriteOnlineStats();
 		// Write the player data used in determining skill ratings
 		WriteOnlinePlayerScores();
-		// Force the stats to flush and change the status of the match
-		// to ended making join in progress an option again
-		EndOnlineGame();
-		// Notify clients that the session has ended for arbitrated
-		if (bUsingArbitration)
-		{
-			PendingArbitrationPCs.Length = 0;
-			ArbitrationPCs.Length = 0;
-			// Do end of session handling
-			NotifyArbitratedMatchEnd();
-		}
-	}
-}
-
-/**
- * Tells the online system to end the game and tells all clients to do the same
- */
-function EndOnlineGame()
-{
-	local PlayerController PC;
-
-	GameReplicationInfo.EndGame();
-	if (GameInterface != None)
-	{
 		// Have clients end their games
-		foreach WorldInfo.AllControllers(class'PlayerController',PC)
-		{
-			// Skip notifying local PCs as they are handled automatically
-			if (!PC.IsLocalPlayerController())
-			{
-				PC.ClientEndOnlineGame();
-			}
-		}
+		GameReplicationInfo.EndGame();
 		// Server is handled here
-		GameInterface.EndOnlineGame(PlayerReplicationInfoClass.default.SessionName);
+		GameInterface.EndOnlineGame();
 	}
+	// Arbitrated matches require all participants to report stats
+	// This is handled in the end game handshaking process
+	else
+	{
+		GameReplicationInfo.bMatchIsOver = true;
+		if (bNeedsEndGameHandshake)
+		{
+			// Iterate through the inactive list and send them to the clients
+			for (Index = 0; Index < InactivePRIArray.Length; Index++)
+			{
+				InactivePRIArray[Index].bIsInactive = true;
+				InactivePRIArray[Index].RemoteRole = InactivePRIArray[Index].default.RemoteRole;
+			}
+			// Delay a bit so that replication can happen before processing
+			SetTimer(2.0,false,'ProcessEndGameHandshake');
+			bNeedsEndGameHandshake = false;
+			bIsEndGameHandshakeComplete = false;
+		}
+	}
+
+	bGameEnded = true;
 }
 
-/** Entry point of the stats code for custom game logging at a regular interval */
-function GameEventsPoll();
-function EndLogging(string Reason);	// Stub function
 
 /** returns whether the given Controller StartSpot property should be used as the spawn location for its Pawn */
 function bool ShouldSpawnAtStartSpot(Controller Player)
@@ -2570,13 +2169,11 @@ function NavigationPoint FindPlayerStart( Controller Player, optional byte InTea
 	local Teleporter Tel;
 
 	// allow GameRulesModifiers to override playerstart selection
-	if (BaseMutator != None)
+	if ( GameRulesModifiers != None )
 	{
-		N = BaseMutator.FindPlayerStart(Player, InTeam, IncomingName);
-		if (N != None)
-		{
+		N = GameRulesModifiers.FindPlayerStart(Player,InTeam,incomingName);
+		if ( N != None )
 			return N;
-		}
 	}
 
 	// if incoming start is specified, then just use it
@@ -2599,7 +2196,7 @@ function NavigationPoint FindPlayerStart( Controller Player, optional byte InTea
 	if ( (BestStart == None) && (Player == None) )
 	{
 		// no playerstart found, so pick any NavigationPoint to keep player from failing to enter game
-		`log("Warning - PATHS NOT DEFINED or NO PLAYERSTART with positive rating");
+		LogInternal("Warning - PATHS NOT DEFINED or NO PLAYERSTART with positive rating");
 		ForEach AllActors( class 'NavigationPoint', N )
 		{
 			BestStart = N;
@@ -2648,24 +2245,9 @@ function PlayerStart ChoosePlayerStart( Controller Player, optional byte InTeam 
 */
 function float RatePlayerStart(PlayerStart P, byte Team, Controller Player)
 {
-	local float Rating;
 	if ( !P.bEnabled )
-	{
-		return 5.f;
-	}
-	else
-	{
-		Rating = 10.f;
-		if (P.bPrimaryStart)
-		{
-			Rating += 10.f;
-		}
-		if (P.TeamIndex == Team)
-		{
-			Rating += 15.f;
-		}
-		return Rating;
-	}
+		return 10;
+	return ( P.bPrimaryStart ? 100 : 20 );
 }
 
 function AddObjectiveScore(PlayerReplicationInfo Scorer, Int Score)
@@ -2674,10 +2256,8 @@ function AddObjectiveScore(PlayerReplicationInfo Scorer, Int Score)
 	{
 		Scorer.Score += Score;
 	}
-	if (BaseMutator != None)
-	{
-		BaseMutator.ScoreObjective(Scorer, Score);
-	}
+	if ( GameRulesModifiers != None )
+		GameRulesModifiers.ScoreObjective(Scorer,Score);
 }
 
 function ScoreObjective(PlayerReplicationInfo Scorer, Int Score)
@@ -2698,7 +2278,7 @@ function ScoreKill(Controller Killer, Controller Other)
 {
 	if( (killer == Other) || (killer == None) )
 	{
-		if ( (Other!=None) && (Other.PlayerReplicationInfo != None) )
+    	if ( (Other!=None) && (Other.PlayerReplicationInfo != None) )
 		{
 			Other.PlayerReplicationInfo.Score -= 1;
 			Other.PlayerReplicationInfo.bForceNetUpdate = TRUE;
@@ -2711,9 +2291,10 @@ function ScoreKill(Controller Killer, Controller Other)
 		Killer.PlayerReplicationInfo.Kills++;
 	}
 
-	ModifyScoreKill(Killer, Other);
+	if ( GameRulesModifiers != None )
+		GameRulesModifiers.ScoreKill(Killer, Other);
 
-	if (Killer != None || MaxLives > 0)
+    if ( (Killer != None) || (MaxLives > 0) )
 	{
 		CheckScore(Killer.PlayerReplicationInfo);
 	}
@@ -2724,10 +2305,14 @@ function ScoreKill(Controller Killer, Controller Other)
   */
 function ModifyScoreKill(Controller Killer, Controller Other)
 {
-	if (BaseMutator != None)
-	{
-		BaseMutator.ScoreKill(Killer, Other);
-	}
+	if ( GameRulesModifiers != None )
+		GameRulesModifiers.ScoreKill(Killer, Other);
+}
+
+// - Parse out % vars for various messages
+static function string ParseMessageString(Controller Who, String Message)
+{
+	return Message;
 }
 
 function DriverEnteredVehicle(Vehicle V, Pawn P)
@@ -2748,6 +2333,8 @@ function DriverLeftVehicle(Vehicle V, Pawn P)
 	if ( BaseMutator != None )
 		BaseMutator.DriverLeftVehicle(V, P);
 }
+
+exec function KillBots();
 
 function bool PlayerCanRestartGame( PlayerController aPlayer )
 {
@@ -2773,16 +2360,6 @@ function bool AllowCheats(PlayerController P)
 }
 
 /**
- * @return	TRUE if the player is allowed to pause the game.
- */
-function bool AllowPausing( optional PlayerController PC )
-{
-	return	bPauseable
-		||	WorldInfo.NetMode == NM_Standalone
-		||	(bAdminCanPause && AccessControl.IsAdmin(PC));
-}
-
-/**
  * Called from C++'s CommitMapChange before unloading previous level
  * @param PreviousMapName Name of the previous persistent level
  * @param NextMapName Name of the persistent level being streamed to
@@ -2800,7 +2377,7 @@ event PostCommitMapChange();
 function AddInactivePRI(PlayerReplicationInfo PRI, PlayerController PC)
 {
 	local int i;
-	local PlayerReplicationInfo NewPRI, CurrentPRI;
+	local PlayerReplicationInfo NewPRI;
 	local bool bIsConsole;
 
 	// don't store if it's an old PRI from the previous level or if it's a spectator
@@ -2821,10 +2398,10 @@ function AddInactivePRI(PlayerReplicationInfo PRI, PlayerController PC)
 		// make sure no duplicates
 		for (i=0; i<InactivePRIArray.Length; i++)
 		{
-			CurrentPRI = InactivePRIArray[i];
-			if ( (CurrentPRI == None) || CurrentPRI.bDeleteMe ||
-				(!bIsConsole && (CurrentPRI.SavedNetworkAddress == NewPRI.SavedNetworkAddress)) ||
-				(bIsConsole && CurrentPRI.UniqueId == NewPRI.UniqueId) )
+			if ( (InactivePRIArray[i] == None) || InactivePRIArray[i].bDeleteMe ||
+			//@todo joeg -- Change this once the PC master server is issuing net ids
+				(!bIsConsole && (InactivePRIArray[i].SavedNetworkAddress == NewPRI.SavedNetworkAddress)) ||
+				(bIsConsole && InactivePRIArray[i].AreUniqueNetIdsEqual(NewPRI)) )
 			{
 				InactivePRIArray.Remove(i,1);
 				i--;
@@ -2851,7 +2428,7 @@ function bool FindInactivePRI(PlayerController PC)
 {
 	local string NewNetworkAddress, NewName;
 	local int i;
-	local PlayerReplicationInfo OldPRI, CurrentPRI;
+	local PlayerReplicationInfo OldPRI;
 	local bool bIsConsole;
 
 	// don't bother for spectators
@@ -2867,25 +2444,24 @@ function bool FindInactivePRI(PlayerController PC)
 	NewName = PC.PlayerReplicationInfo.PlayerName;
 	for (i=0; i<InactivePRIArray.Length; i++)
 	{
-		CurrentPRI = InactivePRIArray[i];
-		if ( (CurrentPRI == None) || CurrentPRI.bDeleteMe )
+		if ( (InactivePRIArray[i] == None) || InactivePRIArray[i].bDeleteMe )
 		{
 			InactivePRIArray.Remove(i,1);
 			i--;
 		}
-		else if ( (bIsConsole && CurrentPRI.UniqueId == PC.PlayerReplicationInfo.UniqueId) ||
-			(!bIsConsole && (CurrentPRI.SavedNetworkAddress ~= NewNetworkAddress) && (CurrentPRI.PlayerName ~= NewName)) )
+//@todo joeg -- Change this once the PC master server is issuing net ids
+		else if ( (bIsConsole && InactivePRIArray[i].AreUniqueNetIdsEqual(PC.PlayerReplicationInfo)) ||
+			(!bIsConsole && (InactivePRIArray[i].SavedNetworkAddress ~= NewNetworkAddress) && (InactivePRIArray[i].PlayerName ~= NewName)) )
 		{
 			// found it!
 			OldPRI = PC.PlayerReplicationInfo;
-			PC.PlayerReplicationInfo = CurrentPRI;
+			PC.PlayerReplicationInfo = InactivePRIArray[i];
 			PC.PlayerReplicationInfo.SetOwner(PC);
 			PC.PlayerReplicationInfo.RemoteRole = ROLE_SimulatedProxy;
 			PC.PlayerReplicationInfo.Lifespan = 0;
 			OverridePRI(PC, OldPRI);
 			WorldInfo.GRI.AddPRI(PC.PlayerReplicationInfo);
 			InactivePRIArray.Remove(i,1);
-			OldPRI.bIsInactive = TRUE;
 			OldPRI.Destroy();
 			return true;
 		}
@@ -2919,7 +2495,7 @@ event GetSeamlessTravelActorList(bool bToEntry, out array<Actor> ActorList)
 	for (i = 0; i < WorldInfo.GRI.PRIArray.Length; i++)
 	{
 		WorldInfo.GRI.PRIArray[i].bFromPreviousLevel = true;
-		WorldInfo.GRI.PRIArray[i].bForceNetUpdate = true;
+		WorldInfo.GRI.PRIArray[i].bFromPreviousLevel_Replicated = true;
 		ActorList[ActorList.length] = WorldInfo.GRI.PRIArray[i];
 	}
 
@@ -2936,17 +2512,6 @@ event GetSeamlessTravelActorList(bool bToEntry, out array<Actor> ActorList)
 	if (BaseMutator != None)
 	{
 		BaseMutator.GetSeamlessTravelActorList(bToEntry, ActorList);
-	}
-
-	if (MyAutoTestManager != None)
-	{
-		ActorList[ActorList.length] = MyAutoTestManager;
-	}
-
-	// Keep the AccessControl persistent, as it needs to >always< be ready for handling auth callbacks
-	if (AccessControl != none)
-	{
-		ActorList[ActorList.Length] = AccessControl;
 	}
 }
 
@@ -2984,6 +2549,10 @@ event PostSeamlessTravel()
 				{
 					HandleSeamlessTravelPlayer(C);
 				}
+				else if (MaxClientTravelTime > 0)
+				{
+					C.SetTimer(MaxClientTravelTime, false, 'ClientTravelTimeExpired');
+				}
 			}
 		}
 	}
@@ -2992,7 +2561,7 @@ event PostSeamlessTravel()
 	{
 		StartMatch();
 	}
-	if (WorldInfo.NetMode == NM_DedicatedServer)
+	if (WorldInfo.NetMode == NM_DedicatedServer || WorldInfo.NetMode == NM_ListenServer)
 	{
 		// Update any online advertised settings
 		UpdateGameSettings();
@@ -3016,7 +2585,7 @@ event HandleSeamlessTravelPlayer(out Controller C)
 	local PlayerController PC, NewPC;
 	local PlayerReplicationInfo OldPRI;
 
-	`log(">> GameInfo::HandleSeamlessTravelPlayer:" @ C,,'SeamlessTravel');
+	LogInternal(">> GameInfo::HandleSeamlessTravelPlayer:" @ C,'SeamlessTravel');
 
 	PC = PlayerController(C);
 	if (PC != None && PC.Class != PlayerControllerClass)
@@ -3024,10 +2593,10 @@ event HandleSeamlessTravelPlayer(out Controller C)
 		if (PC.Player != None)
 		{
 			// we need to spawn a new PlayerController to replace the old one
-			NewPC = SpawnPlayerController(PC.Location, PC.Rotation);
+			NewPC = Spawn(PlayerControllerClass,,, PC.Location, PC.Rotation);
 			if (NewPC == None)
 			{
-				`Warn("Failed to spawn new PlayerController for" @ PC.GetHumanReadableName() @ "(old class" @ PC.Class $ ")");
+				WarnInternal("Failed to spawn new PlayerController for" @ PC.GetHumanReadableName() @ "(old class" @ PC.Class $ ")");
 				PC.Destroy();
 				return;
 			}
@@ -3048,6 +2617,10 @@ event HandleSeamlessTravelPlayer(out Controller C)
 	}
 	else
 	{
+		if (PC != none)
+			PC.bPendingNotifyLoadedWorld = False;
+
+		C.ClearTimer('ClientTravelTimeExpired');
 		// clear out data that was only for the previous game
 		C.PlayerReplicationInfo.Reset();
 		// create a new PRI and copy over info; this is necessary because the old gametype may have used a different PRI class
@@ -3071,7 +2644,7 @@ event HandleSeamlessTravelPlayer(out Controller C)
 
 	if (StartSpot == None)
 	{
-		`warn(GameMessageClass.Default.FailedPlaceMessage);
+		WarnInternal(GameMessageClass.Default.FailedPlaceMessage);
 	}
 	else
 	{
@@ -3089,10 +2662,11 @@ event HandleSeamlessTravelPlayer(out Controller C)
 		// tell the player controller to register its data stores again
 		PC.ClientInitializeDataStores();
 
-		SetSeamlessTravelViewTarget(PC);
+		PC.SetViewTarget(PC);
 		if (PC.PlayerReplicationInfo.bOnlySpectator)
 		{
 			PC.GotoState('Spectating');
+			PC.ClientGotoState('Spectating'); // needed because Spectating state doesn't send client adjustments
 			PC.PlayerReplicationInfo.bIsSpectator = true;
 			PC.PlayerReplicationInfo.bOutOfLives = true;
 			NumSpectators++;
@@ -3104,7 +2678,22 @@ event HandleSeamlessTravelPlayer(out Controller C)
 			PC.GotoState('PlayerWaiting');
 		}
 
+		// tell client what hud and scoreboard to use
+		PC.SetHUD(HudType, ScoreboardType);
 
+		ReplicateStreamingStatus(PC);
+
+		// tell the player about the music, if any
+		PC.ServerSendMusicInfo();
+
+		// see if we need to spawn a CoverReplicator for this player
+		if (CoverReplicatorBase != None)
+		{
+			PC.SpawnCoverReplicator();
+		}
+
+		// Set the rich presence strings on the client (has to be done there)
+		PC.ClientSetOnlineStatus();
 	}
 	else
 	{
@@ -3112,14 +2701,12 @@ event HandleSeamlessTravelPlayer(out Controller C)
 		C.GotoState('RoundEnded');
 	}
 
-	GenericPlayerInitialization(C);
+	if (BaseMutator != None)
+	{
+		BaseMutator.NotifyLogin(C);
+	}
 
-	`log("<< GameInfo::HandleSeamlessTravelPlayer:" @ C,,'SeamlessTravel');
-}
-
-function SetSeamlessTravelViewTarget(PlayerController PC)
-{
-	PC.SetViewTarget(PC);
+	LogInternal("<< GameInfo::HandleSeamlessTravelPlayer:" @ C,'SeamlessTravel');
 }
 
 /**
@@ -3128,19 +2715,13 @@ function SetSeamlessTravelViewTarget(PlayerController PC)
  */
 function UpdateGameSettingsCounts()
 {
-	local OnlineGameSettings GameSettings;
-
-	if (GameInterface != None)
+	if (GameSettings != None && GameSettings.bIsLanMatch)
 	{
-		GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-		if (GameSettings != None && GameSettings.bIsLanMatch)
+		// Update the number of open slots available
+		GameSettings.NumOpenPublicConnections = GameSettings.NumPublicConnections - GetNumPlayers();
+		if (GameSettings.NumOpenPublicConnections < 0)
 		{
-			// Update the number of open slots available
-			GameSettings.NumOpenPublicConnections = GameSettings.NumPublicConnections - GetNumPlayers();
-			if (GameSettings.NumOpenPublicConnections < 0)
-			{
-				GameSettings.NumOpenPublicConnections = 0;
-			}
+			GameSettings.NumOpenPublicConnections = 0;
 		}
 	}
 }
@@ -3170,11 +2751,8 @@ function RegisterServerForArbitration();
 
 /**
  * Empty implementation of the code that handles the callback for completion
- *
- * @param SessionName the name of the session this is for
- * @param bWasSuccessful whether the call worked or not
  */
-function ArbitrationRegistrationComplete(name SessionName,bool bWasSuccessful);
+function ArbitrationRegistrationComplete(bool bWasSuccessful);
 
 function bool MatchIsInProgress()
 {
@@ -3229,16 +2807,18 @@ auto State PendingMatch
 	{
 		local PlayerController PC;
 		local UniqueNetId HostId;
-		local OnlineGameSettings GameSettings;
 
 		if (!bHasArbitratedHandshakeBegun)
 		{
 			// Tell PreLogin() to reject new connections
 			bHasArbitratedHandshakeBegun = true;
 
-			// Get the host id from the game settings in case splitscreen works with arbitration
-			GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-			HostId = GameSettings.OwningPlayerId;
+			// Find the host's net id
+			foreach LocalPlayerControllers(class'PlayerController', PC)
+			{
+				HostId = PC.PlayerReplicationInfo.UniqueId;
+				break;
+			}
 
 			PendingArbitrationPCs.Length = 0;
 			// Iterate the controller list and tell them to register with arbitration
@@ -3259,7 +2839,7 @@ auto State PendingMatch
 				}
 			}
 			// Start the kick timer
-			SetTimer( ArbitrationHandshakeTimeout,false,nameof(ArbitrationTimeout) );
+			SetTimer(ArbitrationHandshakeTimeout,false,'ArbitrationTimeout');
 		}
 	}
 
@@ -3272,12 +2852,12 @@ auto State PendingMatch
 		if (GameInterface != None)
 		{
 			GameInterface.AddArbitrationRegistrationCompleteDelegate(ArbitrationRegistrationComplete);
-			GameInterface.RegisterForArbitration(PlayerReplicationInfoClass.default.SessionName);
+			GameInterface.RegisterForArbitration();
 		}
 		else
 		{
 			// Fake as working without subsystem
-			ArbitrationRegistrationComplete(PlayerReplicationInfoClass.default.SessionName,true);
+			ArbitrationRegistrationComplete(true);
 		}
 	}
 
@@ -3285,13 +2865,12 @@ auto State PendingMatch
 	 * Callback from the server that starts the match if the registration was
 	 * successful. If not, it goes back to the menu
 	 *
-	 * @param SessionName the name of the session this is for
 	 * @param bWasSuccessful whether the registration worked or not
 	 */
-	function ArbitrationRegistrationComplete(name SessionName,bool bWasSuccessful)
+	function ArbitrationRegistrationComplete(bool bWasSuccessful)
 	{
 		// Clear the delegate so we don't leak with GC
-		GameInterface.ClearArbitrationRegistrationCompleteDelegate(ArbitrationRegistrationComplete);
+		GameInterface.AddArbitrationRegistrationCompleteDelegate(ArbitrationRegistrationComplete);
 		if (bWasSuccessful)
 		{
 			// Start the match
@@ -3320,9 +2899,6 @@ auto State PendingMatch
 		RegisterServerForArbitration();
 	}
 
-	/**
-	 * Called once arbitration has completed and kicks off the real start of the match
-	 */
 	function StartArbitratedMatch()
 	{
 		bNeedsEndGameHandshake = true;
@@ -3341,6 +2917,9 @@ auto State PendingMatch
 	function ProcessClientRegistrationCompletion(PlayerController PC,bool bWasSuccessful)
 	{
 		local int FoundIndex;
+
+		if (!bUsingArbitration)
+			return;
 
 		// Search for the specified PC and remove if found
 		FoundIndex = PendingArbitrationPCs.Find(PC);
@@ -3361,7 +2940,7 @@ auto State PendingMatch
 		if (PendingArbitrationPCs.Length == 0)
 		{
 			// Clear the kick timer
-			SetTimer( 0,false,nameof(ArbitrationTimeout) );
+			SetTimer(0,false,'ArbitrationTimeout');
 			RegisterServerForArbitration();
 		}
 	}
@@ -3369,7 +2948,7 @@ auto State PendingMatch
 	event EndState(name NextStateName)
 	{
 		// Clear the kick timer
-		SetTimer( 0,false,nameof(ArbitrationTimeout) );
+		SetTimer(0,false,'ArbitrationTimeout');
 
 		if( GameInterface != None )
 		{
@@ -3379,12 +2958,96 @@ auto State PendingMatch
 }
 
 /**
+ * Iterates the arbitrated PCs list and tells them to write their end of
+ * game data to arbitration
+ */
+function ProcessEndGameHandshake()
+{
+	local int Index;
+
+	bHasEndGameHandshakeBegun = true;
+	// Iterate the controller list and tell them to register with arbitration
+	for (Index = 0; Index < ArbitrationPCs.Length; Index++)
+	{
+		if (!ArbitrationPCs[Index].bDeleteMe)
+		{
+			// Tell the client to write stats out
+			ArbitrationPCs[Index].ClientWriteArbitrationEndGameData(OnlineStatsWriteClass);
+			// Add to the pending list
+			PendingArbitrationPCs[PendingArbitrationPCs.Length] = ArbitrationPCs[Index];
+		}
+	}
+	// If we aren't waiting for any clients to process data, do our processing now
+	if (PendingArbitrationPCs.Length == 0)
+	{
+		ServerWriteArbitrationEndGameData();
+	}
+	else
+	{
+		SetTimer(5.0,false,'ServerWriteArbitrationEndGameData');
+	}
+}
+
+/**
+ * Removes the specified client from the pending list and tells the game to
+ * restart once all clients have notified
+ *
+ * @param PC the player controller that completed the write
+ */
+function ProcessClientDataWriteCompletion(PlayerController PC)
+{
+	local int FoundIndex;
+
+	if (!bUsingArbitration)
+		return;
+
+	// Search for the specified PC and remove if found
+	FoundIndex = PendingArbitrationPCs.Find(PC);
+	if (FoundIndex != INDEX_NONE)
+	{
+		PendingArbitrationPCs.Remove(FoundIndex,1);
+	}
+	// If all clients have responded, tell the server to write its data which
+	// will then restart the game upon completion
+	if (PendingArbitrationPCs.Length == 0)
+	{
+		ServerWriteArbitrationEndGameData();
+	}
+}
+
+/**
+ * Commits arbitration data for the server and restarts the match
+ */
+function ServerWriteArbitrationEndGameData()
+{
+	if (!bHasEndGameHandshakeBegun)
+		return;
+
+	SetTimer(0.0,false,'ServerWriteArbitrationEndGameData');
+	// Write all of the game stats
+	WriteOnlineStats();
+	// Write out any player scoring data
+	WriteOnlinePlayerScores();
+	// Now finalize the data before closing the session down
+	if (GameInterface != None)
+	{
+		// Force the flush of the stats
+		GameInterface.EndOnlineGame();
+	}
+	// Clean up handshaking state
+	bIsEndGameHandshakeComplete = true;
+	PendingArbitrationPCs.Length = 0;
+	ArbitrationPCs.Length = 0;
+	// Start the next match
+	RestartGame();
+}
+
+/**
  * Tells all clients to disconnect and then goes to the menu
  */
 function NotifyArbitratedMatchEnd()
 {
 	local PlayerController PC;
-
 	// Iterate through the controllers telling them to disconnect
 	foreach WorldInfo.AllControllers(class'PlayerController',PC)
 	{
@@ -3411,13 +3074,7 @@ function NotifyArbitratedMatchEnd()
  *
  * @param PC the playercontroller that is ready for updates
  */
-function UpdateGameplayMuteList(PlayerController PC)
-{
-	// Let the server start sending voice packets
-	PC.bHasVoiceHandshakeCompleted = true;
-	// And tell the client it can start sending voice packets
-	PC.ClientVoiceHandshakeComplete();
-}
+function UpdateGameplayMuteList(PlayerController PC);
 
 /**
  * Used by the game type to update the advertised skill for this game
@@ -3440,12 +3097,9 @@ function RecalculateSkillRating()
 				Players[Players.Length] = GameReplicationInfo.PRIArray[Index].UniqueId;
 			}
 		}
-		if (Players.Length > 0)
-		{
-			// Update the skill rating with the list of players
-			OnlineSub.GameInterface.RecalculateSkillRating(PlayerReplicationInfoClass.default.SessionName,Players);
-		}
-	};
+		// Update the skill rating with the list of players
+		OnlineSub.GameInterface.RecalculateSkillRating(Players);
+	}
 }
 
 /** Called when this PC is in cinematic mode, and its matinee is cancelled by the user. */
@@ -3467,6 +3121,7 @@ function bool ProcessServerLogin()
 		{
 			OnlineSub.PlayerInterface.AddLoginChangeDelegate(OnLoginChange);
 			OnlineSub.PlayerInterface.AddLoginFailedDelegate(0,OnLoginFailed);
+			OnlineSub.SystemInterface.AddConnectionStatusChangeDelegate(OnConnectionStatusChange);
 			// Check the command line for login information and login async
 			if (OnlineSub.PlayerInterface.AutoLogin() == false)
 			{
@@ -3500,14 +3155,13 @@ function ClearAutoLoginDelegates()
 function OnLoginFailed(byte LocalUserNum,EOnlineServerConnectionStatus ErrorCode)
 {
 	ClearAutoLoginDelegates();
+	EnableAutoReconnect();
 }
 
 /**
  * Used to tell the game when the autologin has completed
- *
- * @param LocalUserNum ignored
  */
-function OnLoginChange(byte LocalUserNum)
+function OnLoginChange()
 {
 	ClearAutoLoginDelegates();
 	// The login has completed so start the dedicated server
@@ -3519,349 +3173,185 @@ function OnLoginChange(byte LocalUserNum)
  */
 function RegisterServer()
 {
-	local OnlineGameSettings GameSettings;
-
 	if (OnlineGameSettingsClass != None && OnlineSub != None && OnlineSub.GameInterface != None)
 	{
 		// Create the default settings to get the standard settings to advertise
 		GameSettings = new OnlineGameSettingsClass;
 		// Serialize any custom settings from the URL
 		GameSettings.UpdateFromURL(ServerOptions, self);
-
-		// If 'bIsLanMatch' is set, disable all authentication
-		if (AccessControl != None &&
-			(WorldInfo.NetMode == NM_DedicatedServer || WorldInfo.NetMode == NM_ListenServer) && GameSettings.bIsLanMatch)
-		{
-			`log("Disabling all authentication, due to bIsLanMatch being set to true");
-			AccessControl.ClearAuthDelegates(false);
-		}
-
 		// Register the delegate so we can see when it's done
 		OnlineSub.GameInterface.AddCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
 		// Now kick off the async publish
-		if ( !OnlineSub.GameInterface.CreateOnlineGame(0,PlayerReplicationInfoClass.default.SessionName,GameSettings) )
+		if ( !OnlineSub.GameInterface.CreateOnlineGame(0,GameSettings) )
 		{
 			OnlineSub.GameInterface.ClearCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
 		}
 	}
-	else
+	else if (!bDisableGamespyLogs)
 	{
-		`Warn("No game settings to register with the online service. Game won't be advertised");
+		WarnInternal("No game settings to register with the online service. Game won't be advertised");
 	}
 }
 
 /**
  * Notifies us of the game being registered successfully or not
  *
- * @param SessionName the name of the session that was created
  * @param bWasSuccessful flag telling us whether it worked or not
  */
-function OnServerCreateComplete(name SessionName,bool bWasSuccessful)
+function OnServerCreateComplete(bool bWasSuccessful)
 {
-	local OnlineGameSettings GameSettings;
-
-	GameInterface.ClearCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
+	OnlineSub.GameInterface.ClearCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
 	if (bWasSuccessful == false)
 	{
-		GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-		if (GameSettings != None && GameSettings.bIsLanMatch == false)
+		/*
+		if (GameSettings.bIsLanMatch == false)
 		{
 			`Warn("Failed to register game with online service. Registering as a LAN match");
 			// Force to be a LAN match
 			GameSettings.bIsLanMatch = true;
 			// Register the delegate so we can see when it's done
-			GameInterface.AddCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
+			OnlineSub.GameInterface.AddCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
 			// Now kick off the async publish
-			if (!GameInterface.CreateOnlineGame(0,SessionName,GameSettings))
+			if ( !OnlineSub.GameInterface.CreateOnlineGame(0,GameSettings) )
 			{
-				GameInterface.ClearCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
+				OnlineSub.GameInterface.ClearCreateOnlineGameCompleteDelegate(OnServerCreateComplete);
 			}
 		}
 		else
 		{
 			`Warn("Failed to register game with online service. Game won't be advertised");
 		}
+		*/
+
+		if (!bDisableGamespyLogs)
+			LogInternal("Failed to register game with online service");
+
+		EnableAutoReconnect();
 	}
 	else
 	{
-		// If a game server is started without Steam running, auth code needs late initialization
-		//	(as the auth interface is only setup within CreateOnlineGame when Steam was not started)
-		if (OnlineSub.Class.Name == 'OnlineSubsystemSteamworks' && AccessControl != none && AccessControl.CachedAuthInt == none)
-		{
-			AccessControl.InitAuthHooks();
-
-			// This delegate was not set until after the auth interface became ready, so kick it off here
-			AccessControl.OnAuthReady();
-		}
-
 		UpdateGameSettings();
 	}
 }
 
 /**
- * Iterates the player controllers and tells them to return to their party
+ * Delegate fired when the online server connection state changes
+ *
+ * @param ConnectionStatus the new connection status
  */
-function TellClientsToReturnToPartyHost()
+function OnConnectionStatusChange(EOnlineServerConnectionStatus ConnectionStatus)
 {
-	local PlayerController PC;
-	local OnlineGameSettings GameSettings;
-	local UniqueNetId RequestingPlayerId;
-
-	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-	if (OnlineSub != None)
+	// Any error other than we are connected means destroy the game
+	if (ConnectionStatus != OSCS_Connected && GameSettings != none)
 	{
-		// And grab one for the game interface since it will be used often
-		GameInterface = OnlineSub.GameInterface;
-		if (GameInterface != None)
+		// Set the destroy delegate so we can know when that is complete
+		OnlineSub.GameInterface.AddDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+
+		// Now we can destroy the game
+		if (!bDisableGamespyLogs)
+			LogInternal("GameInfo::OnConnectionStatusChange() - Destroying Online Game");
+
+		if ( !OnlineSub.GameInterface.DestroyOnlineGame() )
 		{
-			// Use the game session owner as the host requesting travel
-			GameSettings = GameInterface.GetGameSettings(PlayerReplicationInfoClass.default.SessionName);
-			if (GameSettings != None)
-			{
-				RequestingPlayerId = GameSettings.OwningPlayerId;
-			}
-			else
-			{
-				// If no valid game session then use local player's net id as the host requesting the travel
-				foreach LocalPlayerControllers(class'PlayerController',PC)
-				{
-					if (PC.IsPrimaryPlayer() &&
-						PC.PlayerReplicationInfo != None)
-					{
-						RequestingPlayerId = PC.PlayerReplicationInfo.UniqueId;
-						break;
-					}
-				}
-			}
-			// Tell all clients to return using the net id of the host
-			foreach WorldInfo.AllControllers(class'PlayerController',PC)
-			{
-				if (!PC.IsLocalPlayerController() && 
-					PC.IsPrimaryPlayer())
-				{
-					PC.ClientReturnToParty(RequestingPlayerId);
-				}
-			}
-			// Host travels last as this can trigger a disconnect on clients
-			foreach LocalPlayerControllers(class'PlayerController',PC)
-			{
-				if (PC.IsPrimaryPlayer())
-				{
-					PC.ClientReturnToParty(RequestingPlayerId);
-					break;
-				}
-			}
+			OnDestroyOnlineGameComplete(true);
 		}
 	}
 }
 
-/**
- * Send notification to clients that a party host is about to leave the match
- *
- * @param PartyHostPlayerId net id of the party host that is leaving
- */
-function TellClientsPartyHostIsLeaving(UniqueNetId PartyHostPlayerId)
+function OnDestroyOnlineGameComplete(bool bWasSuccessful)
 {
-	local PlayerController PC;
+	if (!bDisableGamespyLogs)
+		LogInternal("GameInfo::OnDestroyOnlineGameComplete() bWasSuccesful:"@bWasSuccessful);
 
-	// Tell all clients to return using the net id of the host
-	foreach WorldInfo.AllControllers(class'PlayerController',PC)
+	if (OnlineSub != None && OnlineSub.GameInterface != None)
+		OnlineSub.GameInterface.ClearDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+
+	//Clear the cache
+	GameSettings = None;
+
+	// Automatically reconnect in the event of an unwanted disconnect (this is ignored if the current game is over)
+	EnableAutoReconnect();
+}
+
+function EnableAutoReconnect()
+{
+	if (WorldInfo.NetMode == NM_DedicatedServer && OnlineSub.CanAutoLogin())
+		SetTimer(30.0,, 'AttemptReconnect');
+}
+
+function AttemptReconnect()
+{
+	local ELoginStatus LoginStatus;
+
+	if (WorldInfo.NetMode != NM_DedicatedServer || OnlineSub == none || OnlineSub.PlayerInterface == none || bGameEnded)
+		return;
+
+
+	LoginStatus = OnlineSub.PlayerInterface.GetLoginStatus(0);
+
+	if (LoginStatus == LS_UsingLocalProfile)
+		return;
+
+
+	// Log messages are delayed in order to prevent log spam
+	if (WorldInfo.RealTimeSeconds > LastAutoReconnectMessageTime)
 	{
-		if ( PC.IsPrimaryPlayer() )
-		{
-			PC.ClientNotifyPartyHostLeaving(PartyHostPlayerId);
-		}
+		LastAutoReconnectMessageTime = WorldInfo.RealTimeSeconds + 300;
+		LogInternal("Attempting to re-register the game with the online service");
 	}
-}
-
-
-/**
- * Iterates the player controllers and tells remote players to travel to the specified session
- *
- * @param SessionName the name of the session to register
- * @param SearchClass the search that should be populated with the session
- * @param PlatformSpecificInfo the binary data to place in the platform specific areas
- */
-function TellClientsToTravelToSession(name SessionName,class<OnlineGameSearch> SearchClass,byte PlatformSpecificInfo[80])
-{
-	local PlayerController PC;
-
-	foreach WorldInfo.AllControllers(class'PlayerController',PC)
+	else
 	{
-		if ( !PC.IsLocalPlayerController() && PC.IsPrimaryPlayer() )
-		{
-			PC.ClientTravelToSession(SessionName,SearchClass,PlatformSpecificInfo);
-		}
-	}
-}
-
-//=================================================================
-/**
-  * AutoTestManager INTERFACE
-  */
-
-/** function to start the world traveling **/
-exec function DoTravelTheWorld()
-{
-	if ( MyAutoTestManager != None )
-	{
-		GotoState('TravelTheWorld');
-		MyAutoTestManager.DoTravelTheWorld();
-	}
-}
-
-/** Alters the synthetic bandwidth limit for a running game **/
-exec native function SetBandwidthLimit( float AsyncIOBandwidthLimit );
-
-/** This our state which allows us to have delayed actions while traveling the world (e.g. waiting for levels to stream in) **/
-state TravelTheWorld
-{
-}
-
-/**
-  *  @returns true if Automated Performance testing is enabled
-  */
-function bool IsAutomatedPerfTesting()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.bAutomatedPerfTesting;
-}
-
-/**
-  *  @returns true if checking for fragmentation is enabled
-  */
-function bool IsCheckingForFragmentation()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.bCheckingForFragmentation;
-}
-
-/**
-  *  @returns true if checking for memory leaks is enabled
-  */
-function bool IsCheckingForMemLeaks()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.bCheckingForMemLeaks;
-}
-
-/**
-  *  @returns true if doing a sentinel run
-  */
-function bool IsDoingASentinelRun()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.bDoingASentinelRun;
-}
-
-/**
-  *  @returns true if should auto-continue to next round
-  */
-function bool ShouldAutoContinueToNextRound()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.bAutoContinueToNextRound;
-}
-
-/**
-  *  Asks AutoTestManager to start a sentinel run if needed
-  *  Must be called by gameinfo subclass - not called in base implementation of GameInfo.StartMatch()
-  *  @returns true if should skip normal startmatch process
-  */
-function bool CheckForSentinelRun()
-{
-	return (MyAutoTestManager != None) && MyAutoTestManager.CheckForSentinelRun();
-}
-
-/** This is for the QA team who don't use UFE nor commandline :-( **/
-exec simulated function BeginBVT( optional coerce string TagDesc )
-{
-	if ( MyAutoTestManager == None )
-	{
-		MyAutoTestManager = spawn(AutoTestManagerClass);
+		bDisableGamespyLogs = True;
 	}
 
-	MyAutoTestManager.BeginSentinelRun( "BVT", "", TagDesc );
-	MyAutoTestManager.SetTimer( 3.0f, TRUE, nameof(MyAutoTestManager.DoTimeBasedSentinelStatGathering) );
-}
 
-
-
-/**
- * Turns standby detection on/off
- *
- * @param bIsEnabled true to turn it on, false to disable it
- */
-native function EnableStandbyCheatDetection(bool bIsEnabled);
-
-/**
- * Notifies the game code that a standby cheat was detected
- *
- * @param StandbyType the type of cheat detected
- */
-event StandbyCheatDetected(EStandbyType StandbyType);
-
-
-/**
- * Used to create a new online session after the previous one has been destroyed after travelling
- *
- * @param SessionName		The name of the game session (not used with Steamworks)
- * @param bWasSuccesful		Whether or not the session was succesfully destroyed
- */
-function OnDestroyOnlineGameComplete(name SessionName, bool bWasSuccessful)
-{
-	if (!ProcessServerLogin())
+	// First check that the server is logged in to Gamespy, and attempt to autologin if not; otherwise, attempt to directly register the server
+	if (LoginStatus == LS_NotLoggedIn)
+		ProcessServerLogin();
+	else
 		RegisterServer();
 
-	GameInterface.ClearDestroyOnlineGameCompleteDelegate(OnDestroyOnlineGameComplete);
+
+	SetTimer(5.0,, 'ResetLog');
 }
 
-/**
- * Notifies the game code that the engine has finished loading. This
- * function will only be called one time only.
- */
-event OnEngineHasLoaded();
-
-function InitCrowdPopulationManager()
+function ResetLog()
 {
-	if( PopulationManagerClass != None )
-	{
-		PopulationManager = Spawn(PopulationManagerClass);
-	}
+	bDisableGamespyLogs = False;
 }
-
-/**
- * Cleans up any online subsystem delegates that are set
- */
-function ClearOnlineDelegates();
-
 
 defaultproperties
 {
-	// The game spawns bots/players which can't be done during physics ticking
-	TickGroup=TG_PreAsyncWork
-
-	GameSpeed=1.0
-	bDelayedStart=true
-	HUDType=class'Engine.HUD'
-	bWaitingToStartMatch=false
-    bRestartLevel=True
-    bPauseable=True
-	AccessControlClass=class'Engine.AccessControl'
-	BroadcastHandlerClass=class'Engine.BroadcastHandler'
-	DeathMessageClass=class'LocalMessage'
-	PlayerControllerClass=class'Engine.PlayerController'
-	GameMessageClass=class'GameMessage'
-	GameReplicationInfoClass=class'GameReplicationInfo'
-	AutoTestManagerClass=class'Engine.AutoTestManager'
-    FearCostFalloff=+0.95
-	CurrentID=1
-	PlayerReplicationInfoClass=Class'Engine.PlayerReplicationInfo'
-	MaxSpectatorsAllowed=32
-	MaxPlayersAllowed=32
-
-	Components.Remove(Sprite)
-
-	// Defaults for if your game has only one skill leaderboard
-	LeaderboardId=0xFFFE0000
-	ArbitratedLeaderboardId=0xFFFF0000
-
-//	PopulationManagerClass=class'CrowdPopulationManagerBase'
-
-	StreamingPauseIcon=Material'EngineResources.M_StreamingPause'
+   bRestartLevel=True
+   bPauseable=True
+   bDelayedStart=True
+   bChangeLevels=True
+   TimeToWaitForHashKey=45.000000
+   GameDifficulty=1.000000
+   GameSpeed=1.000000
+   HUDType=Class'Engine.HUD'
+   MaxSpectators=2
+   MaxSpectatorsAllowed=32
+   MaxPlayers=32
+   MaxPlayersAllowed=32
+   CurrentID=1
+   DefaultPlayerName="Giocatore"
+   GameName="Game"
+   FearCostFallOff=0.950000
+   DeathMessageClass=Class'Engine.LocalMessage'
+   GameMessageClass=Class'Engine.GameMessage'
+   AccessControlClass=Class'Engine.AccessControl'
+   BroadcastHandlerClass=Class'Engine.BroadcastHandler'
+   PlayerControllerClass=Class'Engine.PlayerController'
+   PlayerReplicationInfoClass=Class'Engine.PlayerReplicationInfo'
+   GameReplicationInfoClass=Class'Engine.GameReplicationInfo'
+   TimeMarginSlack=1.350000
+   MinTimeMargin=-1.000000
+   TotalNetBandwidth=32000
+   MinDynamicBandwidth=4000
+   MaxDynamicBandwidth=7000
+   MaxChildConnections=1
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__GameInfo"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

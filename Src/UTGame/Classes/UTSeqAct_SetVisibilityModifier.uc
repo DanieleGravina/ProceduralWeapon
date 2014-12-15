@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqAct_SetVisibilityModifier extends SequenceAction;
@@ -26,8 +26,9 @@ event Activated()
 
 defaultproperties
 {
-	NewVisibilityModifier=1.0
-	ObjName="Set Visibility Modifier"
-	ObjCategory="AI"
-	VariableLinks.Empty()
+   NewVisibilityModifier=1.000000
+   ObjName="Set Visibility Modifier"
+   ObjCategory="AI"
+   Name="Default__UTSeqAct_SetVisibilityModifier"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

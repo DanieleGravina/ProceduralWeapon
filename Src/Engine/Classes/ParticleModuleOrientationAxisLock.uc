@@ -1,9 +1,10 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleOrientationAxisLock extends ParticleModuleOrientationBase
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object);
 
 // Flags indicating lock
@@ -31,33 +32,24 @@ enum EParticleAxisLock
 	EPAL_ROTATE_Z
 };
 
-/** The lock axis flag setting.
- *	Can be one of the following:
- *		EPAL_NONE			No locking to an axis.
- *		EPAL_X				Lock the sprite facing towards +X.
- *		EPAL_Y				Lock the sprite facing towards +Y.
- *		EPAL_Z				Lock the sprite facing towards +Z.
- *		EPAL_NEGATIVE_X		Lock the sprite facing towards -X.
- *		EPAL_NEGATIVE_Y		Lock the sprite facing towards -Y.
- *		EPAL_NEGATIVE_Z		Lock the sprite facing towards -Z.
- *		EPAL_ROTATE_X		Lock the sprite rotation on the X-axis.
- *		EPAL_ROTATE_Y		Lock the sprite rotation on the Y-axis.
- *		EPAL_ROTATE_Z		Lock the sprite rotation on the Z-axis.
- */
 var(Orientation) EParticleAxisLock	LockAxisFlags;
 
-cpptext
-{
-	virtual void	Spawn(FParticleEmitterInstance* Owner, INT Offset, FLOAT SpawnTime);
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-
-	virtual void	PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	virtual void	SetLockAxis(EParticleAxisLock eLockFlags);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSpawnModule=true
-	bUpdateModule=true
+   bSpawnModule=True
+   bUpdateModule=True
+   Name="Default__ParticleModuleOrientationAxisLock"
+   ObjectArchetype=ParticleModuleOrientationBase'Engine.Default__ParticleModuleOrientationBase'
 }

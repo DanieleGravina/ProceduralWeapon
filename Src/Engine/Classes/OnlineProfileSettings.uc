@@ -1,13 +1,81 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
  * This class holds the data used in reading/writing online profile settings.
  * Online profile settings are stored by an external service.
  */
-class OnlineProfileSettings extends OnlinePlayerStorage
+class OnlineProfileSettings extends Object
+	dependson(Settings)
 	native;
+
+/** Enum indicating who owns a given online profile proprety */
+enum EOnlineProfilePropertyOwner
+{
+	/** No owner assigned */
+	OPPO_None,
+	/** Owned by the online service */
+	OPPO_OnlineService,
+	/** Owned by the game in question */
+	OPPO_Game
+};
+
+/**
+ * Structure used to hold the information for a given profile setting
+ */
+struct native OnlineProfileSetting
+{
+	/** Which party owns the data (online service vs game) */
+	var EOnlineProfilePropertyOwner Owner;
+	/** The profile setting comprised of unique id and union of held types */
+	var SettingsProperty ProfileSetting;
+
+	structcpptext
+	{
+		/** Does nothing (no init version) */
+		FOnlineProfileSetting(void)
+		{
+		}
+
+		/**
+		 * Zeroes members
+		 */
+		FOnlineProfileSetting(EEventParm) :
+			Owner(0),
+			ProfileSetting(EC_EventParm)
+		{
+		}
+
+		/**
+		 * Copy constructor. Copies the other into this object
+		 *
+		 * @param Other the other structure to copy
+		 */
+		FOnlineProfileSetting(const FOnlineProfileSetting& Other) :
+			Owner(0),
+			ProfileSetting(EC_EventParm)
+		{
+			Owner = Other.Owner;
+			ProfileSetting = Other.ProfileSetting;
+		}
+
+		/**
+		 * Assignment operator. Copies the other into this object
+		 *
+		 * @param Other the other structure to copy
+		 */
+		FOnlineProfileSetting& operator=(const FOnlineProfileSetting& Other)
+		{
+			if (&Other != this)
+			{
+				Owner = Other.Owner;
+				ProfileSetting = Other.ProfileSetting;
+			}
+			return *this;
+		}
+	}
+};
 
 /**
  * Enum of profile setting IDs
@@ -48,11 +116,20 @@ enum EProfileSettingID
 	// Add new profile settings ids here
 };
 
+/** Used to determine if the read profile is the proper version or not */
+var const int VersionNumber;
+
 /**
  * Holds the list of profile settings to read from the service.
  * NOTE: Only used for a read request and populated by the subclass
  */
 var array<int> ProfileSettingIds;
+
+/**
+ * Holds the set of profile settings that are either returned from a read or
+ * to be written out
+ */
+var array<OnlineProfileSetting> ProfileSettings;
 
 /**
  * These are the settings to use when no setting has been specified yet for
@@ -63,6 +140,20 @@ var array<OnlineProfileSetting> DefaultSettings;
 
 /** Mappings for owner information */
 var const array<IdToStringMapping> OwnerMappings;
+
+/** Holds the set of mappings from native format to human readable format */
+var array<SettingsPropertyPropertyMetaData> ProfileMappings;
+
+/** Enum indicating the current async action happening on this profile */
+enum EOnlineProfileAsyncState
+{
+	OPAS_None,
+	OPAS_Read,
+	OPAS_Write
+};
+
+/** Indicates the state of the profile (whether an async action is happening and what type) */
+var const EOnlineProfileAsyncState AsyncState;
 
 /**
  * Enum of difficulty profile values stored by the online service
@@ -201,16 +292,6 @@ enum EProfileXInversionOptions
 	PXIO_On
 };
 
-/**
-* Enum of player's omnidirectional evade preferences stored by the online service
-* Used with Profile ID OmniDirEvade
-*/
-enum EProfileOmniDirEvadeOptions
-{
-	PODI_Off,
-	PODI_On
-};
-
 
 /**
  * Enum of player's vibration preferences stored by the online service
@@ -236,35 +317,178 @@ enum EProfileVoiceThruSpeakersOptions
 };
 
 /**
- * Searches for the profile setting by id and gets the default value index
+ * Searches the profile setting array for the matching string setting name and returns the id
+ *
+ * @param ProfileSettingName the name of the profile setting being searched for
+ * @param ProfileSettingId the id of the context that matches the name
+ *
+ * @return true if the seting was found, false otherwise
+ */
+native function bool GetProfileSettingId(name ProfileSettingName,out int ProfileSettingId);
+
+/**
+ * Finds the human readable name for the profile setting
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ *
+ * @return the name of the string setting that matches the id or NAME_None if not found
+ */
+native function name GetProfileSettingName(int ProfileSettingId);
+
+/**
+ * Finds the localized column header text for the profile setting
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ *
+ * @return the string to use as the list column header for the profile setting that matches the id, or an empty string if not found.
+ */
+native function string GetProfileSettingColumnHeader( int ProfileSettingId );
+
+/**
+ * Determines if the setting is id mapped or not
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ *
+ * @return TRUE if the setting is id mapped, FALSE if it is a raw value
+ */
+native function bool IsProfileSettingIdMapped(int ProfileSettingId);
+
+/**
+ * Finds the human readable name for a profile setting's value. Searches the
+ * profile settings mappings for the specifc profile setting and then searches
+ * the set of values for the specific value index and returns that value's
+ * human readable name
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ * @param Value the out param that gets the value copied to it
+ *
+ * @return true if found, false otherwise
+ */
+native function bool GetProfileSettingValue(int ProfileSettingId,out string Value);
+
+/**
+ * Finds the human readable name for a profile setting's value. Searches the
+ * profile settings mappings for the specifc profile setting and then searches
+ * the set of values for the specific value index and returns that value's
+ * human readable name
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ *
+ * @return the name of the value or NAME_None if not value mapped
+ */
+native function name GetProfileSettingValueName(int ProfileSettingId);
+
+/**
+ * Searches the profile settings mappings for the specifc profile setting and
+ * then adds all of the possible values to the out parameter
+ *
+ * @param ProfileSettingId the id to look up in the mappings table
+ * @param Values the out param that gets the list of values copied to it
+ *
+ * @return true if found and value mapped, false otherwise
+ */
+native function bool GetProfileSettingValues(int ProfileSettingId,out array<name> Values);
+
+/**
+ * Finds the human readable name for a profile setting's value. Searches the
+ * profile settings mappings for the specifc profile setting and then searches
+ * the set of values for the specific value index and returns that value's
+ * human readable name
+ *
+ * @param ProfileSettingName the name of the profile setting to find the string value of
+ * @param Value the out param that gets the value copied to it
+ *
+ * @return true if found, false otherwise
+ */
+native function bool GetProfileSettingValueByName(name ProfileSettingName,out string Value);
+
+/**
+ * Searches for the profile setting by name and sets the value index to the
+ * value contained in the profile setting meta data
+ *
+ * @param ProfileSettingName the name of the profile setting to find
+ * @param NewValue the string value to use
+ *
+ * @return true if the profile setting was found and the value was set, false otherwise
+ */
+native function bool SetProfileSettingValueByName(name ProfileSettingName,const out string NewValue);
+
+/**
+ * Searches for the profile setting by name and sets the value index to the
+ * value contained in the profile setting meta data
+ *
+ * @param ProfileSettingName the name of the profile setting to set the string value of
+ * @param NewValue the string value to use
+ *
+ * @return true if the profile setting was found and the value was set, false otherwise
+ */
+native function bool SetProfileSettingValue(int ProfileSettingId,const out string NewValue);
+
+/**
+ * Searches for the profile setting by id and gets the value index
  *
  * @param ProfileSettingId the id of the profile setting to return
- * @param DefaultId the out value of the default id
- * @param ListIndex the out value of the index where that value lies in the ValueMappings list
+ * @param ValueId the out value of the id
  *
- * @return true if the profile setting was found and retrieved the default id, false otherwise
+ * @return true if the profile setting was found and id mapped, false otherwise
  */
-native function bool GetProfileSettingDefaultId(int ProfileSettingId,out int DefaultId, out int ListIndex);
+native function bool GetProfileSettingValueId(int ProfileSettingId,out int ValueId);
 
 /**
- * Searches for the profile setting by id and gets the default value int
+ * Searches for the profile setting by id and gets the value index
  *
- * @param ProfileSettingId the id of the profile setting to return the default of
- * @param Value the out value of the default setting
+ * @param ProfileSettingId the id of the profile setting to return
+ * @param Value the out value of the setting
  *
- * @return true if the profile setting was found and retrieved the default int, false otherwise
+ * @return true if the profile setting was found and not id mapped, false otherwise
  */
-native function bool GetProfileSettingDefaultInt(int ProfileSettingId,out int DefaultInt);
+native function bool GetProfileSettingValueInt(int ProfileSettingId,out int Value);
 
 /**
- * Searches for the profile setting by id and gets the default value float
+ * Searches for the profile setting by id and gets the value index
  *
- * @param ProfileSettingId the id of the profile setting to return the default of
- * @param Value the out value of the default setting
+ * @param ProfileSettingId the id of the profile setting to return
+ * @param Value the out value of the setting
  *
- * @return true if the profile setting was found and retrieved the default float, false otherwise
+ * @return true if the profile setting was found and not id mapped, false otherwise
  */
-native function bool GetProfileSettingDefaultFloat(int ProfileSettingId,out float DefaultFloat);
+native function bool GetProfileSettingValueFloat(int ProfileSettingId,out float Value);
+
+/**
+ * Searches for the profile setting by id and sets the value
+ *
+ * @param ProfileSettingId the id of the profile setting to return
+ * @param Value the new value
+ *
+ * @return true if the profile setting was found and id mapped, false otherwise
+ */
+native function bool SetProfileSettingValueId(int ProfileSettingId,int Value);
+
+/**
+ * Searches for the profile setting by id and sets the value
+ *
+ * @param ProfileSettingId the id of the profile setting to return
+ * @param Value the new value
+ *
+ * @return true if the profile setting was found and not id mapped, false otherwise
+ */
+native function bool SetProfileSettingValueInt(int ProfileSettingId,int Value);
+
+/**
+ * Searches for the profile setting by id and sets the value
+ *
+ * @param ProfileSettingId the id of the profile setting to return
+ * @param Value the new value
+ *
+ * @return true if the profile setting was found and not id mapped, false otherwise
+ */
+native function bool SetProfileSettingValueFloat(int ProfileSettingId,float Value);
+
+/** 
+ *	 Compares the data inside the profile with default values to ensure that every entry exists
+ *   and sets to default values where appropriate
+ */
+native function ReconcileProfileSettings();
 
 /**
  * Sets all of the profile settings to their default values
@@ -272,39 +496,188 @@ native function bool GetProfileSettingDefaultFloat(int ProfileSettingId,out floa
 native event SetToDefaults();
 
 /**
+ * Allows script to set defaults without being native.
+ */
+event ScriptSetToDefaults();
+
+/**
  * Adds the version id to the read ids if it is not present
  */
 native function AppendVersionToReadIds();
 
 /**
- * Hooks to allow child classes to dynamically adjust available profile settings or mappings based on e.g. ini values.
+ * Adds the version number to the read data if not present
  */
-event ModifyAvailableProfileSettings();
+native function AppendVersionToSettings();
+
+/** Returns the version number that was found in the profile read results */
+native function int GetVersionNumber();
+
+/** Sets the version number to the class default */
+native function SetDefaultVersionNumber();
+
+/**
+ * Determines the mapping type for the specified property
+ *
+ * @param ProfileId the ID to get the mapping type for
+ * @param OutType the out var the value is placed in
+ *
+ * @return TRUE if found, FALSE otherwise
+ */
+native function bool GetProfileSettingMappingType(int ProfileId,out EPropertyValueMappingType OutType);
+
+/**
+ * Determines the min and max values of a property that is clamped to a range
+ *
+ * @param ProfileId the ID to get the mapping type for
+ * @param OutMinValue the out var the min value is placed in
+ * @param OutMaxValue the out var the max value is placed in
+ * @param RangeIncrement the amount the range can be adjusted by the UI in any single update
+ * @param bFormatAsInt whether the range's value should be treated as an int.
+ *
+ * @return TRUE if found and is a range property, FALSE otherwise
+ */
+native function bool GetProfileSettingRange(int ProfileId,out float OutMinValue,out float OutMaxValue,out float RangeIncrement,out byte bFormatAsInt);
+
+/**
+ * Sets the value of a ranged property, clamping to the min/max values
+ *
+ * @param ProfileId the ID of the property to set
+ * @param NewValue the new value to apply to the
+ *
+ * @return TRUE if found and is a range property, FALSE otherwise
+ */
+native function bool SetRangedProfileSettingValue(int ProfileId,float NewValue);
+
+/**
+ * Gets the value of a ranged property
+ *
+ * @param ProfileId the ID to get the value of
+ * @param OutValue the out var that receives the value
+ *
+ * @return TRUE if found and is a range property, FALSE otherwise
+ */
+native function bool GetRangedProfileSettingValue(int ProfileId,out float OutValue);
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// This must be set by subclasses
-	VersionNumber=-1
-	VersionSettingsId=PSI_ProfileVersionNum;
-	// UI readable versions of the owners
-	OwnerMappings(0)=(Id=OPPO_None)
-	OwnerMappings(1)=(Id=OPPO_OnlineService)
-	OwnerMappings(2)=(Id=OPPO_Game)
-	// Meta data for displaying in the UI
-	ProfileMappings(0)=(Id=PSI_ControllerVibration,Name="Controller Vibration",MappingType=PVMT_IdMapped,ValueMappings=((Id=PCVTO_On),(Id=PCVTO_Off)))
-	ProfileMappings(1)=(Id=PSI_YInversion,Name="Invert Y",MappingType=PVMT_IdMapped,ValueMappings=((Id=PYIO_Off),(Id=PYIO_On)))
-	ProfileMappings(2)=(Id=PSI_VoiceMuted,Name="Mute Voice",MappingType=PVMT_IdMapped,ValueMappings=((Id=0),(Id=1)))
-	ProfileMappings(3)=(Id=PSI_VoiceThruSpeakers,Name="Voice Via Speakers",MappingType=PVMT_IdMapped,ValueMappings=((Id=PVTSO_Off),(Id=PVTSO_On),(Id=PVTSO_Both)))
-	ProfileMappings(4)=(Id=PSI_VoiceVolume,Name="Voice Volume",MappingType=PVMT_RawValue)
-	ProfileMappings(5)=(Id=PSI_GameDifficulty,Name="Difficulty Level",MappingType=PVMT_IdMapped,ValueMappings=((Id=PDO_Normal),(Id=PDO_Easy),(Id=PDO_Hard)))
-	ProfileMappings(6)=(Id=PSI_ControllerSensitivity,Name="Controller Sensitivity",MappingType=PVMT_IdMapped,ValueMappings=((Id=PCSO_Medium),(Id=PCSO_Low),(Id=PCSO_High)))
-	ProfileMappings(7)=(Id=PSI_PreferredColor1,Name="First Preferred Color",MappingType=PVMT_IdMapped,ValueMappings=((Id=PPCO_None),(Id=PPCO_Black),(Id=PPCO_White),(Id=PPCO_Yellow),(Id=PPCO_Orange),(Id=PPCO_Pink),(Id=PPCO_Red),(Id=PPCO_Purple),(Id=PPCO_Blue),(Id=PPCO_Green),(Id=PPCO_Brown),(Id=PPCO_Silver)))
-	ProfileMappings(8)=(Id=PSI_PreferredColor2,Name="Second Preferred Color",MappingType=PVMT_IdMapped,ValueMappings=((Id=PPCO_None),(Id=PPCO_Black),(Id=PPCO_White),(Id=PPCO_Yellow),(Id=PPCO_Orange),(Id=PPCO_Pink),(Id=PPCO_Red),(Id=PPCO_Purple),(Id=PPCO_Blue),(Id=PPCO_Green),(Id=PPCO_Brown),(Id=PPCO_Silver)))
-	ProfileMappings(9)=(Id=PSI_AutoAim,Name="Auto Aim",MappingType=PVMT_IdMapped,ValueMappings=((Id=PAAO_Off),(Id=PAAO_On)))
-	ProfileMappings(10)=(Id=PSI_AutoCenter,Name="Auto Center",MappingType=PVMT_IdMapped,ValueMappings=((Id=PACO_Off),(Id=PACO_On)))
-	ProfileMappings(11)=(Id=PSI_MovementControl,Name="Movement Control",MappingType=PVMT_IdMapped,ValueMappings=((Id=PMCO_L_Thumbstick),(Id=PMCO_R_Thumbstick)))
-	ProfileMappings(12)=(Id=PSI_RaceTransmission,Name="Transmission Preference",MappingType=PVMT_IdMapped,ValueMappings=((Id=PRTO_Auto),(Id=PRTO_Manual)))
-	ProfileMappings(13)=(Id=PSI_RaceCameraLocation,Name="Race Camera Preference",MappingType=PVMT_IdMapped,ValueMappings=((Id=PRCLO_Behind),(Id=PRCLO_Front),(Id=PRCLO_Inside)))
-	ProfileMappings(14)=(Id=PSI_RaceBrakeControl,Name="Brake Preference",MappingType=PVMT_IdMapped,ValueMappings=((Id=PRBCO_Trigger),(Id=PRBCO_Button)))
-	ProfileMappings(15)=(Id=PSI_RaceAcceleratorControl,Name="Accelerator Preference",MappingType=PVMT_IdMapped,ValueMappings=((Id=PRACO_Trigger),(Id=PRACO_Button)))
+   VersionNumber=-1
+   OwnerMappings(0)=
+   OwnerMappings(1)=(Id=1,Name="Online Service Setting")
+   OwnerMappings(2)=(Id=2,Name="Game Setting")
+   ProfileMappings(0)=(Id=1,Name="Controller Vibration",MappingType=PVMT_IdMapped,ValueMappings=((Name="Off"),(Id=3,Name="On")))
+   ProfileMappings(1)=(Id=2,Name="Invert Y",MappingType=PVMT_IdMapped,ValueMappings=((Name="Off"),(Id=1,Name="On")))
+   ProfileMappings(2)=(Id=5,Name="Mute Voice",MappingType=PVMT_IdMapped,ValueMappings=((Name="No"),(Id=1,Name="Yes")))
+   ProfileMappings(3)=(Id=6,Name="Voice Via Speakers",MappingType=PVMT_IdMapped,ValueMappings=((Name="Off"),(Id=1,Name="On"),(Id=2,Name="Both")))
+   ProfileMappings(4)=(Id=7,Name="Voice Volume")
+   ProfileMappings(5)=(Id=12,Name="Difficulty Level",MappingType=PVMT_IdMapped,ValueMappings=((Name="Normal"),(Id=1,Name="Easy"),(Id=2,Name="Hard")))
+   ProfileMappings(6)=(Id=13,Name="Controller Sensitivity",MappingType=PVMT_IdMapped,ValueMappings=((Name="Medium"),(Id=1,Name="Low"),(Id=2,Name="High")))
+   ProfileMappings(7)=(Id=14,Name="First Preferred Color",MappingType=PVMT_IdMapped,ValueMappings=(,(Id=1,Name="Black"),(Id=2,Name="White"),(Id=3,Name="Yellow"),(Id=4,Name="Orange"),(Id=5,Name="Pink"),(Id=6,Name="Red"),(Id=7,Name="Purple"),(Id=8,Name="Blue"),(Id=9,Name="Green"),(Id=10,Name="Brown"),(Id=11,Name="Silver")))
+   ProfileMappings(8)=(Id=15,Name="Second Preferred Color",MappingType=PVMT_IdMapped,ValueMappings=(,(Id=1,Name="Black"),(Id=2,Name="White"),(Id=3,Name="Yellow"),(Id=4,Name="Orange"),(Id=5,Name="Pink"),(Id=6,Name="Red"),(Id=7,Name="Purple"),(Id=8,Name="Blue"),(Id=9,Name="Green"),(Id=10,Name="Brown"),(Id=11,Name="Silver")))
+   ProfileMappings(9)=(Id=16,Name="Auto Aim",MappingType=PVMT_IdMapped,ValueMappings=((Name="Off"),(Id=1,Name="On")))
+   ProfileMappings(10)=(Id=17,Name="Auto Center",MappingType=PVMT_IdMapped,ValueMappings=((Name="Off"),(Id=1,Name="On")))
+   ProfileMappings(11)=(Id=18,Name="Movement Control",MappingType=PVMT_IdMapped,ValueMappings=((Name="Left Thumbstick"),(Id=1,Name="Right Thumbstick")))
+   ProfileMappings(12)=(Id=19,Name="Transmission Preference",MappingType=PVMT_IdMapped,ValueMappings=((Name="Auto"),(Id=1,Name="Manual")))
+   ProfileMappings(13)=(Id=20,Name="Race Camera Preference",MappingType=PVMT_IdMapped,ValueMappings=((Name="Behind"),(Id=1,Name="Front"),(Id=2,Name="Inside")))
+   ProfileMappings(14)=(Id=21,Name="Brake Preference",MappingType=PVMT_IdMapped,ValueMappings=((Name="Trigger"),(Id=1,Name="Button")))
+   ProfileMappings(15)=(Id=22,Name="Accelerator Preference",MappingType=PVMT_IdMapped,ValueMappings=((Name="Trigger"),(Id=1,Name="Button")))
+   Name="Default__OnlineProfileSettings"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,22 +1,21 @@
-
 /**
  * Gives code control to override an AnimTree branch, with a custom animation.
  * . Normal branch is the normal tree branch (for example Human upper body).
  * . Custom branch must be connected to an AnimNodeSequence.
  * This node can then take over the upper body to play a cutom animation given various parameters.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNodePlayCustomAnim extends AnimNodeBlend
 	DependsOn(AnimNodeSequence)
 	native(Anim);
 
-cpptext
-{
-	virtual void TickAnim(FLOAT DeltaSeconds);
-
-	virtual INT GetNumSliders() const { return 0; }
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** True, when we're playing a custom animation */
 var bool	bIsPlayingCustomAnim;
@@ -134,19 +133,21 @@ final function SetRootBoneAxisOption
 	AnimSeq = GetCustomAnimNodeSeq();
 	if( AnimSeq != None )
 	{
-		AnimSeq.SetRootBoneAxisOption(AxisX, AxisY, AxisZ);
+		AnimSeq.RootBoneOption[0] = AxisX;
+		AnimSeq.RootBoneOption[1] = AxisY;
+		AnimSeq.RootBoneOption[2] = AxisZ;
 	}
 	else
 	{
-		`Warn(GetFuncName() @ "Custom AnimNodeSequence not found for" @ Self);
+		WarnInternal(GetFuncName() @ "Custom AnimNodeSequence not found for" @ Self);
 	}
 }
 
-
 defaultproperties
 {
-	NodeName="CustomAnim"
-	bFixNumChildren=TRUE
-	Children(0)=(Name="Normal")
-	Children(1)=(Name="Custom")
+   Children(0)=(Name="Normal")
+   Children(1)=(Name="Custom")
+   NodeName="CustomAnim"
+   Name="Default__AnimNodePlayCustomAnim"
+   ObjectArchetype=AnimNodeBlend'Engine.Default__AnimNodeBlend'
 }

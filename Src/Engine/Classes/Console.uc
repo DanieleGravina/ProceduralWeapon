@@ -1,6 +1,6 @@
 //=============================================================================
 // Console - A quick little command line console that accepts most commands.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Console extends Interaction
 	within GameViewportClient
@@ -13,6 +13,11 @@ const MaxHistory=16;		// # of command history to remember.
 
 /** The player which the next console command should be executed in the context of.  If NULL, execute in the viewport. */
 var LocalPlayer ConsoleTargetPlayer;
+
+var	UIScene			LargeConsoleScene, MiniConsoleScene;
+var	UILabel			ConsoleBufferText;
+var ConsoleEntry	MiniConsoleInput;
+var ConsoleEntry	LargeConsoleInput;
 
 var Texture2D		DefaultTexture_Black;
 var Texture2D		DefaultTexture_White;
@@ -44,9 +49,6 @@ var config int HistoryCur;
 /** tracks previously entered console commands */
 var config string History[MaxHistory];
 
-/** tracks whether the user is using arrows keys to navigate the history, so that auto-complete doesn't override */
-var transient bool bNavigatingHistory;
-
 /** The command the user is currently typing. */
 var string TypedStr;
 
@@ -63,77 +65,45 @@ var bool bCtrl;
 
 var config bool bEnableUI;
 
-struct native AutoCompleteCommand
-{
-	var string		Command;
-	var string		Desc;
-};
-
-/** Manual list of auto-complete commands and info specified in BaseInput.ini */
-var config array<AutoCompleteCommand>	ManualAutoCompleteList;
-/** Full list of auto-complete commands and info */
-var transient array<AutoCompleteCommand>	AutoCompleteList;
-/** Is the current auto-complete selection locked */
-var transient bool 			bAutoCompleteLocked;
-/** Currently selected auto complete index */
-var transient int			AutoCompleteIndex;
-/** Should the user be required to hold ctrl to use the up/down arrows when navigating auto-complete */
-var config bool				bRequireCtrlToNavigateAutoComplete;
-/** Do we need to rebuild auto complete? */
-var transient bool			bIsRuntimeAutoCompleteUpToDate;
-
-/** Node for storing an auto-complete tree based on each char in the command */
-struct native AutoCompleteNode
-{
-	/** Char for node in the tree */
-	var int IndexChar;
-	/** Indicies into AutoCompleteList for commands that match to this level */
-	var init array<int> AutoCompleteListIndices;
-	/** Children for further matching */
-	var init array<pointer> ChildNodes{FAutoCompleteNode};
-
-structcpptext
-{
-	FAutoCompleteNode()
-	{
-		IndexChar = INDEX_NONE;
-	}
-	FAutoCompleteNode(INT NewChar)
-	{
-		IndexChar = NewChar;
-	}
-	~FAutoCompleteNode()
-	{
-		for (INT Idx = 0; Idx < ChildNodes.Num(); Idx++)
-		{
-			FAutoCompleteNode *Node = ChildNodes(Idx);
-			delete Node;
-		}
-		ChildNodes.Empty();
-	}
-}
-};
-var native transient AutoCompleteNode AutoCompleteTree;
-
-/** Current list of matching commands for auto-complete, @see UpdateCompleteIndices() */
-var transient array<int> AutoCompleteIndices;
-
 /**
  * Called when the Console is added to the GameViewportClient's Interactions array.
  */
 function Initialized()
 {
 	Super.Initialized();
+
+	if (bEnableUI)
+	{
+		LargeConsoleScene = UIScene(DynamicLoadObject("EngineScenes.ConsoleScene", class'Engine.UIScene'));
+		MiniConsoleScene = UIScene(DynamicLoadObject("EngineScenes.MiniConsole", class'Engine.UIScene'));
+
+		UIController.SceneClient.InitializeScene(LargeConsoleScene,None,LargeConsoleScene);
+		UIController.SceneClient.InitializeScene(MiniConsoleScene,None,MiniConsoleScene);
+
+		LargeConsoleInput = ConsoleEntry(LargeConsoleScene.FindChild('CommandRegion'));
+		MiniConsoleInput = ConsoleEntry(MiniConsoleScene.FindChild('CommandRegion'));
+		ConsoleBufferText = UILabel(LargeConsoleScene.FindChild('BufferText'));
+	}
 }
 
 function SetInputText( string Text )
 {
 	TypedStr = Text;
+	if ( bEnableUI )
+	{
+		MiniConsoleInput.SetValue(Text);
+		LargeConsoleInput.SetValue(Text);
+	}
 }
 
 function SetCursorPos( int Position )
 {
 	TypedStrPos = Position;
+	if ( bEnableUI )
+	{
+		MiniConsoleInput.CursorPosition = Position;
+		LargeConsoleInput.CursorPosition = Position;
+	}
 }
 
 /**
@@ -191,7 +161,15 @@ function ConsoleCommand(string Command)
 	// Save the command history to the INI.
 	SaveConfig();
 
-	OutputText("\n>>>" @ Command @ "<<<");
+	if ( bEnableUI )
+	{
+		// must escape these special characters if using the UI
+		OutputText("\n\\>\\>\\>" @ Command @ "\\<\\<\\<");
+	}
+	else
+	{
+		OutputText("\n>>>" @ Command @ "<<<");
+	}
 
 	if(ConsoleTargetPlayer != None)
 	{
@@ -217,6 +195,11 @@ function ClearOutput()
 {
 	SBHead = 0;
 	ScrollBack.Remove(0,ScrollBack.Length);
+
+	if ( bEnableUI )
+	{
+		ConsoleBufferText.SetValue("");
+	}
 }
 
 /**
@@ -237,6 +220,12 @@ function OutputTextLine(coerce string Text)
 	// Add the line
 	ScrollBack.Length = ScrollBack.Length+1;
 	ScrollBack[SBHead] = Text;
+
+	if ( bEnableUI && ConsoleBufferText != None )
+	{
+		// add the scrollback to the scene version
+		ConsoleBufferText.SetArrayValue(ScrollBack);
+	}
 }
 
 /**
@@ -332,6 +321,16 @@ function bool InputChar( int ControllerId, string Unicode )
 	return bCaptureKeyInput;
 }
 
+function bool IsUIConsoleOpen()
+{
+	return bEnableUI && UIController.SceneClient.ActiveScenes.Find(LargeConsoleScene) != INDEX_NONE;
+}
+
+function bool IsUIMiniConsoleOpen()
+{
+	return bEnableUI && UIController.SceneClient.ActiveScenes.Find(MiniConsoleScene) != INDEX_NONE;
+}
+
 /**
  * Clears out all pressed keys from the player's input object.
  */
@@ -411,18 +410,13 @@ function AppendInputText(string Text)
 		Character = Asc(Left(Text, 1));
 		Text = Mid(Text, 1);
 
-		if (Character >= 0x20 && Character < 0x100)
+		if (Character >= 0x20 && Character < 0x100 && Character != Asc("~") && Character != Asc("`"))
 		{
 			SetInputText(Left(TypedStr, TypedStrPos) $ Chr(Character) $ Right(TypedStr, Len(TypedStr) - TypedStrPos));
 			SetCursorPos(TypedStrPos + 1);
 		}
 	};
-	UpdateCompleteIndices();
 }
-
-final native function BuildRuntimeAutoCompleteList(optional bool bForce);
-
-native function UpdateCompleteIndices();
 
 /**
  * This state is used when the typing bar is open.
@@ -440,6 +434,11 @@ state Typing
 	 */
 	function bool InputChar( int ControllerId, string Unicode )
 	{
+		if ( IsUIMiniConsoleOpen() )
+		{
+			return false;
+		}
+
 		if ( bCaptureKeyInput )
 		{
 			return true;
@@ -464,9 +463,6 @@ state Typing
 	function bool InputKey( int ControllerId, name Key, EInputEvent Event, float AmountDepressed = 1.f, bool bGamepad = FALSE )
 	{
 		local string Temp;
-		local int NewPos, SpacePos, PeriodPos;
-
-		//`log(`location@`showvar(Key));
 
 		if ( Event == IE_Pressed )
 		{
@@ -476,10 +472,6 @@ state Typing
 		if (ProcessControlKey(Key, Event))
 		{
 			return true;
-		}
-		else if( bGamepad )
-		{
-			return FALSE;
 		}
 		else if( Key == 'Escape' && Event == IE_Released )
 		{
@@ -505,17 +497,8 @@ state Typing
 		}
 		else if(Key == TypeKey && Event == IE_Pressed)
 		{
-			if (AutoCompleteIndices.Length > 0 && !bAutoCompleteLocked)
-			{
-				TypedStr = AutoCompleteList[AutoCompleteIndices[AutoCompleteIndex]].Command;
-				SetCursorPos(Len(TypedStr));
-				bAutoCompleteLocked = TRUE;
-			}
-			else
-			{
-				GotoState('');
-				bCaptureKeyInput = true;
-			}
+			GotoState('');
+			bCaptureKeyInput = true;
 			return true;
 		}
 		else if( Key=='Enter' && Event == IE_Released )
@@ -534,8 +517,6 @@ state Typing
 
 				OutputText( "" );
 				GotoState('');
-
-				UpdateCompleteIndices();
 			}
 			else
 			{
@@ -550,24 +531,12 @@ state Typing
 		}
 		else if( Event != IE_Pressed && Event != IE_Repeat )
 		{
-			if( !bGamepad )
-			{
-				return	Key != 'LeftMouseButton'
-					&&	Key != 'MiddleMouseButton'
-					&&	Key != 'RightMouseButton';
-			}
-			return FALSE;
+			return	Key != 'LeftMouseButton'
+				&&	Key != 'MiddleMouseButton'
+				&&	Key != 'RightMouseButton';
 		}
 		else if( Key=='up' )
 		{
-			if (!bNavigatingHistory && ((bRequireCtrlToNavigateAutoComplete && bCtrl) || (!bRequireCtrlToNavigateAutoComplete && !bCtrl && AutoCompleteIndices.Length > 1)))
-			{
-				if (++AutoCompleteIndex == AutoCompleteIndices.Length)
-				{
-					AutoCompleteIndex = 0;
-				}
-			}
-			else
 			if ( HistoryBot >= 0 )
 			{
 				if (HistoryCur == HistoryBot)
@@ -581,22 +550,11 @@ state Typing
 
 				SetInputText(History[HistoryCur]);
 				SetCursorPos(Len(History[HistoryCur]));
-				UpdateCompleteIndices();
-				bNavigatingHistory = TRUE;
 			}
 			return True;
 		}
 		else if( Key=='down' )
 		{
-			if (!bNavigatingHistory && ((bRequireCtrlToNavigateAutoComplete && bCtrl) || (!bRequireCtrlToNavigateAutoComplete && !bCtrl && AutoCompleteIndices.Length > 1)))
-			{
-				if (--AutoCompleteIndex < 0)
-				{
-					AutoCompleteIndex = AutoCompleteIndices.Length - 1;
-				}
-				bAutoCompleteLocked = FALSE;
-			}
-			else
 			if ( HistoryBot >= 0 )
 			{
 				if (HistoryCur == HistoryTop)
@@ -606,8 +564,6 @@ state Typing
 
 				SetInputText(History[HistoryCur]);
 				SetCursorPos(Len(History[HistoryCur]));
-				UpdateCompleteIndices();
-				bNavigatingHistory = TRUE;
 			}
 
 		}
@@ -617,8 +573,6 @@ state Typing
 			{
 				SetInputText(Left(TypedStr,TypedStrPos-1) $ Right(TypedStr, Len(TypedStr) - TypedStrPos));
 				SetCursorPos(TypedStrPos-1);
-				// unlock auto-complete (@todo - track the lock position so we don't bother unlocking under bogus cases)
-				bAutoCompleteLocked = FALSE;
 			}
 
 			return true;
@@ -633,38 +587,12 @@ state Typing
 		}
 		else if ( Key=='left' )
 		{
-			if (bCtrl)
-			{
-				// find the nearest '.' or ' '
-				NewPos = Max(InStr(TypedStr,".",TRUE,FALSE,TypedStrPos),InStr(TypedStr," ",TRUE,FALSE,TypedStrPos));
-				SetCursorPos(Max(0,NewPos));
-			}
-			else
-			{
-				SetCursorPos(Max(0, TypedStrPos - 1));
-			}
+			SetCursorPos(Max(0, TypedStrPos - 1));
 			return true;
 		}
 		else if ( Key=='right' )
 		{
-			if (bCtrl)
-			{
-				// find the nearest '.' or ' '
-				SpacePos = InStr(TypedStr," ",FALSE,FALSE,TypedStrPos+1);
-				PeriodPos = InStr(TypedStr,".",FALSE,FALSE,TypedStrPos+1);
-				// pick the closest valid index
-				NewPos = SpacePos < 0 ? PeriodPos : (PeriodPos < 0 ? SpacePos : Min(SpacePos,PeriodPos));
-				// jump to end if nothing in between
-				if (NewPos == INDEX_NONE)
-				{
-					NewPos = Len(TypedStr);
-				}
-				SetCursorPos(Min(Len(TypedStr),Max(TypedStrPos,NewPos)));
-			}
-			else
-			{
-				SetCursorPos(Min(Len(TypedStr), TypedStrPos + 1));
-			}
+			SetCursorPos(Min(Len(TypedStr), TypedStrPos + 1));
 			return true;
 		}
 		else if ( Key=='home' )
@@ -678,127 +606,77 @@ state Typing
 			return true;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	event PostRender_Console(Canvas Canvas)
 	{
-		local float y, xl, yl, info_xl, info_yl, ClipX, ClipY, LeftPos;
+		local float xl,yl;
 		local string OutStr;
-		local int MatchIdx, Idx, StartIdx;
+		local float ClipX;
+		local float ClipY;
+		local float LeftPos;
 
-		Global.PostRender_Console(Canvas);
-
-		// Blank out a space
-
-		// use the smallest font
-		Canvas.Font	 = class'Engine'.Static.GetSmallFont();
-		// determine the position for the cursor
-		OutStr = "(>"@TypedStr;
-		Canvas.Strlen(OutStr,xl,yl);
-
-		ClipX = Canvas.ClipX;
-		ClipY = Canvas.ClipY;
-		LeftPos = 0;
-
-		if (Class'WorldInfo'.Static.IsConsoleBuild())
+		if ( !IsUIMiniConsoleOpen() )
 		{
-			ClipX	-= 32;
-			ClipY	-= 32;
-			LeftPos	 = 32;
+			Global.PostRender_Console(Canvas);
+
+			// Blank out a space
+
+			// use the smallest font
+			Canvas.Font	 = class'Engine'.Static.GetSmallFont();
+			// determine the position for the cursor
+			OutStr = "(>"@TypedStr;
+			Canvas.Strlen(OutStr,xl,yl);
+
+			ClipX = Canvas.ClipX;
+			ClipY = Canvas.ClipY;
+			LeftPos = 0;
+
+			if (Class'WorldInfo'.Static.IsConsoleBuild())
+			{
+				ClipX	-= 32;
+				ClipY	-= 32;
+				LeftPos	 = 32;
+			}
+
+			// start at the bottom of the screen, then come up 6 pixels more than the height of the font
+			Canvas.SetPos(LeftPos,ClipY-6-yl);
+			// draw the background texture
+			Canvas.DrawTile( DefaultTexture_Black, ClipX, yl+6,0,0,32,32);
+
+			Canvas.SetPos(LeftPos,ClipY-6-yl);
+
+			// change the draw color to green
+			Canvas.SetDrawColor(0,255,0);
+
+			// draw the top border of the typing region
+			Canvas.DrawTile( DefaultTexture_White, ClipX, 2,0,0,32,32);
+
+			// center the text between the bottom of the screen and the bottom of the border line
+			Canvas.SetPos(LeftPos,ClipY-3-yl);
+			Canvas.bCenter = False;
+			Canvas.DrawText( OutStr, false );
+
+			// determine the cursor position
+			OutStr = "(>"@Left(TypedStr,TypedStrPos);
+			Canvas.StrLen(OutStr,xl,yl);
+
+			// move the pen to that position
+			Canvas.SetPos(LeftPos + xl,ClipY-1-yl);
+
+			// draw the cursor
+			Canvas.DrawText("_");
 		}
-
-		// start at the bottom of the screen, then come up 6 pixels more than the height of the font
-		Canvas.SetPos(LeftPos,ClipY-6-yl);
-		// draw the background texture
-		Canvas.DrawTile( DefaultTexture_Black, ClipX, yl+6,0,0,32,32);
-
-		Canvas.SetPos(LeftPos,ClipY-6-yl);
-
-		// change the draw color to green
-		Canvas.SetDrawColor(0,255,0);
-
-		// draw the top border of the typing region
-		Canvas.DrawTile( DefaultTexture_White, ClipX, 2,0,0,32,32);
-
-		// center the text between the bottom of the screen and the bottom of the border line
-		Canvas.SetPos(LeftPos,ClipY-3-yl);
-		Canvas.bCenter = False;
-		Canvas.DrawText( OutStr, false );
-
-		// draw the remaining text for matching auto-complete
-		if (AutoCompleteIndices.Length > 0)
-		{
-			Idx = AutoCompleteIndices[AutoCompleteIndex];
-			//Canvas.StrLen(OutStr,xl,yl);
-			Canvas.SetPos(LeftPos+xl,ClipY-3-yl);
-			Canvas.SetDrawColor(87,148,87);
-			Canvas.DrawText(Right(AutoCompleteList[Idx].Command,Len(AutoCompleteList[Idx].Command) - Len(TypedStr)),FALSE);
-			Canvas.StrLen("(>",xl,yl);
-
-			StartIdx = AutoCompleteIndex - 5;
-			if (StartIdx < 0)
-			{
-				StartIdx = Max(0,AutoCompleteIndices.Length + StartIdx);
-			}
-			Idx = StartIdx;
-			y = ClipY - 6 - (yl * 2);
-			for (MatchIdx = 0; MatchIdx < 10; MatchIdx++)
-			{
-				OutStr = AutoCompleteList[AutoCompleteIndices[Idx]].Desc;
-				Canvas.StrLen(OutStr, info_xl, info_yl);
-				y -= info_yl - yl;
-				Canvas.SetPos(LeftPos + xl, y);
-				Canvas.SetDrawColor(0, 0, 0);
-				Canvas.DrawTile(DefaultTexture_White, info_xl, info_yl, 0, 0, 32, 32);
-				Canvas.SetPos(LeftPos + xl, y);
-				if (Idx == AutoCompleteIndex)
-				{
-					Canvas.SetDrawColor(0,255,0);
-				}
-				else
-				{
-					Canvas.SetDrawColor(0,150,0);
-				}
-				Canvas.DrawText(OutStr,false);
-				if (++Idx >= AutoCompleteIndices.Length)
-				{
-					Idx = 0;
-				}
-				y -= yl;
-				// break out if we loop on lists < 10
-				if (Idx == StartIdx)
-				{
-					break;
-				}
-			}
-			if (AutoCompleteIndices.Length >= 10)
-			{
-				OutStr = "[" $ (AutoCompleteIndices.Length - 10 + 1) @ "more matches]";
-				Canvas.StrLen(OutStr, info_xl, info_yl);
-				Canvas.SetPos(LeftPos + xl, y);
-				Canvas.SetDrawColor(0, 0, 0);
-				Canvas.DrawTile(DefaultTexture_White, info_xl, info_yl, 0, 0, 32, 32);
-				Canvas.SetPos(LeftPos + xl, y);
-				Canvas.SetDrawColor(0, 255, 0);
-				Canvas.DrawText(OutStr, false);
-			}
-		}
-
-		// determine the cursor position
-		OutStr = "(>"@Left(TypedStr,TypedStrPos);
-		Canvas.StrLen(OutStr,xl,yl);
-
-		// move the pen to that position
-		Canvas.SetPos(LeftPos + xl,ClipY-1-yl);
-
-		// draw the cursor
-		Canvas.DrawText("_");
 	}
 
 	event BeginState(Name PreviousStateName)
 	{
-		if ( PreviousStateName == '' )
+		if ( bEnableUI && MiniConsoleScene != None )
+		{
+			UIController.OpenScene(MiniConsoleScene);
+		}
+		else if ( PreviousStateName == '' )
 		{
 			FlushPlayerInput();
 		}
@@ -808,7 +686,10 @@ state Typing
 
 	event EndState( Name NextStateName )
 	{
-		bAutoCompleteLocked = FALSE;
+		if ( MiniConsoleScene != None )
+		{
+			UIController.CloseScene(MiniConsoleScene);
+		}
 	}
 }
 
@@ -853,10 +734,6 @@ state Open
 		{
 			return true;
 		}
-		else if( bGamepad )
-		{
-			return FALSE;
-		}
 		else if( Key == 'Escape' && Event == IE_Released )
 		{
 			if( TypedStr!="" )
@@ -879,17 +756,8 @@ state Open
 		}
 		else if(Key == TypeKey && Event == IE_Pressed)
 		{
-			if (AutoCompleteIndices.Length > 0 && !bAutoCompleteLocked)
-			{
-				TypedStr = AutoCompleteList[AutoCompleteIndices[0]].Command;
-				SetCursorPos(Len(TypedStr));
-				bAutoCompleteLocked = TRUE;
-			}
-			else
-			{
-				GotoState('');
-				bCaptureKeyInput = true;
-			}
+			GotoState('Typing');
+			bCaptureKeyInput = true;
 			return true;
 		}
 		else if( Key=='Enter' && Event == IE_Released )
@@ -909,8 +777,6 @@ state Open
 				{
 					ConsoleCommand(Temp);
 				}
-
-				UpdateCompleteIndices();
 			}
 
 			return true;
@@ -921,13 +787,9 @@ state Open
 		}
 		else if( Event != IE_Pressed && Event != IE_Repeat )
 		{
-			if( !bGamepad )
-			{
-				return	Key != 'LeftMouseButton'
-					&&	Key != 'MiddleMouseButton'
-					&&	Key != 'RightMouseButton';
-			}
-			return FALSE;
+			return	Key != 'LeftMouseButton'
+				&&	Key != 'MiddleMouseButton'
+				&&	Key != 'RightMouseButton';
 		}
 		else if( Key=='up' )
 		{
@@ -995,8 +857,6 @@ state Open
 			{
 				SetInputText(Left(TypedStr,TypedStrPos-1) $ Right(TypedStr, Len(TypedStr) - TypedStrPos));
 				SetCursorPos(TypedStrPos-1);
-				// unlock auto-complete (@todo - track the lock position so we don't bother unlocking under bogus cases)
-				bAutoCompleteLocked = FALSE;
 			}
 
 			return true;
@@ -1070,124 +930,94 @@ state Open
 		}
 
 
-		return TRUE;
+		return true;
 	}
 
 	event PostRender_Console(Canvas Canvas)
 	{
 
 		local float Height;
-		local float xl, yl, y, ScrollLineXL, ScrollLineYL, info_xl, info_yl;
+		local float xl,yl,y;
 		local string OutStr;
-		local int idx, MatchIdx;
+		local int idx;
 
 		// render the buffer
 
 		// Blank out a space
-		Canvas.Font = class'Engine'.Static.GetSmallFont();
-
-		// the height of the buffer will be 75% of the height of the screen
-		Height = Canvas.ClipY * 0.75;
-
-		// change the draw color to white
-		Canvas.SetDrawColor(255,255,255,255);
-
-		// move the pen to the top-left pixel
-		Canvas.SetPos(0,0);
-
-		// draw the black background tile
-		Canvas.DrawTile( DefaultTexture_Black, Canvas.ClipX, Height,0,0,32,32);
-
-		// now render the typing region
-		OutStr = "(>"@TypedStr;
-
-		// determine the height of the text
-		Canvas.Strlen(OutStr,xl,yl);
-
-		// move the pen up + 12 pixels of buffer (for the green borders and some space)
-		Canvas.SetPos(0,Height-12-yl);
-
-		// change the draw color to green
-		Canvas.SetDrawColor(0,255,0);
-
-		// draw the top typing region border
-		Canvas.DrawTile( DefaultTexture_White, Canvas.ClipX, 2,0,0,32,32);
-
-		// move the pen to the bottom of the console buffer area
-		Canvas.SetPos(0,Height);
-
-		// draw the bottom typing region border
-		Canvas.DrawTile( DefaultTexture_White, Canvas.ClipX, 2,0,0,32,32);
-
-		// center the pen between the two borders
-		Canvas.SetPos(0,Height-5-yl);
-		Canvas.bCenter = False;
-
-		// render the text that is being typed
-		Canvas.DrawText( OutStr, false );
-
-		// draw the remaining text for matching auto-complete
-		if (AutoCompleteIndices.Length > 0)
+		if ( !IsUIConsoleOpen() )
 		{
-			Idx = AutoCompleteIndices[0];
-			//Canvas.StrLen(OutStr,xl,yl);
-			Canvas.SetPos(0+xl,Height-5-yl);
-			Canvas.SetDrawColor(87,148,87);
-			Canvas.DrawText(Right(AutoCompleteList[Idx].Command,Len(AutoCompleteList[Idx].Command) - Len(TypedStr)),FALSE);
+			Canvas.Font	 = class'Engine'.Static.GetSmallFont();
 
-			Canvas.StrLen("(>", xl, yl);
-			y = Height + 5;
-			for (MatchIdx = 0; MatchIdx < AutoCompleteIndices.Length && MatchIdx < 10; MatchIdx++)
+			// the height of the buffer will be 75% of the height of the screen
+			Height = Canvas.ClipY*0.75;
+
+			// change the draw color to white
+	        Canvas.SetDrawColor(255,255,255,255);
+
+	        // move the pen to the top-left pixel
+			Canvas.SetPos(0,0);
+
+			// draw the black background tile
+			Canvas.DrawTile( DefaultTexture_Black, Canvas.ClipX, Height,0,0,32,32);
+
+			// now render the typing region
+			OutStr = "(>"@TypedStr;
+
+			// determine the height of the text
+			Canvas.Strlen(OutStr,xl,yl);
+
+			// move the pen up + 12 pixels of buffer (for the green borders and some space)
+			Canvas.SetPos(0,Height-12-yl);
+
+			// change the draw color to green
+			Canvas.SetDrawColor(0,255,0);
+
+			// draw the top typing region border
+			Canvas.DrawTile( DefaultTexture_White, Canvas.ClipX, 2,0,0,32,32);
+
+			// move the pen to the bottom of the console buffer area
+			Canvas.SetPos(0,Height);
+
+			// draw the bottom typing region border
+			Canvas.DrawTile( DefaultTexture_White, Canvas.ClipX, 2,0,0,32,32);
+
+			// center the pen between the two borders
+			Canvas.SetPos(0,Height-5-yl);
+			Canvas.bCenter = False;
+
+			// render the text that is being typed
+			Canvas.DrawText( OutStr, false );
+
+			OutStr = "(>"@Left(TypedStr,TypedStrPos);
+
+			// position the pen at the cursor position
+			Canvas.StrLen(OutStr,xl,yl);
+			Canvas.SetPos(xl,Height-3-yl);
+
+			// render the cursor
+			Canvas.DrawText("_");
+
+			// figure out which element of the scrollback buffer to should appear first (at the top of the screen)
+			idx = SBHead - SBPos;
+			y = Height-16-(yl*2);
+
+			if (ScrollBack.Length==0)
+				return;
+
+			// change the draw color to white
+			Canvas.SetDrawColor(255,255,255,255);
+
+			// while we have enough room to draw another line and there are more lines to draw
+			while (y>yl && idx>=0)
 			{
-				Idx = AutoCompleteIndices[MatchIdx];
-				Canvas.SetPos(0 + xl, y);
-				Canvas.StrLen(AutoCompleteList[Idx].Desc, info_xl, info_yl);
-				Canvas.SetDrawColor(0, 0, 0);
-				Canvas.DrawTile(DefaultTexture_White, info_xl, info_yl, 0, 0, 32, 32);
-				Canvas.SetPos(0 + xl, y);
-				Canvas.SetDrawColor(0, 255, 0);
-				Canvas.DrawText(AutoCompleteList[Idx].Desc, false);
-				y += info_yl;
+				// move the pen to the correct position
+				Canvas.SetPos(0,y);
+
+				// draw the next line down in the buffer
+				Canvas.DrawText(Scrollback[idx],false);
+				idx--;
+				y-=yl;
 			}
-		}
-
-		OutStr = "(>"@Left(TypedStr,TypedStrPos);
-
-		// position the pen at the cursor position
-		Canvas.StrLen(OutStr,xl,yl);
-		Canvas.SetPos(xl,Height-3-yl);
-
-		// render the cursor
-		Canvas.DrawText("_");
-
-		// figure out which element of the scrollback buffer to should appear first (at the top of the screen)
-		idx = SBHead - SBPos;
-		y = Height-16-(yl*2);
-
-		if (ScrollBack.Length==0)
-			return;
-
-		// change the draw color to white
-		Canvas.SetDrawColor(255,255,255,255);
-
-		// while we have enough room to draw another line and there are more lines to draw
-		while (y>yl && idx>=0)
-		{
-			// move the pen to the correct position
-			Canvas.SetPos(0, y);
-
-			// adjust the location for any word wrapping due to long text lines
-			Canvas.StrLen(ScrollBack[idx], ScrollLineXL, ScrollLineYL);
-			if (ScrollLineYL > yl)
-			{
-				y -= (ScrollLineYL - yl);
-				Canvas.SetPos(Canvas.CurX, y, Canvas.CurZ);
-			}
-
-			// draw the next line down in the buffer
-			Canvas.DrawText(Scrollback[idx],false);
-			idx--;
-			y-=yl;
 		}
 	}
 
@@ -1199,18 +1029,35 @@ state Open
 		SBPos = 0;
 		bCtrl = false;
 
-		if ( PreviousStateName == '' )
+		if ( bEnableUI && LargeConsoleScene != None )
+		{
+			UIController.OpenScene(LargeConsoleScene);
+		}
+		else if ( PreviousStateName == '' )
 		{
 			FlushPlayerInput();
+		}
+	}
+
+	event EndState( Name NextStateName )
+	{
+		if ( LargeConsoleScene != None )
+		{
+			UIController.CloseScene(LargeConsoleScene);
 		}
 	}
 }
 
 defaultproperties
 {
-	OnReceivedNativeInputKey=InputKey
-	OnReceivedNativeInputChar=InputChar
-
-	DefaultTexture_Black=Texture2D'EngineResources.Black'
-	DefaultTexture_White=Texture2D'EngineResources.WhiteSquareTexture'
+   DefaultTexture_Black=Texture2D'EngineResources.Black'
+   DefaultTexture_White=Texture2D'EngineResources.White'
+   ConsoleKey="F10"
+   TypeKey="Tab"
+   MaxScrollbackSize=1024
+   HistoryBot=-1
+   __OnReceivedNativeInputKey__Delegate=Default__Console.InputKey
+   __OnReceivedNativeInputChar__Delegate=Default__Console.InputChar
+   Name="Default__Console"
+   ObjectArchetype=Interaction'Engine.Default__Interaction'
 }

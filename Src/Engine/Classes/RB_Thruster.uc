@@ -1,17 +1,17 @@
-/** 
- *	Base one of these on an Actor using PHYS_RigidBody and it will apply a force down the negative-X direction
- *	ie. point X in the direction you want the thrust in.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
-
-class RB_Thruster extends RigidBodyBase
+class RB_Thruster extends Actor
 	placeable
 	native(Physics);
 
-cpptext
-{
-	virtual UBOOL Tick( FLOAT DeltaSeconds, ELevelTick TickType );
-}
+/** 
+ *	Base one of these on an Actor using PHYS_RigidBody and it will apply a force down the negative-X direction
+ *	ie. point X in the direction you want the thrust in.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ */
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
 
 /** If thrust should be applied at the moment. */
@@ -42,28 +42,26 @@ simulated function OnToggle(SeqAct_Toggle action)
 
 defaultproperties
 {
-	// Various physics related items need to be ticked pre physics update
-	TickGroup=TG_PreAsyncWork
-
-	Begin Object Class=ArrowComponent Name=ArrowComponent0
-		ArrowSize=1.7
-		ArrowColor=(R=255,G=180,B=0)
-		bTreatAsASprite=True
-		SpriteCategoryName="Physics"
-	End Object
-	Components.Add(ArrowComponent0)
-
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Thruster'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Physics"
-	End Object
-	Components.Add(Sprite)
-
-	bHardAttach=true
-	bEdShouldSnap=true
-
-	ThrustStrength=100.0
+   ThrustStrength=100.000000
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowColor=(B=0,G=180,R=255,A=255)
+      ArrowSize=1.700000
+      Name="ArrowComponent0"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Components(0)=ArrowComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_Thruster'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(1)=Sprite
+   bHardAttach=True
+   bEdShouldSnap=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__RB_Thruster"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

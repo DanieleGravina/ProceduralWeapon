@@ -1,9 +1,43 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTBot extends UDKBot
-	dependson(UTCharInfo);
+class UTBot extends AIController
+	native(AI)
+	dependson(UTCustomChar_Data);
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 // AI Magic numbers - distance based, so scale to bot speed/weapon range
 const MAXSTAKEOUTDIST = 2000;
@@ -13,47 +47,83 @@ const MINSTRAFEDIST = 200;
 const MINVIEWDIST = 200;
 const AngleConvert = 0.0000958738;	// 2*PI/65536
 
+var float WarningDelay;		// delay before act on firing warning
+var Projectile WarningProjectile;
 /** shooter of instant hit weapon we're trying to dodge (@see DelayedInstantWarning()) */
 var Pawn InstantWarningShooter;
+
+// for monitoring the position of a pawn
+var		vector		MonitorStartLoc;	// used by latent function MonitorPawn()
+var		Pawn		MonitoredPawn;		// used by latent function MonitorPawn()
+var		float		MonitorMaxDistSq;
+
+// enemy position information
+var		vector		LastSeenPos; 	// enemy position when I last saw enemy (auto updated if EnemyNotVisible() enabled)
+var		vector		LastSeeingPos;	// position where I last saw enemy (auto updated if EnemyNotVisible enabled)
+var		float		LastSeenTime;
 
 var float	LastWarningTime;	/** Last time a warning about a shot being fired at my pawn was accepted. */
 
 //AI flags
 var		bool		bHuntPlayer;		// hunting player
+var		bool		bEnemyInfoValid;	// false when change enemy, true when LastSeenPos etc updated
 var		bool		bCanFire;			// used by TacticalMove and Charging states
 var		bool		bStrafeDir;
+var		bool		bLeadTarget;		// lead target with projectile attack
 var		bool		bChangeDir;			// tactical move boolean
 var		bool		bFrustrated;
 var		bool		bInitLifeMessage;
 var		bool		bReachedGatherPoint;
+var		bool		bHasTranslocator;
 var		bool		bTacticalDoubleJump;
 var		bool		bWasNearObjective;
 var		bool		bHasFired;
 var		bool		bForcedDirection;
 var		bool		bFireSuccess;
 var		bool		bStoppedFiring;
+var		bool		bTranslocatorHop;
 var		bool		bMustCharge;
 var		bool		bPursuingFlag;
 var		bool		bJustLanded;
 var		bool		bRecommendFastMove;
 var		bool		bIgnoreEnemyChange;		// to prevent calling whattodonext() again on enemy change
 var		bool		bHasSuperWeapon;
+var		bool		bPlannedJump;		// set when doing voluntary jump
 var		bool		bPendingDoubleJump;
 var		bool		bAllowedToImpactJump;
+var		bool		bInDodgeMove;
+var		bool		bAllowedToTranslocate;
+var		bool		bForceTranslocateAbility;
+var		bool		bJumpOverWall;					// true when jumping to clear obstacle
+var		bool							bEnemyAcquired;
 var		bool		bScriptedFrozen;
 var		bool		bSendFlagMessage;
 var		bool		bForceNoDetours;
 var		bool		bShortCamp;
 var		bool		bBetrayTeam;
 
+var		int								AcquisitionYawRate;
 
 /** set to true for bots created by Kismet scripts; prevents them from checking for too many bots or unbalanced teams
 	also causes them to be destroyed on death instead of respawning */
 var bool bSpawnedByKismet;
 
+/** script flags that cause various events to be called to override C++ functionality */
+var bool bScriptSpecialJumpCost;
+
+var		float		DodgeLandZ;		// expected min landing height of dodge
+
 /** impact hammer properties */
 var		Actor		ImpactTarget;
 var		float		ImpactJumpZ; // if > 0, we have an impact hammer and it will give us this much Z speed
+
+/** translocator properties */
+var		actor		TranslocationTarget;
+var		float		TranslocFreq;
+var		float		NextTranslocTime;
+
+/** jump Z velocity bot can gain using multijumps (not counting first jump) */
+var		float		MultiJumpZ;
 
 /** maximum jump Z velocity bot can attain using special abilities (jump boots, impact jumping, etc) */
 var		float		MaxSpecialJumpZ;
@@ -64,6 +134,9 @@ var int		LastTauntIndex;
 
 /** Temp holder for sending killed vehicle messages */
 var class<UTVehicle> KilledVehicleClass;
+
+/** Temp holder for sending constructed node messages */
+var UTOnslaughtPowerNode ConstructedNode;
 
 // Advanced AI attributes.
 var	vector			HidingSpot;
@@ -86,18 +159,28 @@ var	float		    BaseAggressiveness; // 0 to 1 (0.3 default, higher is more aggres
 var	float			StrafingAbility;	// -1 to 1 (higher uses strafing more)
 var	float			CombatStyle;		// -1 to 1 = low means tends to stay off and snipe, high means tends to charge and melee
 var float			Tactics;
+var float			TranslocUse;		// 0 to 1 - higher means more likely to use
 var float			ReactionTime;
 var float			Jumpiness;			// 0 to 1
 var class<Weapon>	FavoriteWeapon;
+var float			DodgeToGoalPct;
 var float OldMessageTime;				// to limit frequency of voice messages
+var float			HearingThreshold;	// distance at which bot will notice noises.
 
 // Team AI attributes
 var string			GoalString;			// for debugging - used to show what bot is thinking (with 'ShowDebug')
 var string			SoakString;			// for debugging - shows problem when soaking
+var UTSquadAI			Squad;
 
 /** linked list of members of this squad */
 var UTBot			NextSquadMember;
 
+/** whether bot is currently using the squad alternate route - if false, FindPathToSquadRoute() just calls FindPathToward(Squad.RouteObjective) */
+var bool bUsingSquadRoute;
+/** if true, this bot uses the SquadAI's PreviousObjectiveRouteCache instead (used when the route changes while bot is following it) */
+var bool bUsePreviousSquadRoute;
+/** goal along squad's route, used when moving along alternate path via FindPathToSquadRoute() */
+var NavigationPoint SquadRouteGoal;
 /** set when bot is done waiting at gather point for more attackers */
 var bool bFinalStretch;
 
@@ -109,14 +192,24 @@ var NavigationPoint DefensivePosition;
 /** if RouteGoal == NoVehicleGoal, don't use a vehicle to get there */
 var Actor NoVehicleGoal;
 
+var		Vehicle		LastBlockingVehicle;
 var		vector		DirectionHint;	// used to help pick which side of vehicle to get out of
 
+/** set when in ExecuteWhatToDoNext() so we can detect bugs where
+ * it calls WhatToDoNext() again and causes decision-making to happen every tick
+ */
+var bool bExecutingWhatToDoNext;
 var float		StopStartTime;
 var float		LastRespawnTime;
 var float		FailedHuntTime;
 var Pawn		FailedHuntEnemy;
 /** if set bot ignores Squad recommendation of spots to look for enemy while hunting */
 var bool bDirectHunt;
+
+// caching visibility of enemies
+var		float		EnemyVisibilityTime;	/** When last enemy LineOfSightTo() check was done */
+var		pawn		VisibleEnemy;			/** Who the enemy was for the last LineOfSightTo() check */
+var		bool		bEnemyIsVisible;		/** Result of last enemy LineOfSightTo() check */
 
 // inventory searh
 var float		LastSearchTime;
@@ -135,12 +228,64 @@ var() name OrderNames[16];
 var name OldOrders;
 var Controller OldOrderGiver;
 
+// Enemy tracking
+var		float		TrackingReactionTime;	/** How far back in time is bots model of enemy position based on */
+var		float		BaseTrackingReactionTime;	/** Base value, modified by skill to set TrackingReactionTime */
+var		Pawn		CurrentlyTrackedEnemy;	/** Normally the current enemy.  Reset SavedPositions if this changes. */
+var		vector		TrackedVelocity;		/** Current velocity estimate (lagged) of tracked enemy */
+
+struct native EnemyPosition
+{
+	var vector	Position;
+	var	vector	Velocity;
+	var float	Time;
+};
+var array<EnemyPosition> SavedPositions;	/** Position and velocity of enemy at previous ticks. */
+
+/** Iterative aim correction in progress if set */
+var pawn BlockedAimTarget;
+
+/** pct lead for last targeting check */
+var float LastIterativeCheck;
+
+/* aim update frequency */
+var float AimUpdateFrequency;
+
+var float LastAimUpdateTime;
+
+/** how often aim error is updated when bot has a visible enemy */
+var float ErrorUpdateFrequency;
+
+/** last time aim error was updated */
+var float LastErrorUpdateTime;
+
+/** aim error value currently being used */
+var float CurrentAimError;
+
 // 1vs1 Enemy location model
 var vector LastKnownPosition;
 var vector LastKillerPosition;
 
+var		UTAvoidMarker	FearSpots[2];	// avoid these spots when moving - used for very short term stationary hazards like bio goo or sticky grenades
+
+var vector	ImpactVelocity;	// velocity added while falling (bot tries to correct for it)
+
 /** if set, bot always shoots at it (for Kismet scripts) */
 var Actor ScriptedTarget;
+
+/** if not 255, bot always uses this fire mode */
+var byte ScriptedFireMode;
+
+/** component that handles delayed calls ExecuteWhatToDoNext() to when triggered */
+var UTBotDecisionComponent DecisionComponent;
+
+/** triggers the bot to call DelayedLeaveVehicle() during its next tick - used in the 'non-blocking' case of LeaveVehicle() */
+var bool bNeedDelayedLeaveVehicle;
+
+/** if true, when pathfinding to the same RouteGoal as the last time, use old RouteCache if it's still valid and all paths on it usable */
+var bool bAllowRouteReuse;
+/** used with route reuse to force the next route finding attempt to do the full path search */
+var bool bForceRefreshRoute;
 
 /** Last time bot sent an action music event to a player */
 var float LastActionMusicUpdate;
@@ -153,10 +298,58 @@ var Actor LastFireTarget;
 /** transient flag for TimedFireWeaponAtEnemy() to indicate that the weapon firing code already reset the combat timer */
 var transient bool bResetCombatTimer;
 
+/** temporarily look at this actor (for e.g. looking at shock ball for combos) - only used when looking at enemy */
+var Actor TemporaryFocus;
+/** if set pass bRequestAlternateLoc = TRUE to GetTargetLocation() when determining FocalPoint from Focus */
+var bool bTargetAlternateLoc;
+
 /** Last time weapon's CanAttack() was checked for firing again */
 var float LastCanAttackCheckTime;
 
 var float LastInjuredVoiceMessageTime;
+
+//========================================================
+
+native final latent function WaitToSeeEnemy(); // return when looking directly at visible enemy
+
+/** encapsulates calling WhatToDoNext() and waiting for the tick-delayed decision making process to occur */
+native final latent function LatentWhatToDoNext();
+
+//========================================================
+// For Navigation AI
+native final function bool CanMakePathTo(Actor A); // assumes valid CurrentPath, tries to see if CurrentPath can be combined with path to N
+
+/* epic ===============================================
+* ::FindBestInventoryPath
+*
+* Searches the navigation network for a path that leads
+* to nearby inventory pickups.
+*
+* =====================================================
+*/
+native final function actor FindBestInventoryPath(out float MinWeight);
+
+/* epic ===============================================
+* ::FindPathToSquadRoute
+*
+* Returns shortest path to squad route (UTSquadAI.ObjectiveRouteCache), or next node along route
+* if already on squad route
+*
+* =====================================================
+*/
+native final function actor FindPathToSquadRoute(optional bool bWeightDetours);
+
+/* epic ===============================================
+* ::BuildSquadRoute
+*
+* Called by squadleader.  Fills the squad's ObjectiveRouteCache.
+* Builds upon previous attempts by adding cost to the routes
+* in the SquadAI's SquadRoutes array, up to a maximum
+* of MaxSquadRoutes iterations.
+*
+* =====================================================
+*/
+native final function BuildSquadRoute();
 
 /* epic ===============================================
 * ::EnemyJustTeleported
@@ -183,6 +376,8 @@ function WasKilledBy(Controller Other)
 		LastKillerPosition = Other.Pawn.Location;
 }
 
+event MonitoredPawnAlert();
+
 function StartMonitoring(Pawn P, float MaxDist)
 {
 	MonitoredPawn = P;
@@ -206,7 +401,7 @@ function Destroyed()
 		Pawn.Suicide();
 	}
 	if ( Squad != None )
-		UTSquadAI(Squad).RemoveBot(self);
+		Squad.RemoveBot(self);
 	if ( DefensePoint != None )
 		DefensePoint.FreePoint();
 	Super.Destroyed();
@@ -214,11 +409,20 @@ function Destroyed()
 
 function PostBeginPlay()
 {
+	local string MapName;
+
 	Super.PostBeginPlay();
 	SetCombatTimer();
 	Aggressiveness = BaseAggressiveness;
 	if ( UTGame(WorldInfo.Game).bSoaking )
 		bSoaking = true;
+
+	// hack for CTF-Morbid
+	MapName = WorldInfo.GetMapName();
+	if ( Left(MapName, 8) ~= "MORBID" )
+	{
+		bForceTranslocateAbility = true;
+	}
 }
 
 event SpawnedByKismet()
@@ -236,6 +440,66 @@ returns true if controller wants landing view shake
 simulated function bool LandingShake()
 {
 	return true;
+}
+
+/* HasSuperWeapon() - returns superweapon if bot has one in inventory
+*/
+function weapon HasSuperWeapon()
+{
+	local Pawn CheckPawn;
+	local UTWeapon W;
+
+	if ( !bHasSuperWeapon )
+		return None;
+
+	if ( Vehicle(Pawn) != None )
+		CheckPawn = Vehicle(Pawn).Driver;
+	else
+		CheckPawn = Pawn;
+
+	if ( (CheckPawn == None) || (CheckPawn.InvManager == None) )
+	{
+		bHasSuperWeapon = false;
+		return None;
+	}
+
+	ForEach CheckPawn.InvManager.InventoryActors(class'UTWeapon',W)
+	{
+		if (W.bSuperWeapon && W.HasAmmo(0))
+		{
+			return W;
+		}
+	}
+
+	bHasSuperWeapon = false;
+	return None;
+}
+
+/** @return whether the bot has a weapon that can destroy barricades */
+function bool HasBarricadeDestroyingWeapon()
+{
+	local UTWeapon Weapon;
+	local Vehicle V;
+
+	// deployables can't be switched away from and bots will tend to always equip the Redeemer
+	// so we can just check the bot's current weapon
+	Weapon = UTWeapon(Pawn.Weapon);
+	if (Weapon != None && Weapon.bCanDestroyBarricades)
+	{
+		return true;
+	}
+	// check vehicle driver as well
+	V = Vehicle(Pawn);
+	if (V != None && V.Driver != None)
+	{
+		Weapon = UTWeapon(V.Driver.Weapon);
+		if (Weapon != None && Weapon.bCanDestroyBarricades)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /** @return whether bot has an inventory item with a timer on it */
@@ -273,6 +537,7 @@ function NotifyAddInventory(inventory NewItem)
 */
 event SetupSpecialPathAbilities()
 {
+	bAllowedToTranslocate = CanUseTranslocator();
 	bAllowedToImpactJump = CanImpactJump();
 
 	if ( Pawn.bCanJump )
@@ -314,7 +579,7 @@ event bool NotifyHitWall(vector HitNormal, actor Wall)
 			JumpDir = Movetarget.Location - Pawn.Location;
 			JumpDir.Z = 0;
 			ImpactVelocity = vect(0,0,0);
-			UTPawn(Pawn).JumpOutOfWater(Normal(JumpDir));
+			Pawn.JumpOutOfWater(Normal(JumpDir));
 			bNotifyApex = true;
 			bPendingDoubleJump = true;
 		}
@@ -347,7 +612,7 @@ event bool NotifyHitWall(vector HitNormal, actor Wall)
 				if (Vehicle(Pawn) != None)
 				{
 					LastBlockingVehicle = None;
-					UTSquadAI(Squad).BotEnteredVehicle(self);
+					Squad.BotEnteredVehicle(self);
 					WhatToDoNext();
 				}
 			}
@@ -363,13 +628,30 @@ event bool NotifyHitWall(vector HitNormal, actor Wall)
 			bNotifyApex = true;
 			bPendingDoubleJump = true;
 			Pawn.SetPhysics(PHYS_Falling);
-			Pawn.Velocity = GetDestinationPosition() - Pawn.Location;
+			Pawn.Velocity = Destination - Pawn.Location;
 			Pawn.Velocity.Z = 0;
 			Pawn.Velocity = Pawn.GroundSpeed * Normal(Pawn.Velocity);
 			Pawn.Velocity.Z = Pawn.JumpZ;
 		}
 	}
 	return false;
+}
+
+function GetOutOfVehicle()
+{
+	if (Vehicle(Pawn) != None)
+	{
+		if (UTVehicle(Pawn) != None)
+		{
+			UTVehicle(Pawn).PlayerStartTime = WorldInfo.TimeSeconds + 20;
+		}
+		Vehicle(Pawn).DriverLeave(false);
+	}
+}
+
+function bool CanDoubleJump(Pawn Other)
+{
+	return ( ((UTPawn(Pawn) != None) && UTPawn(Pawn).bCanDoubleJump) || (Pawn.GetGravityZ() > WorldInfo.DefaultGravityZ) );
 }
 
 function FearThisSpot(UTAvoidMarker aSpot)
@@ -413,13 +695,34 @@ function SetCombatTimer()
 
 function bool CanImpactJump()
 {
-	return (ImpactJumpZ > 0.f && Pawn.Health >= 80 && Skill >= 5.0 && UTSquadAI(Squad).AllowImpactJumpBy(self));
+	return (ImpactJumpZ > 0.f && Pawn.Health >= 80 && Skill >= 5.0 && Squad.AllowImpactJumpBy(self));
 }
 
-/** 
-  * If bot gets stuck trying to jump, then bCanDoubleJump is set false for the pawn
-  * Set a timer to reset the ability to double jump once the bot is clear.
-  */
+function bool CanUseTranslocator()
+{
+	return ( bHasTranslocator && ((skill >= 2) || bForceTranslocateAbility) && (WorldInfo.TimeSeconds > NextTranslocTime) && Squad.AllowTranslocationBy(self) &&
+		(Pawn.Weapon == None || Pawn.Weapon.IsA('UTWeap_Translocator') || Pawn.Weapon.GetAIRating() < 10.0) );
+}
+
+function bool ValidTranslocationTarget(Actor NewTranslocationTarget)
+{
+	local int i;
+
+	if ( (NewTranslocationTarget == MoveTarget) || (NewTranslocationTarget == RouteGoal) )
+	{
+		return true;
+	}
+	else if (NavigationPoint(NewTranslocationTarget) == None)
+	{
+		return false;
+	}
+	else
+	{
+		i = RouteCache.Find(NavigationPoint(NewTranslocationTarget));
+		return (i != INDEX_NONE && i < 4);
+	}
+}
+
 event TimeDJReset()
 {
 	SetTimer(12.0, false, 'ResetDoubleJump');
@@ -436,6 +739,35 @@ function ResetDoubleJump()
 	}
 	if ( P != None )
 		P.bCanDoubleJump = true;
+}
+
+/** performs an impact jump; assumes the impact hammer is already equipped and ready to fire */
+function ImpactJump()
+{
+	local float RealJumpZ;
+
+	bPlannedJump = true;
+
+	// fire the impact hammer with no charge
+	// impact hammer handles firing at the ground
+	Pawn.Weapon.StartFire(0);
+	Pawn.Weapon.StopFire(0);
+
+	// see if we need to double jump on top of the impact jump
+	RealJumpZ = Pawn.JumpZ;
+	// force what the impact hammer told us it could do so the AI doesn't break if the hammer lies to it :)
+	Pawn.JumpZ += ImpactJumpZ;
+	if (!Pawn.SuggestJumpVelocity(Pawn.Velocity, ImpactTarget.Location, Pawn.Location) || (UTPawn(Pawn) != None && UTPawn(Pawn).bRequiresDoubleJump))
+	{
+		// need a double jump
+		bNotifyApex = true;
+		bPendingDoubleJump = true;
+		// SuggestJumpVelocity() will be off in this case because of our modification to JumpZ
+		Pawn.Velocity.Z = Pawn.JumpZ;
+	}
+	Pawn.JumpZ = RealJumpZ;
+	ImpactTarget = None;
+	bPreparingMove = false;
 }
 
 // WaitForMover()
@@ -465,9 +797,9 @@ function ReadyForLift()
 		{
 			Pawn.SetAnchor(Pawn.GetBestAnchor(Pawn, Pawn.Location, true, true, Dist));
 			if ( LiftCenter(Pawn.Anchor) != None )
-	{
-		LeaveVehicle(false);
-	}
+			{
+				LeaveVehicle(false);
+			}
 		}
 	}
 }
@@ -494,7 +826,7 @@ function bool WeaponFireAgain(bool bFinishedFire)
 	{
 		if ( !Pawn.IsFiring() )
 		{
-			if ( (Pawn.Weapon != None && Pawn.Weapon.bMeleeWeapon) || (!Pawn.NeedToTurn(GetFocalPoint()) && CanAttack(Focus)) )
+			if ( (Pawn.Weapon != None && Pawn.Weapon.bMeleeWeapon) || (!Pawn.NeedToTurn(FocalPoint) && CanAttack(Focus)) )
 			{
 				LastCanAttackCheckTime = WorldInfo.TimeSeconds;
 				bCanFire = true;
@@ -796,6 +1128,12 @@ function bool CanCombo()
 	return CanComboMoving();
 }
 
+function SetDoubleJump()
+{
+	bNotifyApex = true;
+	bPendingDoubleJump = true;
+}
+
 //===========================================================================
 
 simulated function DisplayDebug(HUD HUD, out float YL, out float YPos)
@@ -870,32 +1208,36 @@ simulated function DisplayDebug(HUD HUD, out float YL, out float YPos)
 	Canvas.DrawText("PERSONALITY: Alertness "$BaseAlertness$" Accuracy "$Accuracy$" Favorite Weap "$FavoriteWeapon);
 	YPos += YL;
 	Canvas.SetPos(4,YPos);
-	Canvas.DrawText("    Aggressiveness "$BaseAggressiveness$" CombatStyle "$CombatStyle$" Strafing "$StrafingAbility$" Tactics "$Tactics);
+	Canvas.DrawText("    Aggressiveness "$BaseAggressiveness$" CombatStyle "$CombatStyle$" Strafing "$StrafingAbility$" Tactics "$Tactics$" TranslocUse "$TranslocUse);
 	YPos += YL;
 	Canvas.SetPos(4,YPos);
 }
 
 function name GetOrders()
 {
-	local UTSquadAI UTSquad;
-
-	UTSquad = UTSquadAI(Squad);
 	if ( UTHoldSpot(DefensePoint) != None )
 	{
 		return 'Hold';
 	}
-	else if (UTSquad == None)
+	else if (Squad == None)
 	{
 		return 'Attack';
 	}
-	else if (PlayerController(UTSquad.SquadLeader) != None)
+	else if (PlayerController(Squad.SquadLeader) != None)
 	{
 		return 'Follow';
 	}
 	else
 	{
-		return UTSquad.GetOrders();
+		return Squad.GetOrders();
 	}
+}
+
+function actor GetOrderObject()
+{
+	if ( PlayerController(Squad.SquadLeader) != None )
+		return Squad.SquadLeader;
+	return Squad.SquadObjective;
 }
 
 /* YellAt()
@@ -959,7 +1301,7 @@ function SetTemporaryOrders(name NewOrders, Controller OrderGiver)
 	if (OldOrders == 'None')
 	{
 		OldOrders = GetOrders();
-		OldOrderGiver = UTSquadAI(Squad).SquadLeader;
+		OldOrderGiver = Squad.SquadLeader;
 		if (OldOrderGiver == None)
 			OldOrderGiver = OrderGiver;
 	}
@@ -997,7 +1339,7 @@ event HearNoise(float Loudness, Actor NoiseMaker, optional Name NoiseType )
 		}
 	}
 
-	if ( UTSquadAI(Squad).SetEnemy(self, NoiseMaker.Instigator))
+	if ( Squad.SetEnemy(self, NoiseMaker.Instigator))
 	{
 		WhatToDoNext();
 	}
@@ -1010,7 +1352,7 @@ event SeePlayer(Pawn SeenPlayer)
 		// maybe scripted pawn; just notify Kismet
 		Pawn.TriggerEventClass(class'SeqEvent_AISeeEnemy', SeenPlayer);
 	}
-	else if (UTSquadAI(Squad).SetEnemy(self, SeenPlayer))
+	else if (Squad.SetEnemy(self, SeenPlayer))
 	{
 		// check for any Kismet scripts that might care
 		Pawn.TriggerEventClass(class'SeqEvent_AISeeEnemy', SeenPlayer);
@@ -1049,7 +1391,7 @@ function bool ClearShot(Vector TargetLoc, bool bImmediateFire)
 
 	if (!bSeeTarget)
 		return false;
-	if ( VSize(Pawn.Location - TargetLoc) < UTWeapon(Pawn.Weapon).GetDamageRadius()
+	if ( VSize(Pawn.Location - TargetLoc) < Pawn.Weapon.GetDamageRadius()
 		|| !FastTrace(TargetLoc + vect(0,0,0.9) * Enemy.GetCollisionHeight(), Pawn.Location,, true) )
 	{
 		StopFiring();
@@ -1132,7 +1474,7 @@ function bool AssignSquadResponsibility()
 		return false;
 	LastAttractCheck = WorldInfo.TimeSeconds;
 
-	return UTSquadAI(Squad).AssignSquadResponsibility(self);
+	return Squad.AssignSquadResponsibility(self);
 }
 
 /* RelativeStrength()
@@ -1150,29 +1492,12 @@ function float RelativeStrength(Pawn Other)
 
 	if ( Pawn == None )
 	{
-		`warn("Relative strength with no pawn in state "$GetStateName());
+		WarnInternal("Relative strength with no pawn in state "$GetStateName());
 		return 0;
 	}
 	adjustedOther = 0.5 * (Other.Health + Other.HealthMax);
 	compare = 0.01 * float(adjustedOther - Pawn.health);
-
-	//allow pawns to adjust their strength based on custom factors
-	if ( UTPawn(Pawn) != None )
-	{
-		compare = compare - UTPawn(Pawn).AdjustedStrength();
-	}
-	else if ( UTVehicle(Pawn) != None )
-	{
-		compare = compare - UTVehicle(Pawn).AdjustedStrength();
-	}
-	if ( UTPawn(Other) != None )
-	{
-		compare = compare + UTPawn(Other).AdjustedStrength();
-	}
-	else if ( UTVehicle(Other) != None )
-	{
-		compare = compare + UTVehicle(Other).AdjustedStrength();
-	}
+	compare = compare - Pawn.AdjustedStrength() + Other.AdjustedStrength();
 
 	if ( UTWeapon(Pawn.Weapon) != None )
 	{
@@ -1233,11 +1558,9 @@ function SetEnemyInfo(bool bNewEnemyVisible)
 	{
 		LastSeenTime = -1000;
 		bEnemyInfoValid = false;
-		For ( B=UTSquadAI(Squad).SquadMembers; B!=None; B=B.NextSquadMember )
-		{
+		For ( B=Squad.SquadMembers; B!=None; B=B.NextSquadMember )
 			if ( B.Enemy == Enemy )
 				AcquireTime = FMax(AcquireTime, B.AcquireTime);
-		}
 	}
 }
 
@@ -1276,11 +1599,11 @@ event NotifyPhysicsVolumeChange(PhysicsVolume NewVolume)
 		{
 			Pawn.SetPhysics(PHYS_Falling);
 			if ( Pawn.bCanWalk && (Abs(Pawn.Acceleration.X) + Abs(Pawn.Acceleration.Y) + Abs(Acceleration.Z) > 0)
-				&& (GetDestinationPosition().Z >= Pawn.Location.Z)
+				&& (Destination.Z >= Pawn.Location.Z)
 				&& Pawn.CheckWaterJump(jumpDir) )
 				{
 					ImpactVelocity = vect(0,0,0);
-					UTPawn(Pawn).JumpOutOfWater(jumpDir);
+					Pawn.JumpOutOfWater(jumpDir);
 					bNotifyApex = true;
 					bPendingDoubleJump = true;
 				}
@@ -1302,7 +1625,7 @@ event MayDodgeToMoveTarget()
 	if ( Pawn.Physics != PHYS_Walking )
 		return;
 
-	if ( (Focus != MoveTarget) && (Skill+Jumpiness < 4.5 + 1.5 * FRand()) )
+	if ( (bTranslocatorHop || (Focus != MoveTarget)) && (Skill+Jumpiness < 4.5 + 1.5 * FRand()) )
 		return;
 
 	// never in low grav
@@ -1344,7 +1667,7 @@ event MayDodgeToMoveTarget()
 	}
 	if ( Focus == OldMoveTarget )
 		Focus = MoveTarget;
-	SetDestinationPosition(MoveTarget.Location);
+	Destination = MoveTarget.Location;
 	GetAxes(Pawn.Rotation,X,Y,Z);
 
 	if ( Abs(X Dot Dir) > Abs(Y Dot Dir) )
@@ -1372,7 +1695,7 @@ event MayDodgeToMoveTarget()
 		DodgeV.Z = 0.0;
 		RealGroundSpeed = Pawn.GroundSpeed;
 		Pawn.GroundSpeed = VSize(DodgeV);
-		Pawn.SuggestJumpVelocity(Pawn.Velocity, GetDestinationPosition(), Pawn.Location);
+		Pawn.SuggestJumpVelocity(Pawn.Velocity, Destination, Pawn.Location);
 		Pawn.GroundSpeed = RealGroundSpeed;
 		Pawn.JumpZ = RealJumpZ;
 	}
@@ -1395,7 +1718,7 @@ event NotifyJumpApex()
 	else if ( bJumpOverWall )
 	{
 		// double jump if haven't cleared obstacle
-		Pawn.Acceleration = GetDestinationPosition() - Pawn.Location;
+		Pawn.Acceleration = Destination - Pawn.Location;
 		Pawn.Acceleration.Z = 0;
 		HalfHeight = Pawn.GetCollisionRadius() * vect(1,1,0);
 		HalfHeight.Z = 0.5 * Pawn.GetCollisionHeight();
@@ -1418,25 +1741,41 @@ event NotifyMissedJump()
 	local float BestDist, NewDist;
 
 	OldMoveTarget = MoveTarget;
-	MoveTarget = None;
+	if ( !bHasTranslocator )
+		MoveTarget = None;
 
 	if ( MoveTarget == None )
 	{
 		// find an acceptable path
-		Loc2D = Pawn.Location;
-		Loc2D.Z = 0;
-		foreach WorldInfo.AllNavigationPoints(class'NavigationPoint', N)
+		if ( bHasTranslocator && (skill >= 2) )
 		{
-			if ( N.Location.Z < Pawn.Location.Z )
+			foreach WorldInfo.AllNavigationPoints(class'NavigationPoint', N)
 			{
-				NavLoc2D = N.Location;
-				NavLoc2D.Z = 0;
-				NewDist = VSize(NavLoc2D - Loc2D);
-				if ( (NewDist <= Pawn.Location.Z - N.Location.Z)
-					&& ((MoveTarget == None) || (BestDist > NewDist))  && LineOfSightTo(N) )
+				if ( (VSize(N.Location - Pawn.Location) < 1500)
+					&& LineOfSightTo(N) )
 				{
 					MoveTarget = N;
-					BestDist = NewDist;
+					break;
+				}
+			}
+		}
+		else
+		{
+			Loc2D = Pawn.Location;
+			Loc2D.Z = 0;
+			foreach WorldInfo.AllNavigationPoints(class'NavigationPoint', N)
+			{
+				if ( N.Location.Z < Pawn.Location.Z )
+				{
+					NavLoc2D = N.Location;
+					NavLoc2D.Z = 0;
+					NewDist = VSize(NavLoc2D - Loc2D);
+					if ( (NewDist <= Pawn.Location.Z - N.Location.Z)
+						&& ((MoveTarget == None) || (BestDist > NewDist))  && LineOfSightTo(N) )
+					{
+						MoveTarget = N;
+						BestDist = NewDist;
+					}
 				}
 			}
 		}
@@ -1447,7 +1786,92 @@ event NotifyMissedJump()
 		}
 	}
 
+	if ( bHasTranslocator && (skill >= 2) )
+	{
+		if ( !bPreparingMove || (TranslocationTarget != MoveTarget) )
+		{
+			TranslocateTo(MoveTarget);
+		}
+	}
 	MoveTimer = 1.0;
+}
+
+/** returns the location the bot should throw the translocator disc at to reach TranslocationTarget */
+function vector GetTranslocationDestination()
+{
+	if (TranslocationTarget == None)
+	{
+		return vect(0,0,0);
+	}
+	else if (TranslocationTarget == MoveTarget)
+	{
+		return TranslocationTarget.GetDestination(self);
+	}
+	else
+	{
+		return TranslocationTarget.Location;
+	}
+}
+
+event TranslocateTo(Actor DestinationActor)
+{
+	bPreparingMove = true;
+	TranslocationTarget = DestinationActor;
+	ImpactTarget = DestinationActor;
+	Focus = DestinationActor;
+	if ( Pawn.Weapon.IsA('UTWeap_Translocator') )
+	{
+		Pawn.InvManager.PendingWeapon = None;
+		Pawn.Weapon.SetTimer(0.2,false,'FireHackTimer');
+	}
+	else
+		SwitchToBestWeapon();
+}
+
+/** Called when bScriptSpecialJumpCost is true and the bot is considering a path to DestinationActor
+ *	that requires a jump with JumpZ greater than the bot's normal capability, but less than MaxSpecialJumpZ
+ *	calculates any additional distance that should be applied to this path to take into account preparation, etc
+ * @return true to override the cost with the value in the Cost out param, false to use the default natively-calculated cost
+ */
+event bool SpecialJumpCost(float RequiredJumpZ, out float Cost);
+
+/** Called when the bot wants to take a path to DestinationActor that requires a jump with JumpZ greater than the bot's normal capability,
+ *	but less than MaxSpecialJumpZ
+ */
+event SpecialJumpTo(Actor DestinationActor, float RequiredJumpZ)
+{
+	// see if normal jumping will get us there (we have jump boots, low grav, or other automatic effect that improves jumping)
+	if (Pawn.JumpZ + MultiJumpZ > RequiredJumpZ)
+	{
+		Pawn.Velocity = Normal(DestinationActor.Location - Pawn.Location) * Pawn.GroundSpeed;
+		Pawn.Velocity.Z = 0.f;
+		Pawn.Acceleration = vect(0,0,0);
+		Pawn.DoJump(false);
+		if (RequiredJumpZ > Pawn.JumpZ)
+		{
+			// need a double jump
+			bPendingDoubleJump = true;
+			bNotifyApex = true;
+		}
+	}
+	else if (bAllowedToImpactJump && Pawn.JumpZ + ImpactJumpZ + MultiJumpZ > RequiredJumpZ)
+	{
+		StopMovement();
+		ImpactTarget = DestinationActor;
+		bPreparingMove = true;
+		// hammer should rate itself highly now so we switch to it
+		SwitchToBestWeapon();
+		if (Pawn.InvManager.PendingWeapon == None)
+		{
+			// hammer already out
+			ImpactJump();
+		}
+	}
+	else
+	{
+		// this should never happen
+		WarnInternal("Called with unreachable destination" @ DestinationActor @ "RequiredJumpZ:" @ RequiredJumpZ);
+	}
 }
 
 function Reset()
@@ -1496,7 +1920,7 @@ function Possess(Pawn aPawn, bool bVehicleTransition)
 {
 	if (aPawn.bDeleteMe)
 	{
-		`Warn(self @ GetHumanReadableName() @ "attempted to possess destroyed Pawn" @ aPawn);
+		WarnInternal(self @ GetHumanReadableName() @ "attempted to possess destroyed Pawn" @ aPawn);
 		ScriptTrace();
 		GotoState('Dead');
 	}
@@ -1516,6 +1940,7 @@ function Possess(Pawn aPawn, bool bVehicleTransition)
 function Initialize(float InSkill, const out CharacterInfo BotInfo)
 {
 	local UTPlayerReplicationInfo PRI;
+	local CustomCharData BotCharData;
 
 	Skill = FClamp(InSkill, 0, 7);
 
@@ -1541,11 +1966,17 @@ function Initialize(float InSkill, const out CharacterInfo BotInfo)
 	ReactionTime = FClamp(BotInfo.AIData.ReactionTime, -5, 5);
 
 	// copy visual properties
- 	PRI = UTPlayerReplicationInfo(PlayerReplicationInfo);
- 	if (PRI != None)
- 	{
-	//Get the chosen character class for this character
-		PRI.CharClassInfo = class'UTCharInfo'.static.FindFamilyInfo(BotInfo.FamilyID);
+	PRI = UTPlayerReplicationInfo(PlayerReplicationInfo);
+	if (PRI != None)
+	{
+		// If we have no 'based on' char ref, just fill it in with this char. Thing like VoiceClass look at this.
+		BotCharData = BotInfo.CharData;
+		if(BotCharData.BasedOnCharID == "")
+		{
+			BotCharData.BasedOnCharID = BotInfo.CharID;
+		}
+
+		PRI.SetCharacterData(BotCharData);
 	}
 
 	ResetSkill();
@@ -1586,7 +2017,7 @@ function ResetSkill()
 		}
 		else
 		{
-			RotationRate.Yaw = 35000 + 3000 * (skill + ReactionTime);
+			RotationRate.Yaw = 31000 + 4000 * (skill + ReactionTime);
 			SightCounterInterval = 0.4;
 		}
 	}
@@ -1607,15 +2038,15 @@ function SetMaxDesiredSpeed()
 		}
 		else if ( Skill >= 4 )
 			Pawn.MaxDesiredSpeed = 1;
-		else if ( (UTPlayerReplicationInfo(PlayerReplicationInfo) != None) && UTPlayerReplicationInfo(PlayerReplicationInfo).bHasFlag )
+		else if ( (PlayerReplicationInfo != None) && PlayerReplicationInfo.bHasFlag )
 		{
 			Pawn.MaxDesiredSpeed = 0.8 + 0.05 * Skill;
 		}
 		else
 		{
 			Pawn.MaxDesiredSpeed = 0.6 + 0.1 * Skill;
+		}
 	}
-}
 }
 
 function SetPeripheralVision()
@@ -1666,14 +2097,16 @@ function SetAlertness(float NewAlertness)
  */
 event WhatToDoNext()
 {
+	local UTTeamGame TDMGame;
+	
 	if (bExecutingWhatToDoNext)
 	{
-		`Log("WhatToDoNext loop:" @ GetHumanReadableName());
+		LogInternal("WhatToDoNext loop:" @ GetHumanReadableName());
 		// ScriptTrace();
 	}
 	if (Pawn == None)
 	{
-		`Warn(GetHumanReadableName() @ "WhatToDoNext with no pawn");
+		WarnInternal(GetHumanReadableName() @ "WhatToDoNext with no pawn");
 		return;
 	}
 
@@ -1683,12 +2116,21 @@ event WhatToDoNext()
 		{
 			if ( Pawn != None )
 			{
+				TDMGame = UTTeamGame(WorldInfo.Game);
+				if ( TDMGame != None )
+				{
+					TDMGame.bNoTeamChangePenalty = true;
+				}
 				if ( (Vehicle(Pawn) != None) && (Vehicle(Pawn).Driver != None) )
 					Vehicle(Pawn).Driver.KilledBy(Vehicle(Pawn).Driver);
 				else
 				{
 					Pawn.Health = 0;
 					Pawn.Died( self, class'DmgType_Suicided', Pawn.Location );
+				}
+				if ( TDMGame != None )
+				{
+					TDMGame.bNoTeamChangePenalty = false;
 				}
 			}
 			Destroy();
@@ -1709,6 +2151,23 @@ event WhatToDoNext()
 	DecisionComponent.bTriggered = true;
 }
 
+function string GetEnemyName()
+{
+	if ( Enemy == None )
+		return "NONE";
+	else
+		return Enemy.GetHumanReadableName();
+}
+
+/** makes bot deploy the deployable it's carrying */
+function UseDeployable()
+{
+	if (Pawn != None && UTDeployable(Pawn.Weapon) != None)
+	{
+		Pawn.BotFire(false);
+	}
+}
+
 /** entry point for AI decision making
  * this gets executed during the physics tick so actions that could change the physics state (e.g. firing weapons) are not allowed
  */
@@ -1722,6 +2181,7 @@ protected event ExecuteWhatToDoNext()
 		return;
 	}
 	bHasFired = false;
+	bTranslocatorHop = false;
 	GoalString = "WhatToDoNext at "$WorldInfo.TimeSeconds;
 	// if we don't have a squad, try to find one
 	//@fixme FIXME: doesn't work for FFA gametypes
@@ -1748,17 +2208,27 @@ protected event ExecuteWhatToDoNext()
 	if ( (Enemy != None) && ((Enemy.Health <= 0) || (Enemy.Controller == None)) )
 		LoseEnemy();
 	if ( Enemy == None )
-		UTSquadAI(Squad).FindNewEnemyFor(self,false);
-	else if ( !UTSquadAI(Squad).MustKeepEnemy(Enemy) && !LineOfSightTo(Enemy) )
+		Squad.FindNewEnemyFor(self,false);
+	else if ( !Squad.MustKeepEnemy(Enemy) && !LineOfSightTo(Enemy) )
 	{
 		// decide if should lose enemy
-		if ( UTSquadAI(Squad).IsDefending(self) )
+		if ( Squad.IsDefending(self) )
 		{
 			if ( LostContact(4) )
 				LoseEnemy();
 		}
 		else if ( LostContact(7) )
 			LoseEnemy();
+	}
+	if ( Pawn.ForceSpecialAttack(Enemy) )
+	{
+		DoRangedAttackOn(Enemy);
+		return;
+	}
+	if (UTDeployable(Pawn.Weapon) != None && UTDeployable(Pawn.Weapon).ShouldDeploy(self))
+	{
+		// can't use during physics tick, have to wait
+		SetTimer(0.01, false, 'UseDeployable');
 	}
 
 	bIgnoreEnemyChange = false;
@@ -1805,7 +2275,7 @@ protected event ExecuteWhatToDoNext()
 		}
 
 		GoalString @= "- Wander or Camp at" @ WorldInfo.TimeSeconds;
-		bShortCamp = UTPlayerReplicationInfo(PlayerReplicationInfo).bHasFlag;
+		bShortCamp = PlayerReplicationInfo.bHasFlag;
 		WanderOrCamp();
 	}
 }
@@ -1853,6 +2323,29 @@ event DelayedLeaveVehicle()
 	}
 }
 
+/** gets the deployable vehicle this bot is using, if any and only if the bot has deployment control over it */
+function UTVehicle_Deployable GetDeployableVehicle()
+{
+	local UTVehicle_Deployable DeployableVehicle;
+	local UTWeaponPawn WeaponPawn;
+
+	DeployableVehicle = UTVehicle_Deployable(Pawn);
+	if (DeployableVehicle == None)
+	{
+		WeaponPawn = UTWeaponPawn(Pawn);
+		if (WeaponPawn != None)
+		{
+			DeployableVehicle = UTVehicle_Deployable(WeaponPawn.MyVehicle);
+			if (DeployableVehicle != None && !DeployableVehicle.IsDriverSeat(WeaponPawn))
+			{
+				DeployableVehicle = None;
+			}
+		}
+	}
+
+	return DeployableVehicle;
+}
+
 function bool DoWaitForLanding()
 {
 	GotoState('WaitingForLanding');
@@ -1882,7 +2375,26 @@ function VehicleFightEnemy(bool bCanCharge, float EnemyStrength)
 		}
 		return;
 	}
-
+	else if ( V.bIsOnTrack )
+	{
+		if (!LineOfSightTo(Enemy))
+		{
+			if (FindRoamDest())
+			{
+				GoalString = "Try to get in position to shoot enemy";
+			}
+			else
+			{
+				GoalString = "Stake Out";
+				DoStakeOut();
+			}
+		}
+		else
+		{
+			DoRangedAttackOn(Enemy);
+		}
+		return;
+	}
 	if ( !bFrustrated && Pawn.HasRangedAttack() && Pawn.TooCloseToAttack(Enemy) )
 	{
 		GoalString = "Retreat";
@@ -1900,13 +2412,13 @@ function VehicleFightEnemy(bool bCanCharge, float EnemyStrength)
 	}
 	if ( !LineOfSightTo(Enemy) )
 	{
-		if ( UTSquadAI(Squad).MustKeepEnemy(Enemy) )
+		if ( Squad.MustKeepEnemy(Enemy) )
 		{
 			GoalString = "Hunt priority enemy";
 			GotoState('Hunting');
 			return;
 		}
-		if ( !bCanCharge || (UTSquadAI(Squad).IsDefending(self) && LostContact(4)) )
+		if ( !bCanCharge || (Squad.IsDefending(self) && LostContact(4)) )
 		{
 			GoalString = "Stake Out";
 			DoStakeOut();
@@ -1961,7 +2473,7 @@ function FightEnemy(bool bCanCharge, float EnemyStrength)
 	local bool bFarAway, bOldForcedCharge;
 
 	if ( (Squad == None) || (Enemy == None) || (Pawn == None) )
-		`log("HERE 3 Squad "$Squad$" Enemy "$Enemy$" pawn "$Pawn);
+		LogInternal("HERE 3 Squad "$Squad$" Enemy "$Enemy$" pawn "$Pawn);
 
 	if ( Vehicle(Pawn) != None )
 	{
@@ -2004,7 +2516,7 @@ function FightEnemy(bool bCanCharge, float EnemyStrength)
 		Aggression += 0.5;
 	if (Squad != None)
 	{
-		UTSquadAI(Squad).ModifyAggression(self, Aggression);
+		Squad.ModifyAggression(self, Aggression);
 	}
 	if ( (Pawn.Physics == PHYS_Walking) || (Pawn.Physics == PHYS_Falling) )
 	{
@@ -2021,7 +2533,7 @@ function FightEnemy(bool bCanCharge, float EnemyStrength)
 
 	if (!Pawn.CanAttack(Enemy))
 	{
-		if ( UTSquadAI(Squad).MustKeepEnemy(Enemy) )
+		if ( Squad.MustKeepEnemy(Enemy) )
 		{
 			GoalString = "Hunt priority enemy";
 			GotoState('Hunting');
@@ -2032,7 +2544,7 @@ function FightEnemy(bool bCanCharge, float EnemyStrength)
 			GoalString = "Stake Out - no charge";
 			DoStakeOut();
 		}
-		else if ( UTSquadAI(Squad).IsDefending(self) && LostContact(4) && ClearShot(LastSeenPos, false) )
+		else if ( Squad.IsDefending(self) && LostContact(4) && ClearShot(LastSeenPos, false) )
 		{
 			GoalString = "Stake Out "$LastSeenPos;
 			DoStakeOut();
@@ -2045,7 +2557,7 @@ function FightEnemy(bool bCanCharge, float EnemyStrength)
 		else if ( Skill + Tactics >= 3.5 + FRand() && !LostContact(1) && VSize(Enemy.Location - Pawn.Location) < MAXSTAKEOUTDIST &&
 			Pawn.Weapon != None && Pawn.Weapon.AIRating > 0.5 && !Pawn.Weapon.bMeleeWeapon &&
 			FRand() < 0.75 && !LineOfSightTo(Enemy) && !Enemy.LineOfSightTo(Pawn) &&
-			(Squad == None || !UTSquadAI(Squad).HasOtherVisibleEnemy(self)) )
+			(Squad == None || !Squad.HasOtherVisibleEnemy(self)) )
 		{
 			GoalString = "Stake Out 3";
 			DoStakeOut();
@@ -2140,7 +2652,7 @@ function ChooseAttackMode()
 	GoalString = " ChooseAttackMode last seen "$(WorldInfo.TimeSeconds - LastSeenTime);
 	// should I run away?
 	if ( (Squad == None) || (Enemy == None) || (Pawn == None) )
-		`log("HERE 1 Squad "$Squad$" Enemy "$Enemy$" pawn "$Pawn);
+		LogInternal("HERE 1 Squad "$Squad$" Enemy "$Enemy$" pawn "$Pawn);
 	EnemyStrength = RelativeStrength(Enemy);
 	if ( EnemyStrength > RetreatThreshold && (PlayerReplicationInfo.Team != None) && (FRand() < 0.25)
 		&& (WorldInfo.TimeSeconds - LastInjuredVoiceMessageTime > 45.0) )
@@ -2153,7 +2665,7 @@ function ChooseAttackMode()
 		VehicleFightEnemy(true, EnemyStrength);
 		return;
 	}
-	if ( !bFrustrated && !UTSquadAI(Squad).MustKeepEnemy(Enemy) )
+	if ( !bFrustrated && !Squad.MustKeepEnemy(Enemy) )
 	{
 		RetreatThreshold = Aggressiveness;
 		if ( UTWeapon(Pawn.Weapon).CurrentRating > 0.5 )
@@ -2172,7 +2684,7 @@ function ChooseAttackMode()
 		}
 	}
 
-	if ( (UTSquadAI(Squad).PriorityObjective(self) == 0) && (Skill + Tactics > 2) && ((EnemyStrength > -0.3) || (Pawn.Weapon.AIRating < 0.5)) )
+	if ( (Squad.PriorityObjective(self) == 0) && (Skill + Tactics > 2) && ((EnemyStrength > -0.3) || (Pawn.Weapon.AIRating < 0.5)) )
 	{
 		if ( Pawn.Weapon.AIRating < 0.5 )
 		{
@@ -2201,6 +2713,8 @@ function ChooseAttackMode()
 	GoalString = "ChooseAttackMode FightEnemy";
 	FightEnemy(true, EnemyStrength);
 }
+
+native function Actor FindBestSuperPickup(float MaxDist);
 
 function bool FindSuperPickup(float MaxDist)
 {
@@ -2263,30 +2777,30 @@ function bool FindInventoryGoal(float BestWeight)
 	if ( BestPath != None )
 	{
 		MoveTarget = BestPath;
-		P = UTPickupFactory(RouteGoal);
-		if ( (P!=None) && (P == Pawn.Anchor) && Pawn.IsOverlapping(P) )
+	P = UTPickupFactory(RouteGoal);
+		if ( (P!=None) && (P == Pawn.Anchor) && Pawn.IsOverlapping(P) ) 
 		{
 			P.Touch(Pawn, Pawn.Mesh, P.Location, vect(0,0,1));
 		}
-		if ( (P != None) && P.bIsSuperItem && (PlayerReplicationInfo.Team != None)
-				&& (PlayerReplicationInfo.Team.TeamIndex < 4) )
-		{
-				if ( WorldInfo.TimeSeconds - P.LastSeekNotificationTime > 30.0 )
-				{
-					P.LastSeekNotificationTime = WorldInfo.TimeSeconds;
-					SendMessage(None, 'LOCATION', 10, None);
-				}
-		}
+	if ( (P != None) && P.bIsSuperItem && (PlayerReplicationInfo.Team != None)
+	        && (PlayerReplicationInfo.Team.TeamIndex < 4) )
+	{
+	        if ( WorldInfo.TimeSeconds - P.LastSeekNotificationTime > 30.0 )
+	        {
+				P.LastSeekNotificationTime = WorldInfo.TimeSeconds;
+		        SendMessage(None, 'LOCATION', 10, None);
+	        }
+	}
 		return true;
 	}
 	return false;
 }
 
-/**
- * TossFlagToPlayer()
- * If a player is nearby, transfer the flag / orb to the nearest player
- * Otherwise, just drop the flag / orb
- */
+/** 
+* TossFlagToPlayer()
+* If a player is nearby, transfer the flag / orb to the nearest player
+* Otherwise, just drop the flag / orb
+*/
 function TossFlagToPlayer(Controller OrderGiver)
 {
 	local UTPawn BotPawn;
@@ -2357,7 +2871,7 @@ event SoakStop(optional string problem)
 {
 	local UTPlayerController PC;
 
-	`log(problem);
+	LogInternal(problem);
 	SoakString = problem;
 	GoalString = SoakString@GoalString;
 	ForEach DynamicActors(class'UTPlayerController',PC)
@@ -2441,7 +2955,7 @@ function ClearPathFor(Controller C)
 
 function bool AdjustAround(Pawn Other)
 {
-	local vector VelDir, OtherDir, SideDir, HitLocation, HitNormal, Adj;
+	local vector VelDir, OtherDir, SideDir, HitLocation, HitNormal;
 
 	if ( !InLatentExecution(LATENT_MOVETOWARD) )
 		return false;
@@ -2453,19 +2967,17 @@ function bool AdjustAround(Pawn Other)
 	OtherDir = Normal(OtherDir);
 	if ( (VelDir Dot OtherDir) > 0.8 )
 	{
+		bAdjusting = true;
 		SideDir.X = VelDir.Y;
 		SideDir.Y = -1 * VelDir.X;
 		if ( (SideDir Dot OtherDir) > 0 )
 			SideDir *= -1;
-		Adj = Pawn.Location + 3 * Other.GetCollisionRadius() * (0.5 * VelDir + SideDir);
+		AdjustLoc = Pawn.Location + 3 * Other.GetCollisionRadius() * (0.5 * VelDir + SideDir);
 		// make sure adjust location isn't through a wall
-		if (Trace(HitLocation, HitNormal, Adj, Pawn.Location, false) != None)
+		if (Trace(HitLocation, HitNormal, AdjustLoc, Pawn.Location, false) != None)
 		{
-			Adj = HitLocation;
+			AdjustLoc = HitLocation;
 		}
-
-		SetAdjustLocation( Adj, TRUE );
-
 		return true;
 	}
 	else
@@ -2489,7 +3001,7 @@ event bool NotifyBump(Actor Other, Vector HitNormal)
 				V.TryToDrive(Pawn);
 				if (Vehicle(Pawn) != None)
 				{
-					UTSquadAI(Squad).BotEnteredVehicle(self);
+					Squad.BotEnteredVehicle(self);
 					WhatToDoNext();
 				}
 			}
@@ -2504,7 +3016,7 @@ event bool NotifyBump(Actor Other, Vector HitNormal)
 	P = Pawn(Other);
 	if ( (P == None) || (P.Controller == None) || (Enemy == P) )
 		return false;
-	if ( (Squad != None) && UTSquadAI(Squad).SetEnemy(self,P) )
+	if ( (Squad != None) && Squad.SetEnemy(self,P) )
 	{
 		WhatToDoNext();
 		return false;
@@ -2522,7 +3034,7 @@ event bool NotifyBump(Actor Other, Vector HitNormal)
 
 function bool PriorityObjective()
 {
-	return (UTSquadAI(Squad).PriorityObjective(self) > 0);
+	return (Squad.PriorityObjective(self) > 0);
 }
 
 function SetFall()
@@ -2545,8 +3057,8 @@ function SetFall()
 	else
 	{
 		bPlannedJump = true;
-		AdjustedDest = (MoveTarget != None) ? MoveTarget.GetDestination(self) : GetDestinationPosition();
-		Pawn.SuggestJumpVelocity(Pawn.Velocity, (MoveTarget != None) ? MoveTarget.GetDestination(self) : GetDestinationPosition(), Pawn.Location);
+		AdjustedDest = (MoveTarget != None) ? MoveTarget.GetDestination(self) : Destination;
+		Pawn.SuggestJumpVelocity(Pawn.Velocity, (MoveTarget != None) ? MoveTarget.GetDestination(self) : Destination, Pawn.Location);
 		if (P != None && P.bRequiresDoubleJump)
 		{
 			// if trying to avoid double jumps, see if really need to
@@ -2652,7 +3164,7 @@ function bool SetRouteToGoal(Actor A)
 
 event bool AllowDetourTo(NavigationPoint N)
 {
-	return UTSquadAI(Squad).AllowDetourTo(self,N);
+	return Squad.AllowDetourTo(self,N);
 }
 
 /* FindBestPathToward()
@@ -2722,15 +3234,12 @@ function bool CheckFutureSight(float deltatime)
 		return false;
 
 	//check if can still see target
-	if ( FastTrace(GetFocalPoint() + TrackedVelocity * deltatime, FutureLoc) )
+	if ( FastTrace(FocalPoint + TrackedVelocity * deltatime, FutureLoc) )
 		return true;
 
 	return false;
 }
 
-/*
- * Aiming code requests an update to the aiming error periodically when tracking a target, based on ErrorUpdateFrequency.
- */
 event float AdjustAimError(float TargetDist, bool bInstantProj )
 {
 	local float aimdist, desireddist, NewAngle, aimerror, TargetRadius, TargetHeight, FullAcquisitionTime, LowVisibilityMult;
@@ -2796,7 +3305,7 @@ event float AdjustAimError(float TargetDist, bool bInstantProj )
 		aimerror *= (3.3 - 0.4 * (FClamp(skill+Accuracy,0,8) + 0.3 * FRand()));
 
 	// Bots don't aim as well if recently hit, or if they or their target is flying through the air
-	if ( (skill < 5 + 2*FRand()) && (WorldInfo.TimeSeconds - Pawn.LastPainTime < 0.2) )
+	if ( ( skill < 5 + 2*FRand()) && (WorldInfo.TimeSeconds - Pawn.LastPainTime < 0.2) )
 		aimerror *= 1.3;
 	if (Pawn.Physics == PHYS_Falling) // don't consider target physics here because native tracking covers it
 		aimerror *= (1.6 - 0.04*(Skill+Accuracy));
@@ -2831,7 +3340,7 @@ event float AdjustAimError(float TargetDist, bool bInstantProj )
 		aimdist = tan(AngleConvert * aimerror) * targetdist;
 		if ( abs(aimdist) > DesiredDist )
 		{
-			NewAngle = ATan2(DesiredDist,TargetDist)/AngleConvert;
+			NewAngle = ATan(DesiredDist,TargetDist)/AngleConvert;
 			if ( aimerror > 0 )
 				aimerror = NewAngle;
 			else
@@ -2867,19 +3376,19 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 	if ( ProjectileClass != None )
 		projspeed = ProjectileClass.default.speed;
 
-	FireSpot = GetFocalPoint();
-	TargetDist = VSize(GetFocalPoint() - Pawn.Location);
+	FireSpot = FocalPoint;
+	TargetDist = VSize(FocalPoint - Pawn.Location);
 
 	// perfect aim at stationary objects
 	if ( Focus.IsStationary() )
 	{
 		if ( (ProjectileClass == None) || (ProjectileClass.Default.Physics != PHYS_Falling) )
 		{
-			FireRotation = rotator(GetFocalPoint() - projstart);
+			FireRotation = rotator(FocalPoint - projstart);
 		}
 		else
 		{
-			SuggestTossVelocity(FireDir, GetFocalPoint(), ProjStart, projspeed, ProjectileClass.Default.TossZ, 0.2,, PhysicsVolume.bWaterVolume ? PhysicsVolume.TerminalVelocity : ProjectileClass.Default.TerminalVelocity);
+			SuggestTossVelocity(FireDir, FocalPoint, ProjStart, projspeed, ProjectileClass.Default.TossZ, 0.2,, PhysicsVolume.bWaterVolume ? PhysicsVolume.TerminalVelocity : ProjectileClass.Default.TerminalVelocity);
 			FireRotation = rotator(FireDir);
 		}
 		// make sure bot shoots in the direction it's facing
@@ -2909,8 +3418,8 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 	if ( (ProjectileClass != None) && (ProjectileClass.Default.Physics == PHYS_Falling) )
 	{
 		if ( W.bRecommendSplashDamage && (Pawn(Focus) != None) && ((Skill >=4) || bDefendMelee)
-			&& (((Focus.Physics == PHYS_Falling) && (Pawn.Location.Z + 80 >= GetFocalPoint().Z))
-				|| ((Pawn.Location.Z + 19 >= GetFocalPoint().Z) && (bDefendMelee || (skill > 6.5 * FRand() - 0.5)))) )
+			&& (((Focus.Physics == PHYS_Falling) && (Pawn.Location.Z + 80 >= FocalPoint.Z))
+				|| ((Pawn.Location.Z + 19 >= FocalPoint.Z) && (bDefendMelee || (skill > 6.5 * FRand() - 0.5)))) )
 		{
 			FireSpot = FireSpot - vect(0,0,1) * TargetHeight;
 		}
@@ -2937,31 +3446,31 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 				}
 			}
 			else if ( ((Skill >=4) || bDefendMelee)
-			&& (((Focus.Physics == PHYS_Falling) && (Pawn.Location.Z + 80 >= GetFocalPoint().Z))
-				|| ((Pawn.Location.Z + 19 >= GetFocalPoint().Z) && (bDefendMelee || (skill > 6.5 * FRand() - 0.5)))) )
-		{
-	 		HitActor = Trace(HitLocation, HitNormal, FireSpot - vect(0,0,1) * (TargetHeight + 6), FireSpot, false);
- 			bClean = (HitActor == None);
-			if ( !bClean )
+			&& (((Focus.Physics == PHYS_Falling) && (Pawn.Location.Z + 80 >= FocalPoint.Z))
+				|| ((Pawn.Location.Z + 19 >= FocalPoint.Z) && (bDefendMelee || (skill > 6.5 * FRand() - 0.5)))) )
 			{
-				FireSpot = HitLocation + vect(0,0,3);
-				bClean = FastTrace(FireSpot, ProjStart);
+		 		HitActor = Trace(HitLocation, HitNormal, FireSpot - vect(0,0,1) * (TargetHeight + 6), FireSpot, false);
+ 				bClean = (HitActor == None);
+				if ( !bClean )
+				{
+					FireSpot = HitLocation + vect(0,0,3);
+					bClean = FastTrace(FireSpot, ProjStart);
+				}
+				else
+					bClean = ( (Focus.Physics == PHYS_Falling) && FastTrace(FireSpot, ProjStart) );
 			}
-			else
-				bClean = ( (Focus.Physics == PHYS_Falling) && FastTrace(FireSpot, ProjStart) );
-		}
 		}
 		if ( W.bSniping && Stopped() && (Skill > 5 + 6 * FRand()) )
 		{
 			// try head
- 			FireSpot.Z = GetFocalPoint().Z + 0.9 * TargetHeight;
+ 			FireSpot.Z = FocalPoint.Z + 0.9 * TargetHeight;
  			bClean = FastTrace(FireSpot, ProjStart);
 		}
 
 		if ( !bClean )
 		{
 			//try middle
-			FireSpot.Z = GetFocalPoint().Z;
+			FireSpot.Z = FocalPoint.Z;
  			bClean = FastTrace(FireSpot, ProjStart);
 		}
 		if ( (ProjectileClass != None) && (ProjectileClass.Default.Physics == PHYS_Falling) && !bClean && bEnemyInfoValid )
@@ -2979,7 +3488,7 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 		if( !bClean )
 		{
 			// try head
- 			FireSpot.Z = GetFocalPoint().Z + 0.9 * TargetHeight;
+ 			FireSpot.Z = FocalPoint.Z + 0.9 * TargetHeight;
  			bClean = FastTrace(FireSpot, ProjStart);
 		}
 		if (!bClean && (Focus == Enemy) && bEnemyInfoValid)
@@ -2991,7 +3500,7 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 			if ( HitActor != None )
 			{
 				FireSpot = LastSeenPos + 2 * TargetHeight * HitNormal;
-				if ( Pawn.Weapon != None && UTWeapon(Pawn.Weapon).GetDamageRadius() > 0 && (Skill >= 4) )
+				if ( Pawn.Weapon != None && Pawn.Weapon.GetDamageRadius() > 0 && (Skill >= 4) )
 				{
 			 		HitActor = Trace(HitLocation, HitNormal, FireSpot, ProjStart, false);
 					if ( HitActor != None )
@@ -3000,8 +3509,8 @@ function Rotator GetAdjustedAimFor( Weapon InWeapon, vector projstart )
 				if ( UTWeapon(Pawn.Weapon) != None && !UTWeapon(Pawn.Weapon).bFastRepeater )
 				{
 					bCanFire = false;
+				}
 			}
-		}
 		}
 
 		FireDir = FireSpot - ProjStart;
@@ -3069,7 +3578,7 @@ event DelayedWarning()
 	if ( Enemy == None )
 	{
 		if ( Squad != None )
-			UTSquadAI(Squad).SetEnemy(self, WarningProjectile.Instigator);
+			Squad.SetEnemy(self, WarningProjectile.Instigator);
 		return;
 	}
 
@@ -3202,7 +3711,7 @@ function DelayedInstantWarning()
 	{
 		if ( Squad != None )
 		{
-			UTSquadAI(Squad).SetEnemy(self, InstantWarningShooter);
+			Squad.SetEnemy(self, InstantWarningShooter);
 		}
 		return;
 	}
@@ -3255,7 +3764,7 @@ event ReceiveWarning(Pawn shooter, float projSpeed, vector FireDir)
 	if ( Enemy == None )
 	{
 		if ( Squad != None )
-			UTSquadAI(Squad).SetEnemy(self, shooter);
+			Squad.SetEnemy(self, shooter);
 		return;
 	}
 
@@ -3361,10 +3870,10 @@ event ReceiveWarning(Pawn shooter, float projSpeed, vector FireDir)
 	}
 }
 
-/*
- Warning from vehicle that bot is about to be run over.
+/* ReceiveRunOverWarning()
+ AI controlled creatures may duck
 */
-event ReceiveRunOverWarning(UDKVehicle V, float projSpeed, vector VehicleDir)
+event ReceiveRunOverWarning(UTVehicle V, float projSpeed, vector VehicleDir)
 {
 	if ( !WorldInfo.GRI.OnSameTeam(V,self) )
 	{
@@ -3390,10 +3899,6 @@ event NotifyFallingHitWall( vector HitNormal, actor HitActor)
 	TryWallDodge(HitNormal, HitActor);
 }
 
-/** 
- * If DodgeLandZ (expected min landing height of dodge) is missed when bInDodgeMove is true,
- * the MissedDodge() event is triggered.
- */
 event MissedDodge()
 {
 	local Actor HitActor;
@@ -3570,11 +4075,11 @@ function bool TryToDuck(vector duckDir, bool bReversed)
 	return true;
 }
 
-function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn, class<DamageType> damageType)
+function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn)
 {
 	if ( Squad != None )
 	{
-		UTSquadAI(Squad).NotifyKilled(Killer,Killed,KilledPawn,damageType);
+		Squad.NotifyKilled(Killer,Killed,KilledPawn);
 	}
 }
 
@@ -3592,7 +4097,7 @@ function bool ShouldStrafeTo(Actor WayPoint)
 	if ( (UTVehicle(Pawn) != None) && !UTVehicle(Pawn).bFollowLookDir )
 		return true;
 
-	if ( (Skill + StrafingAbility < 3) && !UTPlayerReplicationInfo(PlayerReplicationInfo).bHasFlag )
+	if ( (Skill + StrafingAbility < 3) && !PlayerReplicationInfo.bHasFlag )
 		return false;
 
 	if ( WayPoint == Enemy )
@@ -3612,7 +4117,7 @@ function bool ShouldStrafeTo(Actor WayPoint)
 		if ( N.bAlwaysUseStrafing && (FRand() < 0.8) )
 			return true;
 	}
-	if ( (Pawn(WayPoint) != None) || ((UTSquadAI(Squad).SquadLeader != None) && (WayPoint == UTSquadAI(Squad).SquadLeader.MoveTarget)) )
+	if ( (Pawn(WayPoint) != None) || ((Squad.SquadLeader != None) && (WayPoint == Squad.SquadLeader.MoveTarget)) )
 		return ( Skill + StrafingAbility > 5 * FRand() - 1 );
 
 	if ( Skill + StrafingAbility < 6 * FRand() - 1 )
@@ -3628,18 +4133,47 @@ function bool ShouldStrafeTo(Actor WayPoint)
 	return ( FRand() < 0.6 );
 }
 
-/**
-  * Used to determine which actor should be the focus of this bot (that he looks at while moving)
-  */
+function Actor AlternateTranslocDest()
+{
+	if ( (PathNode(MoveTarget) == None) || (RouteCache.Length == 0) || (MoveTarget != RouteCache[0]) )
+		return None;
+	if ( (RouteCache.Length < 2)
+		|| ((PathNode(RouteCache[1]) == None) && (PickupFactory(RouteCache[1]) == None) && (UTGameObjective(RouteCache[1]) == None)) )
+	{
+		if ( (FRand() < 0.5) && (UTCarriedObject(RouteGoal) != None)
+			&& (VSize(RouteGoal.Location - Pawn.Location) < 2000)
+			&& LineOfSightTo(RouteGoal) )
+			return RouteGoal;
+		return None;
+	}
+	if ( (FRand() < 0.3)
+		&& (UTGameObjective(RouteCache[1]) == None)
+		&& (RouteCache.Length > 2)
+		&& ((PathNode(RouteCache[2]) != None) || (PickupFactory(RouteCache[2]) != None) || (UTGameObjective(RouteCache[2]) != None))
+		&& LineOfSightTo(RouteCache[2]) )
+		return RouteCache[2];
+	if ( LineOfSightTo(RouteCache[1]) )
+		return RouteCache[1];
+	return None;
+}
+
 function Actor FaceActor(float StrafingModifier)
 {
-	local float RelativeDir;
-	local actor SquadFace;
+	local float RelativeDir, Dist, MinDist;
+	local actor SquadFace, N;
+	local bool bEnemyNotEngaged, bTranslocTactics, bCatchup;
+	local UTVehicle V;
 
-	if ( (UTGameObjective(Focus) != None) && (Focus == Squad.SquadObjective) && (UTSquadAI(Squad).GetOrders() == 'ATTACK') && Pawn.IsFiring() && UTGameObjective(Focus).Shootable() )
+	if ( (UTGameObjective(Focus) != None) && (Focus == Squad.SquadObjective) && (Squad.GetOrders() == 'ATTACK') && Pawn.IsFiring() && UTGameObjective(Focus).Shootable() )
 		return Focus;
-
-	SquadFace = UTSquadAI(Squad).SetFacingActor(self);
+	bTranslocatorHop = false;
+	// if being towed, must face tow truck
+	V = UTVehicle(Pawn);
+	if (V != None && V.GetTowingVehicle() != None)
+	{
+		return V.GetTowingVehicle();
+	}
+	SquadFace = Squad.SetFacingActor(self);
 	if ( SquadFace != None )
 		return SquadFace;
 	if ( FocusOnLeader(false) )
@@ -3648,7 +4182,60 @@ function Actor FaceActor(float StrafingModifier)
 			FireWeaponAt(Focus);
 		return Focus;
 	}
-
+	// translocator hopping
+	if ( CanUseTranslocator() )
+	{
+		bEnemyNotEngaged = (Enemy == None)||(WorldInfo.TimeSeconds - LastSeenTime > 1);
+		bCatchup = ((Pawn(RouteGoal) != None) && !WorldInfo.GRI.OnSameTeam(self,Pawn(RouteGoal).Controller)) || (UTCarriedObject(RouteGoal) != None);
+		if ( bEnemyNotEngaged )
+		{
+			if ( bCatchup )
+				bTranslocTactics = (Skill + Tactics > 2 + 2*FRand());
+			else
+				bTranslocTactics = (Skill + Tactics > 4);
+		}
+		bTranslocTactics = bTranslocTactics || (Skill + Tactics > 2.5 + 3 * FRand());
+		if (  bTranslocTactics && (TranslocUse > FRand()) && (Vehicle(Pawn) == None)
+			&& (TranslocFreq < WorldInfo.TimeSeconds + 6 + 9 * FRand())
+			&& ((NavigationPoint(Movetarget) != None) || (UTCarriedObject(MoveTarget) != None))
+			&& (LiftCenter(MoveTarget) == None)
+			&& (bEnemyNotEngaged || bRecommendFastMove || (UTCarriedObject(MoveTarget) != None) || (VSize(Enemy.Location - Pawn.Location) > ENEMYLOCATIONFUZZ * (1 + FRand()))
+				|| (bCatchup && (FRand() < 0.65) && (!LineOfSightTo(RouteGoal) || (UTCarriedObject(RouteGoal) != None)))) )
+		{
+			bRecommendFastMove = false;
+			bTranslocatorHop = true;
+			TranslocationTarget = MoveTarget;
+			Focus = MoveTarget;
+			Dist = VSize(Pawn.Location - MoveTarget.Location);
+			MinDist = 300 + 40 * FMax(0,TranslocFreq - WorldInfo.TimeSeconds);
+			if ( (UTCarriedObject(RouteGoal) != None) && (VSize(Pawn.Location - RouteGoal.Location) < 1000 + 1200 * FRand()) && LineOfSightTo(RouteGoal) )
+			{
+				TranslocationTarget = RouteGoal;
+				Dist = VSize(Pawn.Location - TranslocationTarget.Location);
+				Focus = RouteGoal;
+			}
+			else if ( MinDist + 200 + 1000 * FRand() > Dist )
+			{
+				N = AlternateTranslocDest();
+				if ( N != None )
+				{
+					TranslocationTarget = N;
+					Dist = VSize(Pawn.Location - TranslocationTarget.Location);
+					Focus = N;
+				}
+			}
+			if ( (Dist < MinDist) || ((Dist < MinDist + 150) && !Pawn.Weapon.IsA('UTWeap_Translocator')) )
+			{
+				TranslocationTarget = None;
+				bTranslocatorHop = false;
+			}
+			else
+			{
+				SwitchToBestWeapon();
+				return Focus;
+			}
+		}
+	}
 	bRecommendFastMove = false;
 	if ( (!Pawn.bCanStrafe && (UTVehicle(Pawn) == None || !UTVehicle(Pawn).bSeparateTurretFocus))
 	     || (Enemy == None) || (WorldInfo.TimeSeconds - LastSeenTime > 6 - StrafingModifier) )
@@ -3705,10 +4292,6 @@ event float RatePickup(Actor PickupHolder, class<Inventory> InvClass)
 	return InvClass.static.BotDesireability(PickupHolder, bCheckDriverPickups ? Vehicle(Pawn).Driver : Pawn, self);
 }
 
-/*
- * Called from native FindBestSuperPickup() to determine how desireable a specific super pickup 
- * is to this bot.
- */
 event float SuperDesireability(PickupFactory P)
 {
 	if ( !SuperPickupNotSpokenFor(UTPickupFactory(P)) )
@@ -3737,21 +4320,21 @@ function bool SuperPickupNotSpokenFor(UTPickupFactory P)
 	}
 
 	// decide if better than current owner
-	if ( (UTSquadAI(Squad).GetOrders() == 'Defend')
+	if ( (Squad.GetOrders() == 'Defend')
 		|| (CurrentOwner.MoveTarget == P) )
 		return false;
-	if ( UTPlayerReplicationInfo(PlayerReplicationInfo).bHasFlag )
+	if ( PlayerReplicationInfo.bHasFlag )
 		return true;
 	if ( CurrentOwner.RouteCache.length > 1 && CurrentOwner.RouteCache[1] == P )
 		return false;
-	if ( UTSquadAI(CurrentOwner.Squad).GetOrders() == 'Defend' )
+	if ( CurrentOwner.Squad.GetOrders() == 'Defend' )
 		return true;
 	return false;
 }
 
 function DamageAttitudeTo(Controller Other, float Damage)
 {
-	if ( (Pawn.health > 0) && (Damage > 0) && (Other.Pawn != None) && (Squad != None) && UTSquadAI(Squad).SetEnemy(self,Other.Pawn) )
+	if ( (Pawn.health > 0) && (Damage > 0) && (Other.Pawn != None) && (Squad != None) && Squad.SetEnemy(self,Other.Pawn) )
 		WhatToDoNext();
 }
 
@@ -3836,10 +4419,6 @@ state Defending
 		enable('NotifyBump');
 	}
 
-	/**
-	 * Will receive a MonitoredPawnAlert() event if the MonitoredPawn is killed or no longer possessed, 
-	 * or moves too far away from either MonitorStartLoc or the bot's position 
-	 */
 	event MonitoredPawnAlert()
 	{
 		WhatToDoNext();
@@ -3880,10 +4459,10 @@ state Defending
 			{
 				if ( !CurrentPosition.PathList[i].IsBlockedFor(Pawn) )
 				{
-					CurrentDot = Abs(Normal(CurrentPosition.Pathlist[i].GetEnd().Location - Pawn.Location) dot BlockedDir);
+					CurrentDot = Abs(Normal(CurrentPosition.Pathlist[i].End.Nav.Location - Pawn.Location) dot BlockedDir);
 					if ( (Best == None) || (CurrentDot < BestDot) )
 					{
-						Best = CurrentPosition.Pathlist[i].GetEnd();
+						Best = CurrentPosition.Pathlist[i].End.Nav;
 						BestDot = CurrentDot;
 					}
 				}
@@ -3927,27 +4506,27 @@ state Defending
 		{
 			Focus = None;
 
-			FormationCenter = UTSquadAI(Squad).FormationCenter(self);
+			FormationCenter = Squad.FormationCenter(self);
 			if (FormationCenter != None)
 			{
-				CenterDir = Normal(FormationCenter.Location - Pawn.Location);
+				CenterDir = Normal(Squad.FormationCenter(self).Location - Pawn.Location);
 
 				// temp pick randomly from among reachspecs not facing formation center
 				for ( i=0; i<DefenseAnchor.PathList.Length; i++ )
 				{
-					if ( DefenseAnchor.PathList[i].GetEnd() != None &&
-						(CenterDir Dot Normal(DefenseAnchor.PathList[i].GetEnd().Location - Pawn.Location)) <= 0.0 )
+					if ( DefenseAnchor.PathList[i].End.Nav != None &&
+						(CenterDir Dot Normal(DefenseAnchor.PathList[i].End.Nav.Location - Pawn.Location)) <= 0.0 )
 					{
 						if ( ((Rand(DefenseAnchor.PathList.Length) == 0) && (DefenseAnchor.PathList[i].Distance > 200.0)) || (Focus == None) )
 						{
-							Focus = DefenseAnchor.PathList[i].GetEnd();
+							Focus = DefenseAnchor.PathList[i].End.Nav;
 						}
 					}
 				}
 			}
 			if ( Focus == None )
 			{
-				Focus = DefenseAnchor.PathList[0].GetEnd();
+				Focus = DefenseAnchor.PathList[0].End.Nav;
 			}
 		}
 	}
@@ -3956,24 +4535,21 @@ state Defending
 	{
 		local Actor NextMoveTarget;
 		local bool bCanDetour;
-		local UTSquadAI UTSquad;
 
-		UTSquad = UTSquadAI(Squad);
-
-		if (DefensePoint == None || UTPlayerReplicationInfo(PlayerReplicationInfo).bHasFlag )
+		if (DefensePoint == None || PlayerReplicationInfo.bHasFlag )
 		{
 			// if in good position, tend to stay there
 			if ( (WorldInfo.TimeSeconds - FMax(LastSeenTime, AcquireTime) < 5.0 || FRand() < 0.85)
 				&& DefensivePosition != None && Pawn.ReachedDestination(DefensivePosition)
-				&& UTSquad.AcceptableDefensivePosition(DefensivePosition, self) )
+				&& Squad.AcceptableDefensivePosition(DefensivePosition, self) )
 			{
 				CampTime = 3;
 				GotoState('Defending','Pausing');
 			}
-			DefensivePosition = UTSquad.FindDefensivePositionFor(self);
+			DefensivePosition = Squad.FindDefensivePositionFor(self);
 			if ( DefensivePosition == None )
 			{
-				RouteGoal = UTSquad.FormationCenter(self);
+				RouteGoal = Squad.FormationCenter(self);
 			}
 			else
 			{
@@ -3993,10 +4569,10 @@ state Defending
 			{
 				if ( (DefensePoint != None) && (UTHoldSpot(DefensePoint) == None) )
 					FreePoint();
-				DefensivePosition = UTSquad.FindDefensivePositionFor(self);
+				DefensivePosition = Squad.FindDefensivePositionFor(self);
 				if ( DefensivePosition == None )
 				{
-					RouteGoal = UTSquad.FormationCenter(self);
+					RouteGoal = Squad.FormationCenter(self);
 				}
 				else
 				{
@@ -4014,6 +4590,18 @@ state Defending
 		MoveTarget = NextMoveTarget;
 	}
 
+	/** try to deploy vehicle (if have one that can) */
+	function TryToDeploy()
+	{
+		local UTVehicle_Deployable DeployableVehicle;
+
+		DeployableVehicle = GetDeployableVehicle();
+		if (DeployableVehicle != None && DeployableVehicle.DeployedState == EDS_Undeployed && (UTStealthVehicle(DeployableVehicle) == None) )
+		{
+			DeployableVehicle.ServerToggleDeploy();
+		}
+	}
+
 	function EndState(Name NextStateName)
 	{
 		MonitoredPawn = None;
@@ -4023,19 +4611,16 @@ state Defending
 
 	function BeginState(Name PreviousStateName)
 	{
-		local UTSquadAI UTSquad;
-
-		UTSquad = UTSquadAI(Squad);
 		Pawn.bWantsToCrouch = false;
 		if ( (Vehicle(Pawn) != None) && (Pawn.GetVehicleBase() != None) )
 		{
 			if ( Pawn.GetVehicleBase().Controller != None )
 			{
-			StartMonitoring(Pawn.GetVehicleBase(),UTSquad.FormationSize);
+			StartMonitoring(Pawn.GetVehicleBase(),Squad.FormationSize);
 			}
 		}
-		else if ( (UTSquad.SquadLeader != self) && (UTSquad.SquadLeader.Pawn != None) && (UTSquad.FormationCenter(self) == UTSquad.SquadLeader.Pawn) )
-			StartMonitoring(UTSquad.SquadLeader.Pawn,UTSquad.FormationSize);
+		else if ( (Squad.SquadLeader != self) && (Squad.SquadLeader.Pawn != None) && (Squad.FormationCenter(self) == Squad.SquadLeader.Pawn) )
+			StartMonitoring(Squad.SquadLeader.Pawn,Squad.FormationSize);
 		else
 			MonitoredPawn = None;
 	}
@@ -4068,9 +4653,15 @@ Moving:
 Pausing:
 	if (UTVehicle(Pawn) != None && UTVehicle(Pawn).bShouldLeaveForCombat)
 	{
-		UTVehicle(Pawn).DriverLeave(false);
+		if (UTVehicle(Pawn).GetTowingVehicle() == None)
+		{
+			UTVehicle(Pawn).DriverLeave(false);
+		}
 	}
-
+	else
+	{
+		TryToDeploy();
+	}
 	StopMovement();
 	Pawn.bWantsToCrouch = IsSniping() && !WorldInfo.bUseConsoleInput;
 	if ( DefensePoint != None )
@@ -4078,7 +4669,7 @@ Pausing:
 		if ( Pawn.ReachedDestination(DefensePoint) )
 		{
 			Focus = None;
-			SetFocalPoint( Pawn.Location + vector(DefensePoint.Rotation) * 1000.0 );
+			FocalPoint = Pawn.Location + vector(DefensePoint.Rotation) * 1000.0;
 		}
 	}
 	else if ( (DefensivePosition != None) && Pawn.ReachedDestination(DefensivePosition) )
@@ -4104,10 +4695,8 @@ function Celebrate()
 function ForceGiveWeapon()
 {
     local Vector TossVel, LeaderVel;
-	local Pawn LeaderPawn;
 
-	LeaderPawn = UTSquadAI(Squad).SquadLeader.Pawn;
-	if ( (Pawn == None) || (Pawn.Weapon == None) || (LeaderPawn == None) || !LineOfSightTo(LeaderPawn) )
+    if ( (Pawn == None) || (Pawn.Weapon == None) || (Squad.SquadLeader.Pawn == None) || !LineOfSightTo(Squad.SquadLeader.Pawn) )
 	return;
 
     if ( Pawn.CanThrowWeapon() )
@@ -4115,14 +4704,37 @@ function ForceGiveWeapon()
 		TossVel = Vector(Pawn.Rotation);
 		TossVel.Z = 0;
 		TossVel = Normal(TossVel);
-		LeaderVel = Normal(LeaderPawn.Location - Pawn.Location);
+		LeaderVel = Normal(Squad.SquadLeader.Pawn.Location - Pawn.Location);
 		if ( (TossVel Dot LeaderVel) > 0.7 )
 				TossVel = LeaderVel;
 		TossVel = TossVel * ((Pawn.Velocity Dot TossVel) + 500) + Vect(0,0,200);
-		Pawn.TossInventory(Pawn.Weapon, TossVel);
+		Pawn.TossWeapon(Pawn.Weapon, TossVel);
 		SwitchToBestWeapon();
     }
 }
+
+function ForceCelebrate()
+{
+	local bool bRealCrouch;
+
+	Pawn.bWantsToCrouch = false;
+	bRealCrouch = Pawn.bCanCrouch;
+	Pawn.bCanCrouch = false;
+	if ( Enemy == None )
+	{
+		CampTime = 3;
+		GotoState('Defending','Pausing');
+		if ( Squad.SquadLeader.Pawn != None )
+			FocalPoint = Squad.SquadLeader.Pawn.Location;
+	}
+	StopFiring();
+	// if blew self up, return
+	if ( (Pawn == None) || (Pawn.Health <= 0) )
+		return;
+	Celebrate();
+	Pawn.bCanCrouch = bRealCrouch;
+}
+
 
 //=======================================================================================================
 // Move To Goal states
@@ -4159,15 +4771,12 @@ state MoveToGoal
 {
 	function bool CheckPathToGoalAround(Pawn P)
 	{
-		local UTBot PBot;
-		local UTSquadAI PSquad;
-
-		PBot = UTBot(P.Controller);
-		if ( (MoveTarget == None) || (PBot == None) || !WorldInfo.GRI.OnSameTeam(self,P.Controller) )
+		if ( (MoveTarget == None) || (UTBot(P.Controller) == None) || !WorldInfo.GRI.OnSameTeam(self,P.Controller) )
 			return false;
 
-		PSquad = UTSquadAI(PBot.Squad);
-		return ( (PSquad != None) && PSquad.ClearPathFor(self) );
+		if ( (UTBot(P.Controller).Squad != None) && UTBot(P.Controller).Squad.ClearPathFor(self) )
+			return true;
+		return false;
 	}
 
 	function Timer()
@@ -4200,20 +4809,17 @@ state MoveToGoalWithEnemy extends MoveToGoal
 
 function float GetDesiredOffset()
 {
-	local UTSquadAI UTSquad;
-
-	UTSquad = UTSquadAI(Squad);
-	if ( (UTSquad.SquadLeader == None) || (MoveTarget != UTSquad.SquadLeader.Pawn) )
+	if ( (Squad.SquadLeader == None) || (MoveTarget != Squad.SquadLeader.Pawn) )
 		return 0;
 
-	return UTSquad.FormationSize*0.5;
+	return Squad.FormationSize*0.5;
 }
 
 state Roaming extends MoveToGoal
 {
 	ignores EnemyNotVisible;
 
-	function MayFall(bool bFloor, vector FloorNormal)
+	function MayFall()
 	{
 		Pawn.bCanJump = ( (MoveTarget != None)
 					&& ((MoveTarget.Physics != PHYS_Falling) || !MoveTarget.IsA('DroppedPickup')) );
@@ -4222,7 +4828,7 @@ state Roaming extends MoveToGoal
 Begin:
 	SwitchToBestWeapon();
 	WaitForLanding();
-	if ( Pawn.bCanPickupInventory && (UTPickupFactory(MoveTarget) != None) && (UTSquadAI(Squad).PriorityObjective(self) == 0) && (Vehicle(Pawn) == None)
+	if ( Pawn.bCanPickupInventory && (UTPickupFactory(MoveTarget) != None) && (Squad.PriorityObjective(self) == 0) && (Vehicle(Pawn) == None)
 		&& UTPickupFactory(MoveTarget).ShouldCamp(self, 5) )
 	{
 		CampTime = MoveTarget.LatentFloat;
@@ -4244,7 +4850,7 @@ state Fallback extends MoveToGoalWithEnemy
 	{
 		if ( (A == Enemy) && (Pawn.Weapon != None) && (Pawn.Weapon.AIRating < 0.5)
 			&& (WorldInfo.TimeSeconds - Pawn.SpawnTime < UTDeathMatch(WorldInfo.Game).SpawnProtectionTime)
-			&& (UTSquadAI(Squad).PriorityObjective(self) == 0)
+			&& (Squad.PriorityObjective(self) == 0)
 			&& (PickupFactory(Routegoal) != None) )
 		{
 			// don't fire if still spawn protected, and no good weapon
@@ -4273,7 +4879,7 @@ state Fallback extends MoveToGoalWithEnemy
 					V.TryToDrive(Pawn);
 					if (Vehicle(Pawn) != None)
 					{
-						UTSquadAI(Squad).BotEnteredVehicle(self);
+						Squad.BotEnteredVehicle(self);
 						WhatToDoNext();
 					}
 				}
@@ -4303,7 +4909,7 @@ state Fallback extends MoveToGoalWithEnemy
 			MoveTimer = VSize(RouteCache[1].Location - Pawn.Location)/(Pawn.GroundSpeed * Pawn.DesiredSpeed) + 1;
 			MoveTarget = RouteCache[1];
 		}
-		UTSquadAI(Squad).SetEnemy(self,P);
+		Squad.SetEnemy(self,P);
 		if ( Enemy == Other )
 		{
 			Focus = Enemy;
@@ -4316,7 +4922,7 @@ state Fallback extends MoveToGoalWithEnemy
 		return false;
 	}
 
-	function MayFall(bool bFloor, vector FloorNormal)
+	function MayFall()
 	{
 		Pawn.bCanJump = ( (MoveTarget != None)
 					&& ((MoveTarget.Physics != PHYS_Falling) || !MoveTarget.IsA('DroppedPickup')) );
@@ -4324,7 +4930,7 @@ state Fallback extends MoveToGoalWithEnemy
 
 	function EnemyNotVisible()
 	{
-		if ( UTSquadAI(Squad).FindNewEnemyFor(self,false) || (Enemy == None) )
+		if ( Squad.FindNewEnemyFor(self,false) || (Enemy == None) )
 			WhatToDoNext();
 		else
 		{
@@ -4384,7 +4990,7 @@ function bool LoseEnemy()
 	if ( (Enemy.Health > 0) && (Enemy.Controller != None) && (LoseEnemyCheckTime > WorldInfo.TimeSeconds - 0.2) )
 		return false;
 	LoseEnemyCheckTime = WorldInfo.TimeSeconds;
-	if ( UTSquadAI(Squad).LostEnemy(self) )
+	if ( Squad.LostEnemy(self) )
 	{
 		bFrustrated = false;
 		return true;
@@ -4436,7 +5042,7 @@ function DoTacticalMove()
 
 function DoRetreat()
 {
-	if ( UTSquadAI(Squad).PickRetreatDestination(self) )
+	if ( Squad.PickRetreatDestination(self) )
 	{
 		GotoState('Retreating');
 		return;
@@ -4494,7 +5100,7 @@ ignores SeePlayer, HearNoise;
 		is about to go off a ledge.  Pawn has opportunity (by setting
 		bCanJump to false) to avoid fall
 	*/
-	function MayFall(bool bFloor, vector FloorNormal)
+	function MayFall()
 	{
 		if ( MoveTarget != Enemy )
 			return;
@@ -4554,7 +5160,7 @@ ignores SeePlayer, HearNoise;
 			if ( HitActor == None )
 				return false;
 		}
-		SetDestinationPosition( Pawn.Location + 2 * MINSTRAFEDIST * sideDir );
+		Destination = Pawn.Location + 2 * MINSTRAFEDIST * sideDir;
 		GotoState('TacticalMove', 'DoStrafeMove');
 		return true;
 	}
@@ -4619,7 +5225,7 @@ Begin:
 	if (Pawn.Physics == PHYS_Falling)
 	{
 		Focus = Enemy;
-		SetDestinationPosition( Enemy.Location );
+		Destination = Enemy.Location;
 		WaitForLanding();
 	}
 	if ( Enemy == None )
@@ -4652,27 +5258,27 @@ state VehicleCharging extends MoveToGoalWithEnemy
 
 		if ( MoveTarget == None )
 		{
-			SetDestinationPosition( Pawn.Location );
+			Destination = Pawn.Location;
 			return;
 		}
-		SetDestinationPosition( Pawn.Location + 5000 * Normal(Pawn.Location - MoveTarget.Location) );
-		HitActor = Trace(HitLocation, HitNormal, GetDestinationPosition(), Pawn.Location, false);
+		Destination = Pawn.Location + 5000 * Normal(Pawn.Location - MoveTarget.Location);
+		HitActor = Trace(HitLocation, HitNormal, Destination, Pawn.Location, false);
 
 		if ( HitActor == None )
 			return;
 
-		Cross = Normal((GetDestinationPosition() - Pawn.Location) cross vect(0,0,1));
-		SetDestinationPosition( GetDestinationPosition() + 1000 * Cross );
-		HitActor = Trace(HitLocation, HitNormal, GetDestinationPosition(), Pawn.Location, false);
+		Cross = Normal((Destination - Pawn.Location) cross vect(0,0,1));
+		Destination = Destination + 1000 * Cross;
+		HitActor = Trace(HitLocation, HitNormal, Destination, Pawn.Location, false);
 		if ( HitActor == None )
 			return;
 
-		SetDestinationPosition( GetDestinationPosition() - 2000 * Cross );
-		HitActor = Trace(HitLocation, HitNormal, GetDestinationPosition(), Pawn.Location, false);
+		Destination = Destination - 2000 * Cross;
+		HitActor = Trace(HitLocation, HitNormal, Destination, Pawn.Location, false);
 		if ( HitActor == None )
 			return;
 
-		SetDestinationPosition( GetDestinationPosition() + 1000 * Cross - 3000 * Normal(Pawn.Location - MoveTarget.Location) );
+		Destination = Destination + 1000 * Cross - 3000 * Normal(Pawn.Location - MoveTarget.Location);
 	}
 
 	function EnemyNotVisible()
@@ -4684,7 +5290,7 @@ Begin:
 	if (Pawn.Physics == PHYS_Falling)
 	{
 		Focus = Enemy;
-		SetDestinationPosition( Enemy.Location );
+		Destination = Enemy.Location;
 		WaitForLanding();
 	}
 	if ( Enemy == None )
@@ -4694,13 +5300,13 @@ Begin:
 		if ( VSize(Enemy.Location - Pawn.Location) < 1200 )
 		{
 			FindDestination();
-			MoveTo(GetDestinationPosition(), None,, false);
+			MoveTo(Destination, None, false);
 			if ( Enemy == None )
 				LatentWhatToDoNext();
 		}
 		MoveTarget = Enemy;
 	}
-	else if ( !FindBestPathToward(Enemy, false,true) )
+	else if ( !FindBestPathToward(Enemy, false, false) )
 	{
 		if (Pawn.HasRangedAttack())
 			GotoState('RangedAttack');
@@ -4722,7 +5328,7 @@ function bool IsStrafing()
 
 function bool EngageDirection(vector StrafeDir, bool bForced)
 {
-	`warn("Bot called EngageDirection in state "$GetStateName()$" pawn "$Pawn$" health "$Pawn.health);
+	WarnInternal("Bot called EngageDirection in state "$GetStateName()$" pawn "$Pawn$" health "$Pawn.health);
 	// scripttrace();
 	return false;
 }
@@ -4739,7 +5345,7 @@ ignores SeePlayer, HearNoise;
 	function SetFall()
 	{
 		Pawn.Acceleration = vect(0,0,0);
-		SetDestinationPosition( Pawn.Location );
+		Destination = Pawn.Location;
 		Global.SetFall();
 	}
 
@@ -4757,7 +5363,7 @@ ignores SeePlayer, HearNoise;
 					V.TryToDrive(Pawn);
 					if (Vehicle(Pawn) != None)
 					{
-						UTSquadAI(Squad).BotEnteredVehicle(self);
+						Squad.BotEnteredVehicle(self);
 						WhatToDoNext();
 					}
 				}
@@ -4784,7 +5390,7 @@ ignores SeePlayer, HearNoise;
 		else
 		{
 			bChangeDir = true;
-			SetDestinationPosition( Pawn.Location - HitNormal * FRand() * 500 );
+			Destination = Pawn.Location - HitNormal * FRand() * 500;
 		}
 		return true;
 	}
@@ -4821,11 +5427,10 @@ ignores SeePlayer, HearNoise;
 
 	function ChangeStrafe()
 	{
-		local vector Dir, Dest;
+		local vector Dir;
 
 		Dir = Vector(Pawn.Rotation);
-		Dest = GetDestinationPosition();
-		SetDestinationPosition( Dest +  2 * (Pawn.Location - Dest + Dir * ((Dest - Pawn.Location) Dot Dir)) );
+		Destination = Destination +  2 * (Pawn.Location - Destination + Dir * ((Destination - Pawn.Location) Dot Dir));
 	}
 
 	/* PickDestination()
@@ -4837,17 +5442,17 @@ ignores SeePlayer, HearNoise;
 		local vector pickdir, enemydir, enemyPart, Y, LookDir;
 		local float strafeSize;
 		local bool bFollowingPlayer;
-		local Controller SquadLeader;
 
 		if ( Pawn == None )
 		{
-			`warn(self$" Tactical move pick destination with no pawn");
+			WarnInternal(self$" Tactical move pick destination with no pawn");
 			return;
 		}
 		bChangeDir = false;
 		if ( Pawn.PhysicsVolume.bWaterVolume && !Pawn.bCanSwim && Pawn.bCanFly)
 		{
-			SetDestinationPosition( (Pawn.Location + 75 * (VRand() + vect(0,0,1))) + vect(0,0,100) );
+			Destination = Pawn.Location + 75 * (VRand() + vect(0,0,1));
+			Destination.Z += 100;
 			return;
 		}
 
@@ -4861,12 +5466,11 @@ ignores SeePlayer, HearNoise;
 		else
 			enemydir.Z = FMax(0,enemydir.Z);
 
-		SquadLeader = UTSquadAI(Squad).SquadLeader;
-		bFollowingPlayer = ( (PlayerController(SquadLeader) != None) && (SquadLeader.Pawn != None)
-							&& (VSize(Pawn.Location - SquadLeader.Pawn.Location) < 1600) );
+		bFollowingPlayer = ( (PlayerController(Squad.SquadLeader) != None) && (Squad.SquadLeader.Pawn != None)
+							&& (VSize(Pawn.Location - Squad.SquadLeader.Pawn.Location) < 1600) );
 
 		strafeSize = FClamp(((2 * Aggression + 1) * FRand() - 0.65),-0.7,0.7);
-		if ( UTSquadAI(Squad).MustKeepEnemy(Enemy) )
+		if ( Squad.MustKeepEnemy(Enemy) )
 			strafeSize = FMax(0.4 * FRand() - 0.2,strafeSize);
 
 		enemyPart = enemydir * strafeSize;
@@ -4877,9 +5481,9 @@ ignores SeePlayer, HearNoise;
 		if ( bFollowingPlayer )
 		{
 			// try not to get in front of squad leader
-			LookDir = vector(SquadLeader.Rotation);
-			if ( (LookDir dot (Pawn.Location + (enemypart + pickdir)*MINSTRAFEDIST - SquadLeader.Pawn.Location))
-				> FMax(0,(LookDir dot (Pawn.Location + (enemypart - pickdir)*MINSTRAFEDIST - SquadLeader.Pawn.Location))) )
+			LookDir = vector(Squad.SquadLeader.Rotation);
+			if ( (LookDir dot (Pawn.Location + (enemypart + pickdir)*MINSTRAFEDIST - Squad.SquadLeader.Pawn.Location))
+				> FMax(0,(LookDir dot (Pawn.Location + (enemypart - pickdir)*MINSTRAFEDIST - Squad.SquadLeader.Pawn.Location))) )
 			{
 				bStrafeDir = !bStrafeDir;
 				pickdir *= -1;
@@ -4915,7 +5519,7 @@ ignores SeePlayer, HearNoise;
 
 			bWantJump = (Vehicle(Pawn) == None) && (Pawn.Physics == PHYS_Walking) && ((FRand() < 0.05 * Skill + 0.6 * Jumpiness) || (UTWeapon(Pawn.Weapon).SplashJump() && ProficientWithWeapon()))
 				&& (Enemy.Location.Z - Enemy.GetCollisionHeight() <= Pawn.Location.Z + Pawn.MaxStepHeight - Pawn.GetCollisionHeight())
-				&& !Pawn.NeedToTurn((Enemy == Focus) ? GetFocalPoint() : Enemy.Location);
+				&& !Pawn.NeedToTurn((Enemy == Focus) ? FocalPoint : Enemy.Location);
 
 			HitActor = Trace(HitLocation, HitNormal, MinDest, Pawn.Location, false, collSpec);
 			if ( (HitActor != None) && !bWantJump )
@@ -4956,12 +5560,12 @@ ignores SeePlayer, HearNoise;
 				Pawn.Acceleration = vect(0,0,0);
 				if ( Skill + 2*Jumpiness > 3 + 3*FRand() )
 					bNotifyFallingHitWall = true;
-				SetDestinationPosition( MinDest );
+				Destination = MinDest;
 				return true;
 			}
 		}
-		SetDestinationPosition( MinDest + StrafeDir * (0.5 * MINSTRAFEDIST
-											+ FMin(VSize(Enemy.Location - Pawn.Location), MINSTRAFEDIST * (FRand() + FRand()))) );
+		Destination = MinDest + StrafeDir * (0.5 * MINSTRAFEDIST
+											+ FMin(VSize(Enemy.Location - Pawn.Location), MINSTRAFEDIST * (FRand() + FRand())));
 		return true;
 	}
 
@@ -5020,7 +5624,7 @@ Begin:
 	if (Pawn.Physics == PHYS_Falling)
 	{
 		Focus = Enemy;
-		SetDestinationPosition( Enemy.Location );
+		Destination = Enemy.Location;
 		WaitForLanding();
 	}
 	if ( Enemy == None )
@@ -5029,16 +5633,16 @@ Begin:
 
 DoMove:
 	if ( FocusOnLeader(false) )
-		MoveTo(GetDestinationPosition(), Focus);
+		MoveTo(Destination, Focus);
 	else if ( !Pawn.bCanStrafe )
 	{
 		StopFiring();
-		MoveTo(GetDestinationPosition());
+		MoveTo(Destination);
 	}
 	else
 	{
 DoStrafeMove:
-		MoveTo(GetDestinationPosition(), Enemy);
+		MoveTo(Destination, Enemy);
 	}
 	if ( bForcedDirection && (WorldInfo.TimeSeconds - StartTacticalTime < 0.2) )
 	{
@@ -5058,13 +5662,13 @@ RecoverEnemy:
 	HidingSpot = Pawn.Location;
 	StopFiring();
 	Sleep(0.1 + 0.2 * FRand());
-	SetDestinationPosition( LastSeeingPos + 4 * Pawn.GetCollisionRadius() * Normal(LastSeeingPos - Pawn.Location) );
-	MoveTo(GetDestinationPosition(), Enemy);
+	Destination = LastSeeingPos + 4 * Pawn.GetCollisionRadius() * Normal(LastSeeingPos - Pawn.Location);
+	MoveTo(Destination, Enemy);
 
 	if (FireWeaponAt(Enemy))
 	{
 		Pawn.Acceleration = vect(0,0,0);
-		if (Pawn.Weapon != None && UTWeapon(Pawn.Weapon).GetDamageRadius() > 0)
+		if (Pawn.Weapon != None && Pawn.Weapon.GetDamageRadius() > 0)
 		{
 			StopFiring();
 			Sleep(0.05);
@@ -5074,7 +5678,7 @@ RecoverEnemy:
 		if ( (FRand() + 0.3 > Aggression) )
 		{
 			Enable('EnemyNotVisible');
-			SetDestinationPosition( HidingSpot + 4 * Pawn.GetCollisionRadius() * Normal(HidingSpot - Pawn.Location) );
+			Destination = HidingSpot + 4 * Pawn.GetCollisionRadius() * Normal(HidingSpot - Pawn.Location);
 			Goto('DoMove');
 		}
 	}
@@ -5107,7 +5711,7 @@ ignores EnemyNotVisible;
 		return true;
 	}
 
-	function MayFall(bool bFloor, vector FloorNormal)
+	function MayFall()
 	{
 		Pawn.bCanJump = ( (MoveTarget == None) || (MoveTarget.Physics != PHYS_Falling) || !MoveTarget.IsA('DroppedPickup') );
 	}
@@ -5168,7 +5772,7 @@ ignores EnemyNotVisible;
 				WhatToDoNext();
 				return;
 			}
-			SetDestinationPosition( Enemy.Location );
+			Destination = Enemy.Location;
 			MoveTarget = None;
 			return;
 		}
@@ -5176,7 +5780,7 @@ ignores EnemyNotVisible;
 		ViewSpot = Pawn.Location + Pawn.BaseEyeHeight * vect(0,0,1);
 		bCanSeeLastSeen = bEnemyInfoValid && FastTrace(LastSeenPos, ViewSpot);
 
-		if (BlockedPath != None || UTSquadAI(Squad).BeDevious(Enemy))
+		if (BlockedPath != None || Squad.BeDevious(Enemy))
 		{
 			if ( BlockedPath == None )
 			{
@@ -5221,7 +5825,7 @@ ignores EnemyNotVisible;
 		}
 		if (!bDirectHunt)
 		{
-			UTSquadAI(Squad).MarkHuntingSpots(self);
+			Squad.MarkHuntingSpots(self);
 		}
 		if ( FindBestPathToward(Enemy, true, true) )
 			return;
@@ -5236,10 +5840,10 @@ ignores EnemyNotVisible;
 			return;
 		}
 
-		SetDestinationPosition( LastSeeingPos );
+		Destination = LastSeeingPos;
 		bEnemyInfoValid = false;
 		if ( FastTrace(Enemy.Location, ViewSpot)
-			&& VSize(Pawn.Location - GetDestinationPosition()) > Pawn.CylinderComponent.CollisionRadius )
+			&& VSize(Pawn.Location - Destination) > Pawn.CylinderComponent.CollisionRadius )
 			{
 				SeePlayer(Enemy);
 				return;
@@ -5249,7 +5853,7 @@ ignores EnemyNotVisible;
 		nextSpot = LastSeenPos - Normal(Enemy.Velocity) * Pawn.CylinderComponent.CollisionRadius;
 		nextSpot.Z = posZ;
 		if ( FastTrace(nextSpot, ViewSpot) )
-			SetDestinationPosition( nextSpot );
+			Destination = nextSpot;
 		else if ( bCanSeeLastSeen )
 		{
 			Dir = Pawn.Location - LastSeenPos;
@@ -5260,11 +5864,11 @@ ignores EnemyNotVisible;
 				GotoState('StakeOut');
 				return;
 			}
-			SetDestinationPosition( LastSeenPos );
+			Destination = LastSeenPos;
 		}
 		else
 		{
-			SetDestinationPosition( LastSeenPos );
+			Destination = LastSeenPos;
 			if ( !FastTrace(LastSeenPos, ViewSpot) )
 			{
 				// check if could adjust and see it
@@ -5307,21 +5911,21 @@ ignores EnemyNotVisible;
 
 		if ( FastTrace(Enemy.Location, Pawn.Location + 2 * Y * Pawn.CylinderComponent.CollisionRadius) )
 		{
-			SetDestinationPosition( Pawn.Location + 2.5 * Y * Pawn.CylinderComponent.CollisionRadius );
+			Destination = Pawn.Location + 2.5 * Y * Pawn.CylinderComponent.CollisionRadius;
 			return true;
 		}
 
 		if ( FastTrace(Enemy.Location, Pawn.Location - 2 * Y * Pawn.CylinderComponent.CollisionRadius) )
 		{
-			SetDestinationPosition( Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius );
+			Destination = Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius;
 			return true;
 		}
 		if ( bAlwaysTry )
 		{
 			if ( FRand() < 0.5 )
-				SetDestinationPosition( Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius );
+				Destination = Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius;
 			else
-				SetDestinationPosition( Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius );
+				Destination = Pawn.Location - 2.5 * Y * Pawn.CylinderComponent.CollisionRadius;
 			return true;
 		}
 
@@ -5342,7 +5946,7 @@ ignores EnemyNotVisible;
 	}
 
 AdjustFromWall:
-	MoveTo(GetDestinationPosition(), MoveTarget);
+	MoveTo(Destination, MoveTarget);
 
 Begin:
 	WaitForLanding();
@@ -5351,7 +5955,7 @@ Begin:
 	PickDestination();
 SpecialNavig:
 	if (MoveTarget == None)
-		MoveTo(GetDestinationPosition());
+		MoveTo(Destination);
 	else
 		MoveToward(MoveTarget,FaceActor(10),,(FRand() < 0.75) && ShouldStrafeTo(MoveTarget));
 
@@ -5373,7 +5977,7 @@ ignores EnemyNotVisible;
 	{
 		LastFireAttempt = WorldInfo.TimeSeconds;
 		bFireSuccess = false;
-		if (!Pawn.NeedToTurn(GetFocalPoint()))
+		if (!Pawn.NeedToTurn(FocalPoint))
 		{
 			bCanFire = true;
 			bStoppedFiring = false;
@@ -5408,7 +6012,7 @@ ignores EnemyNotVisible;
 			}
 			WhatToDoNext();
 		}
-		else if ( UTSquadAI(Squad).SetEnemy(self,SeenPlayer) )
+		else if ( Squad.SetEnemy(self,SeenPlayer) )
 		{
 			if ( Enemy == SeenPlayer )
 			{
@@ -5425,7 +6029,7 @@ ignores EnemyNotVisible;
 	function DoStakeOut()
 	{
 		FocusOnLeader(false);
-		if ( (FRand() < 0.3) || !FastTrace(GetFocalPoint() + vect(0,0,0.9) * Enemy.GetCollisionHeight(), Pawn.Location + vect(0,0,0.8) * Pawn.GetCollisionHeight()) )
+		if ( (FRand() < 0.3) || !FastTrace(FocalPoint + vect(0,0,0.9) * Enemy.GetCollisionHeight(), Pawn.Location + vect(0,0,0.8) * Pawn.GetCollisionHeight()) )
 			FindNewStakeOutDir();
 		GotoState('StakeOut','Begin');
 	}
@@ -5462,7 +6066,7 @@ ignores EnemyNotVisible;
 		local actor HitActor;
 		local vector HitLocation, HitNormal;
 
-		FireSpot = GetFocalPoint();
+		FireSpot = FocalPoint;
 
 		HitActor = Trace(HitLocation, HitNormal, FireSpot, ProjStart, false);
 		if( HitActor != None )
@@ -5471,7 +6075,7 @@ ignores EnemyNotVisible;
 				FireSpot += 2 * Enemy.GetCollisionHeight() * HitNormal;
 			if ( !FastTrace(FireSpot, ProjStart) )
 			{
-				FireSpot = GetFocalPoint();
+				FireSpot = FocalPoint;
 			}
 		}
 
@@ -5503,7 +6107,7 @@ ignores EnemyNotVisible;
 			}
 		}
 		if ( Best != None )
-			SetFocalPoint( Best.Location + 0.5 * Pawn.GetCollisionHeight() * vect(0,0,1) );
+			FocalPoint = Best.Location + 0.5 * Pawn.GetCollisionHeight() * vect(0,0,1);
 	}
 
 	function BeginState(Name PreviousStateName)
@@ -5514,9 +6118,9 @@ ignores EnemyNotVisible;
 		Pawn.bCanJump = false;
 		//SetAlertness(0.5);
 		FocusOnLeader(false);
-		if ( !bEnemyInfoValid || VSize(GetFocalPoint() - Pawn.Location) < MINSTRAFEDIST ||
+		if ( !bEnemyInfoValid || VSize(FocalPoint - Pawn.Location) < MINSTRAFEDIST ||
 			(WorldInfo.TimeSeconds - LastSeenTime > 6.0 && FRand() < 0.5) ||
-			!ClearShot(GetFocalPoint(), false) )
+			!ClearShot(FocalPoint, false) )
 		{
 			FindNewStakeOutDir();
 		}
@@ -5533,11 +6137,15 @@ Begin:
 	Focus = None;
 	if ( FocusOnLeader(false) )
 		Focus = Focus;
-	CheckIfShouldCrouch(Pawn.Location,GetFocalPoint(), 1);
+	if ( WaitToDeploy() )
+	{
+		Sleep(UTVehicle_Deployable(Pawn).DeployTime + 0.2);
+	}
+	CheckIfShouldCrouch(Pawn.Location,FocalPoint, 1);
 	FinishRotation();
 	if ( FocusOnLeader(false) )
 		FireWeaponAt(Focus);
-	else if ( (Pawn.Weapon != None) && !Pawn.Weapon.bMeleeWeapon && UTSquadAI(Squad).ShouldSuppressEnemy(self) && ClearShot(GetFocalPoint(),true) )
+	else if ( (Pawn.Weapon != None) && !Pawn.Weapon.bMeleeWeapon && Squad.ShouldSuppressEnemy(self) && ClearShot(FocalPoint,true) )
 	{
 		WeaponFireAgain(false);
 	}
@@ -5552,8 +6160,8 @@ Begin:
 	Sleep(1 + FRand());
 	// check if uncrouching would help
 	if ( Pawn.bIsCrouched
-		&& !FastTrace(GetFocalPoint(), Pawn.Location + Pawn.EyeHeight * vect(0,0,1))
-		&& FastTrace(GetFocalPoint(), Pawn.Location + Pawn.GetCollisionHeight() * vect(0,0,1)) )
+		&& !FastTrace(FocalPoint, Pawn.Location + Pawn.EyeHeight * vect(0,0,1))
+		&& FastTrace(FocalPoint, Pawn.Location + Pawn.GetCollisionHeight() * vect(0,0,1)) )
 	{
 		Pawn.bWantsToCrouch = false;
 		Sleep(0.15 + 0.05 * (1 + FRand()) * (10 - skill));
@@ -5594,6 +6202,20 @@ function StopMovement()
 		V.Throttle = 0;
 		V.Rise = 0;
 	}
+}
+
+/** try to deploy vehicle (if have one that can) */
+function bool WaitToDeploy()
+{
+	local UTVehicle_Deployable DeployableVehicle;
+
+	DeployableVehicle = GetDeployableVehicle();
+	if (DeployableVehicle != None && DeployableVehicle.DeployedState == EDS_Undeployed && DeployableVehicle.ShouldDeployToAttack() )
+	{
+		DeployableVehicle.ServerToggleDeploy();
+		return true;
+	}
+	return false;
 }
 
 state RangedAttack
@@ -5642,13 +6264,13 @@ ignores SeePlayer, HearNoise, Bump;
 	}
 
 	// really not sure how this function manages to get into an infinite loop in rare cases...
-	singular function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType)
+	singular function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn)
 	{
 		if (Focus == KilledPawn && Killed != self)
 		{
 			WhatToDoNext();
 		}
-		Global.NotifyKilled(Killer, Killed, KilledPawn,damageType);
+		Global.NotifyKilled(Killer, Killed, KilledPawn);
 	}
 
 	function Timer()
@@ -5737,7 +6359,7 @@ ignores SeePlayer, HearNoise, Bump;
 			{
 				if (!Pawn.Anchor.PathList[i].IsBlockedFor(Pawn))
 				{
-					Nav = Pawn.Anchor.PathList[i].GetEnd();
+					Nav = Pawn.Anchor.PathList[i].End.Nav;
 					if (Nav != Focus && !Nav.bSpecialMove && !Nav.IsA('Teleporter'))
 					{
 						// allow points within range, that aren't significantly backtracking unless allowed,
@@ -5770,7 +6392,7 @@ ignores SeePlayer, HearNoise, Bump;
 		if ( !FocusOnLeader(false) && (Focus == None) )
 			Focus = Enemy;
 		if ( Focus == None )
-			`log(GetHumanReadableName()$" no target in ranged attack");
+			LogInternal(GetHumanReadableName()$" no target in ranged attack");
 	}
 
 Begin:
@@ -5781,9 +6403,13 @@ Begin:
 	Sleep(0.0);
 	if ( (Focus == None) || Focus.bDeleteMe )
 		LatentWhatToDoNext();
+	if ( WaitToDeploy() )
+	{
+		Sleep(GetDeployableVehicle().DeployTime + 0.2);
+	}
 	if ( Enemy != None )
 		CheckIfShouldCrouch(Pawn.Location,Enemy.Location, 1);
-	if ( Pawn.NeedToTurn(GetFocalPoint()) )
+	if ( Pawn.NeedToTurn(FocalPoint) )
 	{
 		FinishRotation();
 	}
@@ -5815,7 +6441,7 @@ Begin:
 state Dead
 {
 ignores SeePlayer, EnemyNotVisible, HearNoise, ReceiveWarning, NotifyLanded, NotifyPhysicsVolumeChange,
-		NotifyHeadVolumeChange, NotifyHitWall, NotifyBump, ExecuteWhatToDoNext;
+		NotifyHeadVolumeChange, NotifyLanded, NotifyHitWall, NotifyBump, ExecuteWhatToDoNext;
 
 	event DelayedWarning() {}
 
@@ -5831,28 +6457,28 @@ ignores SeePlayer, EnemyNotVisible, HearNoise, ReceiveWarning, NotifyLanded, Not
 
 	function Celebrate()
 	{
-		`log(self$" Celebrate while dead");
+		LogInternal(self$" Celebrate while dead");
 	}
 
 	function bool SetRouteToGoal(Actor A)
 	{
-		`log(self$" SetRouteToGoal while dead");
+		LogInternal(self$" SetRouteToGoal while dead");
 		return true;
 	}
 
 	function SetAttractionState()
 	{
-		`log(self$" SetAttractionState while dead");
+		LogInternal(self$" SetAttractionState while dead");
 	}
 
 	function EnemyChanged(bool bNewEnemyVisible)
 	{
-		`log(self$" EnemyChanged while dead");
+		LogInternal(self$" EnemyChanged while dead");
 	}
 
 	function WanderOrCamp()
 	{
-		`log(self$" WanderOrCamp while dead");
+		LogInternal(self$" WanderOrCamp while dead");
 	}
 
 	function Timer() {}
@@ -5888,6 +6514,7 @@ ignores SeePlayer, EnemyNotVisible, HearNoise, ReceiveWarning, NotifyLanded, Not
 		bPreparingMove = false;
 		bPursuingFlag = false;
 		bHasSuperWeapon = false;
+		bHasTranslocator = false;
 		ImpactJumpZ = 0.f;
 		RouteGoal = None;
 		NoVehicleGoal = None;
@@ -5914,7 +6541,13 @@ TryAgain:
 		destroy();
 	else
 	{
-		Sleep(0.75 + UTGame(WorldInfo.Game).SpawnWait(self));
+WaitForSpace:
+		Sleep(0.75);
+		if ( !UTGame(WorldInfo.Game).SpaceAvailable(self) )
+		{
+			Goto('WaitForSpace');
+		}
+		Sleep(UTGame(WorldInfo.Game).SpawnWait(self));
 		LastRespawnTime = WorldInfo.TimeSeconds;
 		WorldInfo.Game.ReStartPlayer(self);
 		Goto('TryAgain');
@@ -5941,7 +6574,7 @@ ignores SeePlayer, HearNoise, Bump;
 	function bool NotifyHitWall(vector HitNormal, actor Wall)
 	{
 		//change directions
-		SetDestinationPosition( MINSTRAFEDIST * (Normal(GetDestinationPosition() - Pawn.Location) + HitNormal) );
+		Destination = MINSTRAFEDIST * (Normal(Destination - Pawn.Location) + HitNormal);
 		return true;
 	}
 
@@ -5959,10 +6592,9 @@ ignores SeePlayer, HearNoise, Bump;
 */
 	function PickDestination(bool bNoCharge)
 	{
-		local Vector Dest;
-		Dest = VRand();
-		Dest.Z = 1;
-		SetDestinationPosition( Pawn.Location + MINSTRAFEDIST * Dest );
+		Destination = VRand();
+		Destination.Z = 1;
+		Destination = Pawn.Location + MINSTRAFEDIST * Destination;
 	}
 
 	function BeginState(Name PreviousStateName)
@@ -5981,10 +6613,18 @@ Begin:
 
 DoMove:
 	if ( Enemy == None )
-		MoveTo(GetDestinationPosition());
+		MoveTo(Destination);
 	else
-		MoveTo(GetDestinationPosition(), Enemy);
+		MoveTo(Destination, Enemy);
 	LatentWhatToDoNext();
+}
+
+function SetEnemyReaction(int AlertnessLevel)
+{
+		Enable('HearNoise');
+		Enable('SeePlayer');
+		Enable('SeeMonster');
+		Enable('NotifyBump');
 }
 
 state RoundEnded
@@ -5998,28 +6638,28 @@ ignores SeePlayer, HearNoise, KilledBy, NotifyBump, HitWall, NotifyPhysicsVolume
 
 	function WhatToDoNext()
 	{
-		`Log(self @ "WhatToDoNext while RoundEnded");
+		LogInternal(self @ "WhatToDoNext while RoundEnded");
 		// ScriptTrace();
 	}
 
 	function Celebrate()
 	{
-		`log(self$" Celebrate while RoundEnded");
+		LogInternal(self$" Celebrate while RoundEnded");
 	}
 
 	function SetAttractionState()
 	{
-		`log(self$" SetAttractionState while RoundEnded");
+		LogInternal(self$" SetAttractionState while RoundEnded");
 	}
 
 	function EnemyChanged(bool bNewEnemyVisible)
 	{
-		`log(self$" EnemyChanged while RoundEnded");
+		LogInternal(self$" EnemyChanged while RoundEnded");
 	}
 
 	function WanderOrCamp()
 	{
-		`log(self$" WanderOrCamp while RoundEnded");
+		LogInternal(self$" WanderOrCamp while RoundEnded");
 	}
 
 	function CelebrateVictory()
@@ -6111,7 +6751,7 @@ Begin:
 	{
 		if (Vehicle(RouteGoal).TryToDrive(Pawn))
 		{
-			UTSquadAI(Squad).BotEnteredVehicle(self);
+			Squad.BotEnteredVehicle(self);
 		}
 		else if (UTVehicle(RouteGoal) != None && UTVehicle(RouteGoal).bPlayingSpawnEffect)
 		{
@@ -6127,7 +6767,7 @@ Begin:
 			MoveToward(RouteGoal, FaceActor(1),, ShouldStrafeTo(RouteGoal));
 			if (Vehicle(Pawn) == None && Vehicle(RouteGoal).TryToDrive(Pawn))
 			{
-				UTSquadAI(Squad).BotEnteredVehicle(self);
+				Squad.BotEnteredVehicle(self);
 			}
 		}
 	}
@@ -6278,7 +6918,7 @@ event bool HandlePathObstruction(Actor BlockedBy)
 	if (!Pawn.IsA('Vehicle'))
 	{
 		V = UTVehicle(BlockedBy);
-		if (V != None && Squad != None && UTSquadAI(Squad).VehicleDesireability(V, self) > 0.0)
+		if (V != None && Squad != None && Squad.VehicleDesireability(V, self) > 0.0)
 		{
 			GoalString = V @ "is blocking path to" @ MoveTarget @ "- enter it";
 			if (Focus == MoveTarget)
@@ -6314,7 +6954,7 @@ event bool HandlePathObstruction(Actor BlockedBy)
 	}
 
 	// ask Squad
-	return (Squad != None) ? UTSquadAI(Squad).HandlePathObstruction(self, BlockedBy) : false;
+	return (Squad != None) ? Squad.HandlePathObstruction(self, BlockedBy) : false;
 }
 
 state InQueue extends RoundEnded
@@ -6471,27 +7111,47 @@ state FrozenMovement
 
 defaultproperties
 {
-	LastTauntIndex=-1
-	OldMessageTime=-100.0
-	LastAttractCheck=-10000.0
-	LastSearchTime=-10000.0
-	bCanDoSpecial=true
-	bIsPlayer=true
-	Aggressiveness=+00000.40000
-	BaseAggressiveness=+00000.40000
-	CombatStyle=+00000.20000
-
-	OrderNames(0)=Defend
-	OrderNames(1)=Hold
-	OrderNames(2)=Attack
-	OrderNames(3)=Follow
-	OrderNames(4)=FreeLance
-	OrderNames(10)=Attack
-	OrderNames(11)=Defend
-	OrderNames(12)=Defend
-	OrderNames(13)=Attack
-	OrderNames(14)=Attack
-
-	ScriptedFireMode=255
-
+   bLeadTarget=True
+   bUsingSquadRoute=True
+   bAllowRouteReuse=True
+   AcquisitionYawRate=20000
+   LastTauntIndex=-1
+   Aggressiveness=0.400000
+   LastAttractCheck=-10000.000000
+   ForcedFlagDropTime=-1000.000000
+   BaseAggressiveness=0.400000
+   CombatStyle=0.200000
+   TranslocUse=1.000000
+   OldMessageTime=-100.000000
+   HearingThreshold=2800.000000
+   LastSearchTime=-10000.000000
+   OrderNames(0)="Defend"
+   OrderNames(1)="Hold"
+   OrderNames(2)="ATTACK"
+   OrderNames(3)="Follow"
+   OrderNames(4)="Freelance"
+   OrderNames(10)="ATTACK"
+   OrderNames(11)="Defend"
+   OrderNames(12)="Defend"
+   OrderNames(13)="ATTACK"
+   OrderNames(14)="ATTACK"
+   TrackingReactionTime=0.250000
+   BaseTrackingReactionTime=0.250000
+   LastIterativeCheck=1.000000
+   AimUpdateFrequency=0.200000
+   ErrorUpdateFrequency=0.450000
+   ScriptedFireMode=255
+   Begin Object Class=UTBotDecisionComponent Name=TheDecider ObjName=TheDecider Archetype=UTBotDecisionComponent'UTGame.Default__UTBotDecisionComponent'
+      Name="TheDecider"
+      ObjectArchetype=UTBotDecisionComponent'UTGame.Default__UTBotDecisionComponent'
+   End Object
+   DecisionComponent=TheDecider
+   bIsPlayer=True
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__AIController:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__AIController:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=TheDecider
+   Name="Default__UTBot"
+   ObjectArchetype=AIController'Engine.Default__AIController'
 }

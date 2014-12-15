@@ -1,20 +1,22 @@
 /**
  * Generic browser type for UTMapMusicInfo
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved
  */
 class GenericBrowserType_UTMapMusicInfo extends GenericBrowserType
 	native;
 
-cpptext
-{
-	/**
-	* Initialize the supported classes for this browser type.
-	*/
-	virtual void Init();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-DefaultProperties
+defaultproperties
 {
-	Description="UT Map Music"
+   Description="UT Map Music"
+   Name="Default__GenericBrowserType_UTMapMusicInfo"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

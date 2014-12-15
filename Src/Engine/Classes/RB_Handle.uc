@@ -1,24 +1,24 @@
 // Utility object for moving actors around.
 // Note - it really doesn't care which actor its a component of - you can use it to pick its owner up or anything else.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 
 class RB_Handle extends ActorComponent
 	collapsecategories
 	hidecategories(Object)
 	native(Physics);
 
-cpptext
-{
-protected:
-	// UActorComponent interface.
-	virtual void Attach();
-	virtual void Detach( UBOOL bWillReattach = FALSE );
-	virtual void Tick(FLOAT DeltaTime);
-public:
-	virtual void TermComponentRBPhys(FRBPhysScene* InScene);
-
-	// URB_Handle interface
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var PrimitiveComponent		GrabbedComponent;
 var name					GrabbedBoneName;
@@ -37,11 +37,6 @@ var transient native const bool		bRotationConstrained;
 var()	FLOAT	LinearDamping;
 var()	FLOAT	LinearStiffness;
 
-/** Scales the handle spring stiffness along each axis (in local space of handle) */
-var()	vector	LinearStiffnessScale3D;
-/** Scales the handle spring damping along each axis (in local space of handle) */
-var()	vector	LinearDampingScale3D;
-
 var()	FLOAT	AngularDamping;
 var()	FLOAT	AngularStiffness;
 
@@ -58,20 +53,16 @@ native function SetLocation(vector NewLocation);
 native function SetSmoothLocation(vector NewLocation, float MoveTime);
 /** Adjust interpolation goal location while respecting current interpolation timing.  Useful for interpolating to a moving target. */
 native function UpdateSmoothLocation(const out vector NewLocation);
-native function SetOrientation(const out quat NewOrientation);
+native function SetOrientation(quat NewOrientation);
 native function Quat GetOrientation();
 
 defaultproperties
 {
-	// Various physics related items need to be ticked pre physics update
-	TickGroup=TG_PreAsyncWork
-
-	LinearDamping=100.0
-	LinearStiffness=1300.0
-
-	AngularDamping=200.0
-	AngularStiffness=1000.0
-
-	LinearStiffnessScale3D=(X=1.0,Y=1.0,Z=1.0)
-	LinearDampingScale3D=(X=1.0,Y=1.0,Z=1.0)
+   LinearDamping=100.000000
+   LinearStiffness=1300.000000
+   AngularDamping=200.000000
+   AngularStiffness=1000.000000
+   TickGroup=TG_PreAsyncWork
+   Name="Default__RB_Handle"
+   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'
 }

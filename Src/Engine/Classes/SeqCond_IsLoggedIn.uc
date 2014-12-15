@@ -1,28 +1,26 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** Used to determine how many players are currently logged in */
 class SeqCond_IsLoggedIn extends SequenceCondition
 	native(Sequence);
 
-cpptext
-{
-	virtual void Activated()
-	{
-		USequenceOp::Activated();
-
-		// Trigger the output based upon meeting the num logged in criteria
-		if (eventCheckLogins() == TRUE)
-		{
-			OutputLinks(0).bHasImpulse = TRUE;
-		}
-		else
-		{
-			OutputLinks(1).bHasImpulse = TRUE;
-		}
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** The number of users that need to be logged in for it to activate as true */
 var() int NumNeededLoggedIn;
@@ -59,9 +57,10 @@ event bool CheckLogins()
 
 defaultproperties
 {
-	ObjName="Is Logged In"
-
-	OutputLinks(0)=(LinkDesc="True")
-	OutputLinks(1)=(LinkDesc="False")
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Int',LinkDesc="NeededLoggedIn",PropertyName="NumNeededLoggedIn")
+   OutputLinks(0)=(LinkDesc="True")
+   OutputLinks(1)=(LinkDesc="False")
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="NeededLoggedIn",PropertyName="NumNeededLoggedIn",MinVars=1,MaxVars=255)
+   ObjName="Is Logged In"
+   Name="Default__SeqCond_IsLoggedIn"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

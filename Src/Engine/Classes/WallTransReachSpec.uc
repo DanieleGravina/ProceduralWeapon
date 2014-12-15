@@ -1,18 +1,21 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class WallTransReachSpec extends ForcedReachSpec
 	native;
 
-cpptext
-{
-	virtual INT CostFor(APawn* P);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSkipPrune=TRUE
+   bSkipPrune=True
+   ForcedPathSizeName="Common"
+   Name="Default__WallTransReachSpec"
+   ObjectArchetype=ForcedReachSpec'Engine.Default__ForcedReachSpec'
 }

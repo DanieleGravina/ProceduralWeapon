@@ -1,11 +1,13 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicleCantCarryFlagMessage extends UTLocalMessage;
 
 var localized string FlagMessage;
 var SoundNodeWave FlagAnnouncement;
+var localized string OrbMessage;
+var SoundNodeWave OrbAnnouncement;
 
 static simulated function ClientReceive( PlayerController P, optional int Switch, optional PlayerReplicationInfo RelatedPRI_1,
 						optional PlayerReplicationInfo RelatedPRI_2, optional Object OptionalObject )
@@ -17,7 +19,11 @@ static simulated function ClientReceive( PlayerController P, optional int Switch
 
 static function SoundNodeWave AnnouncementSound(int MessageIndex, Object OptionalObject, PlayerController PC)
 {
-	return default.FlagAnnouncement;
+	if ( (PC.PlayerReplicationInfo != None) && !PC.PlayerReplicationInfo.bHasFlag )
+	{
+		return None;
+	}
+	return (MessageIndex == 0) ? default.FlagAnnouncement : default.OrbAnnouncement;
 }
 
 static function byte AnnouncementLevel(byte MessageIndex)
@@ -28,16 +34,18 @@ static function byte AnnouncementLevel(byte MessageIndex)
 static function string GetString( optional int Switch, optional bool bPRI1HUD, optional PlayerReplicationInfo RelatedPRI_1,
 					optional PlayerReplicationInfo RelatedPRI_2, optional Object OptionalObject )
 {
-	return default.FlagMessage;
+	return (Switch == 0) ? default.FlagMessage : default.OrbMessage;
 }
 
 defaultproperties
 {
-	FlagAnnouncement=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouCannotCarryTheFlagInThisVehicle'
-
-	bIsUnique=false
-	FontSize=1
-	MessageArea=2
-	bBeep=false
-	DrawColor=(R=0,G=160,B=255,A=255)
+   FlagMessage="Non puoi portare la bandiera su questo veicolo"
+   FlagAnnouncement=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouCannotCarryTheFlagInThisVehicle'
+   OrbMessage="Non puoi trasportare la Sfera con questo veicolo."
+   OrbAnnouncement=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouCannotCarryTheOrbInThisVehicle'
+   MessageArea=2
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=1
+   Name="Default__UTVehicleCantCarryFlagMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

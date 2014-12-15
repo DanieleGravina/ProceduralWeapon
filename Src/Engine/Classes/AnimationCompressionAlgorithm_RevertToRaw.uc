@@ -1,25 +1,25 @@
 /**
  * Reverts any animation compression, restoring the animation to the raw data.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class AnimationCompressionAlgorithm_RevertToRaw extends AnimationCompressionAlgorithm
-	native(Anim)
-	deprecated;
+	native(Anim);
 
-cpptext
-{
-protected:
-	/**
-	 * Reverts any animation compression, restoring the animation to the raw data.
-	 */
-	virtual void DoReduction(class UAnimSequence* AnimSeq, class USkeletalMesh* SkelMesh, const TArray<class FBoneData>& BoneData);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Description="Revert To Raw"
-	TranslationCompressionFormat=ACF_None
-	RotationCompressionFormat=ACF_None
+   Description="Revert To Raw"
+   RotationCompressionFormat=ACF_None
+   Name="Default__AnimationCompressionAlgorithm_RevertToRaw"
+   ObjectArchetype=AnimationCompressionAlgorithm'Engine.Default__AnimationCompressionAlgorithm'
 }

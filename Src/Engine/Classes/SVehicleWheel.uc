@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SVehicleWheel extends Component
 	native(Physics);
@@ -85,30 +85,32 @@ var ParticleSystemComponent WheelParticleComp;
 /** parameter that should be set in WheelParticleComp to the wheel's slip velocity */
 var name SlipParticleParamName;
 
-cpptext
-{
-#if WITH_NOVODEX
-	class NxWheelShape* GetNxWheelShape()
-	{
-		return (NxWheelShape*)WheelShape;
-	}
-#endif
-
-	/** @return whether this wheel wants a particle component attached to it */
-	virtual UBOOL WantsParticleComponent();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	WheelRadius=35
-	SuspensionTravel=30
-	LongSlipFactor=4000
-	LatSlipFactor=20000
-	HandbrakeLongSlipFactor=4000
-	HandbrakeLatSlipFactor=20000
-	ParkedSlipFactor=20000
-	WheelPSCClass=class'ParticleSystemComponent'
-	SuspensionSpeed=50
-	SlipParticleParamName=WheelSlip
-	bCollidesVehicles=TRUE
+   bCollidesVehicles=True
+   WheelRadius=35.000000
+   SuspensionTravel=30.000000
+   SuspensionSpeed=50.000000
+   LongSlipFactor=4000.000000
+   LatSlipFactor=20000.000000
+   HandbrakeLongSlipFactor=4000.000000
+   HandbrakeLatSlipFactor=20000.000000
+   ParkedSlipFactor=20000.000000
+   WheelPSCClass=Class'Engine.ParticleSystemComponent'
+   SlipParticleParamName="WheelSlip"
+   Name="Default__SVehicleWheel"
+   ObjectArchetype=Component'Core.Default__Component'
 }

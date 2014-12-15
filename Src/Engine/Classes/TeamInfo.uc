@@ -1,21 +1,146 @@
 //=============================================================================
 // TeamInfo.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class TeamInfo extends ReplicationInfo
-	native(ReplicationInfo)
+	native
 	nativereplication;
 
-var localized string TeamName;
-var int Size; //number of players on this team in the level
-var float Score;
-var repnotify int TeamIndex;
-var color TeamColor;
 
-cpptext
-{
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 9
+
+var databinding localized string TeamName;
+var databinding int Size; //number of players on this team in the level
+var databinding float Score;
+var databinding repnotify int TeamIndex;
+var databinding color TeamColor;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -67,32 +192,56 @@ simulated event Destroyed()
 
 function bool AddToTeam( Controller Other )
 {
+	local Controller P;
+	local bool bSuccess;
+
 	// make sure loadout works for this team
 	if ( Other == None )
 	{
-		`log("Added none to team!!!");
+		LogInternal("Added none to team!!!");
 		return false;
 	}
-
 	if (Other.PlayerReplicationInfo == None)
 	{
-		`Warn(Other @ "is missing PlayerReplicationInfo");
+		WarnInternal(Other @ "is missing PlayerReplicationInfo");
 		ScriptTrace();
 		return false;
 	}
 
 	Size++;
-	Other.PlayerReplicationInfo.SetPlayerTeam(Self);
+	Other.PlayerReplicationInfo.Team = self;
+	Other.PlayerReplicationInfo.bForceNetUpdate = TRUE;
+
+	bSuccess = false;
+	if ( Other.IsA('PlayerController') )
+		Other.PlayerReplicationInfo.TeamID = 0;
+	else
+		Other.PlayerReplicationInfo.TeamID = 1;
+
+	while ( !bSuccess )
+	{
+		bSuccess = true;
+		foreach WorldInfo.AllControllers(class'Controller', P)
+		{
+			if ( P.bIsPlayer && (P != Other) && P.PlayerReplicationInfo != None
+				&& (P.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
+				&& (P.PlayerReplicationInfo.TeamId == Other.PlayerReplicationInfo.TeamId) )
+			{
+				bSuccess = false;
+				break;
+			}
+		}
+		if ( !bSuccess )
+		{
+			Other.PlayerReplicationInfo.TeamID = Other.PlayerReplicationInfo.TeamID + 1;
+		}
+	}
 	return true;
 }
 
 function RemoveFromTeam(Controller Other)
 {
 	Size--;
-	if ( Other != None && Other.PlayerReplicationInfo != None )
-	{
-		Other.PlayerReplicationInfo.SetPlayerTeam(None);
-	}
 }
 
 simulated function string GetHumanReadableName()
@@ -100,13 +249,31 @@ simulated function string GetHumanReadableName()
 	return TeamName;
 }
 
+/* GetHUDColor()
+returns HUD color associated with this team
+*/
+simulated function color GetHUDColor()
+{
+	return TeamColor;
+}
+
+/* GetTextColor()
+returns text color associated with this team
+*/
+function color GetTextColor()
+{
+	return TeamColor;
+}
+
 simulated native function byte GetTeamNum();
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	TeamIndex=-1					// can't be zero, otherwise the property will not be replicated and the notify will not fire
-	NetUpdateFrequency=2
-	TeamColor=(r=255,g=64,b=64,a=255)
+   TeamName="Team"
+   TeamIndex=-1
+   TeamColor=(B=64,G=64,R=255,A=255)
+   TickGroup=TG_DuringAsyncWork
+   NetUpdateFrequency=2.000000
+   Name="Default__TeamInfo"
+   ObjectArchetype=ReplicationInfo'Engine.Default__ReplicationInfo'
 }

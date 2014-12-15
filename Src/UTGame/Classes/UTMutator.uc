@@ -1,8 +1,14 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTMutator extends Mutator
+	native
 	abstract;
+
+/** if set, when this class is compiled, a menu entry for it will be automatically added/updated in its package.ini file
+ * (abstract classes are skipped even if this flag is set)
+ */
+var bool bExportMenuData;
 
 function bool MutatorIsAllowed()
 {
@@ -72,5 +78,11 @@ function ProcessSpeechRecognition(UTPlayerController Speaker, const out array<Sp
 
 defaultproperties
 {
+   bExportMenuData=True
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Mutator:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Mutator:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTMutator"
+   ObjectArchetype=Mutator'Engine.Default__Mutator'
 }
-

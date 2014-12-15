@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** activates output depending on whether the given Pawn has the specified inventory item */
@@ -39,8 +39,10 @@ event Activated()
 
 defaultproperties
 {
-	ObjName="Has Inventory"
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Target",PropertyName=Target,MinVars=1,MaxVars=1)
-	OutputLinks[0]=(LinkDesc="Has Item")
-	OutputLinks[1]=(LinkDesc="Doesn't Have Item")
+   OutputLinks(0)=(LinkDesc="Has Item")
+   OutputLinks(1)=(LinkDesc="Doesn't Have Item")
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Target",PropertyName="Target",MinVars=1,MaxVars=1)
+   ObjName="Has Inventory"
+   Name="Default__UTSeqCond_HasInventory"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

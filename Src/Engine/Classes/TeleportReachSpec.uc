@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -8,14 +8,16 @@
 class TeleportReachSpec extends ReachSpec
 	native;
 
-cpptext
-{
-	virtual INT CostFor(APawn* P);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Distance=100.0
-	bAddToNavigationOctree=false
-	bCheckForObstructions=false
+   Distance=100
+   bAddToNavigationOctree=False
+   bCheckForObstructions=False
+   Name="Default__TeleportReachSpec"
+   ObjectArchetype=ReachSpec'Engine.Default__ReachSpec'
 }

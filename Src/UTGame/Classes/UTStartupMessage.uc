@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTStartupMessage extends UTLocalMessage;
 
@@ -53,7 +53,7 @@ static function string GetString(
 	local int i, PlayerCount;
 	local GameReplicationInfo GRI;
 
-	if ( (RelatedPRI_1 != None) && (RelatedPRI_1.WorldInfo.NetMode == NM_Standalone) )
+	if ( (RelatedPRI_1 != None) && (RelatedPRI_1.WorldInfo.NetMode == NM_Standalone) && !class'Engine'.static.IsSplitScreen() )
 	{
 		  if ( (UTGame(RelatedPRI_1.WorldInfo.Game) != None) && UTGame(RelatedPRI_1.WorldInfo.Game).bQuickstart )
 			  return "";
@@ -88,11 +88,18 @@ static function string GetString(
 
 defaultproperties
 {
-	FontSize=2
-	bIsConsoleMessage=false
-	bIsUnique=true
-	bBeep=False
-	DrawColor=(R=255,G=255,B=255)
-
-	AnnouncementPriority=20
+   Stage(0)="In attesa di altri giocatori."
+   Stage(1)="In attesa di segnali di partenza."
+   Stage(2)="La partita sta per cominciare...3"
+   Stage(3)="La partita sta per cominciare...2"
+   Stage(4)="La partita sta per cominciare...1"
+   Stage(5)="La partita è cominciata!"
+   Stage(6)="La partita è cominciata!"
+   NotReady="NON SEI PRONTO. Premi Fuoco!"
+   SinglePlayer="Premi [FUOCO] per iniziare!"
+   AnnouncementPriority=20
+   bIsUnique=True
+   FontSize=2
+   Name="Default__UTStartupMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

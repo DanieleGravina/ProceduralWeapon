@@ -1,17 +1,20 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
-class UTShockImpactLight extends UDKExplosionLight;
+class UTShockImpactLight extends UTExplosionLight;
 
 defaultproperties
 {
-	HighDetailFrameTime=+0.02
-	Brightness=200
-	Radius=128
-	LightColor=(R=255,G=192,B=64,A=255)
-
-	TimeShift=((StartTime=0.0,Radius=64,Brightness=150,LightColor=(R=255,G=192,B=255,A=255)),(StartTime=0.15,Radius=48,Brightness=50,LightColor=(R=192,G=64,B=255,A=255)),(StartTime=0.2,Radius=48,Brightness=0,LightColor=(R=192,G=64,B=255,A=255)))
+   HighDetailFrameTime=0.020000
+   TimeShift(0)=(Radius=64.000000,Brightness=150.000000,LightColor=(B=255,G=192,R=255,A=255))
+   TimeShift(1)=(StartTime=0.150000,Radius=48.000000,Brightness=50.000000,LightColor=(B=255,G=64,R=192,A=255))
+   TimeShift(2)=(StartTime=0.200000,Radius=48.000000,LightColor=(B=255,G=64,R=192,A=255))
+   Radius=128.000000
+   Brightness=200.000000
+   LightColor=(B=64,G=192,R=255,A=255)
+   Name="Default__UTShockImpactLight"
+   ObjectArchetype=UTExplosionLight'UTGame.Default__UTExplosionLight'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // Keypoint, the base class of invisible actors which mark things.
@@ -8,21 +8,20 @@ class Keypoint extends Actor
 	abstract
 	placeable
 	native;
-	
-var() SpriteComponent SpriteComp;
 
 defaultproperties
 {
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Keypoint'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Keypoints"
-	End Object
-	Components.Add(Sprite)
-	SpriteComp=Sprite;
-
-	bStatic=True
-	bHidden=True
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_Keypoint'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   bStatic=True
+   bHidden=True
+   Name="Default__Keypoint"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

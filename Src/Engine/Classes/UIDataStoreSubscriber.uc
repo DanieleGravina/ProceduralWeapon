@@ -1,7 +1,7 @@
 /**
  * Provides an interface for working with objects which retrieve data using data stores.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 interface UIDataStoreSubscriber
 	DependsOn(UIRoot)
@@ -69,7 +69,8 @@ native function GetBoundDataStores( out array<UIDataStore> out_BoundDataStores )
  */
 native function ClearBoundDataStores();
 
-DefaultProperties
+defaultproperties
 {
-
+   Name="Default__UIDataStoreSubscriber"
+   ObjectArchetype=Interface'Core.Default__Interface'
 }

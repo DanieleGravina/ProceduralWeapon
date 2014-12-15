@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTVWeap_ScorpionTurret extends UTVehicleWeapon
 	HideDropDown;
@@ -50,32 +50,33 @@ simulated function Projectile ProjectileFire()
 
 defaultproperties
 {
-	WeaponColor=(R=64,G=255,B=64,A=255)
-	PlayerViewOffset=(X=11.0,Y=7.0,Z=-9.0)
-
-	FireInterval(0)=+0.65
-	WeaponFireTypes(0)=EWFT_Projectile
-	WeaponProjectiles(0)=class'UTProj_ScorpionGlob'
-	TeamProjectiles[0]=class'UTProj_ScorpionGlob_Red'
-	TeamProjectiles[1]=class'UTProj_ScorpionGlob'
-
-	WeaponFireSnd[0]=SoundCue'A_Vehicle_Scorpion.SoundCues.A_Vehicle_Scorpion_AltFire'
-	bFastRepeater=true
-
-	bInstantHit=false
-	bSplashJump=false
-	bRecommendSplashDamage=false
-	bSniping=false
-	ShouldFireOnRelease(0)=0
-	ShotCost(0)=0
-	ShotCost(1)=0
-
-	FireOffset=(X=19,Y=10,Z=-10)
-	IconX=382
-	IconY=82
-	IconWidth=27
-	IconHeight=42
-	VehicleClass=class'UTVehicle_Scorpion_Content'
-	WeaponRange=7000
-	AimError=650
+   TeamProjectiles(0)=Class'UTGameContent.UTProj_ScorpionGlob_Red'
+   TeamProjectiles(1)=Class'UTGameContent.UTProj_ScorpionGlob'
+   VehicleClass=Class'UTGameContent.UTVehicle_Scorpion_Content'
+   bFastRepeater=True
+   IconX=382
+   IconY=82
+   IconWidth=27
+   IconHeight=42
+   WeaponFireSnd(0)=SoundCue'A_Vehicle_Scorpion.SoundCues.A_Vehicle_Scorpion_AltFire'
+   WeaponColor=(B=64,G=255,R=64,A=255)
+   PlayerViewOffset=(X=11.000000,Y=7.000000,Z=-9.000000)
+   aimerror=650.000000
+   WeaponFireTypes(0)=EWFT_Projectile
+   WeaponProjectiles(0)=Class'UTGameContent.UTProj_ScorpionGlob'
+   FireInterval(0)=0.650000
+   FireOffset=(X=19.000000,Y=10.000000,Z=-10.000000)
+   WeaponRange=7000.000000
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   ItemName="Scorpion"
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTVWeap_ScorpionTurret"
+   ObjectArchetype=UTVehicleWeapon'UTGame.Default__UTVehicleWeapon'
 }

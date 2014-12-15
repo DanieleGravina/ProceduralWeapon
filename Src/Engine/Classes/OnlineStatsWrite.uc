@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -17,10 +17,10 @@ var const array<StringIdToStringMapping> StatMappings;
 var const array<SettingsProperty> Properties;
 
 /** This array contains the list of views to write the properties to */
-var array<int> ViewIds;
+var const array<int> ViewIds;
 
 /** This array contains the list of views to write the properties to for arbitrated matches */
-var array<int> ArbitratedViewIds;
+var const array<int> ArbitratedViewIds;
 
 /** This is the property id that is used to rate on */
 var const int RatingId;
@@ -30,29 +30,29 @@ var const int RatingId;
  */
 delegate OnStatsWriteComplete();
 
-cpptext
-{
-	/**
-	 * Finds the specified stat in the property list
-	 *
-	 * @param StatId the stat to search for
-	 *
-	 * @return pointer to the stat or NULL if not found
-	 */
-	FORCEINLINE FSettingsData* FindStat(INT StatId)
-	{
-		// Search for the individual stat
-		for (INT PropertyIndex = 0; PropertyIndex < Properties.Num(); ++PropertyIndex)
-		{
-			FSettingsProperty& Stat = Properties(PropertyIndex);
-			if (Stat.PropertyId == StatId)
-			{
-				return &Stat.Data;
-			}
-		}
-		return NULL;
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Searches the stat mappings to find the stat id that matches the name
@@ -126,3 +126,9 @@ native function DecrementFloatStat(int StatId,optional float DecBy = 1.0);
  * @param DecBy the value to decrement by
  */
 native function DecrementIntStat(int StatId,optional int DecBy = 1);
+
+defaultproperties
+{
+   Name="Default__OnlineStatsWrite"
+   ObjectArchetype=OnlineStats'Engine.Default__OnlineStats'
+}

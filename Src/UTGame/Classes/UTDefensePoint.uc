@@ -1,15 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 /** defines a place bots should defend. Bots automatically determine reasonable defending positions in sight of their
  * objective (e.g. flag room), so these should only be used for hard to reach camping spots or choke points far from the objective area
  */
-class UTDefensePoint extends UDKScriptedNavigationPoint
-	placeable;
+class UTDefensePoint extends NavigationPoint
+	placeable
+	native;
 
 var Controller CurrentUser;
 var UTDefensePoint NextDefensePoint;	// list of defensepoints for same objective
-var() UDKGameObjective DefendedObjective;
+var() UTGameObjective DefendedObjective;
 var bool bFirstScript;				// first script in list of scripts
 var() bool bSniping;				// bots should snipe when using this script as a defense point
 var() bool bOnlyOnFoot; 		// bot should not attempt to use this script while in a vehicle
@@ -27,6 +28,12 @@ var() enum EDefensePriority
 
 /** sprites used for this actor in the editor, depending on which team DefendedObjective is on (if possible to determine in editor) */
 var editoronly array<Texture2D> TeamSprites;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /* Reset()
 reset actor to initial state - used when restarting level without reloading.
@@ -46,7 +53,7 @@ function bool CheckForErrors()
 {
 	if ( DefendedObjective == None )
 	{
-		`Log(Self$" has no DefendedObjective!");
+		LogInternal(Self$" has no DefendedObjective!");
 		return true;
 	}
 
@@ -61,7 +68,7 @@ function PreBeginPlay()
 
 	if ( DefendedObjective == None )
 	{
-		`Warn(self @ "has no DefendedObjective!");
+		WarnInternal(self @ "has no DefendedObjective!");
 	}
 	else if ( bFirstScript )
 	{
@@ -130,14 +137,35 @@ function Actor GetMoveTarget()
 
 defaultproperties
 {
-	Begin Object NAME=Sprite
-		Sprite=Texture2D'EnvyEditorResources.DefensePoint'
-	End Object
-
-	TeamSprites[0]=Texture2D'EnvyEditorResources.RedDefense'
-	TeamSprites[1]=Texture2D'EnvyEditorResources.BlueDefense'
-
-	bStatic=true
-	bCollideWhenPlacing=true
-	bFirstScript=true
+   bFirstScript=True
+   TeamSprites(0)=Texture2D'EnvyEditorResources.RedDefense'
+   TeamSprites(1)=Texture2D'EnvyEditorResources.BlueDefense'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+      Sprite=Texture2D'EnvyEditorResources.DefensePoint'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTDefensePoint"
+   ObjectArchetype=NavigationPoint'Engine.Default__NavigationPoint'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 /** action that causes the AI to do absolutely nothing and deactivates any automatic responses it might have
 	note that even while frozen future Kismet AI actions will still work, just no default behavior */
@@ -10,8 +10,10 @@ var() bool bAllowWeaponFiring;
 
 defaultproperties
 {
-	ObjName="Freeze"
-	ObjCategory="AI"
-	InputLinks[0]=(LinkDesc="Freeze")
-	InputLinks[1]=(LinkDesc="Unfreeze")
+   InputLinks(0)=(LinkDesc="Freeze")
+   InputLinks(1)=(LinkDesc="Unfreeze")
+   ObjName="Freeze"
+   ObjCategory="AI"
+   Name="Default__UTSeqAct_AIFreeze"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class StaticMeshComponentFactory extends MeshComponentFactory
 	native
@@ -9,17 +9,19 @@ class StaticMeshComponentFactory extends MeshComponentFactory
 
 var() StaticMesh	StaticMesh;
 
-cpptext
-{
-	virtual UBOOL FactoryIsValid() { return StaticMesh != NULL && Super::FactoryIsValid(); }
-	virtual UPrimitiveComponent* CreatePrimitiveComponent(UObject* InOuter);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	CollideActors=True
-	BlockActors=True
-	BlockZeroExtent=True
-	BlockNonZeroExtent=True
-	BlockRigidBody=True
+   CollideActors=True
+   BlockActors=True
+   BlockZeroExtent=True
+   BlockNonZeroExtent=True
+   BlockRigidBody=True
+   Name="Default__StaticMeshComponentFactory"
+   ObjectArchetype=MeshComponentFactory'Engine.Default__MeshComponentFactory'
 }

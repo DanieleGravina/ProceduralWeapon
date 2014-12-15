@@ -1,18 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawLightRadiusComponent extends DrawSphereComponent
-	native(Light)
+	native
 	noexport
 	hidecategories(Physics,Collision,PrimitiveComponent,Rendering);
 
 defaultproperties
 {
-	SphereColor=(R=173,G=239,B=231,A=255)
-	SphereSides=32
-
-	AlwaysLoadOnClient=False
-	AlwaysLoadOnServer=False
-
-	AbsoluteScale=TRUE
+   SphereColor=(B=231,G=239,R=173,A=255)
+   SphereSides=32
+   AlwaysLoadOnClient=False
+   AlwaysLoadOnServer=False
+   AbsoluteScale=True
+   Name="Default__DrawLightRadiusComponent"
+   ObjectArchetype=DrawSphereComponent'Engine.Default__DrawSphereComponent'
 }

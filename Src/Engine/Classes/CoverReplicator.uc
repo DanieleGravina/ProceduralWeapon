@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -58,18 +58,9 @@ function ReplicateInitialCoverInfo()
 	CoverReplicationData = CoverReplicatorBase.CoverReplicationData;
 	if (PlayerController(Owner) != None)
 	{
-		//@HACK: bSkipActorPropertyReplication prevents Owner from being replicated. Should fix that eventually, but for now, force it by RPC
-		ClientSetOwner(PlayerController(Owner));
-
 		// start replicating it out
 		ServerSendInitialCoverReplicationInfo(0);
 	}
-}
-
-//@HACK: bSkipActorPropertyReplication prevents Owner from being replicated. Should fix that eventually, but for now, force it by RPC
-reliable client function ClientSetOwner(PlayerController PC)
-{
-	SetOwner(PC);
 }
 
 /** sends info for one CoverReplicationData to the client */
@@ -82,6 +73,11 @@ reliable server function ServerSendInitialCoverReplicationInfo(int Index)
 	local int i;
 	local bool bDone;
 
+	if ( Index < 0 )
+	{
+		return;
+	}
+	
 	// verify there's no None entries as the client assumes that means the data must be resent
 	while (Index < CoverReplicationData.length && CoverReplicationData[Index].Link == None)
 	{
@@ -172,8 +168,7 @@ reliable server function ServerSendInitialCoverReplicationInfo(int Index)
 					CoverReplicationData[Index].SlotsCoverTypeChanged.length - SlotsArrayIndex <= 8 );
 
 			// send out the data
-			ClientReceiveInitialCoverReplicationInfo( Index, CoverReplicationData[Index].Link, CoverReplicationData[Index].Link.bDisabled,
-								NumSlotsEnabled, SlotsEnabled,
+			ClientReceiveInitialCoverReplicationInfo( Index, CoverReplicationData[Index].Link, NumSlotsEnabled, SlotsEnabled,
 								NumSlotsDisabled, SlotsDisabled,
 								NumSlotsAdjusted, SlotsAdjusted,
 								NumCoverTypesChanged, SlotsCoverTypeChanged,
@@ -189,8 +184,7 @@ reliable server function ServerSendInitialCoverReplicationInfo(int Index)
 /** replicates the information for one CoverReplicationData entry
  * bDone indicates whether or not there is more data coming for this entry (because some arrays have more than 8 elements)
  */
-reliable client function ClientReceiveInitialCoverReplicationInfo( int Index, CoverLink Link, bool bLinkDisabled,
-								byte NumSlotsEnabled, byte SlotsEnabled[8],
+reliable client function ClientReceiveInitialCoverReplicationInfo( int Index, CoverLink Link, byte NumSlotsEnabled, byte SlotsEnabled[8],
 								byte NumSlotsDisabled, byte SlotsDisabled[8],
 								byte NumSlotsAdjusted, byte SlotsAdjusted[8],
 								byte NumCoverTypesChanged, ManualCoverTypeInfo SlotsCoverTypeChanged[8],
@@ -209,7 +203,6 @@ reliable client function ClientReceiveInitialCoverReplicationInfo( int Index, Co
 	else
 	{
 		// process the data
-		Link.bDisabled = bLinkDisabled;
 		for (i = 0; i < NumSlotsEnabled; i++)
 		{
 			Link.SetSlotEnabled(SlotsEnabled[i], true);
@@ -220,17 +213,17 @@ reliable client function ClientReceiveInitialCoverReplicationInfo( int Index, Co
 		}
 		for (i = 0; i < NumSlotsAdjusted; i++)
 		{
-			if (Link.AutoAdjustSlot(SlotsAdjusted[i], false) && Link.Slots[SlotsAdjusted[i]].SlotOwner != None && Link.Slots[SlotsAdjusted[i]].SlotOwner.Controller != None)
+			if (Link.AutoAdjustSlot(SlotsAdjusted[i], false) && Link.Slots[SlotsAdjusted[i]].SlotOwner != None)
 			{
-				Link.Slots[SlotsAdjusted[i]].SlotOwner.Controller.NotifyCoverAdjusted();
+				Link.Slots[SlotsAdjusted[i]].SlotOwner.NotifyCoverAdjusted();
 			}
 		}
 		for (i = 0; i < NumCoverTypesChanged; i++)
 		{
 			Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].CoverType = SlotsCoverTypeChanged[i].ManualCoverType;
-			if (Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner != None && Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.Controller != None)
+			if (Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner != None)
 			{
-				Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.Controller.NotifyCoverAdjusted();
+				Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.NotifyCoverAdjusted();
 			}
 		}
 
@@ -591,9 +584,9 @@ reliable client function ClientReceiveAdjustedSlots(int Index, CoverLink Link, b
 		// process the data
 		for (i = 0; i < NumSlotsAdjusted; i++)
 		{
-			if (Link.AutoAdjustSlot(SlotsAdjusted[i], true) && Link.Slots[SlotsAdjusted[i]].SlotOwner != None && Link.Slots[SlotsAdjusted[i]].SlotOwner.Controller != None)
+			if (Link.AutoAdjustSlot(SlotsAdjusted[i], false) && Link.Slots[SlotsAdjusted[i]].SlotOwner != None)
 			{
-				Link.Slots[SlotsAdjusted[i]].SlotOwner.Controller.NotifyCoverAdjusted();
+				Link.Slots[SlotsAdjusted[i]].SlotOwner.NotifyCoverAdjusted();
 			}
 		}
 	}
@@ -720,75 +713,19 @@ reliable client function ClientReceiveManualCoverTypeSlots( int Index, CoverLink
 		for (i = 0; i < NumCoverTypesChanged; i++)
 		{
 			Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].CoverType = SlotsCoverTypeChanged[i].ManualCoverType;
-			if (Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner != None && Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.Controller != None)
+			if (Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner != None)
 			{
-				Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.Controller.NotifyCoverAdjusted();
+				Link.Slots[SlotsCoverTypeChanged[i].SlotIndex].SlotOwner.NotifyCoverAdjusted();
 			}
 		}
-	}
-}
-
-function NotifyLinkDisabledStateChange(CoverLink Link)
-{
-	local int Index;
-	local PlayerController PC;
-
-	Index = CoverReplicationData.Find('Link', Link);
-	if (Index == INDEX_NONE)
-	{
-		Index = CoverReplicationData.length;
-		CoverReplicationData.length = CoverReplicationData.length + 1;
-		CoverReplicationData[Index].Link = Link;
-	}
-
-	if (WorldInfo.Game.GetCoverReplicator() == self)
-	{
-		// we are the base info; inform players of the change now
-		foreach WorldInfo.AllControllers(class'PlayerController', PC)
-		{
-			if (PC.MyCoverReplicator == None)
-			{
-				PC.SpawnCoverReplicator();
-			}
-			else
-			{
-				PC.MyCoverReplicator.NotifyLinkDisabledStateChange(Link);
-			}
-		}
-	}
-
-	if (PlayerController(Owner) != None)
-	{
-		// replicate the data for this action
-		ServerSendLinkDisabledState(Index);
-	}
-}
-
-reliable server function ServerSendLinkDisabledState(int Index)
-{
-	if (CoverReplicationData[Index].Link != None)
-	{
-		ClientReceiveLinkDisabledState(Index, CoverReplicationData[Index].Link, CoverReplicationData[Index].Link.bDisabled);
-	}
-}
-
-reliable client function ClientReceiveLinkDisabledState(int Index, CoverLink Link, bool bLinkDisabled)
-{
-	// if we received an invalid CoverLink, we might not have loaded that level yet, so ask for a resend
-	if (Link == None)
-	{
-		ServerSendLinkDisabledState(Index);
-	}
-	else
-	{
-		Link.bDisabled = bLinkDisabled;
 	}
 }
 
 defaultproperties
 {
-	bOnlyRelevantToOwner=true
-	bAlwaysRelevant=false
-	bOnlyDirtyReplication=true
-	NetUpdateFrequency=0.1
+   bOnlyRelevantToOwner=True
+   bAlwaysRelevant=False
+   NetUpdateFrequency=0.100000
+   Name="Default__CoverReplicator"
+   ObjectArchetype=ReplicationInfo'Engine.Default__ReplicationInfo'
 }

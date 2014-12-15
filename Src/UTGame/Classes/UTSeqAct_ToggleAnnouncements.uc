@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqAct_ToggleAnnouncements extends SequenceAction;
@@ -24,10 +24,11 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjName="Toggle Announcements"
-	ObjCategory="Voice/Announcements"
-	InputLinks(0)=(LinkDesc="Enable")
-	InputLinks(1)=(LinkDesc="Disable")
-	VariableLinks.Empty()
+   bCallHandler=False
+   InputLinks(0)=(LinkDesc="Enable")
+   InputLinks(1)=(LinkDesc="Disable")
+   ObjName="Toggle Announcements"
+   ObjCategory="Voice/Announcements"
+   Name="Default__UTSeqAct_ToggleAnnouncements"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

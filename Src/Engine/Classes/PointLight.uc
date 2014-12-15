@@ -1,63 +1,49 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PointLight extends Light
-	native(Light)
-	ClassGroup(Lights,PointLights)
+	native
 	placeable;
 
-cpptext
-{
-#if WITH_EDITOR
-	// AActor interface.
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-#endif
-	/**
-	 * This will determine which icon should be displayed for this light.
-	 **/
-	virtual void DetermineAndSetEditorIcon();
-
-	/**
-	 * Called after this actor has been pasted into a level.  Attempts to catch cases where designers are pasting in really old
-	 * T3D data that was created when component instancing wasn't working correctly.
-	 */
-	virtual void PostEditImport();
-
-	virtual void PostLoad();
-
-	/**
-	 * Called from within SpawnActor, setting up the default value for the Lightmass light source radius.
-	 */
-	virtual void Spawned();
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=Sprite
-		Sprite=Texture2D'EditorResources.LightIcons.Light_Point_Stationary_Statics'
-	End Object
-
-	Begin Object Class=DrawLightRadiusComponent Name=DrawLightRadius0
-	End Object
-	Components.Add(DrawLightRadius0)
-
-	Begin Object Class=DrawLightRadiusComponent Name=DrawLightSourceRadius0
-		SphereColor=(R=231,G=239,B=0,A=255)
-	End Object
-	Components.Add(DrawLightSourceRadius0)
-
-	Begin Object Class=PointLightComponent Name=PointLightComponent0
-	    LightAffectsClassification=LAC_STATIC_AFFECTING
-		CastShadows=TRUE
-		CastStaticShadows=TRUE
-		CastDynamicShadows=FALSE
-		bForceDynamicLight=FALSE
-		UseDirectLightMap=TRUE
-		LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=FALSE,bInitialized=TRUE)
-		PreviewLightRadius=DrawLightRadius0
-		PreviewLightSourceRadius=DrawLightSourceRadius0
-	End Object
-	LightComponent=PointLightComponent0
-	Components.Add(PointLightComponent0)
+   Begin Object Class=PointLightComponent Name=PointLightComponent0 ObjName=PointLightComponent0 Archetype=PointLightComponent'Engine.Default__PointLightComponent'
+      PreviewLightRadius=DrawLightRadiusComponent'Engine.Default__PointLight:DrawLightRadius0'
+      CastDynamicShadows=False
+      UseDirectLightMap=True
+      LightingChannels=(Dynamic=False)
+      LightAffectsClassification=LAC_STATIC_AFFECTING
+      Name="PointLightComponent0"
+      ObjectArchetype=PointLightComponent'Engine.Default__PointLightComponent'
+   End Object
+   LightComponent=PointLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Light:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Light:Sprite'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=DrawLightRadiusComponent Name=DrawLightRadius0 ObjName=DrawLightRadius0 Archetype=DrawLightRadiusComponent'Engine.Default__DrawLightRadiusComponent'
+      Name="DrawLightRadius0"
+      ObjectArchetype=DrawLightRadiusComponent'Engine.Default__DrawLightRadiusComponent'
+   End Object
+   Components(1)=DrawLightRadius0
+   Components(2)=PointLightComponent0
+   Name="Default__PointLight"
+   ObjectArchetype=Light'Engine.Default__Light'
 }

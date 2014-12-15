@@ -2,21 +2,21 @@
  *	a delay, and handling hitting other actors in transit
  *	the Originator of this event should be the mover (InterpActor or subclass), which notifies us when things we might care about happen
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqEvent_Mover extends SequenceEvent
 	native(Sequence)
 	hidecategories(SequenceEvent);
 
 /** how long the mover should stay open before automatically closing (reverse playback)
- * values <= 0.0 turn off this auto behavior and allow manual control (via the "Completed" and "Reversed" output links for the attached matinee action)
+ * values <= 0.0 turn off this auto behavior and allow manual control (via the "Completed" and "Aborted" output links for the attached matinee action)
  */
 var() float StayOpenTime;
 
-cpptext
-{
-	virtual void OnCreated();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 event RegisterEvent()
 {
@@ -71,7 +71,7 @@ function NotifyDetached(Actor Other)
 	// should always be true, but iterators tend to crash when accessing None so be sure
 	if (Originator == None)
 	{
-		`warn("Originator mover missing");
+		WarnInternal("Originator mover missing");
 	}
 	else if (Pawn(Other) != None)
 	{
@@ -97,19 +97,16 @@ function NotifyFinishedOpen()
 
 defaultproperties
 {
-	ObjName="Mover"
-	ObjCategory="Physics"
-	MaxTriggerCount=0
-	StayOpenTime=1.5
-	bPlayerOnly=false
-	// activated when the first pawn gets on the mover
-	OutputLinks(0)=(LinkDesc="Pawn Attached")
-	// activated when all pawns have gotten off the mover
-	OutputLinks(1)=(LinkDesc="Pawn Detached")
-	// activated when the mover has been finished opening (playing forward in matinee) for StayOpenTime seconds
-	OutputLinks(2)=(LinkDesc="Open Finished")
-	// activated when something gets in the mover's way
-	OutputLinks(3)=(LinkDesc="Hit Actor")
-	// when the "Hit Actor" link is activated, this is set to the actor that the mover hit
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Actor Hit",bWriteable=true)
+   StayOpenTime=1.500000
+   MaxTriggerCount=0
+   bPlayerOnly=False
+   OutputLinks(0)=(LinkDesc="Pawn Attached")
+   OutputLinks(1)=(LinkDesc="Pawn Detached")
+   OutputLinks(2)=(LinkDesc="Open Finished")
+   OutputLinks(3)=(LinkDesc="Hit Actor")
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Actor Hit",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Mover"
+   ObjCategory="Physics"
+   Name="Default__SeqEvent_Mover"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

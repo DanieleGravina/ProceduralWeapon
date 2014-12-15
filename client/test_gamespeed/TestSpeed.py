@@ -5,7 +5,7 @@ import pickle
 import time
 
 from Costants import NUM_BOTS
-from Costants import PORT1, PORT2, PORT3, PORT4, PORT5
+from Costants import PORT
 
 from BalancedWeaponClient import BalancedWeaponClient
 from TestClientThread import TestClientThread
@@ -18,68 +18,39 @@ messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:
 
 
 N_CYCLES = 1
+NUM_SERVER = 7
 
 statics = {1:(), 2:(), 3:(), 4:(), 5:()}
 
 
-def initialize_threads():
+def initialize_server():
     clients = []
 
-    
-    # workaround to initialize properly server mode of UDK
-    client1 = BalancedWeaponClient(PORT1)
-    client2 = BalancedWeaponClient(PORT2)
-    client3 = BalancedWeaponClient(PORT3)
-    client4 = BalancedWeaponClient(PORT4)
-    client5 = BalancedWeaponClient(PORT5)
-
-
-    clients.append(client1)
-    clients.append(client2)
-    clients.append(client3)
-    clients.append(client4)
-    clients.append(client5)
+    for i in range(NUM_SERVER):
+        clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
 
-
 # Run the simulation on the server side (UDK)
-def simulate_population(iterations) :
+def simulate_population(population, statics) :
 
     stats = {}
     threads = []
 
-    # Create new threads
-    thread1 = TestClientThread(1, "Thread-1", PORT1, iterations)
-    thread2 = TestClientThread(2, "Thread-2", PORT2, iterations)
-    thread3 = TestClientThread(3, "Thread-3", PORT3, iterations)
-    thread4 = TestClientThread(4, "Thread-4", PORT4, iterations)
-    thread5 = TestClientThread(5, "Thread-5", PORT5, iterations)
+    for i in range(NUM_SERVER):
+        threads.append( myThread(i*2, "Thread-" + str(i), population, statics, PORT[i]) )
 
-    # Start new Threads
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-
-    # Add threads to thread list
-    threads.append(thread1)
-    threads.append(thread2)
-    threads.append(thread3)
-    threads.append(thread4)
-    threads.append(thread5)
+    for t in threads:
+        t.start()
 
     # Wait for all threads to complete
     for t in threads:
         stats.update(t.join())
 
     return stats
-
-
 
 def main():
 

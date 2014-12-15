@@ -1,5 +1,5 @@
 /*=============================================================================
-	Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+	Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 =============================================================================*/
  
 class SpeedTreeActor extends Actor
@@ -8,36 +8,34 @@ class SpeedTreeActor extends Actor
 	
 var() const editconst SpeedTreeComponent SpeedTreeComponent;
 
-cpptext
-{
-public:
-	// AActor interface.
-	/**
-	* Function that gets called from within Map_Check to allow this actor to check itself
-	* for any potential errors and register them with map check dialog.
-	*/
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
-{	
-	Begin Object Class=SpeedTreeComponent Name=SpeedTreeComponent0
-		bAllowApproximateOcclusion=TRUE
-		bForceDirectLightMap=TRUE
-	End Object
-	SpeedTreeComponent = SpeedTreeComponent0;
-	CollisionComponent = SpeedTreeComponent0;
-	Components.Add(SpeedTreeComponent0);
-	
-	bEdShouldSnap	= FALSE
-
-	bStatic			= TRUE 
-	bMovable		= FALSE
-	bNoDelete		= TRUE
-
-	bCollideActors	= TRUE
-	bBlockActors	= TRUE
-	bWorldGeometry	= TRUE
+{
+   Begin Object Class=SpeedTreeComponent Name=SpeedTreeComponent0 ObjName=SpeedTreeComponent0 Archetype=SpeedTreeComponent'Engine.Default__SpeedTreeComponent'
+      bAllowApproximateOcclusion=True
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      Name="SpeedTreeComponent0"
+      ObjectArchetype=SpeedTreeComponent'Engine.Default__SpeedTreeComponent'
+   End Object
+   SpeedTreeComponent=SpeedTreeComponent0
+   Components(0)=SpeedTreeComponent0
+   bStatic=True
+   bNoDelete=True
+   bWorldGeometry=True
+   bMovable=False
+   bCollideActors=True
+   bBlockActors=True
+   CollisionComponent=SpeedTreeComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__SpeedTreeActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

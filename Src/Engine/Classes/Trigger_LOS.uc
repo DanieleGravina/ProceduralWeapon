@@ -1,9 +1,7 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Trigger_LOS extends Trigger;
-
-var array<PlayerController> PCsWithLOS;
 
 /**
  * Overridden to check for any players looking at this
@@ -18,8 +16,6 @@ simulated event Tick(float DeltaTime)
 	local vector cameraLoc;
 	local rotator cameraRot;
 	local float cameraDist;
-	local array<int> ActivateIndices;
-
 	// if any valid los events are attached,
 	if (FindEventsOfClass(class'SeqEvent_LOS',losEvents))
 	{
@@ -34,26 +30,14 @@ simulated event Tick(float DeltaTime)
 				for (idx = 0; idx < losEvents.Length; idx++)
 				{
 					evt = SeqEvent_LOS(losEvents[idx]);
-					if ( cameraDist <= evt.ScreenCenterDistance &&
+					if (cameraDist <= evt.ScreenCenterDistance &&
 						VSize(player.Pawn.Location-Location) <= evt.TriggerDistance &&
 						Normal(Location - cameraLoc) dot vector(cameraRot) > 0.f &&
-						(!evt.bCheckForObstructions || Player.LineOfSightTo(self, cameraLoc)) )
+						(!evt.bCheckForObstructions ||
+						 player.LineOfSightTo(self,cameraLoc)))
 					{
 						// attempt to activate the event
-						ActivateIndices[0] = 0;
-						if ( PCsWithLOS.Find(Player) == INDEX_NONE &&
-							losEvents[idx].CheckActivate(self, Player.Pawn, false, ActivateIndices) )
-						{
-							PCsWithLOS.AddItem(Player);
-						}
-					}
-					else if (PCsWithLOS.Find(Player) != INDEX_NONE)
-					{
-						ActivateIndices[0] = 1;
-						if (losEvents[idx].CheckActivate(self, Player.Pawn, false, ActivateIndices))
-						{
-							PCsWithLOS.RemoveItem(Player);
-						}
+						losEvents[idx].CheckActivate(self,player.Pawn,false);
 					}
 				}
 			}
@@ -63,8 +47,17 @@ simulated event Tick(float DeltaTime)
 
 defaultproperties
 {
-	bStatic=false
-
-	SupportedEvents.Empty
-	SupportedEvents.Add(class'SeqEvent_LOS')
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Trigger:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Trigger:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Trigger:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Trigger:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   SupportedEvents(0)=Class'Engine.SeqEvent_LOS'
+   Name="Default__Trigger_LOS"
+   ObjectArchetype=Trigger'Engine.Default__Trigger'
 }

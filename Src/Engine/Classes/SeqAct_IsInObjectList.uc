@@ -6,7 +6,7 @@
 * unchecked then if ANY of the objects attached to Object(s)ToTest are found, then we will
 * set "In List" to hot
 *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_IsInObjectList extends SequenceAction
 	native(Sequence);
@@ -16,53 +16,51 @@ var() bool bCheckForAllObjects;
 
 var private transient bool bObjectFound;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/**
+ * Determines whether this class should be displayed in the list of available ops in the UI's kismet editor.
+ *
+ * @param	TargetObject	the widget that this SequenceObject would be attached to.
+ *
+ * @return	TRUE if this sequence object should be available for use in the UI kismet editor
+ */
+event bool IsValidUISequenceObject( optional UIScreenObject TargetObject )
 {
-	/**
-	* When a IsInObjectList is Activated() it will look in the referenced
-	* list and then determine if the referenced object is in it
-	**/
-	void Activated();
-
-	/**
-	* IsInObjectList determines which of its outputs should be
-	* set to active
-	**/
-	void DeActivated();
-
-
-private:
-	/**
-	* Helper functions to determine if objects are in the list for each of the cases
-	**/
-	UBOOL TestForAllObjectsInList();
-	UBOOL TestForAnyObjectsInList();
+	return true;
 }
-
 
 defaultproperties
 {
-    bCheckForAllObjects=true
-
-
-	ObjName="IsIn ObjectList"
-	ObjCategory="Object List"
-	ObjColor=(R=255,G=0,B=255,A=255)
-
-
-    // all of the inputs / functionality this Action can do
-	InputLinks(0)=(LinkDesc="Test if in List")
-
-    // outputs that are set to hot depending
-	OutputLinks(0)=(LinkDesc="In List")
-	OutputLinks(1)=(LinkDesc="Not in List")
-
-
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Object(s)ToTest",MinVars=1)
-
-	// this is the LIST(S) object that we are going to check existence against
-	VariableLinks(1)=(ExpectedType=class'SeqVar_ObjectList',LinkDesc="ObjectListVar",bWriteable=true)
-
-
+   bCheckForAllObjects=True
+   InputLinks(0)=(LinkDesc="Test if in List")
+   OutputLinks(0)=(LinkDesc="In List")
+   OutputLinks(1)=(LinkDesc="Not in List")
+   VariableLinks(0)=(LinkDesc="Object(s)ToTest",PropertyName=)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_ObjectList',LinkDesc="ObjectListVar",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="IsIn ObjectList"
+   ObjCategory="Object List"
+   Name="Default__SeqAct_IsInObjectList"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

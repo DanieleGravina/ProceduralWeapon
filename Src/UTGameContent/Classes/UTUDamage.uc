@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTUDamage extends UTTimedPowerup;
 
@@ -22,7 +22,7 @@ simulated static function AddWeaponOverlay(UTGameReplicationInfo GRI)
 	GRI.VehicleWeaponEffects[0] = default.VehicleWeaponEffect;
 }
 
-function GivenTo(Pawn NewOwner, optional bool bDoNotActivate)
+function GivenTo(Pawn NewOwner, bool bDoNotActivate)
 {
 	local UTPawn P;
 
@@ -99,46 +99,50 @@ function PlayUDamageFadingSound()
 	}
 }
 
-
 defaultproperties
 {
-	PowerupStatName=POWERUPTIME_UDAMAGE
-
-	Begin Object Class=StaticMeshComponent Name=MeshComponentA
-		StaticMesh=StaticMesh'Pickups.Udamage.Mesh.S_Pickups_UDamage'
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-		CastShadow=false
-		bForceDirectLightMap=true
-		bCastDynamicShadow=false
-		bAcceptsLights=true
-		CollideActors=false
-		BlockRigidBody=false
-		Scale3D=(X=0.6,Y=0.6,Z=0.6)
-		MaxDrawDistance=8000
-		Translation=(X=0.0,Y=0.0,Z=+5.0)
-	End Object
-	DroppedPickupMesh=MeshComponentA
-	PickupFactoryMesh=MeshComponentA
-
-	Begin Object Class=UTParticleSystemComponent Name=PickupParticles
-		Template=ParticleSystem'Pickups.UDamage.Effects.P_Pickups_UDamage_Idle'
-		bAutoActivate=false
-		SecondsBeforeInactive=1.0f
-		Translation=(X=0.0,Y=0.0,Z=+5.0)
-	End Object
-	DroppedPickupParticles=PickupParticles
-
-	bReceiveOwnerEvents=true
-	PickupSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_UDamage_PickupCue'
-	UDamageFireSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_UDamage_FireCue'
-	UDamageFadingSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_UDamage_WarningCue'
-	PowerupOverSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_UDamage_EndCue'
-	OverlayMaterialInstance=Material'Pickups.UDamage.M_UDamage_Overlay'
-	DamageAmbientSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_UDamage_PowerLoopCue'
-	HudIndex=0
-	IconCoords=(U=792,UL=43,V=41,VL=58)
-
-	VehicleWeaponEffect=(Mesh=StaticMesh'Envy_Effects.Mesh.S_VH_Powerups',Material=MaterialInterface'Envy_Effects.Energy.Materials.M_VH_UDamage')
-	PP_Scene_Highlights=(X=-0.1,Y=0.04,Z=-0.2)
+   UDamageFireSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_UDamage_FireCue'
+   UDamageFadingSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_UDamage_WarningCue'
+   OverlayMaterialInstance=Material'PICKUPS.UDamage.M_UDamage_Overlay'
+   VehicleWeaponEffect=(Mesh=StaticMesh'Envy_Effects.Mesh.S_VH_Powerups',Material=Material'Envy_Effects.Energy.Materials.M_VH_UDamage')
+   DamageAmbientSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_UDamage_PowerLoopCue'
+   PowerupOverSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_UDamage_EndCue'
+   PowerupStatName="POWERUPTIME_UDAMAGE"
+   IconCoords=(U=792.000000,V=41.000000,UL=43.000000,VL=58.000000)
+   PP_Scene_HighLights=(X=-0.100000,Y=0.040000,Z=-0.200000)
+   bRenderOverlays=True
+   bReceiveOwnerEvents=True
+   PickupMessage="AMPLIFICATORE DANNI!"
+   PickupSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_UDamage_PickupCue'
+   Begin Object Class=StaticMeshComponent Name=MeshComponentA ObjName=MeshComponentA Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'PICKUPS.UDamage.Mesh.S_Pickups_UDamage'
+      CullDistance=8000.000000
+      CachedCullDistance=8000.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      CollideActors=False
+      BlockRigidBody=False
+      Translation=(X=0.000000,Y=0.000000,Z=5.000000)
+      Scale3D=(X=0.600000,Y=0.600000,Z=0.600000)
+      Name="MeshComponentA"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   DroppedPickupMesh=MeshComponentA
+   PickupFactoryMesh=MeshComponentA
+   Begin Object Class=UTParticleSystemComponent Name=PickupParticles ObjName=PickupParticles Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      Template=ParticleSystem'PICKUPS.UDamage.Effects.P_Pickups_UDamage_Idle'
+      bAutoActivate=False
+      Translation=(X=0.000000,Y=0.000000,Z=5.000000)
+      Name="PickupParticles"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   DroppedPickupParticles=PickupParticles
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTTimedPowerup:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTTimedPowerup:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTUDamage"
+   ObjectArchetype=UTTimedPowerup'UTGame.Default__UTTimedPowerup'
 }

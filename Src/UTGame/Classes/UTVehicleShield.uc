@@ -1,10 +1,10 @@
 /**
  * shield that vehicles can attach to themselves and activate/deactivate 
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
-class UTVehicleShield extends UDKWeaponShield
+class UTVehicleShield extends UTWeaponShield
 	abstract;
 
 var SoundCue ActivatedSound, DeactivatedSound;
@@ -63,9 +63,10 @@ event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vec
 
 defaultproperties
 {
-	bHidden=true
-	bCollideActors=false
-	bHardAttach=true
-	ShieldActivatedTime=1.8f
-	bFullyActive=false
+   ShieldActivatedTime=1.800000
+   bHidden=True
+   bHardAttach=True
+   bCollideActors=False
+   Name="Default__UTVehicleShield"
+   ObjectArchetype=UTWeaponShield'UTGame.Default__UTWeaponShield'
 }

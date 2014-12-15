@@ -1,14 +1,14 @@
 /*=============================================================================
 // LadderVolumes, when touched, cause ladder supporting actors to use Phys_Ladder.
 // note that underwater ladders won't be waterzones (no breathing problems)
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 ============================================================================= */
 
 class LadderVolume extends PhysicsVolume
 	native
 	placeable;
 
-var() rotator WallDir;
+var rotator WallDir;
 var vector LookDir;
 var vector ClimbDir;	// pawn can move in this direction (or reverse)
 var const Ladder LadderList;		// list of Ladder actors associated with this LadderVolume
@@ -18,19 +18,12 @@ var() bool  bAllowLadderStrafing;  // if true, players on ladder can strafe side
 
 var Pawn PendingClimber;
 
-/** Editor visual cue for the direction of the wall */
-var ArrowComponent WallDirArrow;
-
-cpptext
-{
-	// Editor modification
-#if WITH_EDITOR
-	FVector FindTop(FVector V);
-	FVector FindCenter();
-	virtual INT AddMyMarker(AActor *S);
-#endif
-	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 simulated event PostBeginPlay()
 {
@@ -38,6 +31,7 @@ simulated event PostBeginPlay()
 	local vector Dir;
 
 	Super.PostBeginPlay();
+	WallDir = Rotation;
 	LookDir = vector(WallDir);
 	if ( !bAutoPath && (LookDir.Z != 0) )
 	{
@@ -132,19 +126,24 @@ simulated event PhysicsChangedFor(Actor Other)
 
 defaultproperties
 {
-	Begin Object Class=ArrowComponent Name=Arrow
-		ArrowColor=(R=150,G=100,B=150)
-		ArrowSize=5.0
-	End Object
-	WallDirArrow = Arrow
-	Components.Add(Arrow)
-
-	Begin Object Name=BrushComponent0
-		HiddenEditor=false
-	End Object
-
-	RemoteRole=ROLE_SimulatedProxy
-	ClimbDir=(X=+0.0,Y=+0.0,Z=+1.0)
-	bAutoPath=true
-	bAllowLadderStrafing=true
+   ClimbDir=(X=0.000000,Y=0.000000,Z=1.000000)
+   bAutoPath=True
+   bAllowLadderStrafing=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowColor=(B=150,G=100,R=150,A=255)
+      ArrowSize=5.000000
+      Name="Arrow"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Components(1)=Arrow
+   RemoteRole=ROLE_SimulatedProxy
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__LadderVolume"
+   ObjectArchetype=PhysicsVolume'Engine.Default__PhysicsVolume'
 }

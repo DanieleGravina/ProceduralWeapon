@@ -1,9 +1,10 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleAttractorPoint extends ParticleModuleAttractorBase
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object);
 
 /**	The position of the point attractor from the source of the emitter.		*/
@@ -24,34 +25,21 @@ var(Attractor) bool									bAffectBaseVelocity;
 /**	If TRUE, set the velocity.												*/
 var(Attractor) bool									bOverrideVelocity;
 
-/**	If TRUE, treat the position as world space.  So don't transform the the point to localspace. */
-var(Attractor) bool									bUseWorldSpacePosition;
-
-cpptext
-{
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-	virtual void	Render3DPreview(FParticleEmitterInstance* Owner, const FSceneView* View,FPrimitiveDrawInterface* PDI);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bUpdateModule=true
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionPosition
-	End Object
-	Position=(Distribution=DistributionPosition)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionRange
-	End Object
-	Range=(Distribution=DistributionRange)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionStrength
-	End Object
-	Strength=(Distribution=DistributionStrength)
-	
-	StrengthByDistance=true
-	bAffectBaseVelocity=false
-	bOverrideVelocity=false
-
-	bSupported3DDrawMode=true
+   Position=(Distribution=DistributionPosition,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   Range=(Distribution=DistributionRange,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   Strength=(Distribution=DistributionStrength,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   StrengthByDistance=True
+   bUpdateModule=True
+   bSupported3DDrawMode=True
+   Name="Default__ParticleModuleAttractorPoint"
+   ObjectArchetype=ParticleModuleAttractorBase'Engine.Default__ParticleModuleAttractorBase'
 }

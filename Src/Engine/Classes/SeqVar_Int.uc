@@ -1,36 +1,38 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqVar_Int extends SequenceVariable
 	native(Sequence);
 
-cpptext
-{
-	virtual INT* GetRef()
-	{
-		return &IntValue;
-	}
-
-	virtual FString GetValueStr()
-	{
-		return FString::Printf(TEXT("%d"),IntValue);
-	}
-
-	virtual UBOOL SupportsProperty(UProperty *Property)
-	{
-		return (Property->IsA(UIntProperty::StaticClass()) ||
-				(Property->IsA(UArrayProperty::StaticClass()) && ((UArrayProperty*)Property)->Inner->IsA(UIntProperty::StaticClass())));
-	}
-
-	virtual void PublishValue(USequenceOp *Op, UProperty *Property, FSeqVarLink &VarLink);
-	virtual void PopulateValue(USequenceOp *Op, UProperty *Property, FSeqVarLink &VarLink);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() int				IntValue;
 
 defaultproperties
 {
-	ObjName="Int"
-	ObjCategory="Int"
-	ObjColor=(R=0,G=255,B=255,A=255)		// bright aqua / teal
+   ObjName="Int"
+   ObjCategory="Int"
+   ObjColor=(B=255,G=255,R=0,A=255)
+   Name="Default__SeqVar_Int"
+   ObjectArchetype=SequenceVariable'Engine.Default__SequenceVariable'
 }

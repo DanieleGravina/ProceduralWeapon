@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -55,3 +55,18 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vecto
 	}
 }
 
+defaultproperties
+{
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Trigger:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Trigger:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Trigger:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Trigger:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   Name="Default__TriggerStreamingLevel"
+   ObjectArchetype=Trigger'Engine.Default__Trigger'
+}

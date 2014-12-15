@@ -1,9 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVoice extends UTLocalMessage
 	abstract;
 
+var Array<SoundNodeWave> TauntSounds;
+var Array<SoundNodeWave> MatureTauntSounds;
+var SoundNodeWave WeaponTauntSounds[20];
+var Array<SoundNodeWave> EncouragementSounds;
+var Array<SoundNodeWave> ManDownSounds;
+var Array<SoundNodeWave> FlagKillSounds;
+var Array<SoundNodeWave> OrbKillSounds;
 var Array<SoundNodeWave> AckSounds;
 var Array<SoundNodeWave> FriendlyFireSounds;
 var Array<SoundNodeWave> GotYourBackSounds;
@@ -11,9 +18,12 @@ var Array<SoundNodeWave> NeedOurFlagSounds;
 var Array<SoundNodeWave> SniperSounds;
 var Array<SoundNodeWave> InPositionSounds;
 var Array<SoundNodeWave> HaveFlagSounds;
+var Array<SoundNodeWave> HaveOrbSounds;
+var Array<SoundNodeWave> UnderAttackSounds;
 var Array<SoundNodeWave> AreaSecureSounds;
 
 var SoundNodeWave IncomingSound;
+var SoundNodeWave EnemyOrbCarrierSound;
 var SoundNodeWave EnemyFlagCarrierSound;
 var SoundNodeWave EnemyFlagCarrierHereSound;
 var SoundNodeWave EnemyFlagCarrierHighSound;
@@ -21,10 +31,29 @@ var SoundNodeWave EnemyFlagCarrierLowSound;
 var SoundNodeWave MidfieldSound;
 var SoundNodeWave GotOurFlagSound;
 
+/** The set of taunt sounds that we pick from when a specific taunt animation is played. */
+struct TauntAnimSound
+{
+	/** Matches the EmoteTag property of the EmoteInfo struct in FamilyInfo. */
+	var	name	EmoteTag;
+
+	/** Indexes into the TauntSounds array. */
+	var array<int>	TauntSoundIndex;
+};
+
+/** Mapping from taunt animations to sounds to play. */
+var array<TauntAnimSound>	TauntAnimSoundMap;
+
 /** Offset into actor specific location speech array */
 var int LocationSpeechOffset;
 
 /** Index offsets for message groups */
+const TAUNTINDEXSTART = 0;
+const WEAPONTAUNTINDEXSTART = 100;
+const ENCOURAGEMENTINDEXSTART = 200;
+const MANDOWNINDEXSTART = 300;
+const FLAGKILLINDEXSTART = 400;
+const ORBKILLINDEXSTART = 500;
 const ACKINDEXSTART = 600;
 const FRIENDLYFIREINDEXSTART = 700;
 const GOTYOURBACKINDEXSTART = 800;
@@ -37,8 +66,86 @@ const KILLEDVEHICLEINDEXSTART = 1400;
 const ENEMYFLAGCARRIERINDEXSTART = 1500;
 const HOLDINGFLAGINDEXSTART = 1600;
 const AREASECUREINDEXSTART = 1700;
+const UNDERATTACKINDEXSTART = 1800;
 const GOTOURFLAGINDEXSTART = 1900;
 const NODECONSTRUCTEDINDEXSTART = 2000;
+
+static function int GetTauntMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype, class<DamageType> DamageType)
+{
+	local UTBot B;
+	local int R, TauntLength;
+	local class<UTDamageType> D;
+	local UTGame G;
+
+	if ( (FRand() < 0.5) && (UTBot(Sender) != None) )
+	{
+		G = UTGame(Sender.WorldInfo.Game);
+		if ( G != None )
+		{
+			// look for weapon specific taunt
+			D = class<UTDamageType>(DamageType);
+			if ( (D != None) && (D.default.CustomTauntIndex >= 0) && (D.default.CustomTauntIndex < 20)
+				&& (default.WeaponTauntSounds[D.default.CustomTauntIndex] != None)
+				&& (G.WeaponTauntUsed[D.default.CustomTauntIndex] == 0) )
+			{
+				R = WEAPONTAUNTINDEXSTART + D.Default.CustomTauntIndex;
+				G.WeaponTauntUsed[D.default.CustomTauntIndex] = 1;
+				return R;
+			}
+		}
+	}
+	TauntLength = default.TauntSounds.Length;
+	R = Rand(TauntLength);
+
+	B = UTBot(Sender);
+	if ( B == None )
+	{
+		return R + TAUNTINDEXSTART;
+	}
+	if ( R == B.LastTauntIndex )
+	{
+		R = (R+1)%TauntLength;
+	}
+	B.LastTauntIndex = R;
+
+	return R + TAUNTINDEXSTART;
+}
+
+static function int GetEncouragementMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype)
+{
+	if ( default.EncouragementSounds.Length == 0)
+	{
+		return -1;
+	}
+	return ENCOURAGEMENTINDEXSTART + Rand(default.EncouragementSounds.Length);
+}
+
+static function int GetManDownMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype, class<DamageType> DamageType)
+{
+	if ( default.ManDownSounds.Length == 0)
+	{
+		return -1;
+	}
+	return MANDOWNINDEXSTART + Rand(default.ManDownSounds.Length);
+}
+
+static function int GetFlagKillMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype, class<DamageType> DamageType)
+{
+	if ( (default.FlagKillSounds.Length == 0) || (FRand() < 0.6) )
+	{
+		return GetTauntMessageIndex(Sender, Recipient, MessageType, DamageType);
+	}
+	return FLAGKILLINDEXSTART + Rand(default.FlagKillSounds.Length);
+}
+
+static function int GetOrbKillMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype, class<DamageType> DamageType)
+{
+	if ( (default.OrbKillSounds.Length == 0) || (FRand() < 0.6) )
+	{
+		return GetTauntMessageIndex(Sender, Recipient, MessageType, DamageType);
+	}
+	return ORBKILLINDEXSTART + Rand(default.OrbKillSounds.Length);
+}
 
 static function int GetAckMessageIndex(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype)
 {
@@ -96,10 +203,54 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 	local UTGameObjective O;
 	local UTCTFFlag Flag;
 
-	MessageIndex -= 500;
+	if ( MessageIndex < default.TauntSounds.Length )
+	{
+		return default.TauntSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
 	if ( MessageIndex < 0 )
 	{
 		return None;
+	}
+	if ( MessageIndex < 20 )
+	{
+		return default.WeaponTauntSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
+	if ( MessageIndex < 0 )
+	{
+		return None;
+	}
+	if ( MessageIndex < default.EncouragementSounds.Length )
+	{
+		return default.EncouragementSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
+	if ( MessageIndex < 0 )
+	{
+		return None;
+	}
+	if ( MessageIndex < default.ManDownSounds.Length )
+	{
+		return default.ManDownSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
+	if ( MessageIndex < 0 )
+	{
+		return None;
+	}
+	if ( MessageIndex < default.FlagKillSounds.Length )
+	{
+		return default.FlagKillSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
+	if ( MessageIndex < 0 )
+	{
+		return None;
+	}
+	if ( MessageIndex < default.OrbKillSounds.Length )
+	{
+		return default.OrbKillSounds[MessageIndex];
 	}
 	MessageIndex -= 100;
 	if ( MessageIndex < 0 )
@@ -226,6 +377,10 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 	}
 	if ( MessageIndex < 100 )
 	{
+		if ( MessageIndex < default.HaveOrbSounds.Length )
+		{
+			return default.HaveOrbSounds[MessageIndex];
+		}
 		MessageIndex -= 50;
 		if ( MessageIndex < 0 )
 		{
@@ -246,7 +401,16 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 	{
 		return default.AreaSecureSounds[MessageIndex];
 	}
-	MessageIndex -= 200;
+	MessageIndex -= 100;
+	if ( MessageIndex < 0 )
+	{
+		return None;
+	}
+	if ( MessageIndex < default.UnderAttackSounds.Length )
+	{
+		return default.UnderAttackSounds[MessageIndex];
+	}
+	MessageIndex -= 100;
 	if ( MessageIndex < 0 )
 	{
 		return None;
@@ -259,6 +423,10 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 	if ( MessageIndex < 0 )
 	{
 		return None;
+	}
+	if ( MessageIndex == 0 )
+	{
+		return NodeConstructedSound(PC, OptionalObject);;
 	}
 	return None;
 }
@@ -281,11 +449,15 @@ static function SoundNodeWave EnemySound(PlayerController PC, object OptionalObj
 			if ( (UTPC != None) && (UTPC.WorldInfo.TimeSeconds - UTPC.LastIncomingMessageTime > 35) )
 			{
 				UTPC.LastIncomingMessageTime = UTPC.WorldInfo.TimeSeconds;
-			return default.IncomingSound;
-		}
+				return default.IncomingSound;
+			}
 			return None;
 		}
 
+		if ( class<UTOnslaughtGame>(PC.WorldInfo.GRI.GameClass) != None )
+		{
+			return default.EnemyOrbCarrierSound;
+		}
 		Flag = UTCTFFlag(PRI.GetFlag());
 		if ( Flag != None )
 		{
@@ -301,8 +473,8 @@ static function SoundNodeWave EnemySound(PlayerController PC, object OptionalObj
 		if ( (UTPC != None) && (UTPC.WorldInfo.TimeSeconds - UTPC.LastIncomingMessageTime > 25) )
 		{
 			UTPC.LastIncomingMessageTime = UTPC.WorldInfo.TimeSeconds;
-		return default.EnemyFlagCarrierSound;
-	}
+			return default.EnemyFlagCarrierSound;
+		}
 		return None;
 	}
 
@@ -358,6 +530,85 @@ static function bool AllowVoiceMessage(name MessageType, UTPlayerController PC, 
 	return true;
 }
 
+ /** Used to play a voice taunt that matches a taunt animation. */
+ static function SendVoiceForTauntAnim(Controller Sender, Name EmoteTag, bool bOnlyTeam)
+ {
+	local UTPlayerController PC;
+	local UTPlayerReplicationInfo SenderPRI;
+	local int SpeechIndex;
+	
+	SenderPRI = UTPlayerReplicationInfo(Sender.PlayerReplicationInfo);
+	if ( SenderPRI != None )
+	{
+		if ( Left(string(EmoteTag),5) ~= "Taunt" )
+		{
+            //Taunts should be heard by everybody
+			SpeechIndex = Rand(100);
+			bOnlyTeam = false;
+		}
+		else if ( EmoteTag == 'Encouragement' )
+		{ 
+			SpeechIndex = GetEncouragementMessageIndex(Sender, None, '');
+		}
+		else if ( EmoteTag == 'Ack' )
+		{ 
+			SpeechIndex = GetAckMessageIndex(Sender, None, '');
+		}
+		else if ( EmoteTag == 'InPosition' )
+		{ 
+			SpeechIndex = INPOSITIONINDEXSTART + Rand(default.InPositionSounds.Length);
+		}
+		else if ( EmoteTag == 'UnderAttack' )
+		{ 
+			SpeechIndex = UNDERATTACKINDEXSTART + Rand(default.UnderAttackSounds.Length);
+		}
+		else if ( EmoteTag == 'AreaSecure' )
+		{ 
+			SpeechIndex = AREASECUREINDEXSTART + Rand(default.AreaSecureSounds.Length);
+		}
+
+		foreach Sender.WorldInfo.AllControllers(class'UTPlayerController', PC)
+		{
+			if (!bOnlyTeam || Sender.WorldInfo.GRI.OnSameTeam(Sender, PC))
+			{
+				PC.ReceiveTauntMessage( SenderPRI, EmoteTag, SpeechIndex);
+			}
+		}
+	}
+ }
+
+/** Used to play a voice taunt that matches a taunt animation. */
+ static function ClientPlayTauntAnim(UTPlayerController PC, PlayerReplicationInfo Sender, Name EmoteTag, int Seed)
+ {
+	 local int i, TauntIndex;
+
+	 if ( Seed < 100 )
+	 {
+		 // Look for this EmoteTag, to find appropriate set of voice taunts
+		 TauntIndex = -1;
+		 for(i=0; i<default.TauntAnimSoundMap.length; i++)
+		 {
+			 if (default.TauntAnimSoundMap[i].EmoteTag == EmoteTag)
+			 {
+				 // Pick one randomly
+				 Seed = Min(Seed * default.TauntAnimSoundMap[i].TauntSoundIndex.length/100, default.TauntAnimSoundMap.Length);
+				 TauntIndex = TAUNTINDEXSTART + default.TauntAnimSoundMap[i].TauntSoundIndex[Seed];
+				 continue;
+			 }
+		 }
+	 }
+	 else
+	 {
+		 TauntIndex = Seed;
+	 }
+	
+	 // If found one, play it
+	 if(TauntIndex != -1)
+	 {
+		 PC.ReceiveLocalizedMessage( default.Class, TauntIndex, Sender );
+	 }
+ }
+
 /**
   *
   */
@@ -392,6 +643,14 @@ static function SendVoiceMessage(Controller Sender, PlayerReplicationInfo Recipi
 		}
 		if ( !bFoundFriendlyPlayer )
 		{
+	                if ( (SenderPC != None) && AllowVoiceMessage(MessageType, SenderPC, RecipientPC) )
+	                {
+				MessageIndex = GetMessageIndex(Sender, Recipient, MessageType, DamageType);
+	                	if ( MessageIndex != -1 )
+	                	{
+		        	        SenderPC.ReceiveBotVoiceMessage(SenderPRI, MessageIndex, None);
+	                	}
+			}
 			return;
 		}
 	}
@@ -412,6 +671,10 @@ static function SendVoiceMessage(Controller Sender, PlayerReplicationInfo Recipi
 		{
 			RecipientPC.ReceiveBotVoiceMessage(SenderPRI, MessageIndex, None);
 		}
+		if ( SenderPC != None )
+		{
+			SenderPC.ReceiveBotVoiceMessage(SenderPRI, MessageIndex, None);
+		}
 		return;
 	}
 
@@ -430,7 +693,7 @@ static function int GetMessageIndex(Controller Sender, PlayerReplicationInfo Rec
     switch (Messagetype)
     {
 		case 'TAUNT':
-			return -1;
+			return GetTauntMessageIndex(Sender, Recipient, MessageType, DamageType);
 
 		case 'INJURED':
 			InitCombatUpdate(Sender, Recipient, MessageType);
@@ -454,16 +717,19 @@ static function int GetMessageIndex(Controller Sender, PlayerReplicationInfo Rec
 			return -1;
 
 		case 'MANDOWN':
-			return -1;
+			return GetManDownMessageIndex(Sender, Recipient, MessageType, DamageType);
 
 		case 'FRIENDLYFIRE':
 			return GetFriendlyFireMessageIndex(Sender, Recipient, MessageType);
 
 		case 'ENCOURAGEMENT':
-			return -1;
+			return GetEncouragementMessageIndex(Sender, Recipient, MessageType);
+
+		case 'ORBKILL':
+			return GetOrbKillMessageIndex(Sender, Recipient, MessageType, DamageType);
 
 		case 'FLAGKILL':
-			return -1;
+			return GetFlagKillMessageIndex(Sender, Recipient, MessageType, DamageType);
 
 		case 'ACK':
 			return GetAckMessageIndex(Sender, Recipient, MessageType);
@@ -492,6 +758,10 @@ static function int GetMessageIndex(Controller Sender, PlayerReplicationInfo Rec
 		case 'VEHICLEKILL':
 			SendKilledVehicleMessage(Sender, Recipient, MessageType);
 			return -1;
+
+		case 'NODECONSTRUCTED':
+			SendNodeConstructedMessage(Sender, Recipient, MessageType);
+			return -1;
 	}
 	return -1;
 }
@@ -512,8 +782,8 @@ static function InitStatusUpdate(Controller Sender, PlayerReplicationInfo Recipi
 		if ( (BotOrders == 'defend') || (BotOrders == 'hold') )
 		{
 			if ( (UTDefensePoint(B.Pawn.Anchor) != None)
-				|| ((UTGameObjective(B.Squad.SquadObjective) != None) &&
-					(VSizeSq(B.Pawn.Location - B.Squad.SquadObjective.Location) < Square(UTGameObjective(B.Squad.SquadObjective).BaseRadius))) )
+				|| ((B.Squad.SquadObjective != None) &&
+					(VSizeSq(B.Pawn.Location - B.Squad.SquadObjective.Location) < Square(B.Squad.SquadObjective.BaseRadius))) )
 			{
 				InitCombatUpdate(Sender, Recipient, MessageType);
 				return;
@@ -531,6 +801,7 @@ static function InitStatusUpdate(Controller Sender, PlayerReplicationInfo Recipi
 static function InitCombatUpdate(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype)
 {
 	local int MessageIndex;
+	local UTPlayerController PC;
 
 	if ( Sender.Enemy == None )
 	{
@@ -542,7 +813,20 @@ static function InitCombatUpdate(Controller Sender, PlayerReplicationInfo Recipi
 	}
 	else
 	{
-		return;
+		if ( default.UnderAttackSounds.Length == 0 )
+		{
+			return;
+		}
+		ForEach Sender.WorldInfo.AllControllers(class'UTPlayerController', PC )
+		{
+			if ( Sender.WorldInfo.TimeSeconds - PC.LastCombatUpdateTime < 25 )
+			{
+				return;
+			}
+			PC.LastCombatUpdateTime = Sender.WorldInfo.TimeSeconds;
+			break;
+		}
+		MessageIndex = UNDERATTACKINDEXSTART + Rand(default.UnderAttackSounds.Length);
 	}
 	SendLocalizedMessage(Sender, Recipient, MessageType, MessageIndex);
 }
@@ -552,6 +836,20 @@ static function SetHoldingFlagUpdate(Controller Sender, PlayerReplicationInfo Re
 	local int MessageIndex;
 
 	MessageIndex = HOLDINGFLAGINDEXSTART;
+	if ( class<UTOnslaughtGame>(Sender.WorldInfo.GRI.GameClass) != None )
+	{
+		if ( default.HaveOrbSounds.Length == 0 )
+		{
+			return;
+		}
+		MessageIndex += Rand(default.HaveOrbSounds.Length);
+		SendLocalizedMessage(Sender, Recipient, MessageType, MessageIndex);
+		if ( PlayerController(Sender) == None )
+		{
+			SendLocationUpdate(Sender, Recipient, Messagetype, UTGame(Sender.WorldInfo.Game), Sender.Pawn);
+		}
+		return;
+	}
 	if ( default.HaveFlagSounds.Length == 0 )
 	{
 		return;
@@ -658,7 +956,6 @@ static function InitSniperUpdate(Controller Sender, PlayerReplicationInfo Recipi
 
 static function SendEnemyStatusUpdate(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype)
 {
-	local UTPlayerReplicationInfo EnemyPRI;
 	local object EnemyObject;
 	local UTVehicle V;
 	local int MessageIndex;
@@ -667,12 +964,11 @@ static function SendEnemyStatusUpdate(Controller Sender, PlayerReplicationInfo R
 	{
 		return;
 	}
-
+	
 	// possibly say "incoming!" or identify if flag/orb carrier or big vehicle
 	MessageIndex = ENEMYSTATUSINDEXSTART;
-	EnemyPRI = UTPlayerReplicationInfo(Sender.Enemy.PlayerReplicationInfo);
-	EnemyObject = EnemyPRI;
-	if ( (EnemyObject == None) || !EnemyPRI.bHasFlag )
+	EnemyObject = Sender.Enemy.PlayerReplicationInfo;
+	if ( (EnemyObject == None) || !Sender.Enemy.PlayerReplicationInfo.bHasFlag )
 	{
 		// maybe send vehicle class instead
 		V = UTVehicle(Sender.Enemy);
@@ -688,7 +984,7 @@ static function SendEnemyStatusUpdate(Controller Sender, PlayerReplicationInfo R
 	}
 	SendLocalizedMessage(Sender, Recipient, MessageType, MessageIndex, EnemyObject);
 
-	if ( (V == None) && !EnemyPRI.bHasFlag )
+	if ( (V == None) && !Sender.Enemy.PlayerReplicationInfo.bHasFlag )
 	{
 		// don't say "incoming" + location
 		return;
@@ -710,6 +1006,18 @@ static function SendKilledVehicleMessage(Controller Sender, PlayerReplicationInf
 	SendLocalizedMessage(Sender, Recipient, MessageType, KILLEDVEHICLEINDEXSTART, B.KilledVehicleClass);
 }
 
+static function SendNodeConstructedMessage(Controller Sender, PlayerReplicationInfo Recipient, Name Messagetype)
+{
+	local UTBot B;
+
+	B = UTBot(Sender);
+	if ( (B == None) || (B.ConstructedNode == None) )
+	{
+		return;
+	}
+	SendLocalizedMessage(Sender, Recipient, MessageType, NODECONSTRUCTEDINDEXSTART, B.ConstructedNode);
+}
+
 static function SoundNodeWave KilledVehicleSound(PlayerController PC, object OptionalObject)
 {
 	local class<UTVehicle> VehicleClass;
@@ -723,6 +1031,37 @@ static function SoundNodeWave KilledVehicleSound(PlayerController PC, object Opt
 
 	return (VehicleClass.default.VehicleDestroyedSound.Length > default.LocationSpeechOffset)
 				? VehicleClass.default.VehicleDestroyedSound[default.LocationSpeechOffset]
+				: None;
+}
+
+static function SoundNodeWave NodeConstructedSound(PlayerController PC, object OptionalObject)
+{
+	local UTOnslaughtPowerNode N;
+
+	N = UTOnslaughtPowerNode(OptionalObject);
+
+	if ( N == None )
+	{
+		return None;
+	}
+	if ( N.PrimeCore != None )
+	{
+		if ( N.bDualPrimeCore || PC.WorldInfo.GRI.OnSameTeam(PC, N.PrimeCore) )
+		{
+			return (N.CapturedPrimeSpeech.Length > default.LocationSpeechOffset)
+						? N.CapturedPrimeSpeech[default.LocationSpeechOffset]
+						: None;
+		}
+		else
+		{
+			return (N.CapturedEnemyPrimeSpeech.Length > default.LocationSpeechOffset)
+						? N.CapturedEnemyPrimeSpeech[default.LocationSpeechOffset]
+						: None;
+		}
+	}
+
+	return (N.CapturedLocationSpeech.Length > default.LocationSpeechOffset)
+				? N.CapturedLocationSpeech[default.LocationSpeechOffset]
 				: None;
 }
 
@@ -801,6 +1140,10 @@ static function bool AddAnnouncement(UTAnnouncer Announcer, int MessageIndex, op
 		{
 			return false;
 		}
+		if ( (MessageIndex < default.TauntSounds.Length) && (class<UTVoice>(A.AnnouncementClass) != None) && (A.MessageIndex < class<UTVoice>(A.AnnouncementClass).default.TauntSounds.Length) )
+		{
+			return false;
+		}
 	}
 
 	super.AddAnnouncement(Announcer, MessageIndex, PRI, OptionalObject);
@@ -809,11 +1152,9 @@ static function bool AddAnnouncement(UTAnnouncer Announcer, int MessageIndex, op
 
 defaultproperties
 {
-	bShowPortrait=true
-	bIsConsoleMessage=false
-	AnnouncementDelay=0.75
-	AnnouncementPriority=-1
-	AnnouncementVolume=2.0
+   AnnouncementPriority=-1
+   bShowPortrait=True
+   AnnouncementDelay=0.750000
+   Name="Default__UTVoice"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }
-
-

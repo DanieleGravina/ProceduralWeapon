@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -8,6 +8,8 @@ class UTSeqAct_SelfDestruct extends SequenceAction;
 
 defaultproperties
 {
-	ObjName="Self Destruct"
-	ObjCategory="Vehicle"
+   ObjName="Self Destruct"
+   ObjCategory="Vehicle"
+   Name="Default__UTSeqAct_SelfDestruct"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** spawns a ghost to magically fire a weapon for cinematics
@@ -116,20 +116,18 @@ event bool Update(float DeltaTime)
 
 defaultproperties
 {
-	ObjName="Dummy Weapon Fire"
-	ObjCategory="Cinematic"
-	bCallHandler=false
-	bAutoActivateOutputLinks=false
-
-	ShotsToFire=1
-
-	InputLinks(0)=(LinkDesc="Start Firing")
-	InputLInks(1)=(LinkDesc="Stop Firing")
-
-	OutputLinks(0)=(LinkDesc="Out")
-	OutputLinks(1)=(LinkDesc="Finished")
-	OutputLinks(2)=(LinkDesc="Stopped")
-
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Origin",PropertyName=Origin,MaxVars=1)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Target",PropertyName=Target,MaxVars=1)
+   ShotsToFire=1
+   bCallHandler=False
+   bAutoActivateOutputLinks=False
+   InputLinks(0)=(LinkDesc="Start Firing")
+   InputLinks(1)=(LinkDesc="Stop Firing")
+   OutputLinks(0)=(LinkDesc="Out")
+   OutputLinks(1)=(LinkDesc="Finished")
+   OutputLinks(2)=(LinkDesc="Stopped")
+   VariableLinks(0)=(LinkDesc="Origin",PropertyName="Origin",MaxVars=1)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Target",PropertyName="Target",MinVars=1,MaxVars=1)
+   ObjName="Dummy Weapon Fire"
+   ObjCategory="Cinematic"
+   Name="Default__UTSeqAct_DummyWeaponFire"
+   ObjectArchetype=SeqAct_Latent'Engine.Default__SeqAct_Latent'
 }

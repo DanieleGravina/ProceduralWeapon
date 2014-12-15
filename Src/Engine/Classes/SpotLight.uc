@@ -1,91 +1,71 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SpotLight extends Light
-	native(Light)
-	ClassGroup(Lights,SpotLights)
+	native
 	placeable;
 
-cpptext
-{
-#if WITH_EDITOR
-	// AActor interface.
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-#endif
-	/**
-	 * This will determine which icon should be displayed for this light.
-	 **/
-	virtual void DetermineAndSetEditorIcon();
-
-	/**
-	 * Called after this actor has been pasted into a level.  Attempts to catch cases where designers are pasting in really old
-	 * T3D data that was created when component instancing wasn't working correctly.
-	 */
-	virtual void PostEditImport();
-
-	virtual void PostLoad();
-
-    /**
-	 * Called from within SpawnActor, setting up the default value for the Lightmass light source radius.
-	 */
-	virtual void Spawned();
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=Sprite
-		Sprite=Texture2D'EditorResources.LightIcons.Light_Spot_Stationary_Statics'
-	End Object
-
-	// Light radius visualization.
-	Begin Object Class=DrawLightRadiusComponent Name=DrawLightRadius0
-	End Object
-	Components.Add(DrawLightRadius0)
-
-	// Inner cone visualization.
-	Begin Object Class=DrawLightConeComponent Name=DrawInnerCone0
-		ConeColor=(R=150,G=200,B=255)
-	End Object
-	Components.Add(DrawInnerCone0)
-
-	// Outer cone visualization.
-	Begin Object Class=DrawLightConeComponent Name=DrawOuterCone0
-		ConeColor=(R=200,G=255,B=255)
-	End Object
-	Components.Add(DrawOuterCone0)
-
-	Begin Object Class=DrawLightRadiusComponent Name=DrawLightSourceRadius0
-		SphereColor=(R=231,G=239,B=0,A=255)
-	End Object
-	Components.Add(DrawLightSourceRadius0)
-
-	// Light component.
-	Begin Object Class=SpotLightComponent Name=SpotLightComponent0
-	    LightAffectsClassification=LAC_STATIC_AFFECTING
-		CastShadows=TRUE
-		CastStaticShadows=TRUE
-		CastDynamicShadows=FALSE
-		bForceDynamicLight=FALSE
-		UseDirectLightMap=TRUE
-		LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=FALSE,bInitialized=TRUE)
-	    PreviewLightRadius=DrawLightRadius0
-		PreviewInnerCone=DrawInnerCone0
-		PreviewOuterCone=DrawOuterCone0
-		PreviewLightSourceRadius=DrawLightSourceRadius0
-	End Object
-	LightComponent=SpotLightComponent0
-	Components.Add(SpotLightComponent0)
-
-	Begin Object Class=ArrowComponent Name=ArrowComponent0
-		ArrowColor=(R=150,G=200,B=255)
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		bTreatAsASprite=True
-		SpriteCategoryName="Lighting"
-	End Object
-	Components.Add(ArrowComponent0)
-
-	Rotation=(Pitch=-16384,Yaw=0,Roll=0)
-
+   Begin Object Class=SpotLightComponent Name=SpotLightComponent0 ObjName=SpotLightComponent0 Archetype=SpotLightComponent'Engine.Default__SpotLightComponent'
+      PreviewInnerCone=DrawLightConeComponent'Engine.Default__SpotLight:DrawInnerCone0'
+      PreviewOuterCone=DrawLightConeComponent'Engine.Default__SpotLight:DrawOuterCone0'
+      PreviewLightRadius=DrawLightRadiusComponent'Engine.Default__SpotLight:DrawLightRadius0'
+      CastDynamicShadows=False
+      UseDirectLightMap=True
+      LightingChannels=(Dynamic=False)
+      LightAffectsClassification=LAC_STATIC_AFFECTING
+      Name="SpotLightComponent0"
+      ObjectArchetype=SpotLightComponent'Engine.Default__SpotLightComponent'
+   End Object
+   LightComponent=SpotLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Light:Sprite'
+      Sprite=Texture2D'EngineResources.LightIcons.Light_Spot_Stationary_Statics'
+      ObjectArchetype=SpriteComponent'Engine.Default__Light:Sprite'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=DrawLightRadiusComponent Name=DrawLightRadius0 ObjName=DrawLightRadius0 Archetype=DrawLightRadiusComponent'Engine.Default__DrawLightRadiusComponent'
+      Name="DrawLightRadius0"
+      ObjectArchetype=DrawLightRadiusComponent'Engine.Default__DrawLightRadiusComponent'
+   End Object
+   Components(1)=DrawLightRadius0
+   Begin Object Class=DrawLightConeComponent Name=DrawInnerCone0 ObjName=DrawInnerCone0 Archetype=DrawLightConeComponent'Engine.Default__DrawLightConeComponent'
+      Name="DrawInnerCone0"
+      ObjectArchetype=DrawLightConeComponent'Engine.Default__DrawLightConeComponent'
+   End Object
+   Components(2)=DrawInnerCone0
+   Begin Object Class=DrawLightConeComponent Name=DrawOuterCone0 ObjName=DrawOuterCone0 Archetype=DrawLightConeComponent'Engine.Default__DrawLightConeComponent'
+      ConeColor=(B=255,G=255,R=200,A=255)
+      Name="DrawOuterCone0"
+      ObjectArchetype=DrawLightConeComponent'Engine.Default__DrawLightConeComponent'
+   End Object
+   Components(3)=DrawOuterCone0
+   Components(4)=SpotLightComponent0
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowColor=(B=255,G=200,R=150,A=255)
+      Name="ArrowComponent0"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Components(5)=ArrowComponent0
+   Rotation=(Pitch=-16384,Yaw=0,Roll=0)
+   DesiredRotation=(Pitch=-16384,Yaw=0,Roll=0)
+   Name="Default__SpotLight"
+   ObjectArchetype=Light'Engine.Default__Light'
 }

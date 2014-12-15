@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -17,24 +17,21 @@ var float InterpolateElapsed;
 // Previous values, used in lerp()
 var float OldMotionBlurAmount;
 
-cpptext
-{
-	void Activated();
-	void DeActivated();
-	virtual UBOOL UpdateOp(FLOAT DeltaTime);
-};
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	InterpolateElapsed = 0
-	InterpolateSeconds = 2
-	ObjName="Motion Blur"
-	ObjCategory="Camera"
-
-	// typical settings
-	MotionBlurAmount = 0.1f;
-
-	InputLinks(0)=(LinkDesc="Enable")
-	InputLinks(1)=(LinkDesc="Disable")
+   MotionBlurAmount=0.100000
+   InterpolateSeconds=2.000000
+   InputLinks(0)=(LinkDesc="Enable")
+   InputLinks(1)=(LinkDesc="Disable")
+   ObjName="Motion Blur"
+   ObjCategory="Camera"
+   Name="Default__SeqAct_SetMotionBlurParams"
+   ObjectArchetype=SeqAct_Latent'Engine.Default__SeqAct_Latent'
 }

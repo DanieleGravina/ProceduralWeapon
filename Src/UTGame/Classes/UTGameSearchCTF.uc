@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -9,12 +9,9 @@ class UTGameSearchCTF extends UTGameSearchCommon;
 
 defaultproperties
 {
-	GameClass="UTGameContent.UTCTFGame_Content"
-	GameSettingsClass=class'UTGame.UTGameSettingsCTF'
-
-	// Which server side query to execute
-	Query=(ValueIndex=QUERY_CTF)
-
-	// Set the specific game mode that we are searching for
-	LocalizedSettings(0)=(Id=CONTEXT_GAME_MODE,ValueIndex=CONTEXT_GAME_MODE_CTF,AdvertisementType=ODAT_OnlineService)
+   Query=(ValueIndex=2)
+   GameSettingsClass=Class'UTGame.UTGameSettingsCTF'
+   LocalizedSettings(0)=(ValueIndex=1)
+   Name="Default__UTGameSearchCTF"
+   ObjectArchetype=UTGameSearchCommon'UTGame.Default__UTGameSearchCommon'
 }

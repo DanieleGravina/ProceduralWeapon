@@ -1,7 +1,50 @@
 /**
  * Dataprovider that provides an array of strings.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTUIDataProvider_StringArray extends UDKUIDataProvider_StringArray;
+class UTUIDataProvider_StringArray extends UTUIDataProvider_SimpleElementProvider
+	native(UI);
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/** Strings being provided by this provider. */
+var array<string> Strings;
+
+/** @return Returns the number of elements(rows) provided. */
+native function int GetElementCount();
+
+defaultproperties
+{
+   Name="Default__UTUIDataProvider_StringArray"
+   ObjectArchetype=UTUIDataProvider_SimpleElementProvider'UTGame.Default__UTUIDataProvider_SimpleElementProvider'
+}

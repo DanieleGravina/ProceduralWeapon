@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFHUD extends UTTeamHUD;
 
@@ -37,8 +37,8 @@ simulated function Timer()
 		|| (PlayerOwner.IsSpectating() && UTPlayerController(PlayerOwner).bBehindView) )
 	return;
 
-	if ( (UTGRI != None) && (PawnOwnerPRI.Team != None)
-		&& UTGRI.FlagIsHeldEnemy(PawnOwnerPRI.Team.TeamIndex) )
+	if ( (UTGameReplicationInfo(WorldInfo.GRI) != None) && (PawnOwnerPRI.Team != None)
+		&& UTGameReplicationInfo(WorldInfo.GRI).FlagIsHeldEnemy(PawnOwnerPRI.Team.TeamIndex) )
 	{
 		if ( PawnOwnerPRI.bHasFlag )
 		{
@@ -53,6 +53,8 @@ simulated function Timer()
 	{
 		PlayerOwner.ReceiveLocalizedMessage( class'UTCTFHUDMessage', 0 );
 	}
+
+
 }
 
 function DisplayTeamLogos(byte TeamIndex, vector2d POS, optional float DestScale=1.0)
@@ -86,10 +88,10 @@ function DisplayTeamLogos(byte TeamIndex, vector2d POS, optional float DestScale
 			if ( UTGRI.FlagState[TeamIndex] == FLAG_Down )
 			{
 			    Canvas.SetPos(POS.X-2, POS.Y - (7 * DestScale * Modifier)+2);
-				Canvas.DrawTile(AltHudTexture, 27 * DestScale * Modifier, 27 * DestScale * Modifier, 893,0,27,37,BLACK);
+				Canvas.DrawColorizedTile(AltHudTexture, 27 * DestScale * Modifier, 27 * DestScale * Modifier, 893,0,27,37,BLACK);
 
 			    Canvas.SetPos(POS.X, POS.Y - (7 * DestScale * Modifier));
-				Canvas.DrawTile(AltHudTexture, 27 * DestScale * Modifier, 27 * DestScale * Modifier, 893,0,27,37,Alpha);
+				Canvas.DrawColorizedTile(AltHudTexture, 27 * DestScale * Modifier, 27 * DestScale * Modifier, 893,0,27,37,Alpha);
 			}
 
 			break;
@@ -99,13 +101,13 @@ function DisplayTeamLogos(byte TeamIndex, vector2d POS, optional float DestScale
         	DestScale *=  Modifier;
 
 			Canvas.SetPos(POS.X - (20 * DestScale), POS.Y - (22*DestScale));
-			Canvas.DrawTile(AltHudTexture,27*DestScale, 27*DestScale,893,64,27,27,TC);
+			Canvas.DrawColorizedTile(AltHudTexture,27*DestScale, 27*DestScale,893,64,27,27,TC);
 
 			Canvas.SetPos(POS.X-8, POS.Y - (15*DestScale)+2);
-			Canvas.DrawTile(AltHudTexture,40*DestScale , 38*DestScale,843,48,40,38,BLACK);
+			Canvas.DrawColorizedTile(AltHudTexture,40*DestScale , 38*DestScale,843,48,40,38,BLACK);
 
 			Canvas.SetPos(POS.X-6, POS.Y - (15*DestScale));
-			Canvas.DrawTile(AltHudTexture,40*DestScale , 38*DestScale,843,48,40,38,Alpha);
+			Canvas.DrawColorizedTile(AltHudTexture,40*DestScale , 38*DestScale,843,48,40,38,Alpha);
 
 			break;
 		}
@@ -129,8 +131,10 @@ function Actor GetDirectionalDest(byte TeamIndex)
 
 defaultproperties
 {
-	bShowDirectional=true
-	bShowFragCount=false
-	MapPosition=(X=0.99,Y=0.01)
+   bShowDirectional=True
+   bShowFragCount=False
+   ScoreboardSceneTemplate=Scoreboard_CTF'UI_Scenes_Scoreboards.sbCTF'
+   MapPosition=(X=0.990000,Y=0.010000)
+   Name="Default__UTCTFHUD"
+   ObjectArchetype=UTTeamHUD'UTGame.Default__UTTeamHUD'
 }
-

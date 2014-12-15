@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Used to affect level streaming in the game and level visibility in the editor.
  */
@@ -7,11 +7,6 @@ class LevelStreamingVolume extends Volume
 	native
 	hidecategories(Advanced,Attachment,Collision,Volume)
 	placeable;
-
-struct CheckpointRecord
-{
-	var bool bDisabled;
-};
 
 /** Levels affected by this level streaming volume. */
 var() noimport const editconst array<LevelStreaming> StreamingLevels;
@@ -37,18 +32,7 @@ enum EStreamingVolumeUsage
 };
 
 /** Determines what this volume is used for, e.g. whether to control loading, loading and visibility or just visibilty (blocking on load) */
-var() EStreamingVolumeUsage	StreamingUsage;
-
-/** If TRUE, level will stream when closer than TestVolumeDistance to the volume. */
-var()	bool	bTestDistanceToVolume;
-
-/** If bTestDistanceToVolume is TRUE, level will stream in if closer than this to volume.  */
-var()	float	TestVolumeDistance;
-
-
-
-var deprecated EStreamingVolumeUsage	Usage;
-
+var() EStreamingVolumeUsage	Usage;
 
 /**
  * Kismet support for toggling bDisabled.
@@ -72,62 +56,36 @@ simulated function OnToggle(SeqAct_Toggle action)
 	}
 }
 
-function CreateCheckpointRecord(out CheckpointRecord Record)
-{
-	Record.bDisabled = bDisabled;
-}
-
-function ApplyCheckpointRecord(const out CheckpointRecord Record)
-{
-	bDisabled = Record.bDisabled;
-}
-
-cpptext
-{
-	// UObject interace.
-	/**
-	 * Serialize function.
-	 *
-	 * @param	Ar	Archive to serialize with.
-	 */
-	void Serialize( FArchive& Ar );
-
-	/**
-	 * Performs operations after the object is loaded. 
-	 * Used for fixing up deprecated fields. 
-	 */
-	virtual void PostLoad();
-
-	// AActor interface.
-	/**
-	 * Function that gets called from within Map_Check to allow this actor to check itself
-	 * for any potential errors and register them with map check dialog.
-	 */
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=BrushComponent0
-		CollideActors=False
-		BlockActors=False
-		BlockZeroExtent=False
-		BlockNonZeroExtent=False
-		BlockRigidBody=False
-	End Object
-
-	bColored=true
-	// Orange Brush
-	BrushColor=(R=255,G=165,B=0,A=255)
-
-	bCollideActors=False
-	bBlockActors=False
-	bProjTarget=False
-	SupportedEvents.Empty
-	SupportedEvents(0)=class'SeqEvent_Touch'
-	// streaming volumes are server side - resultant levels to load or not is what is sent to the client
-	bForceAllowKismetModification=true
-	StreamingUsage=SVB_LoadingAndVisibility
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      CollideActors=False
+      BlockNonZeroExtent=False
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bCollideActors=False
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__LevelStreamingVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

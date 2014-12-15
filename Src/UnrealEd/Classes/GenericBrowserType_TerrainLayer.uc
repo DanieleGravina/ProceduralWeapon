@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // GenericBrowserType_TerrainLayer: TerrainLayers
@@ -9,12 +9,15 @@ class GenericBrowserType_TerrainLayer
 	extends GenericBrowserType
 	native;
 
-cpptext
-{
-	virtual void Init();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
+
 defaultproperties
 {
-	Description="Terrain Layers"
+   Description="Terrain Layer"
+   Name="Default__GenericBrowserType_TerrainLayer"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

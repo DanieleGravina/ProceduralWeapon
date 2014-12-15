@@ -1,43 +1,44 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PhATSkeletalMeshComponent extends SkeletalMeshComponent
 	native;
 
-cpptext
-{
-	// UPrimitiveComponent interface.
-	virtual void Render(const FSceneView* View, class FPrimitiveDrawInterface* PDI);
-	virtual void RenderHitTest(const FSceneView* View,class FPrimitiveDrawInterface* PDI);
-
-	/**
-	 * Creates a proxy to represent the primitive to the scene manager in the rendering thread.
-	 * @return The proxy object.
-	 */
-	virtual FPrimitiveSceneProxy* CreateSceneProxy();
-
-	// PhATSkeletalMeshComponent interface
-	void RenderAssetTools(const FSceneView* View, class FPrimitiveDrawInterface* PDI, UBOOL bHitTest);
-	void DrawHierarchy(FPrimitiveDrawInterface* PDI, UBOOL bAnimSkel);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var transient native const pointer	PhATPtr;
 
 /** Mesh-space matrices showing state of just animation (ie before physics) - useful for debugging! */
-var transient native const array<AnimNode.BoneAtom>	AnimationSpaceBases;
+var transient native const array<matrix>	AnimationSpaceBases;
 
 defaultproperties
 {
-	Begin Object Class=AnimNodeSequence Name=AnimNodeSeq0
-		bLooping=true
-	End Object
-	Animations=AnimNodeSeq0
-
-	bHasPhysicsAssetInstance=false
-	bUpdateKinematicBonesFromAnimation=true
-	bUpdateJointsFromAnimation=true
-	ForcedLodModel=1
-	PhysicsWeight=1.0
-
-	RBCollideWithChannels=(Default=TRUE)
+   Begin Object Class=AnimNodeSequence Name=AnimNodeSeq0 ObjName=AnimNodeSeq0 Archetype=AnimNodeSequence'Engine.Default__AnimNodeSequence'
+      bLooping=True
+      Name="AnimNodeSeq0"
+      ObjectArchetype=AnimNodeSequence'Engine.Default__AnimNodeSequence'
+   End Object
+   Animations=AnimNodeSequence'UnrealEd.Default__PhATSkeletalMeshComponent:AnimNodeSeq0'
+   PhysicsWeight=1.000000
+   ForcedLodModel=1
+   bHasPhysicsAssetInstance=True
+   bUpdateJointsFromAnimation=True
+   RBCollideWithChannels=(Default=True)
+   Name="Default__PhATSkeletalMeshComponent"
+   ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
 }

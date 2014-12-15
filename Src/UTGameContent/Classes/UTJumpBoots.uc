@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 /** jump boots drastically increase a player's double jump velocity */
 class UTJumpBoots extends UTInventory;
@@ -7,11 +7,11 @@ class UTJumpBoots extends UTInventory;
 /** the Z velocity boost to give the owner's double jumps */
 var float MultiJumpBoost;
 /** the number of jumps that the owner can do before the boots run out */
-var repnotify byte Charges;
+var repnotify databinding byte Charges;
 /** sound to play when the boots are used */
 var SoundCue ActivateSound;
 /** message to send to the owner when the boots run out */
-var localized string RanOutText;
+var databinding	localized string RanOutText;
 
 replication
 {
@@ -19,7 +19,7 @@ replication
 		Charges;
 }
 
-function GivenTo(Pawn NewOwner, optional bool bDoNotActivate)
+function GivenTo(Pawn NewOwner, bool bDoNotActivate)
 {
 	Super.GivenTo(NewOwner, bDoNotActivate);
 	AdjustPawn(UTPawn(NewOwner), false);
@@ -125,14 +125,7 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 	{
 		Charges = default.Charges;
 		UTPawn(Owner).JumpBootCharge = Charges;
-		if ( PickupFactory(Pickup) != None )
-		{
-			PickupFactory(Pickup).PickedUpBy(Instigator);
-		}
-		else if ( DroppedPickup(Pickup) != None )
-		{
-			DroppedPickup(Pickup).PickedUpBy(Instigator);
-		}
+		Pickup.PickedUpBy(Instigator);
 		AnnouncePickup(Instigator);
 		return true;
 	}
@@ -172,27 +165,36 @@ static function float DetourWeight(Pawn Other, float PathWeight)
 
 defaultproperties
 {
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent1
-		StaticMesh=StaticMesh'Pickups.JumpBoots.Mesh.S_UN_Pickups_Jumpboots002'
-		bOnlyOwnerSee=false
-		CastShadow=false
-		bForceDirectLightMap=true
-		bCastDynamicShadow=false
-		CollideActors=false
-		BlockRigidBody=false
-		Translation=(X=0.0,Y=0.0,Z=-20.0)
-		Scale=1.7
-	End Object
-	DroppedPickupMesh=StaticMeshComponent1
-	PickupFactoryMesh=StaticMeshComponent1
-
-	MaxDesireability=1.00
-	RespawnTime=30.0
-	bReceiveOwnerEvents=true
-	bDropOnDeath=true
-	PickupSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_JumpBoots_PickupCue'
-
-	Charges=3
-	MultiJumpBoost=750.0
-	ActivateSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_JumpBoots_JumpCue'
+   MultiJumpBoost=750.000000
+   Charges=3
+   ActivateSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_JumpBoots_JumpCue'
+   RanOutText="Gli Stivali Anti-Gravità sono esauriti."
+   bRenderOverlays=True
+   bReceiveOwnerEvents=True
+   bDropOnDeath=True
+   RespawnTime=30.000000
+   MaxDesireability=1.000000
+   PickupMessage="Stivali Anti-Gravità"
+   PickupSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_JumpBoots_PickupCue'
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent1 ObjName=StaticMeshComponent1 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'PICKUPS.JumpBoots.Mesh.S_UN_Pickups_Jumpboots002'
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      CollideActors=False
+      BlockRigidBody=False
+      Translation=(X=0.000000,Y=0.000000,Z=-20.000000)
+      Scale=1.700000
+      Name="StaticMeshComponent1"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   DroppedPickupMesh=StaticMeshComponent1
+   PickupFactoryMesh=StaticMeshComponent1
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTJumpBoots"
+   ObjectArchetype=UTInventory'UTGame.Default__UTInventory'
 }

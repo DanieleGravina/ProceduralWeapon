@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 /** this is used to handle auto objective announcements (what the game thinks the player should do next) */
 class UTObjectiveAnnouncement extends UTObjectiveSpecificMessage
@@ -9,6 +9,7 @@ class UTObjectiveAnnouncement extends UTObjectiveSpecificMessage
 static function ObjectiveAnnouncementInfo GetObjectiveAnnouncement(byte MessageIndex, Object Objective, PlayerController PC)
 {
 	local UTGameObjective GameObj;
+	local UTOnslaughtPowerNode Node;
 	local UTCarriedObject Flag;
 	local ObjectiveAnnouncementInfo EmptyAnnouncement;
 	local UTPickupFactory Pickup;
@@ -17,6 +18,18 @@ static function ObjectiveAnnouncementInfo GetObjectiveAnnouncement(byte MessageI
 	GameObj = UTGameObjective(Objective);
 	if (GameObj != None)
 	{
+		Node = UTOnslaughtPowerNode(GameObj);
+		if ( (Node != None) && (Node.PrimeCore != None) )
+		{
+			if ( Node.bDualPrimeCore || GameObj.WorldInfo.GRI.OnSameTeam(Node.PrimeCore, PC) )
+			{
+				return GameObj.WorldInfo.GRI.OnSameTeam(Node, PC) ? Node.PrimeDefendAnnouncement : Node.PrimeAttackAnnouncement;
+			}
+			else
+			{
+				return GameObj.WorldInfo.GRI.OnSameTeam(Node, PC) ? Node.EnemyPrimeDefendAnnouncement : Node.EnemyPrimeAttackAnnouncement;
+			}
+		}
 		return GameObj.WorldInfo.GRI.OnSameTeam(GameObj, PC) ? GameObj.DefendAnnouncement : GameObj.AttackAnnouncement;
 	}
 	else
@@ -70,9 +83,9 @@ static simulated function SetHUDDisplay( PlayerController P, int Switch, string 
 
 defaultproperties
 {
-	bIsUnique=True
-	FontSize=1
-	MessageArea=3
-	bBeep=false
-	DrawColor=(R=255,G=255,B=255,A=255)
+   MessageArea=3
+   bIsUnique=True
+   FontSize=1
+   Name="Default__UTObjectiveAnnouncement"
+   ObjectArchetype=UTObjectiveSpecificMessage'UTGame.Default__UTObjectiveSpecificMessage'
 }

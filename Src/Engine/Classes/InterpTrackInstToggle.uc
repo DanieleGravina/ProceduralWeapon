@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpTrackInstToggle extends InterpTrackInst
 	native(Interpolation);
@@ -11,23 +11,15 @@ var()	ETrackToggleAction	Action;
  */
 var		float				LastUpdatePosition; 
 
-/** Cached 'active' state for the toggleable actor before we possessed it; restored when Matinee exits */
-var bool bSavedActiveState;
-
-
-cpptext
-{
-	/** 
-	 */
-	virtual void InitTrackInst(UInterpTrack* Track);
-
-	/** Called before Interp editing to put object back to its original state. */
-	virtual void SaveActorState(UInterpTrack* Track);
-
-	/** Restore the saved state of this Actor. */
-	virtual void RestoreActorState(UInterpTrack* Track);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__InterpTrackInstToggle"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
 }

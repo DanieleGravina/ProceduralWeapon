@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DistributionVectorParameterBase extends DistributionVectorConstant
 	abstract
@@ -15,22 +15,22 @@ var()	vector	MinOutput;
 var()	vector	MaxOutput;
 var()	DistributionFloatParameterBase.DistributionParamMode ParamModes[3];
 
-cpptext
-{
-	virtual FVector GetValue(FLOAT F = 0.f, UObject* Data = NULL, INT Extreme = 0, class FRandomStream* InRandomStream = NULL);
-	
-	virtual UBOOL GetParamValue(UObject* Data, FName ParamName, FVector& OutVector) { return false; }
-
-	virtual void GetOutRange(FLOAT& MinOut, FLOAT& MaxOut);
-
-	/**
-	 * Return whether or not this distribution can be baked into a FRawDistribution lookup table
-	 */
-	virtual UBOOL CanBeBaked() const { return FALSE; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MaxInput=(X=1.0,Y=1.0,Z=1.0)
-	MaxOutput=(X=1.0,Y=1.0,Z=1.0)
+   MaxInput=(X=1.000000,Y=1.000000,Z=1.000000)
+   MaxOutput=(X=1.000000,Y=1.000000,Z=1.000000)
+   Name="Default__DistributionVectorParameterBase"
+   ObjectArchetype=DistributionVectorConstant'Engine.Default__DistributionVectorConstant'
 }

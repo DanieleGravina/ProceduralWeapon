@@ -1,14 +1,17 @@
 /**
  * operational AI control for TeamGame
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTSquadAI extends UDKSquadAI;
+class UTSquadAI extends ReplicationInfo
+	native(AI);
 
+var UTTeamInfo Team;
 var Controller SquadLeader;
 var UTPlayerReplicationInfo LeaderPRI;
 var UTSquadAI NextSquad;	// list of squads on a team
+var UTGameObjective SquadObjective;
 var int Size;
 var UTBot SquadMembers;
 var localized string SupportString, DefendString, AttackString, HoldString, FreelanceString;
@@ -24,6 +27,23 @@ var bool bAddTransientCosts;
 
 var float FormationSize;
 
+// Alternate path support
+var NavigationPoint RouteObjective;
+var array<NavigationPoint> ObjectiveRouteCache;
+/** when generating a new ObjectiveRouteCache for the same objective, the previous is stored here so bots still following it don't get disrupted */
+var array<NavigationPoint> PreviousObjectiveRouteCache;
+/** list of alternate routes. Each one higher in the list was created by first adding cost to the nodes in all previous routes */
+struct native AlternateRoute
+{
+	var array<NavigationPoint> RouteCache;
+};
+var array<AlternateRoute> SquadRoutes;
+/** maximum size of SquadRoutes list */
+var int MaxSquadRoutes;
+/** current alternate route iteration (loops back to start after reaching MaxSquadRoutes) */
+var int SquadRouteIteration;
+/** bot that we want to use to generate the route (usually SquadLeader) */
+var UTBot PendingSquadRouteMaker;
 /** whether bots should tend to wait to group up near the end of the squad route */
 var bool bShouldUseGatherPoints;
 
@@ -32,8 +52,10 @@ const NEAROBJECTIVEDIST = 2000.0;
 replication
 {
 	if ( Role == ROLE_Authority )
-		LeaderPRI, CurrentOrders, bFreelance;
+		LeaderPRI, CurrentOrders, SquadObjective, bFreelance;
 }
+
+simulated native function byte GetTeamNum();
 
 function Reset()
 {
@@ -82,14 +104,19 @@ function Destroyed()
 {
 	if ( Team != None )
 	{
-		UTTeamInfo(Team).AI.RemoveSquad(self);
+		Team.AI.RemoveSquad(self);
 	}
-	if (SquadObjective != None && UTGameObjective(SquadObjective).DefenseSquad == self)
+	if (SquadObjective != None && SquadObjective.DefenseSquad == self)
 	{
-		UTGameObjective(SquadObjective).DefenseSquad = None;
+		SquadObjective.DefenseSquad = None;
 	}
 
 	Super.Destroyed();
+}
+
+function bool AllowTranslocationBy(UTBot B)
+{
+	return true;
 }
 
 function bool AllowImpactJumpBy(UTBot B)
@@ -106,7 +133,7 @@ function UTVehicle GetLinkVehicle(UTBot B)
 {
 	local UTVehicle V;
 
-	if (UDKVehicleBase(SquadLeader.Pawn) == None)
+	if (UTVehicleBase(SquadLeader.Pawn) == None)
 	{
 		return None;
 	}
@@ -310,7 +337,7 @@ function RemoveEnemy(Pawn E)
 		}
 }
 
-function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn, class<DamageType> damageType)
+function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn)
 {
 	local UTBot B;
 	local bool bPreviousRouteInUse;
@@ -382,7 +409,7 @@ function bool FindNewEnemyFor(UTBot B, bool bSeeEnemy)
 	}
 	for ( i=0; i<ArrayCount(Enemies); i++ )
 	{
-		if (Enemies[i] != None && Enemies[i].Health > 0 && Enemies[i].Controller != None && (B.bBetrayTeam || !WorldInfo.GRI.OnSameTeam(Enemies[i], B)) )
+	    if (Enemies[i] != None && Enemies[i].Health > 0 && Enemies[i].Controller != None && (B.bBetrayTeam || !WorldInfo.GRI.OnSameTeam(Enemies[i], B)) )
 		{
 			if ( BestEnemy == None )
 			{
@@ -457,13 +484,20 @@ function float AssessThreat( UTBot B, Pawn NewThreat, bool bThreatVisible )
 	// prefer enemies bot is good at killing
 	if ( (B.Pawn != None) && (B.Pawn.Weapon != None) )
 	{
-		ThreatValue += UTWeapon(B.Pawn.Weapon).RelativeStrengthVersus(NewThreat, Dist);
+		ThreatValue += B.Pawn.Weapon.RelativeStrengthVersus(NewThreat, Dist);
 	}
 
 	if ( bThreatVisible )
 		ThreatValue += 1;
 
-	if ( (UTVehicle(NewThreat) != None) && UTVehicle(NewThreat).bKeyVehicle )
+	if ( UTPawn(NewThreat) != None )
+	{
+		if ( UTPawn(NewThreat).IsHero() )
+		{
+			ThreatValue += 2.5;
+		}
+	}
+	else if ( (UTVehicle(NewThreat) != None) && UTVehicle(NewThreat).bKeyVehicle )
 	{
 		ThreatValue += 0.25;
 	}
@@ -741,6 +775,8 @@ function bool MustCompleteOnFoot(Actor O, optional Pawn P)
 /** called when the bot is trying to get to the given objective and has reached one of its parking spots */
 function LeaveVehicleAtParkingSpot(UTBot B, Actor O)
 {
+	local UTVehicle_Deployable DeployableVehicle;
+
 	if (!B.Pawn.bStationary && UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bKeyVehicle)
 	{
 		if ( Team.Size == UTVehicle(B.Pawn).NumPassengers() )
@@ -752,6 +788,11 @@ function LeaveVehicleAtParkingSpot(UTBot B, Actor O)
 		}
 		else
 		{
+			DeployableVehicle = B.GetDeployableVehicle();
+			if (DeployableVehicle != None && !DeployableVehicle.DeployActivated())
+			{
+				DeployableVehicle.SetTimer(0.01, false, 'ServerToggleDeploy');
+			}
 			if ( B.Enemy != None )
 			{
 				B.FightEnemy(false, 0);
@@ -767,6 +808,46 @@ function LeaveVehicleAtParkingSpot(UTBot B, Actor O)
 		B.NoVehicleGoal = O;
 		B.RouteGoal = O;
 		B.LeaveVehicle(true);
+	}
+}
+
+/** used with bot's CustomAction interface to undeploy a vehicle */
+function bool UndeployVehicle(UTBot B)
+{
+	local UTVehicle_Deployable DeployableVehicle;
+
+	DeployableVehicle = B.GetDeployableVehicle();
+	if (DeployableVehicle == None || DeployableVehicle.DeployedState == EDS_Undeployed)
+	{
+		return true;
+	}
+	else
+	{
+		if (DeployableVehicle.DeployedState != EDS_Undeploying)
+		{
+			DeployableVehicle.ServerToggleDeploy();
+		}
+		// wait until vehicle finishes undeploying
+		return false;
+	}
+}
+
+/** if bot is in a deployed vehicle, consider undeploying it
+ * @return whether bot was given instructions
+ */
+function bool ShouldUndeployVehicle(UTBot B)
+{
+	local UTVehicle_Deployable DeployableVehicle;
+
+	DeployableVehicle = B.GetDeployableVehicle();
+	if (DeployableVehicle != None && DeployableVehicle.ShouldUndeploy(B) )
+	{
+		B.PerformCustomAction(UndeployVehicle);
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
@@ -793,10 +874,15 @@ function bool FindPathToObjective(UTBot B, Actor O)
 		}
 	}
 
+	if (ShouldUndeployVehicle(B))
+	{
+		return true;
+	}
+
 	Objective = UTGameObjective(O);
 	if (Objective != None)
 	{
-		if (B.Pawn.bStationary )
+		if (B.Pawn.bStationary || (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bIsOnTrack))
 		{
 			V = B.Pawn.GetVehicleBase();
 			if ( V == None )
@@ -837,9 +923,9 @@ function bool FindPathToObjective(UTBot B, Actor O)
 			{
 				for (i = 0; i < N.PathList.length; i++)
 				{
-					if (N.PathList[i].GetEnd() != None)
+					if (N.PathList[i].End.Nav != None)
 					{
-						N.PathList[i].GetEnd().bTransientEndPoint = true;
+						N.PathList[i].End.Nav.bTransientEndPoint = true;
 					}
 				}
 			}
@@ -849,9 +935,10 @@ function bool FindPathToObjective(UTBot B, Actor O)
 			return true;
 		}
 		else if ( UTVehicle(B.Pawn).bKeyVehicle && CloseEnoughToObjective(B, O) )
-			{
-				return false;
-			}
+		{
+			B.WaitToDeploy();
+			return false;
+		}
 		else if (LeaveVehicleToReachObjective(B, O))
 		{
 			return true;
@@ -953,7 +1040,7 @@ function RemovePlayer(PlayerController P)
 		return;
 	}
 
-	NewObjective = UTTeamInfo(Team).AI.GetPriorityAttackObjectiveFor(self, none);
+	NewObjective = Team.AI.GetPriorityAttackObjectiveFor(self, none);
 	if ( NewObjective != SquadObjective )
 	{
 		SquadObjective = NewObjective;
@@ -999,7 +1086,7 @@ function AddBot(UTBot B)
 	if ( B.Squad == self )
 		return;
 	if ( B.Squad != None )
-		UTSquadAI(B.Squad).RemoveBot(B);
+		B.Squad.RemoveBot(B);
 
 	Size++;
 
@@ -1019,7 +1106,6 @@ function SetDefenseScriptFor(UTBot B)
 	local int NumChecked;
 	local UTBot OtherBot;
 	local array<name> DefendedGroups;
-	local UTGameObjective UTObjective;
 
 	if ( (B.DefensePoint != None) && (SquadObjective == B.DefensePoint.DefendedObjective) && (!B.DefensePoint.bOnlyOnFoot || Vehicle(B.Pawn) == None) )
 	{
@@ -1063,8 +1149,7 @@ function SetDefenseScriptFor(UTBot B)
 
 	NumChecked = 1;
 	bAllDefenseGroupsCovered = true;
-	UTObjective = UTGameObjective(SquadObjective);
-	for (S = UTObjective.DefensePoints; S != None; S = S.NextDefensePoint)
+	for (S = SquadObjective.DefensePoints; S != None; S = S.NextDefensePoint)
 	{
 		if (S != OldPoint && DefendedGroups.Find(S.DefenseGroup) == INDEX_NONE)
 		{
@@ -1079,7 +1164,7 @@ function SetDefenseScriptFor(UTBot B)
 	{
 		// try again, ignoring DefenseGroups
 		NumChecked = 1;
-		for (S = UTObjective.DefensePoints; S != None; S = S.NextDefensePoint)
+		for (S = SquadObjective.DefensePoints; S != None; S = S.NextDefensePoint)
 		{
 			if (S != OldPoint && S.HigherPriorityThan(B.DefensePoint, B, bAutoPointsInUse, bPrioritizeSameGroup, NumChecked))
 			{
@@ -1097,32 +1182,30 @@ function SetDefenseScriptFor(UTBot B)
 function SetObjective(UTGameObjective O, bool bForceUpdate)
 {
 	local UTBot M;
-	local UTGameObjective UTObjective;
 
 	//`Log(SquadLeader.PlayerReplicationInfo.PlayerName$" SET OBJECTIVE"@O@"Forced update"@bForceUpdate);
 	if ( SquadObjective == O )
 	{
 		if ( SquadObjective == None )
 			return;
-		if ( (O.DefenderTeamIndex == Team.TeamIndex) && (O.DefenseSquad == None) )
-			O.DefenseSquad = self;
+		if ( (SquadObjective.DefenderTeamIndex == Team.TeamIndex) && (SquadObjective.DefenseSquad == None) )
+			SquadObjective.DefenseSquad = self;
 		if ( !bForceUpdate )
 			return;
 	}
 	else
 	{
-		UTObjective = UTGameObjective(SquadObjective);
-		if ( (UTObjective != None) && (UTObjective.DefenderTeamIndex == Team.TeamIndex) && (UTObjective.DefenseSquad == self) )
-			UTObjective.DefenseSquad = None;
+		if ( (SquadObjective != None) && (SquadObjective.DefenderTeamIndex == Team.TeamIndex) && (SquadObjective.DefenseSquad == self) )
+			SquadObjective.DefenseSquad = None;
 		bForceNetUpdate = TRUE;
 		SquadObjective = O;
 		if ( SquadObjective != None )
 		{
-			if ( (O.DefenderTeamIndex == Team.TeamIndex) && (O.DefenseSquad == None) )
-					O.DefenseSquad = self;
+			if ( (SquadObjective.DefenderTeamIndex == Team.TeamIndex) && (SquadObjective.DefenseSquad == None) )
+					SquadObjective.DefenseSquad = self;
 			RouteObjective = None;
 			if ( UTBot(SquadLeader) != None )
-				SetAlternatePathTo(O, UTBot(SquadLeader));
+				SetAlternatePathTo(SquadObjective, UTBot(SquadLeader));
 		}
 	}
 	for	( M=SquadMembers; M!=None; M=M.NextSquadMember )
@@ -1132,7 +1215,7 @@ function SetObjective(UTGameObjective O, bool bForceUpdate)
 
 function Retask(UTBot B)
 {
-	if (Vehicle(B.Pawn) != None && B.Pawn.bStationary && B.Pawn.GetVehicleBase() == None)
+	if (Vehicle(B.Pawn) != None && (UTVehicle_Deployable(B.Pawn) == None) && (B.Pawn.bStationary || (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bIsOnTrack)) && B.Pawn.GetVehicleBase() == None)
 	{
 		//get out of turrets when objective changes
 		Vehicle(B.Pawn).DriverLeave(false); // should be OK to call directly here
@@ -1148,7 +1231,7 @@ function Retask(UTBot B)
 			B.bPreparingMove = false;
 			B.WhatToDoNext();
 		}
-		else if (B.Pawn.Physics == PHYS_Falling && UDKTrajectoryReachSpec(B.CurrentPath) != None)
+		else if (B.Pawn.Physics == PHYS_Falling && UTTrajectoryReachSpec(B.CurrentPath) != None)
 		{
 			return;
 		}
@@ -1293,7 +1376,6 @@ function bool TellBotToFollow(UTBot B, Controller C)
 	local Pawn Leader;
 	local UTGameObjective O, Best;
 	local float NewDist, BestDist;
-	local UTTeamAI TeamAI;
 
 	if ( (C == None) || C.bDeleteMe )
 	{
@@ -1319,8 +1401,7 @@ function bool TellBotToFollow(UTBot B, Controller C)
 		if ( B.Enemy == None )
 		{
 			// look for destroyable objective
-			TeamAI = UTTeamInfo(Team).AI;
-			for ( O=TeamAI.Objectives; O!=None; O=O.NextObjective )
+			for ( O=Team.AI.Objectives; O!=None; O=O.NextObjective )
 			{
 				if ( !O.bIsDisabled && O.Shootable()
 					&& ((Best == None) || (Best.DefensePriority < O.DefensePriority)) )
@@ -1384,6 +1465,12 @@ function AddTransientCosts(UTBot B, float f)
 		if ( (S != B) && (NavigationPoint(S.MoveTarget) != None) && S.InLatentExecution(S.LATENT_MOVETOWARD) )
 		{
 			NavigationPoint(S.MoveTarget).TransientCost = 1000.0 * f;
+			// if on translocator path also add cost to start since the bot is likely going to be standing there on it
+			// for some time while waiting for the disc
+			if (UTTranslocatorReachSpec(S.CurrentPath) != None && S.Pawn.Anchor != None && S.Pawn.ValidAnchor())
+			{
+				S.Pawn.Anchor.TransientCost = 1000.0 * f;
+			}
 		}
 	}
 }
@@ -1397,7 +1484,7 @@ function bool AssignSquadResponsibility(UTBot B)
 	}
 
 	// set new defense script
-	if (GetOrders() == 'Defend' && !B.Pawn.bStationary )
+	if (GetOrders() == 'Defend' && !B.Pawn.bStationary && (UTVehicle(B.Pawn) == None || !UTVehicle(B.Pawn).bIsOnTrack))
 		SetDefenseScriptFor(B);
 	else if ( (B.DefensePoint != None) && (UTHoldSpot(B.DefensePoint) == None) )
 		B.FreePoint();
@@ -1443,8 +1530,7 @@ function bool AllowContinueOnFoot(UTBot B, UTVehicle V)
 	local int i;
 	local UTBot OtherB;
 	local UTSquadAI S;
-	local UTTeamAI TeamAI;
-	
+
 	if (V.bShouldLeaveForCombat)
 	{
 		return true;
@@ -1508,9 +1594,7 @@ function bool AllowContinueOnFoot(UTBot B, UTVehicle V)
 			return false;
 		}
 		// see if other squad can do it
-		TeamAI = UTTeamInfo(Team).AI;
-
-		for (S = TeamAI.Squads; S != None; S = S.NextSquad)
+		for (S = Team.AI.Squads; S != None; S = S.NextSquad)
 		{
 			if (S != self && S.SquadObjective == SquadObjective)
 			{
@@ -1543,7 +1627,6 @@ function BotEnteredVehicle(UTBot B)
 function bool IsOnPathToSquadObjective(Actor Goal)
 {
 	local NavigationPoint Nav;
-	local UTGameObjective UTObjective;
 
 	if (Goal == SquadObjective)
 	{
@@ -1554,10 +1637,9 @@ function bool IsOnPathToSquadObjective(Actor Goal)
 		Nav = NavigationPoint(Goal);
 		if (Nav != None)
 		{
-			UTObjective = UTGameObjective(SquadObjective);
-			if ( UTObjective.VehicleParkingSpots.Find(Nav) != INDEX_NONE ||
-				(UTObjective.Shootable() && UTObjective.ShootSpots.Find(Nav) != INDEX_NONE) ||
-				(UTObjective == RouteObjective && ObjectiveRouteCache.Find(Nav) != INDEX_NONE) )
+			if ( SquadObjective.VehicleParkingSpots.Find(Nav) != INDEX_NONE ||
+				(SquadObjective.Shootable() && SquadObjective.ShootSpots.Find(Nav) != INDEX_NONE) ||
+				(SquadObjective == RouteObjective && ObjectiveRouteCache.Find(Nav) != INDEX_NONE) )
 			{
 				return true;
 			}
@@ -1659,6 +1741,98 @@ function bool GotoVehicle(UTVehicle SquadVehicle, UTBot B)
 	return false;
 }
 
+/** @return a good objective to tow the given Pawn to - if None is returned bot will just do its normal logic */
+function Actor GetTowingDestination(UTVehicle Towed);
+
+/** considers giving bot actions to do with towing or being towed
+ * @return whether the bot was given something to do
+ */
+function bool CheckTowing(UTBot B, UTVehicle V)
+{
+	local array<UTVehicle> TowedVehicles;
+	local Actor TowDestination;
+	local int i;
+	local Controller C;
+	local UTVehicle OtherV;
+
+	// if we are towing somebody and we can figure out where they probably want to go
+	V.GetTowedVehicles(TowedVehicles);
+	if (TowedVehicles.length > 0)
+	{
+		for (i = 0; i < TowedVehicles.length; i++)
+		{
+			TowDestination = GetTowingDestination(TowedVehicles[i]);
+			if (TowDestination != None)
+			{
+				B.GoalString = "Towing" @ TowedVehicles[i].GetHumanReadableName() @ "to" @ TowDestination;
+				if (FindPathToObjective(B, TowDestination))
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	if (V.bHasTowCable)
+	{
+		TowDestination = GetTowingDestination(V);
+		OtherV = V.GetTowingVehicle();
+		if (OtherV != None)
+		{
+			// decide if should detach tow cable
+			if (OtherV.Controller == None)
+			{
+				// vehicle driver left
+				V.DetachTowCable();
+			}
+			else if ( !FastTrace(V.Location - vect(0,0,500), V.Location) &&
+				(TowDestination == None || VSize(TowDestination.Location - V.Location) < 3000.0 || B.LineOfSightTo(TowDestination)) &&
+				(VSize(OtherV.Velocity) < 300.0 || (TowDestination != None && (Normal(OtherV.Velocity) dot Normal(TowDestination.Location - OtherV.Location)) < 0.0)) )
+			{
+				// near objective and not high up in the air
+				V.DetachTowCable();
+			}
+			else
+			{
+				B.GoalString = "Being towed...";
+				B.CampTime = 1.0;
+				B.GotoState('Defending', 'Pausing');
+				return true;
+			}
+		}
+		else
+		{
+			if (SquadLeader != None && SquadLeader != B && (B.Skill + B.Tactics >= 2.0 || PlayerController(SquadLeader) != None))
+			{
+				OtherV = UTVehicle(SquadLeader.Pawn);
+				if (OtherV != None && OtherV.Class != V.Class && OtherV.IsGoodTowTruck() && V.TryAttachingTowCable(B, OtherV))
+				{
+					return true;
+				}
+			}
+			// if have flag, check for any friendly fast vehicle
+			if ( B.PlayerReplicationInfo.bHasFlag && TowDestination != None &&
+				VSize(B.Pawn.Location - TowDestination.Location) > 3000.0 )
+			{
+				foreach WorldInfo.AllControllers(class'Controller', C)
+				{
+					if (B.Skill + B.Tactics >= 2.0 || PlayerController(C) != None)
+					{
+						OtherV = UTVehicle(C.Pawn);
+						if ( OtherV != None && OtherV.Class != V.Class && OtherV.IsGoodTowTruck() &&
+							WorldInfo.GRI.OnSameTeam(B, OtherV) && V.TryAttachingTowCable(B, OtherV) )
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 /* go to squad vehicle (driven by squad leader - or squad leader objective), if nearby,
 else try to find vehicle
 */
@@ -1671,9 +1845,8 @@ function bool CheckVehicle(UTBot B)
 	local PlayerController PC;
 	local bool bSkip, bVisible;
 	local UTSquadAI Squad;
-	local UTTeamAI TeamAI;
 
-	if ( UTHoldSpot(B.DefensePoint) != None )
+	if ( (UTHoldSpot(B.DefensePoint) != None) || ((UTPawn(B.Pawn) != None) && UTPawn(B.Pawn).IsHero()) )
 	{
 		return false;
 	}
@@ -1836,6 +2009,10 @@ function bool CheckVehicle(UTBot B)
 		}
 
 		V = UTVehicle(BotVehicle);
+		if (V != None && CheckTowing(B, V))
+		{
+			return true;
+		}
 
 		if (V == None || !V.bShouldLeaveForCombat)
 		{
@@ -1847,7 +2024,7 @@ function bool CheckVehicle(UTBot B)
 	V = UTVehicle(SquadLeader.Pawn);
 	if ( V != None && VSize(V.Location - B.Pawn.Location) < 4000.0 && V.OpenPositionFor(B.Pawn) &&
 		(V.NoPassengerObjective == None || V.NoPassengerObjective != SquadObjective) &&
-		(V.bCanCarryFlag || !UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag) )
+		(V.bCanCarryFlag || !B.PlayerReplicationInfo.bHasFlag) )
 	{
 		SquadVehicle = V;
 	}
@@ -1865,7 +2042,7 @@ function bool CheckVehicle(UTBot B)
 			V = UTVehicle(S.Pawn);
 			if ( V != None && VSize(V.Location - B.Pawn.Location) < BestDist && V.OpenPositionFor(B.Pawn) &&
 				(V.NoPassengerObjective == None || V.NoPassengerObjective != SquadObjective) &&
-				(V.bCanCarryFlag || !UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag) )
+				(V.bCanCarryFlag || !B.PlayerReplicationInfo.bHasFlag) )
 			{
 				SquadVehicle = V;
 				break;
@@ -1879,7 +2056,7 @@ function bool CheckVehicle(UTBot B)
 		V = UTVehicle(SquadLeader.RouteGoal);
 		if ( V != None && !V.Occupied() && VSize(V.Location - B.Pawn.Location) < BestDist && V.OpenPositionFor(B.Pawn) &&
 			(V.NoPassengerObjective == None || V.NoPassengerObjective != SquadObjective) &&
-			(V.bCanCarryFlag || !UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag) )
+			(V.bCanCarryFlag || !B.PlayerReplicationInfo.bHasFlag) )
 		{
 			SquadVehicle = V;
 		}
@@ -1898,8 +2075,7 @@ function bool CheckVehicle(UTBot B)
 	// check if other squad has key vehicle
 	if (SquadVehicle == None && Team != None)
 	{
-		TeamAI = UTTeamInfo(Team).AI;
-		for ( Squad = TeamAI.Squads; Squad != None; Squad = Squad.NextSquad )
+		for (Squad = Team.AI.Squads; Squad != None; Squad = Squad.NextSquad)
 		{
 			if (Squad.SquadLeader != None)
 			{
@@ -1971,32 +2147,32 @@ function bool CheckVehicle(UTBot B)
 }
 
 function bool CheckHoverboard(UTBot B)
-	{
+{
 	local UTPawn P;
 
-		P = UTPawn(B.Pawn);
+	P = UTPawn(B.Pawn);
 
-		// if no vehicle nearby, objective is far away, and no visible enemies, use hoverboard
-		if ( P != None && P.bHasHoverboard && P.Anchor != None && UTGameObjective(P.Anchor) == None &&
+	// if no vehicle nearby, objective is far away, and no visible enemies, use hoverboard
+	if ( P != None && P.bHasHoverboard && P.Anchor != None && UTGameObjective(P.Anchor) == None &&
 			WorldInfo.TimeSeconds - B.LastTryHoverboardTime > 4.0 &&
-		(UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag || !B.NeedWeapon()) 
+		(B.PlayerReplicationInfo.bHasFlag || !B.NeedWeapon()) 
 		&& ShouldUseHoverboard(B)
 		&& !B.Pawn.IsFiring() && !B.IsShootingObjective() &&
 		( !B.IsDefending() || ( (B.DefensePoint == None || VSize(B.DefensePoint.Location - P.Location) > 1600.0) &&
 					(B.DefensivePosition == None || VSize(B.DefensivePosition.Location - P.Location) > 1600.0) ) ) &&
-			(SquadObjective == None || (VSize(SquadObjective.Location - P.Location) > 1200.0 && !B.ActorReachable(SquadObjective))) &&
-			P.HoverboardClass.default.CylinderComponent.CollisionRadius <= P.Anchor.MaxPathSize.Radius &&
+		(SquadObjective == None || (VSize(SquadObjective.Location - P.Location) > 1200.0 && !B.ActorReachable(SquadObjective))) &&
+		P.HoverboardClass.default.CylinderComponent.CollisionRadius <= P.Anchor.MaxPathSize.Radius &&
 		P.HoverboardClass.default.CylinderComponent.CollisionHeight <= P.Anchor.MaxPathSize.Height 
 		&& (LiftCenter(P.Anchor) == None) )
-		{
-			B.LastTryHoverboardTime = WorldInfo.TimeSeconds;
-			// can't start up hoverboard during async work - call it delayed instead
-			B.GoalString = "Get on hoverboard";
-			B.PerformCustomAction(GetOnHoverboard);
-			return true;
-		}
-		return false;
+	{
+		B.LastTryHoverboardTime = WorldInfo.TimeSeconds;
+		// can't start up hoverboard during async work - call it delayed instead
+		B.GoalString = "Get on hoverboard";
+		B.PerformCustomAction(GetOnHoverboard);
+		return true;
 	}
+	return false;
+}
 
 function bool ShouldUseHoverboard(UTBot B)
 {
@@ -2014,7 +2190,7 @@ function bool ShouldUseHoverboard(UTBot B)
 	ForEach WorldInfo.AllControllers(class'UTBot', EnemyBot)
 	{
 		if ( (EnemyBot.Enemy == B.Pawn) && (EnemyBot.Focus == B.Pawn) 
-			&& (!UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag || (VSize(EnemyBot.Pawn.Location - B.Pawn.Location) < 3000)) )
+			&& (!B.PlayerReplicationInfo.bHasFlag || (VSize(EnemyBot.Pawn.Location - B.Pawn.Location) < 3000)) )
 		{
 			return false;
 		}
@@ -2032,7 +2208,7 @@ function float VehicleDesireability(UTVehicle V, UTBot B)
 	local float result;
 
 	// if bot has the flag and the vehicle can't carry flags, ignore it
-	if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag && !V.bCanCarryFlag )
+	if ( B.PlayerReplicationInfo.bHasFlag && !V.bCanCarryFlag )
 	{
 		return 0;
 	}
@@ -2071,10 +2247,8 @@ function float VehicleDesireability(UTVehicle V, UTBot B)
 function bool OverrideFollowPlayer(UTBot B)
 {
 	local UTGameObjective PickedObjective;
-	local UTTeamAI TeamAI;
-	
-	TeamAI = UTTeamInfo(Team).AI;
-	PickedObjective = TeamAI.GetPriorityAttackObjectiveFor(self, B);
+
+	PickedObjective = Team.AI.GetPriorityAttackObjectiveFor(self, B);
 	if ( (PickedObjective == None) )
 		return false;
 	if ( PickedObjective.BotNearObjective(B) )
@@ -2108,16 +2282,13 @@ function bool CheckSuperItem(UTBot B, float SuperDist)
 	local bool bFoundSomething, bReallyNeedVehicle;
 	local int i;
 	local UTVehicleFactory VFactory;
-	local UTVehicle V, ChildVehicle;
+	local UTVehicle V;
 	local UTGame Game;
 	local float Dist;
-	local UTTeamAI TeamAI;
-	
-	TeamAI = UTTeamInfo(Team).AI;
 
-	if (!TeamAI.bFoundSuperItems)
+	if (!Team.AI.bFoundSuperItems)
 	{
-		TeamAI.FindSuperItems();
+		Team.AI.FindSuperItems();
 	}
 
 	B.RespawnPredictionTime = (B.Skill > 5.0) ? 2.0 : 0.0;
@@ -2127,17 +2298,16 @@ function bool CheckSuperItem(UTBot B, float SuperDist)
 		bReallyNeedVehicle = (Vehicle(B.Pawn) == None || (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bShouldLeaveForCombat));
 		// we have to iterate through all the vehicle factories because we need to set bTransientEndPoint
 		// (pickups are done automatically by FindSuperPickup())
-		for (i = 0; i < TeamAI.ImportantVehicleFactories.length; i++)
+		for (i = 0; i < Team.AI.ImportantVehicleFactories.length; i++)
 		{
-			VFactory = TeamAI.ImportantVehicleFactories[i];
-			ChildVehicle = UTVehicle(VFactory.ChildVehicle);
-			if ( ChildVehicle != None && !ChildVehicle.bHasBeenDriven &&
-				!ChildVehicle.SpokenFor(B) && VehicleDesireability(ChildVehicle, B) > 0.0 &&
-				(bReallyNeedVehicle || ChildVehicle.bKeyVehicle) )
+			VFactory = Team.AI.ImportantVehicleFactories[i];
+			if ( VFactory.ChildVehicle != None && !VFactory.ChildVehicle.bHasBeenDriven &&
+				!VFactory.ChildVehicle.SpokenFor(B) && VehicleDesireability(VFactory.ChildVehicle, B) > 0.0 &&
+				(bReallyNeedVehicle || VFactory.ChildVehicle.bKeyVehicle) )
 			{
 				VFactory.bTransientEndPoint = true;
 				bFoundSomething = true;
-				if ( UTVehicle(VFactory.ChildVehicle).bKeyVehicle )
+				if ( VFactory.ChildVehicle.bKeyVehicle )
 				{
 					SuperDist = 16000.0;
 				}
@@ -2170,10 +2340,10 @@ function bool CheckSuperItem(UTBot B, float SuperDist)
 
 	if (!bFoundSomething && (B.Skill > 3.5) )
 	{
-		for (i = 0; i < TeamAI.NumSuperPickups; i++)
+		for (i = 0; i < Team.AI.NumSuperPickups; i++)
 		{
-			if (TeamAI.SuperPickups[i] != None && TeamAI.SuperPickups[i].ReadyToPickup(B.RespawnPredictionTime)
-				&& B.SuperPickupNotSpokenFor(TeamAI.SuperPickups[i]) )
+			if (Team.AI.SuperPickups[i] != None && Team.AI.SuperPickups[i].ReadyToPickup(B.RespawnPredictionTime)
+				&& B.SuperPickupNotSpokenFor(Team.AI.SuperPickups[i]) )
 			{
 				bFoundSomething = true;
 				break;
@@ -2190,7 +2360,6 @@ function bool CheckSquadObjectives(UTBot B)
 	local bool bInPosition, bCheckSuperPickups, bMovingToSuperPickup;
 	local float SuperDist;
 	local Vehicle V;
-	local UTGameObjective UTObjective;
 
 	if (WorldInfo.TimeSeconds - B.Pawn.CreationTime < 5.0 && B.NeedWeapon() && B.FindInventoryGoal(0.0004))
 	{
@@ -2222,8 +2391,10 @@ function bool CheckSquadObjectives(UTBot B)
 		}
 		// hold position as ordered (position specified by DefensePoint)
 	}
+	if ( ShouldDestroyTranslocator(B) )
+		return true;
 
-	if ( B.Pawn.bStationary && Vehicle(B.Pawn) != None)
+	if ((B.Pawn.bStationary || (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bIsOnTrack)) && Vehicle(B.Pawn) != None)
 	{
 		if ( UTHoldSpot(B.DefensePoint) != None )
 		{
@@ -2308,7 +2479,6 @@ function bool CheckSquadObjectives(UTBot B)
 		}
 	}
 
-	UTObjective = UTGameObjective(SquadObjective);
 	if ( B.DefensePoint != None )
 	{
 		DesiredPosition = B.DefensePoint.GetMoveTarget();
@@ -2339,30 +2509,30 @@ function bool CheckSquadObjectives(UTBot B)
 	}
 	else
 	{
-		if ( UTObjective.DefenderTeamIndex != Team.TeamIndex )
+		if ( SquadObjective.DefenderTeamIndex != Team.TeamIndex )
 		{
-			if ( UTObjective.bIsDisabled )
+			if ( SquadObjective.bIsDisabled )
 			{
 				B.GoalString = "Objective already disabled";
 				return false;
 			}
 			B.GoalString = "Disable Objective "$SquadObjective;
-			return UTObjective.TellBotHowToDisable(B);
+			return SquadObjective.TellBotHowToDisable(B);
 		}
 		if (B.DefensivePosition != None && AcceptableDefensivePosition(B.DefensivePosition, B))
 		{
 			DesiredPosition = B.DefensivePosition;
 		}
-		else if (UTObjective.bBlocked)
+		else if (SquadObjective.bBlocked)
 		{
 			DesiredPosition = FindDefensivePositionFor(B);
 		}
 		else
 		{
-			DesiredPosition = UTObjective;
+			DesiredPosition = SquadObjective;
 		}
 		bInPosition = ( VSize(DesiredPosition.Location - B.Pawn.Location) < NEAROBJECTIVEDIST &&
-				(B.LineOfSightTo(UTObjective) || (UTObjective.bHasAlternateTargetLocation && B.LineOfSightTo(UTObjective,, true))) );
+				(B.LineOfSightTo(SquadObjective) || (SquadObjective.bHasAlternateTargetLocation && B.LineOfSightTo(SquadObjective,, true))) );
 	}
 
 	if ( B.Enemy != None )
@@ -2371,7 +2541,7 @@ function bool CheckSquadObjectives(UTBot B)
 			B.LoseEnemy();
 		if ( B.Enemy != None )
 		{
-			if ( B.LineOfSightTo(B.Enemy) || (WorldInfo.TimeSeconds - B.LastSeenTime < 3 && (SquadObjective == None || !UTGameObjective(SquadObjective).TeamLink(Team.TeamIndex))) 
+			if ( B.LineOfSightTo(B.Enemy) || (WorldInfo.TimeSeconds - B.LastSeenTime < 3 && (SquadObjective == None || !SquadObjective.TeamLink(Team.TeamIndex))) 
 				&& (UTVehicle(B.Pawn) == None || !UTVehicle(B.Pawn).bKeyVehicle) )
 			{
 				B.FightEnemy(false, 0);
@@ -2392,7 +2562,7 @@ function bool CheckSquadObjectives(UTBot B)
 			B.MoveToDefensePoint();
 		else
 		{
-			if ( UTObjective.TellBotHowToHeal(B) )
+			if ( SquadObjective.TellBotHowToHeal(B) )
 				return true;
 
 			if (B.Enemy != None && (B.LineOfSightTo(B.Enemy) || WorldInfo.TimeSeconds - B.LastSeenTime < 3))
@@ -2406,19 +2576,24 @@ function bool CheckSquadObjectives(UTBot B)
 		return true;
 	}
 
-	if (B.Pawn.bStationary )
+	if (ShouldUndeployVehicle(B))
+	{
+		return true;
+	}
+
+	if (B.Pawn.bStationary || (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bIsOnTrack))
 		return false;
 
 	B.GoalString = "Follow path to "$DesiredPosition;
-	if (DesiredPosition == UTObjective && UTObjective.bAllowOnlyShootable)
+	if (DesiredPosition == SquadObjective && SquadObjective.bAllowOnlyShootable)
 	{
-		if (B.ActorReachable(UTObjective))
+		if (B.ActorReachable(SquadObjective))
 		{
-			B.MoveTarget = UTObjective;
+			B.MoveTarget = SquadObjective;
 		}
 		else
 		{
-			UTObjective.MarkShootSpotsFor(B.Pawn);
+			SquadObjective.MarkShootSpotsFor(B.Pawn);
 			// make sure Anchor wasn't marked, because if it was acceptable we wouldn't have reached this code
 			if (B.Pawn.Anchor != None)
 			{
@@ -2443,11 +2618,38 @@ function bool CheckSquadObjectives(UTBot B)
 			`log(B.PlayerReplicationInfo.PlayerName$" had no path to "$B.DefensePoint);
 		*/
 		B.FreePoint();
-		if ( (UTObjective != None) && (VSize(B.Pawn.Location - UTObjective.Location) > 1200) )
+		if ( (SquadObjective != None) && (VSize(B.Pawn.Location - SquadObjective.Location) > 1200) )
 		{
-			B.FindBestPathToward(UTObjective,false,true);
-			if ( B.StartMoveToward(UTObjective) )
+			B.FindBestPathToward(SquadObjective,false,true);
+			if ( B.StartMoveToward(SquadObjective) )
 				return true;
+		}
+	}
+	return false;
+}
+
+function bool ShouldDestroyTranslocator(UTBot B)
+{
+	local UTGame G;
+	local UTProj_TransDisc T;
+
+	if ( (Vehicle(B.Pawn) != None) || (B.Enemy != None) || (B.Skill < 2) )
+		return false;
+	G = UTGame(WorldInfo.Game);
+	if ( G == None )
+		return false;
+
+	for ( T=G.BeaconList; T!=None; T=T.NextBeacon )
+	{
+		if ( T.bCollideActors && !T.Disrupted() && (T.Instigator != None) && (T.Instigator.Controller != None)
+			&& !WorldInfo.GRI.OnSameTeam(B,T.Instigator.Controller)
+			&& (VSize(B.Pawn.Location - T.Location) < 1500)
+			&& B.LineOfSightTo(T) )
+		{
+			B.SwitchToBestWeapon();
+			B.GoalString = "Destroy Translocator";
+			B.DoRangedAttackOn(T);
+			return true;
 		}
 	}
 	return false;
@@ -2563,12 +2765,9 @@ function bool IsDefending(UTBot B)
 
 function bool FriendlyToward(Pawn Other)
 {
-	local UTTeamAI TeamAI;
-	
-	TeamAI = UTTeamInfo(Team).AI;
 	if ( Team == None )
 		return false;
-	return TeamAI.FriendlyToward(Other);
+	return Team.AI.FriendlyToward(Other);
 }
 
 /** @return the maximum distance a bot should be from the given Actor it wants to defend */
@@ -2583,6 +2782,12 @@ function NavigationPoint FindDefensivePositionFor(UTBot B)
 	local int Num;
 	local float CurrentRating, BestRating;
 	local Actor Center;
+
+	// if on track, just pick random node on that track
+	if (UTVehicle(B.Pawn) != None && UTVehicle(B.Pawn).bIsOnTrack)
+	{
+		return B.FindRandomDest();
+	}
 
 	Center = FormationCenter(B);
 	if (Center == None)
@@ -2626,18 +2831,18 @@ function float RateDefensivePosition(NavigationPoint N, UTBot CurrentBot, Actor 
 		return -1.0;
 	}
 
-	// if bot can't double jump, disregard points only reachable by that method
+	// if bot can't translocate or double jump, disregard points only reachable by that method
 	P = UTPawn(CurrentBot.Pawn);
-	if ( P == None || !P.bCanDoubleJump )
+	if (!CurrentBot.bAllowedToTranslocate || P == None || !P.bCanDoubleJump)
 	{
 		bNeedSpecialMove = true;
 		for (i = 0; i < N.PathList.length; i++)
 		{
-			if (N.PathList[i].GetEnd() != None)
+			if (N.PathList[i].End.Nav != None)
 			{
-				ReverseSpec = N.PathList[i].GetEnd().GetReachSpecTo(N);
+				ReverseSpec = N.PathList[i].End.Nav.GetReachSpecTo(N);
 				if ( ReverseSpec != None &&
-					!ReverseSpec.IsBlockedFor(P) &&
+					(CurrentBot.bAllowedToTranslocate || !ReverseSpec.IsA('UTTranslocatorReachSpec') || !ReverseSpec.IsBlockedFor(P)) &&
 					((ReverseSpec.reachFlags & 16) == 0 || (P != None && P.bCanDoubleJump)) )
 				{
 					bNeedSpecialMove = false;
@@ -2680,7 +2885,27 @@ function float RateDefensivePosition(NavigationPoint N, UTBot CurrentBot, Actor 
 function bool AcceptableDefensivePosition(NavigationPoint N, UTBot B)
 {
 	local Actor Center;
+	local UTVehicle_Deployable DeployableVehicle;
 
+	if ( UTVehicle(B.Pawn) != None ) 
+	{
+		if ( UTVehicle(B.Pawn).bIsOnTrack)
+		{
+			return (UTTrackTurretPathNode(N) != None);
+		}
+		DeployableVehicle = B.GetDeployableVehicle();
+		if ( DeployableVehicle == None )
+		{
+			if ( UTVehicle(B.Pawn).IsArtillery() )
+				return true;
+		}
+		else if ( !DeployableVehicle.GoodDefensivePosition() )
+		{
+			DeployableVehicle.bNotGoodArtilleryPosition = false;
+			return false;
+		}
+	}
+	
 	Center = FormationCenter(B);
 	if (Center == None)
 	{
@@ -2695,6 +2920,14 @@ function bool AcceptableDefensivePosition(NavigationPoint N, UTBot B)
 	return (VSize(N.Location - Center.Location) <= GetMaxDefenseDistanceFrom(Center, B) && RateDefensivePosition(N, B, Center) > 0);
 }
 
+/** @return the objective the given bot wants to spawn at */
+function UTGameObjective GetStartObjective(UTBot B)
+{
+	// Bots return SquadObjective, or nearest spawnable node to it
+	// @todo FIXMESTEVE - should they pick a node with a good vehicle in some situations?
+	return (SquadObjective != None ? SquadObjective.FindNearestFriendlyNode(Team.TeamIndex) : None);
+}
+
 /** called when a ReachSpec the given bot wants to use is blocked by a dynamic obstruction
  * gives the AI an opportunity to do something to get rid of it instead of trying to find another path
  * @note MoveTarget is the actor the AI wants to move toward, CurrentPath the ReachSpec it wants to use
@@ -2706,19 +2939,17 @@ function bool AcceptableDefensivePosition(NavigationPoint N, UTBot B)
 function bool HandlePathObstruction(UTBot B, Actor BlockedBy)
 {
 	local int i;
-	local UTGameObjective UTObjective;
 
 	// if the bot is blocked getting to a VehicleParkingSpot, just pretend we reached it
 	if (B.MoveTarget == B.RouteGoal && SquadObjective != None && Vehicle(B.Pawn) != None)
 	{
-		UTObjective = UTGameObjective(SquadObjective);
-		for (i = 0; i < UTObjective.VehicleParkingSpots.length; i++)
+		for (i = 0; i < SquadObjective.VehicleParkingSpots.length; i++)
 		{
-			if (B.RouteGoal == UTObjective.VehicleParkingSpots[i])
+			if (B.RouteGoal == SquadObjective.VehicleParkingSpots[i])
 			{
 				B.bPreparingMove = true;
 				B.MoveTimer = -1.0;
-				LeaveVehicleAtParkingSpot(B, UTObjective);
+				LeaveVehicleAtParkingSpot(B, SquadObjective);
 				return true;
 			}
 		}
@@ -2773,9 +3004,16 @@ function bool HasOtherVisibleEnemy(UTBot B)
 
 defaultproperties
 {
-	 MaxSquadSize=2
-	 bRoamingSquad=true
-	 NetUpdateFrequency=1
-	 FormationSize=1100.0
-	 MaxSquadRoutes=5
+   SupportString="sostegno in corso"
+   DefendString="difesa in corso"
+   AttackString="attacco in corso"
+   HoldString="in attesa"
+   FreelanceString="Spazzino"
+   MaxSquadSize=2
+   bRoamingSquad=True
+   FormationSize=1100.000000
+   MaxSquadRoutes=5
+   NetUpdateFrequency=1.000000
+   Name="Default__UTSquadAI"
+   ObjectArchetype=ReplicationInfo'Engine.Default__ReplicationInfo'
 }

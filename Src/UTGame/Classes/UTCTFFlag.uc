@@ -1,7 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFFlag extends UTCarriedObject
+	native
 	abstract;
 
 /** particle system to play when the flag respawns at home base */
@@ -10,6 +11,8 @@ var ParticleSystem RespawnEffect;
 var bool bBringUpBright;
 /** if true the bright param has peaked and now we need to phase the flag out */
 var bool bBringDownFromBright;
+/** The Skeletal Mesh of the flag */
+var SkeletalMeshComponent SkelMesh;
 
 var repnotify bool  bFadingOut;
 var repnotify bool  bRespawning;
@@ -21,6 +24,9 @@ var	vector	HoverboardingClothVelClamp;
 
 var ParticleSystemComponent SuccessfulCaptureSystem;
 
+/** Hide flag if closer than this, to avoid camera clipping */
+var float FlagMinViewDist;
+
 /** The Flags's light environment */
 var DynamicLightEnvironmentComponent LightEnvironment;
 
@@ -31,6 +37,13 @@ replication
 	if(Role == ROLE_AUTHORITY)
 		bFadingOut, bRespawning;
 }
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 
 simulated event ReplicatedEvent(name VarName)
 {
@@ -58,14 +71,27 @@ simulated event ReplicatedEvent(name VarName)
 simulated function PostBeginPlay()
 {
 	local int i;
+	local UTPlayerController UTPC;
+
 	super.PostBeginPlay();
 	for(i=0;i<SkelMesh.Materials.Length;++i)
 	{
 		MICArray.Insert(i,1);
 		MICArray[i] = SkelMesh.CreateAndSetMaterialInstanceConstant(i);
 	}
+
+	//Make sure every local player with a hud has an update on the visibility of this flag
+	ForEach LocalPlayerControllers(class'UTPlayerController', UTPC)
+	{
+		if (UTHUD(UTPC.myHUD) != None)
+		{
+			UTHUD(UTPC.myHUD).UpdateCTFFlagVisibility(self);
+		}
+	}
 }
 
+
+// @TODO: Make this native
 simulated function Tick(float DeltaTime)
 {
 	local int i;
@@ -325,7 +351,7 @@ auto state Home
 			UTGameReplicationInfo(WorldInfo.GRI).SetFlagHome(Team.TeamIndex);
 		}
 
-		UTGameObjective(HomeBase).SetAlarm(false);
+		HomeBase.SetAlarm(false);
 		HomeBase.bForceNetUpdate = TRUE;
 		bForceNetUpdate = TRUE;
 		SetBase(HomeBase);
@@ -335,16 +361,15 @@ auto state Home
 	function EndState(Name NextStateName)
 	{
 		Super.EndState(NextStateName);
-		UTGameObjective(HomeBase).SetAlarm(true);
+		HomeBase.SetAlarm(true);
 		HomeBase.bForceNetUpdate = TRUE;
 	}
 
 	function SameTeamTouch(Controller C)
 	{
 		local UTCTFFlag flag;
-		local UTBot Bot;
 
-		if ( UTPlayerReplicationInfo(C.PlayerReplicationInfo).bHasFlag )
+		if (C.PlayerReplicationInfo.bHasFlag)
 		{
 			// Score!
 			flag = UTCTFFlag(UTPlayerReplicationInfo(C.PlayerReplicationInfo).GetFlag());
@@ -352,11 +377,10 @@ auto state Home
 			SuccessfulCaptureSystem.SetActive(true);
 			flag.Score();
 
-			Bot = UTBot(C);
-			if (C.Pawn != None && Bot != None && UTSquadAI(Bot.Squad).GetOrders() == 'Attack')
+			if (C.Pawn != None && UTBot(C) != None && UTBot(C).Squad.GetOrders() == 'Attack')
 			{
-				Bot.Pawn.SetAnchor(HomeBase);
-				UTSquadAI(Bot.Squad).SetAlternatePathTo(UTCTFSquadAI(Bot.Squad).EnemyFlag.HomeBase, Bot);
+				UTBot(C).Pawn.SetAnchor(HomeBase);
+				UTBot(C).Squad.SetAlternatePathTo(UTCTFSquadAI(UTBot(C).Squad).EnemyFlag.HomeBase, UTBot(C));
 			}
 		}
 	}
@@ -420,73 +444,65 @@ function SetFlagDynamicLightToNotBeDynamic()
 	LightEnvironment.bDynamic = FALSE;
 }
 
-
 defaultproperties
 {
-	bHome=True
-	bStatic=False
-	NetPriority=+00003.000000
-	bCollideActors=true
-	bUseTeamColorForIcon=true
-
-	Begin Object Name=CollisionCylinder
-		CollisionRadius=+0048.000000
-		CollisionHeight=+0085.000000
-		CollideActors=true
-	End Object
-
-	Begin Object class=PointLightComponent name=FlagLightComponent
-		Brightness=5.0
-		LightColor=(R=255,G=255,B=255)
-		Radius=250.0
-		CastShadows=false
-		bEnabled=true
-		LightingChannels=(Dynamic=FALSE,CompositeDynamic=FALSE)
-	End Object
-	FlagLight=FlagLightComponent
-	Components.Add(FlagLightComponent)
-
-	Begin Object Class=DynamicLightEnvironmentComponent Name=FlagLightEnvironment
-	    bDynamic=FALSE
-	End Object
-	LightEnvironment=FlagLightEnvironment
-	Components.Add(FlagLightEnvironment)
-
-	Begin Object Class=SkeletalMeshComponent Name=TheFlagSkelMesh
-		CollideActors=false
-		BlockActors=false
-		PhysicsWeight=0
-		bHasPhysicsAssetInstance=true
-		BlockRigidBody=true
-		RBChannel=RBCC_Nothing
-		RBCollideWithChannels=(Default=FALSE,GameplayPhysics=FALSE,EffectPhysics=FALSE,Cloth=TRUE)
-		ClothRBChannel=RBCC_Cloth
-		LightEnvironment=FlagLightEnvironment
-		bEnableClothSimulation=true
-		bAutoFreezeClothWhenNotRendered=true
-		bUpdateSkelWhenNotRendered=false
-		bAcceptsDynamicDecals=FALSE
-		ClothWind=(X=20.0,Y=10.0)
-		Translation=(X=0.0,Y=0.0,Z=-40.0)  // this is needed to make the flag line up with the flag base
-		bPerBoneMotionBlur=true
-	End Object
-	SkelMesh=TheFlagSkelMesh;
-	Components.Add(TheFlagSkelMesh)
-
- 	bHardAttach=true
-
-	GameObjBone3P=b_spine2
-	GameObjOffset3P=(X=0,Y=16,Z=0)
-	GameObjRot3P=(Roll=-16384,Yaw=16384)
-	GameObjRot1P=(Yaw=16384,Roll=-3640)
-	GameObjOffset1P=(X=-45.0,Y=-8.0,Z=30.0)
-
-	RunningClothVelClamp=(X=500,Y=500,Z=200)
-	HoverboardingClothVelClamp=(X=300,Y=300,Z=200)
-
-	HomeBaseOffset=(Z=1.0)
-	LastLocationPingTime=-100.0
-
-	IconCoords=(U=843,V=86,UL=46,VL=44)
-	MapSize=0.4
+   Begin Object Class=SkeletalMeshComponent Name=TheFlagSkelMesh ObjName=TheFlagSkelMesh Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+      bUpdateSkelWhenNotRendered=False
+      bHasPhysicsAssetInstance=True
+      bEnableClothSimulation=True
+      bAutoFreezeClothWhenNotRendered=True
+      ClothWind=(X=20.000000,Y=10.000000,Z=0.000000)
+      LightEnvironment=DynamicLightEnvironmentComponent'UTGame.Default__UTCTFFlag:FlagLightEnvironment'
+      bUseAsOccluder=False
+      BlockRigidBody=True
+      RBChannel=RBCC_Nothing
+      RBCollideWithChannels=(Cloth=True)
+      Translation=(X=0.000000,Y=0.000000,Z=-40.000000)
+      Name="TheFlagSkelMesh"
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+   End Object
+   SkelMesh=TheFlagSkelMesh
+   RunningClothVelClamp=(X=500.000000,Y=500.000000,Z=200.000000)
+   HoverboardingClothVelClamp=(X=300.000000,Y=300.000000,Z=200.000000)
+   FlagMinViewDist=50.000000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=FlagLightEnvironment ObjName=FlagLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+      bDynamic=False
+      Name="FlagLightEnvironment"
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+   End Object
+   LightEnvironment=FlagLightEnvironment
+   LastLocationPingTime=-100.000000
+   bHome=True
+   bUseTeamColorForIcon=True
+   HomeBaseOffset=(X=0.000000,Y=0.000000,Z=1.000000)
+   MapSize=0.400000
+   IconCoords=(U=843.000000,V=86.000000,UL=46.000000,VL=44.000000)
+   GameObjBone3P="b_Spine2"
+   GameObjOffset3P=(X=0.000000,Y=16.000000,Z=0.000000)
+   GameObjRot3P=(Pitch=0,Yaw=16384,Roll=-16384)
+   GameObjOffset1P=(X=-45.000000,Y=-8.000000,Z=30.000000)
+   GameObjRot1P=(Pitch=0,Yaw=16384,Roll=-3640)
+   Begin Object Class=PointLightComponent Name=FlagLightComponent ObjName=FlagLightComponent Archetype=PointLightComponent'Engine.Default__PointLightComponent'
+      Radius=250.000000
+      Brightness=5.000000
+      CastShadows=False
+      LightingChannels=(Dynamic=False,CompositeDynamic=False)
+      Name="FlagLightComponent"
+      ObjectArchetype=PointLightComponent'Engine.Default__PointLightComponent'
+   End Object
+   FlagLight=FlagLightComponent
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTCarriedObject:CollisionCylinder'
+      CollisionHeight=85.000000
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTCarriedObject:CollisionCylinder'
+   End Object
+   Components(0)=CollisionCylinder
+   Components(1)=FlagLightComponent
+   Components(2)=FlagLightEnvironment
+   Components(3)=TheFlagSkelMesh
+   bHardAttach=True
+   bCollideActors=True
+   NetPriority=3.000000
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTCTFFlag"
+   ObjectArchetype=UTCarriedObject'UTGame.Default__UTCarriedObject'
 }

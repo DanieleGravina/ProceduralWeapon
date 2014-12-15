@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -9,14 +9,14 @@ class SeqAct_SetDOFParams extends SeqAct_Latent
 	
 /** exponent to apply to blur amount after it has been normalized to [0,1] */
 var() float FalloffExponent;
-/** affects the radius of the DepthOfField bohek / how blurry the scene gets */
+/** affects the size of the Poisson disc kernel */
 var() float BlurKernelSize;
 /** [0,1] value for clamping how much blur to apply to items in front of the focus plane */
-var(BlurAmount) float MaxNearBlurAmount<DisplayName=MaxNear>;
-/** [0,1] value for clamping how much blur to apply */
-var(BlurAmount) float MinBlurAmount<DisplayName=Min>;
+var() float MaxNearBlurAmount;
 /** [0,1] value for clamping how much blur to apply to items behind the focus plane */
-var(BlurAmount) float MaxFarBlurAmount<DisplayName=MaxFar>;
+var() float MaxFarBlurAmount;
+/** blur color for debugging etc */
+var() color ModulateBlurColor;
 
 /** inner focus radius */
 var() float FocusInnerRadius;
@@ -33,36 +33,33 @@ var float InterpolateElapsed;
 var float OldFalloffExponent;
 var float OldBlurKernelSize;
 var float OldMaxNearBlurAmount;
-var float OldMinBlurAmount;
 var float OldMaxFarBlurAmount;
+var color OldModulateBlurColor;
 var float OldFocusInnerRadius;
 var float OldFocusDistance;
 var vector OldFocusPosition;
 
-cpptext
-{
-	void Activated();
-	void DeActivated();
-	virtual UBOOL UpdateOp(FLOAT DeltaTime);
-};
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	InterpolateElapsed = 0
-	InterpolateSeconds = 2
-	ObjName="Depth Of Field"
-	ObjCategory="Camera"
-
-	// typical settings
-	FocusDistance=600
-	FocusInnerRadius=600
-	FalloffExponent=4
-	BlurKernelSize=5
-	MaxNearBlurAmount=1
-	MinBlurAmount=0
-	MaxFarBlurAmount=1
-
-	InputLinks(0)=(LinkDesc="Enable")
-	InputLinks(1)=(LinkDesc="Disable")
+   FalloffExponent=4.000000
+   BlurKernelSize=5.000000
+   MaxNearBlurAmount=1.000000
+   MaxFarBlurAmount=1.000000
+   ModulateBlurColor=(B=255,G=255,R=255,A=255)
+   FocusInnerRadius=600.000000
+   FocusDistance=600.000000
+   InterpolateSeconds=2.000000
+   InputLinks(0)=(LinkDesc="Enable")
+   InputLinks(1)=(LinkDesc="Disable")
+   ObjName="Depth Of Field"
+   ObjCategory="Camera"
+   Name="Default__SeqAct_SetDOFParams"
+   ObjectArchetype=SeqAct_Latent'Engine.Default__SeqAct_Latent'
 }

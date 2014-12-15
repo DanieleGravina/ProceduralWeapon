@@ -1,67 +1,61 @@
 /**
  * Toggleable version of DirectionalLight.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DirectionalLightToggleable extends DirectionalLight
-	native(Light)
-	ClassGroup(Lights, DirectionalLights)
+	native
 	placeable;
 
 
-cpptext
-{
-public:
-	/**
-	 * This will determine which icon should be displayed for this light.
-	 **/
-	virtual void DetermineAndSetEditorIcon();
-
-	/** 
-	 * Static affecting Toggleables can't have UseDirectLightmaps=TRUE  So even tho they are not "free" 
-	 * lightmapped data, they still are classified as static as it is the best they can be.
-	 **/
-	virtual void SetValuesForLight_StaticAffecting();
-
-	/**
-	 * Returns true if the light supports being toggled off and on on-the-fly
-	 *
-	 * @return For 'toggleable' lights, returns true
-	 **/
-	virtual UBOOL IsToggleable() const
-	{
-		// DirectionalLightToggleable supports being toggled on the fly!
-		return TRUE;
-	}
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// Visual things should be ticked in parallel with physics
-	TickGroup=TG_DuringAsyncWork
-
-	Begin Object Name=Sprite
-		Sprite=Texture2D'EditorResources.LightIcons.Light_Directional_Toggleable_DynamicsAndStatics'
-	End Object
-
-	// Light component.
-	Begin Object Name=DirectionalLightComponent0
-	    LightAffectsClassification=LAC_DYNAMIC_AND_STATIC_AFFECTING
-
-	    CastShadows=TRUE
-	    CastStaticShadows=TRUE
-	    CastDynamicShadows=TRUE
-	    bForceDynamicLight=FALSE
-	    UseDirectLightMap=FALSE
-
-	    LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=TRUE,bInitialized=TRUE)
-        // By default indirect light from toggleable lights won't be put into lightmaps, since it can't be toggled in-game
-        LightmassSettings=(IndirectLightingScale=0)
-	End Object
-
-
-	bMovable=FALSE
-	bStatic=FALSE
-	bHardAttach=TRUE
+   Begin Object Class=DirectionalLightComponent Name=DirectionalLightComponent0 ObjName=DirectionalLightComponent0 Archetype=DirectionalLightComponent'Engine.Default__DirectionalLight:DirectionalLightComponent0'
+      UseDirectLightMap=False
+      LightAffectsClassification=LAC_DYNAMIC_AND_STATIC_AFFECTING
+      ObjectArchetype=DirectionalLightComponent'Engine.Default__DirectionalLight:DirectionalLightComponent0'
+   End Object
+   LightComponent=DirectionalLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__DirectionalLight:Sprite'
+      Sprite=Texture2D'EngineResources.LightIcons.Light_Directional_Toggleable_DynamicsAndStatics'
+      ObjectArchetype=SpriteComponent'Engine.Default__DirectionalLight:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=DirectionalLightComponent0
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__DirectionalLight:ArrowComponent0'
+      ObjectArchetype=ArrowComponent'Engine.Default__DirectionalLight:ArrowComponent0'
+   End Object
+   Components(2)=ArrowComponent0
+   TickGroup=TG_DuringAsyncWork
+   bStatic=False
+   bHardAttach=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__DirectionalLightToggleable"
+   ObjectArchetype=DirectionalLight'Engine.Default__DirectionalLight'
 }

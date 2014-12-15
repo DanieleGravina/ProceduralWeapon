@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ModelComponent extends PrimitiveComponent
 	native
@@ -12,15 +12,17 @@ var transient native const noexport object Model;
 var transient native const noexport int ZoneIndex;
 var transient native const noexport int ComponentIndex; // (note that this is a WORD in C++, but alignment will make everything line up okay)
 var transient native const noexport array<pointer> Nodes;
+var transient native const noexport array<pointer> Edges;
 var transient native const noexport array<pointer> Elements;
 
 defaultproperties
 {
-	LightingChannels=(BSP=TRUE,bInitialized=TRUE)
-	CastShadow=TRUE
-	bAcceptsLights=TRUE
-	bAcceptsStaticDecals=TRUE
-	bAcceptsDecals=TRUE
-	bUsePrecomputedShadows=TRUE
-	bUseAsOccluder=TRUE
+   bUseAsOccluder=True
+   bAcceptsDecals=True
+   CastShadow=True
+   bAcceptsLights=True
+   LightingChannels=(bInitialized=True,BSP=True)
+   bUsePrecomputedShadows=True
+   Name="Default__ModelComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

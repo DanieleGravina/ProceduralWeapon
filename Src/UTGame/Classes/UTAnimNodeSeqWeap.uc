@@ -1,7 +1,26 @@
 /**
- *	Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ *	Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *	AnimNodeSequence which changes its animation based on the weapon anim type.
  */
 
-class UTAnimNodeSeqWeap extends UDKAnimNodeSeqWeap;
+class UTAnimNodeSeqWeap extends UTAnimNodeSequence
+	native(Animation);
 
+var()	name	DefaultAnim;
+var()	name	DualPistolAnim;
+var()	name	SinglePistolAnim;
+var()	name	ShoulderRocketAnim;
+var()	name	StingerAnim;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
+{
+   Name="Default__UTAnimNodeSeqWeap"
+   ObjectArchetype=UTAnimNodeSequence'UTGame.Default__UTAnimNodeSequence'
+}

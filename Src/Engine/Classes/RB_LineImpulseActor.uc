@@ -1,7 +1,7 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class RB_LineImpulseActor extends RigidBodyBase
+class RB_LineImpulseActor extends Actor
 	native(Physics)
 	placeable;
 
@@ -10,19 +10,14 @@ class RB_LineImpulseActor extends RigidBodyBase
  */
 
 
-cpptext
-{
-	// UObject interface
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-#if WITH_EDITOR
-	// AActor interface.
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Strength of impulse to apply to actors hit by the line check. */
-var()	interp float	ImpulseStrength;
+var()	float			ImpulseStrength;
 
 /** Length of line to check along. */
 var()	float			ImpulseRange;
@@ -32,9 +27,6 @@ var()	bool			bVelChange;
 
 /** If an impulse should only be applied to the first thing the line hits, or all things in the lines path. */
 var()	bool			bStopAtFirstHit;
-
-/** If true, will cause FracturedStaticMeshActor fragment hit by ray to break. */
-var()	bool			bCauseFracture;
 
 var		ArrowComponent	Arrow;
 
@@ -68,33 +60,39 @@ simulated event ReplicatedEvent(name VarName)
 	}
 }
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 defaultproperties
 {
-	Begin Object Class=ArrowComponent Name=ArrowComponent0
-		ArrowSize=4.16667
-		ArrowColor=(R=255,G=0,B=0)
-		bTreatAsASprite=True
-		SpriteCategoryName="Physics"
-	End Object
-	Arrow=ArrowComponent0
-	Components.Add(ArrowComponent0)
-
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_LineImpulse'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Physics"
-	End Object
-	Components.Add(Sprite)
-
-	ImpulseStrength=900.0
-	ImpulseRange=200.0
-
-	bEdShouldSnap=true
-	RemoteRole=ROLE_SimulatedProxy
-	bNoDelete=true
-	bAlwaysRelevant=true
-	NetUpdateFrequency=0.1
-	bOnlyDirtyReplication=true
+   ImpulseStrength=900.000000
+   ImpulseRange=200.000000
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowSize=4.166670
+      Name="ArrowComponent0"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Arrow=ArrowComponent0
+   Components(0)=ArrowComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_LineImpulse'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(1)=Sprite
+   RemoteRole=ROLE_SimulatedProxy
+   bNoDelete=True
+   bAlwaysRelevant=True
+   bOnlyDirtyReplication=True
+   bEdShouldSnap=True
+   NetUpdateFrequency=0.100000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__RB_LineImpulseActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

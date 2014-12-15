@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -10,8 +10,9 @@ var Object SpawnPoint;
 
 defaultproperties
 {
-	ObjName="Player Spawned"
-	ObjCategory="Player"
-
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Spawn Point",bWriteable=TRUE,PropertyName=SpawnPoint)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Spawn Point",PropertyName="SpawnPoint",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Player Spawned"
+   ObjCategory="Player"
+   Name="Default__SeqEvent_PlayerSpawned"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

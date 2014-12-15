@@ -2,21 +2,20 @@
 // Projectile.
 //
 // A delayed-hit projectile that moves around for some time after it is created.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Projectile extends Actor
 	abstract
-	native
-	notplaceable;
+	native;
 
 //-----------------------------------------------------------------------------
 // Projectile variables.
 
 // Motion information.
 /** Initial speed of projectile. */
-var(Projectile)		float   Speed;
+var		float   Speed;
 /** Limit on speed of projectile (0 means no limit). */
-var(Projectile)		float   MaxSpeed;
+var		float   MaxSpeed;
 
 /** If collisionextent nonzero, and hit actor with bBlockNonZeroExtents=0, switch to zero extent collision. */
 var		bool	bSwitchToZeroCollision;
@@ -30,20 +29,15 @@ var bool bBlockedByInstigator;
 
 var		bool	bBegunPlay;
 
-// Damage parameters
-/** Damage done by the projectile */
-var(Projectile)		float	Damage;
-/** Radius of effect in which damage is applied. */
-var(Projectile)		float	DamageRadius;
-/** Momentum magnitude imparted by impacting projectile. */
-var(Projectile)		float	MomentumTransfer;
-var	class<DamageType>	   MyDamageType;
+// Damage attributes.
+var   float    Damage;
+var	  float	   DamageRadius;
+var   float	   MomentumTransfer; // Momentum magnitude imparted by impacting projectile.
+var   class<DamageType>	   MyDamageType;
 
 // Projectile sound effects
-/** Sound made when projectile is spawned. */
-var(Projectile)		SoundCue	SpawnSound;
-/** Sound made when projectile hits something. */
-var(Projectile)		SoundCue	ImpactSound;
+var   SoundCue	SpawnSound;		// Sound made when projectile is spawned.
+var   SoundCue ImpactSound;		// Sound made when projectile hits something.
 
 // explosion effects
 var Controller	InstigatorController;
@@ -57,22 +51,25 @@ var	CylinderComponent		CylinderComponent;
 /** If true, this projectile will have its rotation updated each frame to match its velocity */
 var bool bRotationFollowsVelocity;
 
-/** If true, ignore foliage entirely */
-var bool bIgnoreFoliageTouch;
+/** If true, init projectiles rotation when a velocity is received */
+var bool bInitRotationFromVelocity;
 
-cpptext
-{
-	void BoundProjectileVelocity();
-	virtual UBOOL ShrinkCollision(AActor *HitActor, UPrimitiveComponent* HitComponent, const FVector &StartLocation);
-	virtual void GrowCollision();
-	virtual AProjectile* GetAProjectile() { return this; }
-	virtual const AProjectile* GetAProjectile() const { return this; }
-	virtual void processHitWall(FCheckResult const& Hit, FLOAT TimeSlice=0.f);
-	virtual UBOOL IsNetRelevantFor(APlayerController* RealViewer, AActor* Viewer, const FVector& SrcLocation);
-	virtual FLOAT GetNetPriority(const FVector& ViewPos, const FVector& ViewDir, APlayerController* Viewer, UActorChannel* InChannel, FLOAT Time, UBOOL bLowBandwidth);
-	virtual UBOOL IgnoreBlockingBy( const AActor *Other) const;
-	virtual void physProjectile(FLOAT DeltaTime, INT Iterations);
-}
+/** if true, not blocked by vehicle shields with bIgnoreFlaggedProjectiles*/
+var bool bNotBlockedByShield;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //==============
 // Encroachment
@@ -107,7 +104,11 @@ simulated event PostBeginPlay()
 /* Init()
 initialize velocity and rotation of projectile
 */
-native function Init( Vector Direction );
+function Init(vector Direction)
+{
+	SetRotation(Rotator(Direction));
+	Velocity = Speed * Direction;
+}
 
 /*
  * Queries the Instigator and returns his current team index.
@@ -122,39 +123,6 @@ simulated function bool CanSplash()
 function Reset()
 {
 	Destroy();
-}
-
-/**
- * Adjusts HurtOrigin up to avoid world geometry, so more traces to actors around explosion will succeed
- */
-simulated function bool ProjectileHurtRadius( vector HurtOrigin, vector HitNormal)
-{
-	local vector AltOrigin, TraceHitLocation, TraceHitNormal;
-	local Actor TraceHitActor;
-
-	// early out if already in the middle of hurt radius
-	if ( bHurtEntry )
-		return false;
-
-	AltOrigin = HurtOrigin;
-
-	if ( (ImpactedActor != None) && ImpactedActor.bWorldGeometry )
-	{
-		// try to adjust hit position out from hit location if hit world geometry
-		AltOrigin = HurtOrigin + 2.0 * class'Pawn'.Default.MaxStepHeight * HitNormal;
-		TraceHitActor = Trace(TraceHitLocation, TraceHitNormal, AltOrigin, HurtOrigin, false,,,TRACEFLAG_Bullet);
-		if ( TraceHitActor == None )
-		{
-			// go half way if hit nothing
-			AltOrigin = HurtOrigin + class'Pawn'.Default.MaxStepHeight * HitNormal;
-		}
-		else
-		{
-			AltOrigin = HurtOrigin + 0.5*(TraceHitLocation - HurtOrigin);
-		}
-	}
-
-	return HurtRadius(Damage, DamageRadius, MyDamageType, MomentumTransfer, AltOrigin);
 }
 
 /**
@@ -200,9 +168,6 @@ simulated singular event Touch( Actor Other, PrimitiveComponent OtherComp, vecto
 	if ( (Other == None) || Other.bDeleteMe ) // Other just got destroyed in its touch?
 		return;
 
-	if (bIgnoreFoliageTouch && InteractiveFoliageActor(Other) != None ) // Ignore foliage if desired
-		return;
-
 	// don't allow projectiles to explode while spawning on clients
 	// because if that were accurate, the projectile would've been destroyed immediately on the server
 	// and therefore it wouldn't have been replicated to the client
@@ -216,39 +181,20 @@ simulated singular event Touch( Actor Other, PrimitiveComponent OtherComp, vecto
 
 simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNormal)
 {
-	if (Other != Instigator)
-	{
-		if (!Other.bStatic && DamageRadius == 0.0)
-		{
-			Other.TakeDamage(Damage, InstigatorController, Location, MomentumTransfer * Normal(Velocity), MyDamageType,, self);
-		}
-		Explode(HitLocation, HitNormal);
-	}
+	if ( Other != Instigator )
+		Explode( HitLocation, HitNormal );
 }
 
 simulated singular event HitWall(vector HitNormal, actor Wall, PrimitiveComponent WallComp)
 {
-	local KActorFromStatic NewKActor;
-	local StaticMeshComponent HitStaticMesh;
-
-	Super.HitWall(HitNormal, Wall, WallComp);
-
-	if ( Wall.bWorldGeometry )
-	{
-		HitStaticMesh = StaticMeshComponent(WallComp);
-	if ( (HitStaticMesh != None) && HitStaticMesh.CanBecomeDynamic() )
-	{
-	        NewKActor = class'KActorFromStatic'.Static.MakeDynamic(HitStaticMesh);
-	        if ( NewKActor != None )
-			{
-				Wall = NewKActor;
-			}
-	}
-	}
 	ImpactedActor = Wall;
-	if ( !Wall.bStatic && (DamageRadius == 0) )
+
+	if ( !Wall.bStatic && !Wall.bWorldGeometry )
 	{
-		Wall.TakeDamage( Damage, InstigatorController, Location, MomentumTransfer * Normal(Velocity), MyDamageType,, self);
+		if ( DamageRadius == 0 )
+		{
+			Wall.TakeDamage( Damage, InstigatorController, Location, MomentumTransfer * Normal(Velocity), MyDamageType,, self);
+		}
 	}
 
 	Explode(Location, HitNormal);
@@ -268,13 +214,14 @@ simulated function Explode(vector HitLocation, vector HitNormal)
 		{
 			MakeNoise(1.0);
 		}
-		ProjectileHurtRadius(HitLocation, HitNormal);
+		HurtRadius(Damage, DamageRadius, MyDamageType, MomentumTransfer, HitLocation);
 	}
 	Destroy();
 }
 
 simulated final function RandSpin(float spinRate)
 {
+	DesiredRotation = RotRand();
 	RotationRate.Yaw = spinRate * 2 *FRand() - spinRate;
 	RotationRate.Pitch = spinRate * 2 *FRand() - spinRate;
 	RotationRate.Roll = spinRate * 2 *FRand() - spinRate;
@@ -315,53 +262,42 @@ simulated static function float GetRange()
 	}
 }
 
-
-/** Called when this actor touches a fluid surface */
-simulated function ApplyFluidSurfaceImpact( FluidSurfaceActor Fluid, vector HitLocation)
-{
-	Super.ApplyFluidSurfaceImpact(Fluid, HitLocation);
-
-	if ( CanSplash() )
-	{
-		if ( WorldInfo.NetMode != NM_DedicatedServer &&
-			(Instigator != None) &&
-			Instigator.IsPlayerPawn() &&
-			Instigator.IsLocallyControlled() )
-		{
-			WorldInfo.MyEmitterPool.SpawnEmitter(Fluid.ProjectileEntryEffect, HitLocation, rotator(vect(0,0,1)), self);
-		}
-	}
-}
-
 defaultproperties
 {
-	TickGroup=TG_PreAsyncWork
-
-	Begin Object Class=CylinderComponent Name=CollisionCylinder
-		CollisionRadius=0
-		CollisionHeight=0
-		AlwaysLoadOnClient=True
-		AlwaysLoadOnServer=True
-	End Object
-	CollisionComponent=CollisionCylinder
-	CylinderComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-	bCanBeDamaged=true
-	DamageRadius=+220.0
-	MaxSpeed=+02000.000000
-	Speed=+02000.000000
-	bRotationFollowsVelocity=false
-	bCollideActors=true
-	bCollideWorld=true
-	bNetTemporary=true
-	bGameRelevant=true
-	bReplicateInstigator=true
-	Physics=PHYS_Projectile
-	LifeSpan=+0014.000000
-	NetPriority=+00002.500000
-	MyDamageType=class'DamageType'
-	RemoteRole=ROLE_SimulatedProxy
-	NetCullDistanceSquared=+400000000.0
-	bBlockedByInstigator=true
+   Speed=2000.000000
+   MaxSpeed=2000.000000
+   bBlockedByInstigator=True
+   DamageRadius=220.000000
+   MyDamageType=Class'Engine.DamageType'
+   NetCullDistanceSquared=400000000.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__CylinderComponent'
+      CollisionHeight=0.000000
+      CollisionRadius=0.000000
+      Name="CollisionCylinder"
+      ObjectArchetype=CylinderComponent'Engine.Default__CylinderComponent'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   Physics=PHYS_Projectile
+   RemoteRole=ROLE_SimulatedProxy
+   bNetTemporary=True
+   bReplicateInstigator=True
+   bGameRelevant=True
+   bCanBeDamaged=True
+   bCollideActors=True
+   bCollideWorld=True
+   NetPriority=2.500000
+   LifeSpan=14.000000
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Projectile"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

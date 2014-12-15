@@ -12,90 +12,72 @@
 // in response to this event, intercepting the event and superceding the Pawn's default
 // behavior.
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Controller extends Actor
-	native(Controller)
+	native
 	nativereplication
-	implements(Interface_NavigationHandle)
 	abstract;
 
 //=============================================================================
 // BASE VARIABLES
 
-/** Pawn currently being controlled by this controller.  Use Pawn.Possess() to take control of a pawn */
-var editinline repnotify Pawn Pawn;
-
-/** PlayerReplicationInfo containing replicated information about the player using this controller (only exists if bIsPlayer is true). */
-var editinline repnotify PlayerReplicationInfo 	PlayerReplicationInfo;
-
+var 	Pawn							Pawn;
+var repnotify PlayerReplicationInfo 	PlayerReplicationInfo;
 var const int							PlayerNum;						// The player number - per-match player number.
 var const private Controller			NextController;					// chained Controller list
 
 var		bool        					bIsPlayer;						// Pawn is a player or a player-bot.
 var		bool							bGodMode;		   				// cheat - when true, can't be killed or hurt
+var		bool							bAffectedByHitEffects;		   			// cheat - when true, can't be affected by effects from damage (e.g. momentum transfer, hit effects, etc.)
 
-var		bool		bSoaking;			// pause and focus on pawn controlled by this controller if it encounters a problem
-var		bool		bSlowerZAcquire;	// AI acquires targets above or below more slowly than at same height
-
+var		bool		bSoaking;			// pause and focus on this bot if it encounters a problem
+var		bool		bSlowerZAcquire;	// acquire targets above or below more slowly than at same height
+var		bool		bForceStrafe;
+var		bool		bNotifyPostLanded;
 
 // Input buttons.
 var input byte							bFire;
 
-/** If true, the controlled pawn will attempt to alt fire */
-var input byte							bAltFire;
-
 //=============================================================================
 // PHYSICS VARIABLES
 
-var		bool							bNotifyPostLanded;				// if true, event NotifyPostLanded() after pawn lands after falling.
-var		bool							bNotifyApex;					// if true, event NotifyJumpApex() when at apex of jump
+var		bool							bNotifyApex;					// event NotifyJumpApex() when at apex of jump
 var	 	float							MinHitWall;						// Minimum HitNormal dot Velocity.Normal to get a HitWall event from the physics
-
 
 //=============================================================================
 // NAVIGATION VARIABLES
-
-/** Navigation handle used for pathing when using NavMesh */
-var     class<NavigationHandle>         NavigationHandleClass;
-var     editinline NavigationHandle     NavigationHandle;
-/** Override search start position for navhandle path cache info */
-var     bool                            bOverrideSearchStart;
-var     Vector                          OverrideSearchStart;
 
 var		bool							bAdvancedTactics;				// serpentine movement between pathnodes
 var		bool							bCanDoSpecial;					// are we able to traverse R_SPECIAL reach specs?
 var		bool							bAdjusting;						// adjusting around obstacle
 var		bool							bPreparingMove;					// set true while pawn sets up for a latent move
-
-/** Used by AI, set true to force AI to use serpentine/strafing movement when possible. */
-var		bool							bForceStrafe;
-
 var 	float							MoveTimer;						// internal timer for latent moves, useful for setting a max duration
 var 	Actor							MoveTarget;						// actor being moved toward
-var		BasedPosition					DestinationPosition;			// destination controlled pawn is moving toward
-var		BasedPosition					FocalPosition;					// position controlled pawn is looking at
+var		vector	 						Destination;					// location being moved toward
+var	 	vector							FocalPoint;						// location being looked at
 var		Actor							Focus;							// actor being looked at
 var		Actor							GoalList[4];					// used by navigation AI - list of intermediate goals
-var		BasedPosition					AdjustPosition;					// intermediate destination used while adjusting around obstacle (bAdjusting is true)
+var		vector							AdjustLoc;						// location to move to while adjusting around obstacle
 var NavigationPoint 					StartSpot;  					// where player started the match
 
 /** Cached list of nodes filled in by the last call to FindPathXXX */
 var array<NavigationPoint> RouteCache;
 
-var 	ReachSpec						CurrentPath;					// Current path being moved along
-var		ReachSpec						NextRoutePath;					// Next path in route to destination
-var 	vector							CurrentPathDir;					// direction vector of current path
+var 	ReachSpec						CurrentPath;
+var		ReachSpec						NextRoutePath;
+var 	vector							CurrentPathDir;
 var 	Actor							RouteGoal;						// final destination for current route
 var 	float							RouteDist;						// total distance for current route
 var		float							LastRouteFind;					// time at which last route finding occured
-var		InterpActor						PendingMover;					// InterpActor that controller is currently waiting on (e.g. door or lift)
+var		InterpActor						PendingMover;
 
 /** used for discovering navigation failures */
 var		Actor							FailedMoveTarget;
 var		int								MoveFailureCount;
 
 var float GroundPitchTime;
+var vector ViewX, ViewY, ViewZ;											// Viewrotation encoding for PHYS_Spider
 
 var Pawn ShotTarget;													// Target most recently aimed at
 var const Actor							LastFailedReach;				// cache to avoid trying failed actorreachable more than once per frame
@@ -108,29 +90,26 @@ const LATENT_MOVETOWARD = 503; // LatentAction number for Movetoward() latent fu
 // AI VARIABLES
 
 var const bool							bLOSflag;						// used for alternating LineOfSight traces
-var		bool							bSkipExtraLOSChecks;			// Skip viewport nudging checks for LOS
-var		bool							bNotifyFallingHitWall;			// If true, controller gets NotifyFallingHitWall() when pawn hits wall while falling
+var		bool							bUsePlayerHearing;
+var		bool							bNotifyFallingHitWall;
 var		float							SightCounter;					// Used to keep track of when to check player visibility
-var		float							SightCounterInterval;			// how often player visibility is checked
-var     bool                            bEarlyOutOfSighTestsForSameType;// when an AI already has an enemy of this type, early out from sight tests to me
+var		float							SightCounterInterval;			// how often player visibility is checked 
+var		float							RespawnPredictionTime;
 /** multiplier to cost of NavigationPoints that another Pawn is currently anchored to */
 var float InUseNodeCostMultiplier;
-
 /** additive modifier to cost of NavigationPoints that require high jumping */
 var int HighJumpNodeCostModifier;
 
-/** Max time when moving toward a pawn target before latent movetoward returns (allowing reassessment of movement) */
-var float MaxMoveTowardPawnTargetTime;
-
 // Enemy information
 var	 	Pawn					    	Enemy;
+var deprecated	Actor							Target;
 
+/** Forces physics to use Controller.DesiredRotation regardless of focus etc */
+var bool bForceDesiredRotation;
 /** Forces all velocity to be directed towards reaching Destination */
 var bool bPreciseDestination;
-
 /** Do visibility checks, call SeePlayer events() for pawns on same team as self.  Setting to true will result in a lot more AI visibility line checks. */
 var bool bSeeFriendly;
-
 /** List of destinations whose source portals are visible to this Controller */
 struct native VisiblePortalInfo
 {
@@ -158,14 +137,12 @@ struct native VisiblePortalInfo
 	}
 };
 var array<VisiblePortalInfo> VisiblePortals;
-
 /** indicates that the AI is within a lane in its CurrentPath (like a road)
  * to avoid ramming other Pawns also using that path
  * set by MoveToward() when it detects multiple AI pawns using the same path
  * when this is true, serpentine movement and cutting corners are disabled
  */
 var bool bUsingPathLanes;
-
 /** the offset from the center of CurrentPath to the center of the lane in use (the Pawn's CollisionRadius defines the extent)
  * positive values are to the Pawn's right, negative to the Pawn's left
  */
@@ -174,176 +151,104 @@ var float LaneOffset;
 /** Used for reversing rejected mover base movement */
 var const rotator OldBasedRotation;
 
-/** allows easy modification of the search extent provided by setuppathfindingparams() */
-var vector NavMeshPath_SearchExtent_Modifier;
-
-cpptext
-{
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-	UBOOL Tick( FLOAT DeltaTime, enum ELevelTick TickType );
-	virtual void Spawned();
-	virtual void BeginDestroy();
-
-	virtual UBOOL IsPlayerOwned()
-	{
-		return IsPlayerOwner();
-	}
-
-	virtual UBOOL IsPlayerOwner()
-	{
-		return bIsPlayer;
-	}
-	virtual AController* GetAController() { return this; }
-
-	// Seeing and hearing checks
-	virtual UBOOL CanHear(const FVector& NoiseLoc, FLOAT Loudness, AActor *Other);
-	virtual void ShowSelf();
-	virtual UBOOL ShouldCheckVisibilityOf(AController* C);
-	virtual DWORD SeePawn(APawn *Other, UBOOL bMaySkipChecks = TRUE);
-	virtual DWORD LineOfSightTo(const AActor* Other, INT bUseLOSFlag=0, const FVector* chkLocation = NULL, UBOOL bTryAlternateTargetLoc = FALSE);
-	void CheckEnemyVisible();
-	virtual void HearNoise(AActor* NoiseMaker, FLOAT Loudness, FName NoiseType);
-
-	AActor* HandleSpecial(AActor *bestPath);
-	virtual INT AcceptNearbyPath(AActor* goal);
-	virtual UReachSpec* PrepareForMove( ANavigationPoint *NavGoal, UReachSpec* Path );
-	UReachSpec* GetNextRoutePath( ANavigationPoint *NavGoal );
-	virtual void AdjustFromWall(FVector HitNormal, AActor* HitActor);
-	void SetRouteCache( ANavigationPoint *EndPath, FLOAT StartDist, FLOAT EndDist );
-	AActor* FindPath(const FVector& Point, AActor* Goal, UBOOL bWeightDetours, INT MaxPathLength, UBOOL bReturnPartial);
-	/** given the passed in goal for pathfinding, set bTransientEndPoint on all NavigationPoints that are acceptable
-	 * destinations on the path network
-	 * @param EndAnchor the Anchor for the goal on the navigation network
-	 * @param Goal the goal actor we're pathfinding toward (may be NULL)
-	 * @param GoalLocation the goal world location we're pathfinding toward
-	 */
-	virtual void MarkEndPoints(ANavigationPoint* EndAnchor, AActor* Goal, const FVector& GoalLocation);
-	/** gives the Controller a chance to pre-empt pathfinding with its own result (if a cached path is still valid, for example)
-	 * called just before navigation network traversal, after Anchor determination and NavigationPoint transient properties are set up
-	 * only called when using the 'FindEndPoint' node evaluator
-	 * @param EndAnchor - Anchor for Goal on the path network
-	 * @param Goal - Destination Actor we're trying to path to (may be NULL)
-	 * @param GoalLocation - the goal world location we're pathfinding toward
-	 * @param bWeightDetours - whether we should consider short detours for pickups and such
-	 * @param BestWeight - weighting value for best node on path - if this function returns true, findPathToward() will return this value
-	 * @return whether the normal pathfinding should be skipped
-	 */
-	virtual UBOOL OverridePathTo(ANavigationPoint* EndAnchor, AActor* Goal, const FVector& GoalLocation, UBOOL bWeightDetours, FLOAT& BestWeight)
-	{
-		return FALSE;
-	}
-	AActor* SetPath(INT bInitialPath=1);
-	virtual UBOOL WantsLedgeCheck();
-	virtual UBOOL StopAtLedge();
-	virtual void PrePollMove()
-	{}
-	virtual void PostPollMove()
-	{}
-	virtual void PollMoveComplete();
-	virtual AActor* GetViewTarget();
-	virtual void UpdateEnemyInfo(APawn* AcquiredEnemy) {};
-	virtual void JumpOverWall(FVector WallNormal);
-	virtual void UpdatePawnRotation();
-	virtual UBOOL ForceReached(ANavigationPoint *Nav, const FVector& TestPosition);
-	virtual FRotator SetRotationRate(FLOAT deltaTime);
-	virtual FVector DesiredDirection();
-	/** activates path lanes for this Controller's current movement and adjusts its destination accordingly
-	 * @param DesiredLaneOffset the offset from the center of the Controller's CurrentPath that is desired
-	 * 				the Controller sets its LaneOffset as close as it can get to it without
-	 *				allowing any part of the Pawn's cylinder outside of the CurrentPath
-	 */
-	void SetPathLane(FLOAT InPathOffset);
-	virtual void FailMove();
-
-	// falling physics AI hooks
-	virtual void PreAirSteering(FLOAT DeltaTime) {};
-	virtual void PostAirSteering(FLOAT DeltaTime) {};
-	virtual void PostPhysFalling(FLOAT DeltaTime) {};
-	virtual void PostPhysWalking(FLOAT DeltaTime) {};
-	virtual void PostPhysSpider(FLOAT DeltaTime) {};
-	virtual UBOOL AirControlFromWall(float DeltaTime, FVector& RealAcceleration) { return FALSE; };
-	virtual void NotifyJumpApex();
-
-	virtual void PostBeginPlay();
-	virtual void PostScriptDestroyed();
-
-	virtual void ClearCrossLevelPaths(ULevel *Level);
-
-	// Natives.
-	DECLARE_FUNCTION(execPollWaitForLanding);
-	virtual DECLARE_FUNCTION(execPollMoveTo);
-	virtual DECLARE_FUNCTION(execPollMoveToward);
-	DECLARE_FUNCTION(execPollFinishRotation);
-
-	virtual UBOOL ShouldOffsetCorners() { return TRUE; }
-	virtual UBOOL ShouldUsePathLanes() { return TRUE; }
-	virtual UBOOL ShouldIgnoreNavigationBlockingFor(const AActor* Other){ return !Other->bBlocksNavigation; }
-
-	// AnimControl Matinee Track support
-
-	/** Used to provide information on the slots that this Actor provides for animation to Matinee. */
-	virtual void GetAnimControlSlotDesc(TArray<struct FAnimSlotDesc>& OutSlotDescs);
-
-	/**
-	 *	Called by Matinee when we open it to start controlling animation on this Actor.
-	 *	Is also called again when the GroupAnimSets array changes in Matinee, so must support multiple calls.
-	 */
-	virtual void PreviewBeginAnimControl(class UInterpGroup* InInterpGroup);
-
-	/** Called each frame by Matinee to update the desired sequence by name and position within it. */
-	virtual void PreviewSetAnimPosition(FName SlotName, INT ChannelIndex, FName InAnimSeqName, FLOAT InPosition, UBOOL bLooping, UBOOL bFireNotifies, UBOOL bEnableRootMotion, FLOAT DeltaTime);
-
-	/** Called each frame by Matinee to update the desired animation channel weights for this Actor. */
-	virtual void PreviewSetAnimWeights(TArray<FAnimSlotInfo>& SlotInfos);
-
-	/** Called by Matinee when we close it after we have been controlling animation on this Actor. */
-	virtual void PreviewFinishAnimControl(class UInterpGroup* InInterpGroup);
-
-	/** Function used to control FaceFX animation in the editor (Matinee). */
-	virtual void PreviewUpdateFaceFX(UBOOL bForceAnim, const FString& GroupName, const FString& SeqName, FLOAT InPosition);
-
-	/** Used by Matinee playback to start a FaceFX animation playing. */
-	virtual void PreviewActorPlayFaceFX(const FString& GroupName, const FString& SeqName, USoundCue* InSoundCue);
-
-	/** Used by Matinee to stop current FaceFX animation playing. */
-	virtual void PreviewActorStopFaceFX();
-
-	/** Used in Matinee to get the AudioComponent we should play facial animation audio on. */
-	virtual UAudioComponent* PreviewGetFaceFXAudioComponent();
-
-	/** Get the UFaceFXAsset that is currently being used by this Actor when playing facial animations. */
-	virtual class UFaceFXAsset* PreviewGetActorFaceFXAsset();
-
-	/** Called each frame by Matinee to update the weight of a particular MorphNodeWeight. */
-	virtual void PreviewSetMorphWeight(FName MorphNodeName, FLOAT MorphWeight);
-
-	/** Called each frame by Matinee to update the scaling on a SkelControl. */
-	virtual void PreviewSetSkelControlScale(FName SkelControlName, FLOAT Scale);
-
-	/** Called each frame by Matinee to update the controlstrength on a SkelControl. */
-	virtual void SetSkelControlStrength(FName SkelControlName, FLOAT ControlStrength);
-
-	/** Called each from while the Matinee action is running, to set the animation weights for the actor. */
-	virtual void SetAnimWeights( const TArray<struct FAnimSlotInfo>& SlotInfos );
-
-	/** base function called to kick off moveto latent action (called from execMoveTo and execMoveToDirectNonPathPos) */
-	virtual void MoveTo(const FVector& Dest, AActor* ViewFocus, FLOAT DesiredOffset, UBOOL bShouldWalk);
-
-	/** base function called to kick off movetoward latent action (called from execMoveToward) */
-	virtual void MoveToward(AActor* goal, AActor* viewfocus, FLOAT DesiredOffset, UBOOL bStrafe, UBOOL bShouldWalk);
-
-
-	/** IMPLEMENT Interface_NavigationHandle */
-	virtual UBOOL	CanCoverSlip(ACoverLink* Link, INT SlotIdx);
-	virtual void SetupPathfindingParams( FNavMeshPathParams& out_ParamCache );
-	virtual void InitForPathfinding() {}
-	virtual INT ExtraEdgeCostToAddWhenActive(FNavMeshEdgeBase* Edge) { return 0; }
-	virtual FVector GetEdgeZAdjust(FNavMeshEdgeBase* Edge);
-	/** END */
-
-	virtual FLOAT GetMaxDropHeight();
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -356,11 +261,6 @@ replication
  */
 native function bool IsLocalPlayerController();
 
-/** returns whether this controller is a local controller.
-  * @RETURN true always for non-playercontroller
- */
-native function bool IsLocalController();
-
 /** Route Cache Operations
  *	Allows operations on nodes in the route while modifying route (ie before emptying the cache)
  *	Should override in subclasses as needed
@@ -371,69 +271,6 @@ native function RouteCache_InsertItem( NavigationPoint Nav, int Idx=0 );
 native function RouteCache_RemoveItem( NavigationPoint Nav );
 native function RouteCache_RemoveIndex( int InIndex, int Count=1 );
 
-/** Set FocalPoint as absolute position or offset from base */
-native final function SetFocalPoint( Vector FP, optional bool bOffsetFromBase );
-/** Retrive the final position that controller should be looking at */
-native final function Vector GetFocalPoint();
-
-/** Set Destination as absolute position or offset from base */
-native final function SetDestinationPosition( Vector Dest, optional bool bOffsetFromBase );
-/** Retrive the final position that controller should be moving to */
-native final function Vector GetDestinationPosition();
-
-native final virtual function SetAdjustLocation( Vector NewLoc, bool bAdjust, optional bool bOffsetFromBase );
-native final function Vector GetAdjustLocation();
-
-/**
- *  this event is called when an edge is deleted that this controller's handle is actively using
- */
-event NotifyPathChanged();
-
-
-/** Called when we start an AnimControl track operating on this Actor. Supplied is the set of AnimSets we are going to want to play from. */
-simulated event BeginAnimControl(InterpGroup InInterpGroup)
-{
-	Pawn.BeginAnimControl(InInterpGroup);
-}
-
-/** Called each from while the Matinee action is running, with the desired sequence name and position we want to be at. */
-simulated event SetAnimPosition(name SlotName, int ChannelIndex, name InAnimSeqName, float InPosition, bool bFireNotifies, bool bLooping, bool bEnableRootMotion)
-{
-	Pawn.SetAnimPosition(SlotName, ChannelIndex, InAnimSeqName, InPosition, bFireNotifies, bLooping, bEnableRootMotion);
-}
-
-/** Called when we are done with the AnimControl track. */
-simulated event FinishAnimControl(InterpGroup InInterpGroup)
-{
-	Pawn.FinishAnimControl(InInterpGroup);
-}
-
-/**
- * Play FaceFX animations on this Actor.
- * Returns TRUE if succeeded, if failed, a log warning will be issued.
- */
-event bool PlayActorFaceFXAnim(FaceFXAnimSet AnimSet, String GroupName, String SeqName, SoundCue SoundCueToPlay )
-{
-	return Pawn.PlayActorFaceFXAnim(AnimSet, GroupName, SeqName, SoundCueToPlay);
-}
-
-/** Stop any matinee FaceFX animations on this Actor. */
-event StopActorFaceFXAnim()
-{
-	Pawn.StopActorFaceFXAnim();
-}
-
-/** Called each frame by Matinee to update the weight of a particular MorphNodeWeight. */
-event SetMorphWeight(name MorphNodeName, float MorphWeight)
-{
-	Pawn.SetMorphweight(MorphNodeName, MorphWeight);
-}
-
-/** Called each frame by Matinee to update the scaling on a SkelControl. */
-event SetSkelControlScale(name SkelControlName, float Scale)
-{
-	Pawn.SetSkelControlScale(SkelControlName, Scale);
-}
 /* epic ===============================================
 * ::PostBeginPlay
 *
@@ -445,15 +282,10 @@ event SetSkelControlScale(name SkelControlName, float Scale)
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
-
-	if ( !bDeleteMe && (WorldInfo.NetMode != NM_Client) )
+	if ( !bDeleteMe && bIsPlayer && (WorldInfo.NetMode != NM_Client) )
 	{
-		if( bIsPlayer )
-		{
-			// create a new player replication info
-			InitPlayerReplicationInfo();
-		}
-		InitNavigationHandle();
+		// create a new player replication info
+		InitPlayerReplicationInfo();
 	}
 	// randomly offset the sight counter to avoid hitches
 	SightCounter = SightCounterInterval * FRand();
@@ -601,14 +433,31 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 
 	inPawn.PossessedBy(self, bVehicleTransition);
 	Pawn = inPawn;
+	if ( PlayerReplicationInfo != None )
+	{
+		UpdateSex();
+	}
 
 	// preserve Pawn's rotation initially for placed Pawns
-	SetFocalPoint( Pawn.Location + 512*vector(Pawn.Rotation), TRUE );
+	FocalPoint = Pawn.Location + 512*vector(Pawn.Rotation);
 	Restart(bVehicleTransition);
 
 	if( Pawn.Weapon == None )
 	{
 		ClientSwitchToBestWeapon();
+	}
+}
+
+function UpdateSex()
+{
+	if ( Vehicle(Pawn) != None &&
+		Vehicle(Pawn).Driver != None)
+	{
+		PlayerReplicationInfo.bIsFemale = Vehicle(Pawn).Driver.bIsFemale;
+	}
+	else
+	{
+		PlayerReplicationInfo.bIsFemale = Pawn.bIsFemale;
 	}
 }
 
@@ -754,12 +603,6 @@ function Restart(bool bVehicleTransition)
 	{
 		Enemy = None;
 	}
-
-	// if not vehicle transition, clear controller information
-	if ( bVehicleTransition == FALSE && Pawn.InvManager != None )
-	{
-		Pawn.InvManager.UpdateController();
-	}
 }
 
 /* epic ===============================================
@@ -797,12 +640,9 @@ function NotifyTakeHit(Controller InstigatedBy, vector HitLocation, int Damage, 
 function InitPlayerReplicationInfo()
 {
 	PlayerReplicationInfo = Spawn(WorldInfo.Game.PlayerReplicationInfoClass, self,, vect(0,0,0),rot(0,0,0));
-	// force a default player name if necessary
 	if (PlayerReplicationInfo.PlayerName == "")
 	{
-		// don't call SetPlayerName() as that will broadcast entry messages but the GameInfo hasn't had a chance
-		// to potentionally apply a player/bot name yet
-		PlayerReplicationInfo.PlayerName = class'GameInfo'.default.DefaultPlayerName;
+		PlayerReplicationInfo.SetPlayerName(class'GameInfo'.Default.DefaultPlayerName);
 	}
 }
 
@@ -869,7 +709,7 @@ function GameHasEnded(optional Actor EndGameFocus, optional bool bIsWinner)
 *
 * =====================================================
 */
-function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn, class<DamageType> damageTyp)
+function NotifyKilled(Controller Killer, Controller Killed, pawn KilledPawn)
 {
 	if( Pawn != None )
 	{
@@ -959,6 +799,7 @@ function HandlePickup(Inventory Inv);
 *
  * @param	W, weapon about to fire
  * @param	StartFireLoc, world location of weapon fire start trace, or projectile spawn loc.
+ * @param	BaseAimRot, original aiming rotation without any modifications.
  */
 function Rotator GetAdjustedAimFor( Weapon W, vector StartFireLoc )
 {
@@ -989,6 +830,15 @@ function InstantWarnTarget(Actor InTarget, Weapon FiredWeapon, vector FireDir)
 		P.Controller.ReceiveWarning(Pawn, -1, FireDir);
 	}
 }
+
+/* epic ===============================================
+* ::CheckNearMiss
+*
+* Check if bullet went close by my pawn.
+*
+* =====================================================
+*/
+function CheckNearMiss(Pawn Shooter, Weapon W, vector WeapLoc, vector LineDir, vector HitLocation);
 
 /* epic ===============================================
 * ::ReceiveWarning
@@ -1038,6 +888,21 @@ exec function SwitchToBestWeapon(optional bool bForceNewWeapon)
 reliable client function ClientSwitchToBestWeapon(optional bool bForceNewWeapon)
 {
     SwitchToBestWeapon(bForceNewWeapon);
+}
+
+/* ClientSetWeapon:
+	Forces client to switch to this weapon if it can be found in loadout
+*/
+reliable client function ClientSetWeapon( class<Weapon> WeaponClass )
+{
+    local Inventory Inv;
+
+	if ( Pawn == None )
+		return;
+
+	Inv = Pawn.FindInventoryType( WeaponClass );
+	if ( Weapon(Inv) != None )
+		Pawn.SetActiveWeapon( Weapon(Inv) );
 }
 
 /* epic ===============================================
@@ -1149,22 +1014,7 @@ event EnemyNotVisible();
 *
 * =====================================================
 */
-native(500) noexport final latent function MoveTo(vector NewDestination, optional Actor ViewFocus, optional float DestinationOffset, optional bool bShouldWalk = (Pawn != None) ? Pawn.bIsWalking : false);
-
-/* epic ===============================================
-* ::MoveToDirectNonPathPos
-*
-* Latently moves our pawn to the desired location, which
-* is cached in Destination.
-* NOTE: this function should be used only when moving directly to a final goal (e.g. not following a path)
-* it will properly set the final destination on the navhandle (and ensure things are cleared out which would normally be set by GetNextMoveLocation)
-* @Param NewDestination - destination to move to
-* @param ViewFocus      - actor to look at while moving
-* @param DestinationOffset - distance from goal we would like to get within
-* @param bShouldWalk    - should the AI walk for this move?
-* =====================================================
-*/
-native noexport final latent function MoveToDirectNonPathPos(vector NewDestination, optional Actor ViewFocus, optional float DestinationOffset, optional bool bShouldWalk = (Pawn != None) ? Pawn.bIsWalking : false);
+native(500) noexport final latent function MoveTo(vector NewDestination, optional Actor ViewFocus, optional bool bShouldWalk = (Pawn != None) ? Pawn.bIsWalking : false);
 
 /* epic ===============================================
 * ::MoveToward
@@ -1328,11 +1178,10 @@ native function EndClimbLadder();
 * Called when a pawn is about to fall off a ledge, and
 * allows the controller to prevent a fall by toggling
 * bCanJump.
-* This event is also passed if a floor is found over the edge, and the normal of the floor if so.
 *
 * =====================================================
 */
-event MayFall(bool bFloor, vector FloorNormal);
+event MayFall();
 
 /* epic ===============================================
 * ::AllowDetourTo
@@ -1550,9 +1399,6 @@ event NotifyJumpApex();
 */
 event NotifyMissedJump();
 
-/** Called when our pawn reaches Controller.Destination after setting bPreciseDestination = TRUE */
-event ReachedPreciseDestination();
-
 //=============================================================================
 // MISC FUNCTIONS
 
@@ -1672,10 +1518,7 @@ ignores SeePlayer, HearNoise, KilledBy;
 	function PawnDied(Pawn P)
 	{
 		if ( WorldInfo.NetMode != NM_Client )
-		{
-			`warn( Self @ "Pawndied while dead" );
-			ScriptTrace();
-		}
+			WarnInternal(Self @ "Pawndied while dead");
 	}
 
 	/* epic ===============================================
@@ -1739,6 +1582,17 @@ ignores SeePlayer, HearNoise, KilledBy, NotifyBump, HitWall, NotifyPhysicsVolume
 }
 
 /**
+ * Force this actor to make a noise that the AI may hear
+ */
+simulated function OnMakeNoise( SeqAct_MakeNoise Action )
+{
+	if( Pawn != None )
+	{
+		Pawn.MakeNoise( Action.Loudness, 'ScriptNoise' );
+	}
+}
+
+/**
  * Overridden to redirect to pawn, since teleporting the controller
  * would be useless.
  * If Action == None, this was called from the Pawn already
@@ -1758,18 +1612,6 @@ simulated function OnTeleport(SeqAct_Teleport Action)
 	}
 }
 
-function OnAttachToActor(SeqAct_AttachToActor Action)
-{
-	if (Pawn != None)
-	{
-		Pawn.OnAttachToActor(Action);
-	}
-	else
-	{
-		Super.OnAttachToActor(Action);
-	}
-}
-
 /**
  * Sets god mode based on the activated link.
  */
@@ -1779,7 +1621,8 @@ function OnToggleGodMode(SeqAct_ToggleGodMode inAction)
 	{
 		bGodMode = true;
 	}
-	else if (inAction.InputLinks[1].bHasImpulse)
+	else
+	if (inAction.InputLinks[1].bHasImpulse)
 	{
 		bGodMode = false;
 	}
@@ -1789,38 +1632,30 @@ function OnToggleGodMode(SeqAct_ToggleGodMode inAction)
 	}
 }
 
-/** Redirects SetPhysics kismet action to the pawn */
-simulated function OnSetPhysics(SeqAct_SetPhysics Action)
+
+function OnToggleAffectedByHitEffects( SeqAct_ToggleAffectedByHitEffects inAction )
 {
-	if( Pawn != None )
+	//
+	if (inAction.InputLinks[0].bHasImpulse)
 	{
-		Pawn.OnSetPhysics(Action);
+		bAffectedByHitEffects = true;
+	}
+	else
+	if (inAction.InputLinks[1].bHasImpulse)
+	{
+		bAffectedByHitEffects = false;
 	}
 	else
 	{
-		Super.OnSetPhysics(Action);
+		bAffectedByHitEffects = !bAffectedByHitEffects;
 	}
 }
-
-/** Redirects SetVelocity kismet action to the pawn */
-simulated function OnSetVelocity( SeqAct_SetVelocity Action )
-{
-	if( Pawn != None )
-	{
-		Pawn.OnSetVelocity(Action);
-	}
-	else
-	{
-		Super.OnSetVelocity(Action);
-	}
-}
-
 
 
 /**
  * Called when a slot is disabled with this controller as the current owner.
  */
-simulated function NotifyCoverDisabled( CoverLink Link, int SlotIdx, optional bool bAdjacentIdx );
+simulated function NotifyCoverDisabled( CoverLink Link, int SlotIdx );
 
 /**
  * Called when a slot is adjusted with this controller as the current owner.
@@ -1836,20 +1671,20 @@ simulated event NotifyCoverAdjusted()
 simulated function bool NotifyCoverClaimViolation( Controller NewClaim, CoverLink Link, int SlotIdx );
 
 /**
-* Redirect to pawn.
-*/
-simulated function OnModifyHealth(SeqAct_ModifyHealth Action)
+ * Redirect to pawn.
+ */
+simulated function OnCauseDamage(SeqAct_CauseDamage Action)
 {
 	if (Pawn != None)
 	{
-		Pawn.OnModifyHealth(Action);
+		Pawn.OnCauseDamage(Action);
 	}
 }
 
 /**
  * Called when an inventory item is given to our Pawn
  * (owning client only)
- * @param NewItem the Inventory item that was added
+ * @param the Inventory item that was added
  */
 function NotifyAddInventory(Inventory NewItem);
 
@@ -1864,14 +1699,32 @@ simulated function OnToggleHidden(SeqAct_ToggleHidden Action)
 	}
 }
 
+/** called when this Controller causes a kill; gives it the opportunity to override with a different Controller that should get kill credit instead
+ * @return the Controller that should get kill credit
+ */
+function Controller GetKillerController()
+{
+	return self;
+}
+
 /** Returns true if controller is spectating */
-event bool IsSpectating()
+function bool IsSpectating()
 {
 	return false;
 }
 
 /** Returns if controller is in combat */
-event bool IsInCombat( optional bool bForceCheck );
+event bool IsInCombat();
+
+function Actor GetRouteGoalAfter( int RouteIdx )
+{
+	if( RouteIdx + 1 < RouteCache.Length )
+	{
+		return RouteCache[RouteIdx+1];
+	}
+
+	return RouteGoal;
+}
 
 /**
  * Called when the level this controller is in is unloaded via streaming.
@@ -1882,54 +1735,25 @@ function SendMessage(PlayerReplicationInfo Recipient, name MessageType, float Wa
 
 function ReadyForLift();
 
-/** spawn and init Navigation Handle */
-simulated function InitNavigationHandle()
-{
-	if( NavigationHandleClass != None )
-	{
-		NavigationHandle = new(self) NavigationHandleClass;
-	}
-}
-
-simulated event InterpolationStarted(SeqAct_Interp InterpAction, InterpGroupInst GroupInst)
-{
-	if (Pawn!=none)
-	{
-		Pawn.InterpolationStarted(InterpAction, GroupInst);
-	}
-
-	Super.InterpolationStarted( InterpAction, GroupInst );
-}
-
-/** called when a SeqAct_Interp action finished interpolating this Actor
- * @note this function is called on clients for actors that are interpolated clientside via MatineeActor
- * @param InterpAction the SeqAct_Interp that was affecting the Actor
- */
-simulated event InterpolationFinished(SeqAct_Interp InterpAction)
-{
-	if (Pawn!=none)
-	{
-		Pawn.InterpolationFinished(InterpAction);
-	}
-
-	Super.InterpolationFinished( InterpAction );
-}
-
-event bool GeneratePathToActor( Actor Goal, optional float WithinDistance, optional bool bAllowPartialPath );
-event bool GeneratePathToLocation( Vector Goal, optional float WithinDistance, optional bool bAllowPartialPath );
-
 defaultproperties
 {
-	RotationRate=(Pitch=30000,Yaw=30000,Roll=2048)
-	bHidden=TRUE
-	bHiddenEd=TRUE
-	MinHitWall=-1.f
-	bSlowerZAcquire=TRUE
-	RemoteRole=ROLE_None
-	bOnlyRelevantToOwner=TRUE
-
-	SightCounterInterval=0.2
-	MaxMoveTowardPawnTargetTime=1.2
-
-	NavigationHandleClass=class'NavigationHandle'
+   bAffectedByHitEffects=True
+   bSlowerZAcquire=True
+   MinHitWall=-1.000000
+   SightCounterInterval=0.200000
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   bHidden=True
+   bOnlyRelevantToOwner=True
+   bHiddenEd=True
+   CollisionType=COLLIDE_CustomDefault
+   RotationRate=(Pitch=30000,Yaw=30000,Roll=2048)
+   Name="Default__Controller"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

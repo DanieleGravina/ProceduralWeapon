@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MorphTarget extends Object
 	native(Anim)
@@ -7,8 +7,10 @@ class MorphTarget extends Object
 	hidecategories(Object);
 	
 /** morph mesh vertex data for each LOD */
-var	const native array<int>		MorphLODModels; 
+var	const native array<int>		MorphLODModels; //FMorphTargetLODModel
 
-/** Material Parameter control **/
-var(Material)				INT							MaterialSlotId;
-var(Material)				Name						ScalarParameterName;
+defaultproperties
+{
+   Name="Default__MorphTarget"
+   ObjectArchetype=Object'Core.Default__Object'
+}

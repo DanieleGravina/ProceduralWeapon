@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTMultiKillMessage extends UTLocalMessage;
 
@@ -27,7 +27,7 @@ static simulated function ClientReceive(
 {
 	if (P.GamePlayEndedState())
 	{
-		`Warn("Possible incorrect multikill message" @ P @ Switch @ RelatedPRI_1 @ RelatedPRI_2 @ RelatedPRI_1.PlayerName @ RelatedPRI_2.PlayerName);
+		WarnInternal("Possible incorrect multikill message" @ P @ Switch @ RelatedPRI_1 @ RelatedPRI_2 @ RelatedPRI_1.GetPlayerAlias() @ RelatedPRI_2.GetPlayerAlias());
 		// ScriptTrace();
 	}
 
@@ -74,19 +74,21 @@ static function bool AddAnnouncement(UTAnnouncer Announcer, int MessageIndex, op
 
 defaultproperties
 {
-	KillSound(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_DoubleKill'
-	KillSound(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MultiKill'
-	KillSound(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MegaKill'
-	KillSound(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_UltraKill'
-	KillSound(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MonsterKill'
-	bIsSpecial=True
-	bIsUnique=True
-	Lifetime=3
-	bBeep=False
-
-	DrawColor=(R=255,G=0,B=0)
-	FontSize=3
-	AnnouncementPriority=8
-
-	MessageArea=2
+   KillString(0)="Doppia Uccisione!"
+   KillString(1)="Multi uccisione!"
+   KillString(2)="Mega Uccisione!!"
+   KillString(3)="ULTRA UCCISIONE!!"
+   KillString(4)="UCCISIONE MOSTRUOSA!!!"
+   KillSound(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_DoubleKill'
+   KillSound(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MultiKill'
+   KillSound(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MegaKill'
+   KillSound(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_UltraKill'
+   KillSound(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_MonsterKill'
+   MessageArea=2
+   AnnouncementPriority=8
+   bIsUnique=True
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=3
+   Name="Default__UTMultiKillMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

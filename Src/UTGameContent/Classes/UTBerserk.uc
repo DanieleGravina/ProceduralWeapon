@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTBerserk extends UTTimedPowerup;
 
@@ -36,7 +36,7 @@ simulated function AdjustPawn(UTPawn P, bool bRemoveBonus)
 	}
 }
 
-function GivenTo(Pawn NewOwner, optional bool bDoNotActivate)
+function GivenTo(Pawn NewOwner, bool bDoNotActivate)
 {
 	local UTPawn P;
 
@@ -130,46 +130,51 @@ function PlayBerserkFadingSound()
 	}
 }
 
-
 defaultproperties
 {
-	PowerupStatName=POWERUPTIME_BERSERK
-	Begin Object Class=StaticMeshComponent Name=MeshComponentA
-		StaticMesh=StaticMesh'Pickups.Berserk.Mesh.S_Pickups_Berserk'
-		Materials(0)=Material'Pickups.Berserk.Materials.M_Pickups_Berserk'
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-		CastShadow=false
-		bForceDirectLightMap=true
-		bCastDynamicShadow=false
-		bAcceptsLights=true
-		CollideActors=false
-		BlockRigidBody=false
-		Scale3D=(X=0.7,Y=0.7,Z=0.7)
-		MaxDrawDistance=8000
-		Translation=(X=0.0,Y=0.0,Z=+5.0)
-	End Object
-	DroppedPickupMesh=MeshComponentA
-	PickupFactoryMesh=MeshComponentA
-
-	Begin Object Class=UTParticleSystemComponent Name=BerserkParticles
-		Template=ParticleSystem'Pickups.Berserk.Effects.P_Pickups_Berserk_Idle'
-		bAutoActivate=false
-		SecondsBeforeInactive=1.0f
-	Translation=(X=0.0,Y=0.0,Z=+5.0)
-	End Object
-	DroppedPickupParticles=BerserkParticles
-
-	PickupSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_Berzerk_PickupCue'
-
-	BerserkAmbientSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_Berzerk_PowerLoopCue'
-	BerserkFadingSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_Berzerk_WarningCue'
-	OverlayMaterialInstance=Material'Pickups.Berserk.M_Berserk_Overlay'
-	HudIndex=1
-	PowerupOverSound=SoundCue'A_Pickups_Powerups.PowerUps.A_Powerup_Berzerk_EndCue'
-
-	IconCoords=(U=744,UL=35,V=0,VL=55)
-
-	VehicleWeaponEffect=(Mesh=StaticMesh'Envy_Effects.Mesh.S_VH_Powerups',Material=MaterialInterface'Envy_Effects.Energy.Materials.M_VH_Beserk')
-	PP_Scene_Highlights=(X=-0.15,Y=-0.08,Z=0.05)
+   BerserkAmbientSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_Berzerk_PowerLoopCue'
+   BerserkFadingSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_Berzerk_WarningCue'
+   OverlayMaterialInstance=Material'PICKUPS.Berserk.M_Berserk_Overlay'
+   VehicleWeaponEffect=(Mesh=StaticMesh'Envy_Effects.Mesh.S_VH_Powerups',Material=Material'Envy_Effects.Energy.Materials.M_VH_Beserk')
+   HudIndex=1
+   PowerupOverSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_Berzerk_EndCue'
+   PowerupStatName="POWERUPTIME_BERSERK"
+   IconCoords=(U=744.000000,UL=35.000000,VL=55.000000)
+   PP_Scene_HighLights=(X=-0.150000,Y=-0.080000,Z=0.050000)
+   bRenderOverlays=True
+   bReceiveOwnerEvents=True
+   PickupMessage="BERSERK!"
+   PickupSound=SoundCue'A_Pickups_Powerups.Powerups.A_Powerup_Berzerk_PickupCue'
+   Begin Object Class=StaticMeshComponent Name=MeshComponentA ObjName=MeshComponentA Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'PICKUPS.Berserk.Mesh.S_Pickups_Berserk'
+      Materials(0)=Material'PICKUPS.Berserk.Materials.M_Pickups_Berserk'
+      CullDistance=8000.000000
+      CachedCullDistance=8000.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      CollideActors=False
+      BlockRigidBody=False
+      Translation=(X=0.000000,Y=0.000000,Z=5.000000)
+      Scale3D=(X=0.700000,Y=0.700000,Z=0.700000)
+      Name="MeshComponentA"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   DroppedPickupMesh=MeshComponentA
+   PickupFactoryMesh=MeshComponentA
+   Begin Object Class=UTParticleSystemComponent Name=BerserkParticles ObjName=BerserkParticles Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      Template=ParticleSystem'PICKUPS.Berserk.Effects.P_Pickups_Berserk_Idle'
+      bAutoActivate=False
+      Translation=(X=0.000000,Y=0.000000,Z=5.000000)
+      Name="BerserkParticles"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   DroppedPickupParticles=BerserkParticles
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTTimedPowerup:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTTimedPowerup:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTBerserk"
+   ObjectArchetype=UTTimedPowerup'UTGame.Default__UTTimedPowerup'
 }

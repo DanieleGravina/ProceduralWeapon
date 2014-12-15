@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -8,17 +8,173 @@
  */
 class UIDataStore_OnlinePlayerData extends UIDataStore_Remote
 	native(inherit)
+	implements(UIListElementProvider)
 	config(Engine)
 	transient;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 15
 
 /** Provides access to the player's online friends list */
 var UIDataProvider_OnlineFriends FriendsProvider;
 
-/** Holds the player controller that this data store is associated with */
-var int PlayerControllerId;
+/** Provides access to the player's recent online players list */
+var UIDataProvider_OnlinePlayers PlayersProvider;
+
+/** Provides access to the player's clan members list */
+var UIDataProvider_OnlineClanMates ClanMatesProvider;
+
+/** Holds the player that this provider is getting friends for */
+var LocalPlayer Player;
 
 /** The online nick name for the player */
 var string PlayerNick;
+
+/** The ranking value of the logged in player */
+var int PlayerRanking;
+
+/** The timestamp (sec) when the PlayerRanking was last successfully recorded */
+var float PlayerRankingLastQueryTime; 
+
+/** The OnlineStatsRead class that will retrieve the ranking value */
+var config string PlayerRankingQueryClassName;
+
+/** Class used to create an OnlineStatsRead object for the ranking query */
+var class<OnlineStatsRead> PlayerRankingQueryClass;
+
+/** An instance of the ranking query OnlineStatsRead class */
+var OnlineStatsRead CurrentRankingQuery;
+
+/** Are we in the middle of a query to get the player ranking */
+var bool bIsRankingQueryInProgress;
+
+/** The number of new downloads for this player */
+var int NumNewDownloads;
+
+/** The total number of downloads for this player */
+var int NumTotalDownloads;
 
 /** The name of the OnlineProfileSettings class to use as the default */
 var config string ProfileSettingsClassName;
@@ -29,32 +185,8 @@ var class<OnlineProfileSettings> ProfileSettingsClass;
 /** Provides access to the player's profile data */
 var UIDataProvider_OnlineProfileSettings ProfileProvider;
 
-/** The name of the data provider class to use as the default for player storage data */
-var config string ProfileProviderClassName;
-
-/** The class that should be created when a player is bound to this data store */
-var class<UIDataProvider_OnlineProfileSettings> ProfileProviderClass;
-
-/** The name of the OnlinePlayerStorage class to use as the default */
-var config string PlayerStorageClassName;
-
-/** The class that should be created when a player is bound to this data store */
-var class<OnlinePlayerStorage> PlayerStorageClass;
-
-/** Provides access to the player's storage data */
-var UIDataProvider_OnlinePlayerStorage StorageProvider;
-
-/** The name of the data provider class to use as the default for player storage data */
-var config string StorageProviderClassName;
-
-/** The class that should be created when a player is bound to this data store */
-var class<UIDataProvider_OnlinePlayerStorage> StorageProviderClass;
-
 /** Provides access to any friend messages */
 var UIDataProvider_OnlineFriendMessages FriendMessagesProvider;
-
-/** Provides access to the list of achievements for this player */
-var	UIDataProvider_PlayerAchievements AchievementsProvider;
 
 /** The name of the data provider class to use as the default for friends */
 var config string FriendsProviderClassName;
@@ -62,56 +194,130 @@ var config string FriendsProviderClassName;
 /** The class that should be created when a player is bound to this data store */
 var class<UIDataProvider_OnlineFriends> FriendsProviderClass;
 
+/** The name of the data provider class to use as the default for recent players list */
+var config string PlayersProviderClassName;
+
+/** The class that should be created when a player is bound to this data store */
+var class<UIDataProvider_OnlinePlayers> PlayersProviderClass;
+
+/** The name of the data provider class to use as the default for clan mates */
+var config string ClanMatesProviderClassName;
+
+/** The class that should be created when a player is bound to this data store */
+var class<UIDataProvider_OnlineClanMates> ClanMatesProviderClass;
+
 /** The name of the data provider class to use as the default for messages */
 var config string FriendMessagesProviderClassName;
 
 /** The class that should be created when a player is bound to this data store */
 var class<UIDataProvider_OnlineFriendMessages> FriendMessagesProviderClass;
 
-/** The name of the data provider class to use as the default for enumerating achievements */
-var config string AchievementsProviderClassName;
-
-/** The class that should be created when a player is bound to this data store for providing achievements data to the UI */
-var class<UIDataProvider_PlayerAchievements> AchievementsProviderClass;
-
-/** The name of the data provider class to use as the default for party chat members */
-var config string PartyChatProviderClassName;
-
-/** The class that should be created when a player is bound to this data store */
-var class<UIDataProvider_OnlinePartyChatList> PartyChatProviderClass;
-
-/** The provider instance for the party chat data */
-var UIDataProvider_OnlinePartyChatList PartyChatProvider;
-
-cpptext
-{
-/* === UIDataStore interface === */
-
-	/**
-	 * Loads the game specific OnlineProfileSettings class
-	 */
-	virtual void LoadDependentClasses(void);
-
-	/**
-	 * Creates the data providers exposed by this data store
-	 */
-	virtual void InitializeDataStore(void);
-
-	/**
-	 * Forwards the calls to the data providers so they can do their start up
-	 *
-	 * @param Player the player that will be associated with this DataStore
-	 */
-	virtual void OnRegister(ULocalPlayer* Player);
-
-	/**
-	 * Tells all of the child providers to clear their player data
-	 *
-	 * @param Player ignored
-	 */
-	virtual void OnUnregister(ULocalPlayer*);
-
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Binds the player to this provider. Starts the async friends list gathering
@@ -123,37 +329,31 @@ event OnRegister(LocalPlayer InPlayer)
 	local OnlineSubsystem OnlineSub;
 	local OnlinePlayerInterface PlayerInterface;
 
-	if (InPlayer != None)
+	Player = InPlayer;
+	// Figure out if we have an online subsystem registered
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None)
 	{
-		PlayerControllerId = InPlayer.ControllerId;
-		// Figure out if we have an online subsystem registered
-		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-		if (OnlineSub != None)
+		// Grab the player interface to verify the subsystem supports it
+		PlayerInterface = OnlineSub.PlayerInterface;
+		if (PlayerInterface != None)
 		{
-			// Grab the player interface to verify the subsystem supports it
-			PlayerInterface = OnlineSub.PlayerInterface;
-			if (PlayerInterface != None)
-			{
-				// We need to know when the player's login changes
-				PlayerInterface.AddLoginChangeDelegate(OnLoginChange);
-			}
-			if (OnlineSub.PlayerInterfaceEx != None)
-			{
-				// We need to know when the player changes data (change nick name, etc)
-				OnlineSub.PlayerInterfaceEx.AddProfileDataChangedDelegate(PlayerControllerId,OnPlayerDataChange);
-			}
+			// We need to know when the player's login changes
+			PlayerInterface.AddLoginChangeDelegate(OnLoginChange,Player.ControllerId);
 		}
-		//If we do not have an online subsystem, nor any settings, then we want the default settings.
-		else if (ProfileProvider != none && ProfileProvider.Profile != none)
+		if (OnlineSub.PlayerInterfaceEx != None)
 		{
-			 ProfileProvider.Profile.SetToDefaults();
+			// We need to know when the player changes data (change nick name, etc)
+			OnlineSub.PlayerInterfaceEx.AddProfileDataChangedDelegate(Player.ControllerId,OnPlayerDataChange);
 		}
-
-		RegisterDelegates();
-
-		// Force a refresh
-		OnLoginChange(PlayerControllerId);
+		if (OnlineSub.ContentInterface != None)
+		{
+			// Set the delegate for updating the downloadable content info
+			OnlineSub.ContentInterface.AddQueryAvailableDownloadsComplete(Player.ControllerId,OnDownloadableContentQueryDone);
+		}
 	}
+	// Force a refresh
+	OnLoginChange();
 }
 
 /**
@@ -164,62 +364,63 @@ event OnUnregister()
 	local OnlineSubsystem OnlineSub;
 	local OnlinePlayerInterface PlayerInterface;
 
-	if (PlayerControllerId != -1)
+	// Figure out if we have an online subsystem registered
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None)
 	{
-		ClearDelegates();
-
-		// Figure out if we have an online subsystem registered
-		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-		if (OnlineSub != None)
+		// Grab the player interface to verify the subsystem supports it
+		PlayerInterface = OnlineSub.PlayerInterface;
+		if (PlayerInterface != None)
 		{
-			// Grab the player interface to verify the subsystem supports it
-			PlayerInterface = OnlineSub.PlayerInterface;
-			if (PlayerInterface != None)
-			{
-				// Clear our delegate
-				PlayerInterface.ClearLoginChangeDelegate(OnLoginChange);
-			}
-			if (OnlineSub.PlayerInterfaceEx != None)
-			{
-				// Clear for GC reasons
-				OnlineSub.PlayerInterfaceEx.ClearProfileDataChangedDelegate(PlayerControllerId,OnPlayerDataChange);
-			}
+			// Clear our delegate
+			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange,Player.ControllerId);
+		}
+		if (OnlineSub.PlayerInterfaceEx != None)
+		{
+			// Clear for GC reasons
+			OnlineSub.PlayerInterfaceEx.ClearProfileDataChangedDelegate(Player.ControllerId,OnPlayerDataChange);
+		}
+		if (OnlineSub.ContentInterface != None)
+		{
+			// Clear the delegate for updating the downloadable content info
+			OnlineSub.ContentInterface.ClearQueryAvailableDownloadsComplete(Player.ControllerId,OnDownloadableContentQueryDone);
+		}
+
+		if (OnlineSub.StatsInterface != None)
+		{
+			// Clear the delete for updating the current player rating
+			OnlineSub.StatsInterface.ClearReadOnlineStatsCompleteDelegate(OnReadOnlinePlayerRankingComplete);
 		}
 	}
 }
 
 /**
  * Refetches the player's nick name from the online subsystem
- *
- * @param LocalUserNum the player that logged in/out
  */
-function OnLoginChange(byte LocalUserNum)
+function OnLoginChange()
 {
 	local OnlineSubsystem OnlineSub;
 	local OnlinePlayerInterface PlayerInterface;
 
-	if (LocalUserNum == PlayerControllerId)
+	// Figure out if we have an online subsystem registered
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None)
 	{
-		// Figure out if we have an online subsystem registered
-		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-		if (OnlineSub != None)
+		// Grab the player interface to verify the subsystem supports it
+		PlayerInterface = OnlineSub.PlayerInterface;
+		if (PlayerInterface != None)
 		{
-			// Grab the player interface to verify the subsystem supports it
-			PlayerInterface = OnlineSub.PlayerInterface;
-			if (PlayerInterface != None &&
-				PlayerInterface.GetLoginStatus(PlayerControllerId) > LS_NotLoggedIn)
+			// Start a query for downloadable content...
+			if(OnlineSub.ContentInterface != None)
 			{
-				// Get the name and force a refresh
-				PlayerNick = PlayerInterface.GetPlayerNickname(PlayerControllerId);
+				OnlineSub.ContentInterface.QueryAvailableDownloads(Player.ControllerId);
 			}
-			else
-			{
-				PlayerNick = "";
-				ProfileProvider.Profile.SetToDefaults();
-				StorageProvider.Profile.SetToDefaults();
-			}
+			// Get the name and force a refresh
+			PlayerNick = PlayerInterface.GetPlayerNickname(Player.ControllerId);
+			RefreshSubscribers();
 		}
-		RefreshSubscribers();
+
+		QueryLoggedInPlayerRanking();
 	}
 }
 
@@ -237,7 +438,7 @@ function OnPlayerDataChange()
 		if (OnlineSub.PlayerInterface != None)
 		{
 			// Get the name and force a refresh
-			PlayerNick = OnlineSub.PlayerInterface.GetPlayerNickname(PlayerControllerId);
+			PlayerNick = OnlineSub.PlayerInterface.GetPlayerNickname(Player.ControllerId);
 			RefreshSubscribers();
 		}
 	}
@@ -246,76 +447,180 @@ function OnPlayerDataChange()
 /**
  * Registers the delegates with the providers so we can know when async data changes
  */
-function RegisterDelegates()
+event RegisterDelegates()
 {
-
-}
-
-function ClearDelegates()
-{
-
-}
-
-/**
- * Retrieves a player profile which has been cached by the online subsystem.
- *
- * @param	ControllerId	the controller ID for the player to retrieve the profile for.
- *
- * @return	a player profile which was previously created and cached by the online subsystem for
- *			the specified controller id.
- */
-event OnlineProfileSettings GetCachedPlayerProfile( int ControllerId )
-{
-	local OnlineSubsystem OnlineSub;
-	local OnlinePlayerInterface PlayerInterface;
-	local OnlineProfileSettings Result;
-
-	// Figure out if we have an online subsystem registered
-	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-	if (OnlineSub != None)
-	{
-		// Grab the player interface to verify the subsystem supports it
-		PlayerInterface = OnlineSub.PlayerInterface;
-		if (PlayerInterface != None)
-		{
-			Result = PlayerInterface.GetProfileSettings(ControllerId);
-		}
-	}
-	return Result;
+	FriendsProvider.AddPropertyNotificationChangeRequest(OnProviderChanged);
+	FriendMessagesProvider.AddPropertyNotificationChangeRequest(OnProviderChanged);
+	PlayersProvider.AddPropertyNotificationChangeRequest(OnProviderChanged);
+	ClanMatesProvider.AddPropertyNotificationChangeRequest(OnProviderChanged);
+	ProfileProvider.AddPropertyNotificationChangeRequest(OnProviderChanged);
 }
 
 /**
- * Retrieves a player storage which has been cached by the online subsystem.
+ * Handles notification that one of our providers has changed and in turn
+ * notifies the UI system
  *
- * @param	ControllerId	the controller ID for the player to retrieve the profile for.
- *
- * @return	a player storage which was previously created and cached by the online subsystem for
- *			the specified controller id.
+ * @param	SourceProvider	the data provider that generated the notification
+ * @param	PropTag			the property that changed
  */
-event OnlinePlayerStorage GetCachedPlayerStorage( int ControllerId )
+function OnProviderChanged(UIDataProvider SourceProvider, optional name PropTag)
+{
+	RefreshSubscribers(PropTag, true, SourceProvider);
+}
+
+/**
+ * Caches the downloadable content info for the player we're bound to
+ *
+ * @param bWasSuccessful true if the async action completed without error, false if there was an error
+ */
+function OnDownloadableContentQueryDone(bool bWasSuccessful)
 {
 	local OnlineSubsystem OnlineSub;
-	local OnlinePlayerInterface PlayerInterface;
-	local OnlinePlayerStorage Result;
+
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None && OnlineSub.ContentInterface != None)
+	{
+		if (bWasSuccessful == true)
+		{
+			// Read the data and tell the UI to refresh
+			OnlineSub.ContentInterface.GetAvailableDownloadCounts(Player.ControllerId,
+				NumNewDownloads,NumTotalDownloads);
+			RefreshSubscribers();
+		}
+		else
+		{
+			LogInternal("Failed to query for downloaded content");
+		}
+	}
+}
+
+/** Forwards the call to the provider */
+event bool SaveProfileData()
+{
+	if (ProfileProvider != None)
+	{
+		return ProfileProvider.SaveProfileData();
+	}
+	return false;
+}
+
+/** Stores the player rating stored in the OnlineStatsRead **/
+native function StorePlayerRankingQueryValue(OnlineStatsRead RankingQuery);
+
+/** Delegate called when a player rating stats read has completed */
+function OnReadOnlinePlayerRankingComplete(bool bWasSuccessful)
+{
+	local OnlineSubsystem OnlineSub;
+	if (bWasSuccessful && CurrentRankingQuery != None)
+	{
+		StorePlayerRankingQueryValue(CurrentRankingQuery);
+		LogInternal(Name$"::"$GetFuncName()@"Player ranking query success for player:"@CurrentRankingQuery.Rows[0].NickName@PlayerRanking@"at"@PlayerRankingLastQueryTime,'DevOnline');
+	}
+	else
+	{
+		LogInternal(Name$"::"$GetFuncName()@"Player ranking query failed.",'DevOnline');
+	}
+	
+	// Consider this a newbie
+	if (PlayerRanking <= 0)
+	{
+		PlayerRanking = 1000;
+	}
+
+	//Tell the PRI (and potentially the server) of my ranking
+	Player.Actor.RegisterPlayerRanking(PlayerRanking);
+    //Tell anyone subscribed to this data store the value is updated
+	RefreshSubscribers();
+
+    //Cleanup
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	OnlineSub.StatsInterface.ClearReadOnlineStatsCompleteDelegate(OnReadOnlinePlayerRankingComplete);
+	bIsRankingQueryInProgress = false;
+}
+
+/** Queries the online system for this player's rating (1000 is new player) */
+function bool QueryLoggedInPlayerRanking()
+{
+	local array<UniqueNetId> Players;
+	local UniqueNetId ZeroNetId, LoggedInPlayerId;
+	local OnlineSubsystem OnlineSub;
+
+	if (bIsRankingQueryInProgress)
+	{
+		LogInternal(Name$"::"$GetFuncName()@"Player ranking query already in progress.",'DevOnline');
+		return false;
+	}
+
+	//Return valid cached data if possible (only valid for an hour)
+	if (PlayerRanking > 0 && class'Engine'.static.GetCurrentWorldInfo().RealTimeSeconds - PlayerRankingLastQueryTime < 3600)
+	{
+		LogInternal(Name$"::"$GetFuncName()@"using cached value of"@ PlayerRanking,'DevOnline');
+		//Tell the PRI (and potentially the server) of my ranking
+		Player.Actor.RegisterPlayerRanking(PlayerRanking);
+		return true;
+	}
 
 	// Figure out if we have an online subsystem registered
 	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-	if (OnlineSub != None)
+	if (OnlineSub != None && OnlineSub.StatsInterface != None && OnlineSub.PlayerInterface != None)
 	{
-		// Grab the player interface to verify the subsystem supports it
-		PlayerInterface = OnlineSub.PlayerInterface;
-		if (PlayerInterface != None)
+		if (OnlineSub.PlayerInterface.GetLoginStatus(Player.ControllerId) == LS_LoggedIn)
 		{
-			Result = PlayerInterface.GetPlayerStorage(ControllerId);
+			OnlineSub.PlayerInterface.GetUniquePlayerId(Player.ControllerId, LoggedInPlayerId);
+			if (LoggedInPlayerId != ZeroNetId)
+			{
+				// Get the player id of the local player and then read the stats
+				Players[0] = LoggedInPlayerId;
+
+				if (CurrentRankingQuery == None)
+				{
+					CurrentRankingQuery = new PlayerRankingQueryClass;
+				}
+
+				if (CurrentRankingQuery != None)
+				{
+					OnlineSub.StatsInterface.AddReadOnlineStatsCompleteDelegate(OnReadOnlinePlayerRankingComplete);
+					OnlineSub.StatsInterface.FreeStats(CurrentRankingQuery);
+					bIsRankingQueryInProgress = OnlineSub.StatsInterface.ReadOnlineStats(Players, CurrentRankingQuery);
+					if (!bIsRankingQueryInProgress)
+					{
+						OnReadOnlinePlayerRankingComplete(false);
+						CurrentRankingQuery = None;
+					}
+				}
+			}
+			else
+			{
+				LogInternal(Name$"::"$GetFuncName()@"Player id is zero",'DevOnline');
+			}
+		}
+		else
+		{
+			LogInternal(Name$"::"$GetFuncName()@"Player not logged in",'DevOnline');
 		}
 	}
-	return Result;
+	else
+	{
+		LogInternal(Name$"::"$GetFuncName()@"Online subsystem doesn't exist",'DevOnline');
+	}
+
+	return bIsRankingQueryInProgress;
 }
 
 defaultproperties
 {
-	Tag=OnlinePlayerData
-	// So something shows up in the editor
-	PlayerNick="PlayerNickNameHere"
-	PlayerControllerId=-1
+   PlayerNick="PlayerNickNameHere"
+   PlayerRankingQueryClassName="UTGame.UTStatReadPlayerRatingPure"
+   PlayerRankingQueryClass=Class'UTGame.UTStatReadPlayerRatingPure'
+   ProfileSettingsClassName="UTGame.UTProfileSettings"
+   ProfileSettingsClass=Class'UTGame.UTProfileSettings'
+   FriendsProviderClassName="UTGame.UTUIDataProvider_OnlineFriends"
+   FriendsProviderClass=Class'UTGame.UTUIDataProvider_OnlineFriends'
+   PlayersProviderClass=Class'Engine.UIDataProvider_OnlinePlayers'
+   ClanMatesProviderClass=Class'Engine.UIDataProvider_OnlineClanMates'
+   FriendMessagesProviderClassName="UTGame.UTUIDataProvider_OnlineFriendMessages"
+   FriendMessagesProviderClass=Class'UTGame.UTUIDataProvider_OnlineFriendMessages'
+   Tag="OnlinePlayerData"
+   Name="Default__UIDataStore_OnlinePlayerData"
+   ObjectArchetype=UIDataStore_Remote'Engine.Default__UIDataStore_Remote'
 }

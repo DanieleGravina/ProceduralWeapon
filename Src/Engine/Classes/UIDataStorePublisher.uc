@@ -1,7 +1,7 @@
 /**
  * Provides an interface for working with objects which both retrieve and publish data using data stores.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 interface UIDataStorePublisher extends UIDataStoreSubscriber
 	native(inherit);
@@ -21,7 +21,8 @@ interface UIDataStorePublisher extends UIDataStoreSubscriber
  */
 native function bool SaveSubscriberValue( out array<UIDataStore> out_BoundDataStores, optional int BindingIndex=INDEX_NONE );
 
-DefaultProperties
+defaultproperties
 {
-
+   Name="Default__UIDataStorePublisher"
+   ObjectArchetype=UIDataStoreSubscriber'Engine.Default__UIDataStoreSubscriber'
 }

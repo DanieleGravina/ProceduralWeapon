@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTVWeap_CicadaTurret extends UTVehicleWeapon
 	HideDropDown;
@@ -111,30 +111,34 @@ simulated function Projectile ProjectileFire()
 
 defaultproperties
 {
-	WeaponFireTypes(0)=EWFT_InstantHit
-	WeaponFireTypes(1)=EWFT_Projectile
-	bInstantHit=true
-	WeaponProjectiles(1)=class'UTDecoy'
-	FireInterval(0)=0.2
-	FireInterval(1)=1.5
-	InstantHitDamageTypes(0)=class'UTDmgType_CicadaLaser'
-	InstantHitDamageTypes(1)=None
-	ShotCost(0)=0
-	ShotCost(1)=0
-	InstantHitDamage(0)=25
-	InstantHitMomentum(0)=+20000.0
-	WeaponFireSnd[0]=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TurretFire'
-	WeaponFireSnd[1]=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TurretAltFire'
-
-	FireTriggerTags=(TurretWeapon00,TurretWeapon01,TurretWeapon02,TurretWeapon03)
-
-	DefaultImpactEffect=(ParticleTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_2ndPrim_impact',Sound=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_AltFireImpactCue')
-	bFastRepeater=true
-	bSplashJump=false
-	bRecommendSplashDamage=false
-	bSniping=false
-	ShouldFireOnRelease(0)=0
-	ShouldFireOnRelease(1)=0
-
-	VehicleClass=class'UTVehicle_Cicada_Content'
+   FireTriggerTags(0)="TurretWeapon00"
+   FireTriggerTags(1)="TurretWeapon01"
+   FireTriggerTags(2)="TurretWeapon02"
+   FireTriggerTags(3)="TurretWeapon03"
+   DefaultImpactEffect=(Sound=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_AltFireImpactCue',ParticleTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_2ndPrim_impact')
+   VehicleClass=Class'UTGameContent.UTVehicle_Cicada_Content'
+   bFastRepeater=True
+   WeaponFireSnd(0)=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TurretFire'
+   WeaponFireSnd(1)=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TurretAltFire'
+   WeaponFireTypes(1)=EWFT_Projectile
+   WeaponProjectiles(1)=Class'UTGameContent.UTDecoy'
+   FireInterval(0)=0.200000
+   FireInterval(1)=1.500000
+   InstantHitDamage(0)=25.000000
+   InstantHitMomentum(0)=20000.000000
+   InstantHitDamageTypes(0)=Class'UTGameContent.UTDmgType_CicadaLaser'
+   InstantHitDamageTypes(1)=None
+   bInstantHit=True
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   ItemName="Cannoniere Cicada "
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTVehicleWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTVWeap_CicadaTurret"
+   ObjectArchetype=UTVehicleWeapon'UTGame.Default__UTVehicleWeapon'
 }

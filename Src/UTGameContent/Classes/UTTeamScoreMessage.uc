@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTTeamScoreMessage extends UTLocalMessage;
 
@@ -55,13 +55,13 @@ static function string GetString(
 	{
 		if ( RelatedPRI_1.Team == None )
 		{
-			return default.PreScoreNone@RelatedPRI_1.PlayerName@default.ScoreNone;
+			return default.PreScoreNone@RelatedPRI_1.GetPlayerAlias()@default.ScoreNone;
 		}
 		if ( RelatedPRI_1.Team.TeamIndex == 0 )
 		{
-			return default.PreScoreRed@RelatedPRI_1.PlayerName@default.ScoreRed;
+			return default.PreScoreRed@RelatedPRI_1.GetPlayerAlias()@default.ScoreRed;
 		}
-		return default.PreScoreBlue@RelatedPRI_1.PlayerName@default.ScoreBlue;
+		return default.PreScoreBlue@RelatedPRI_1.GetPlayerAlias()@default.ScoreBlue;
 	}
 	return "";
 }
@@ -82,15 +82,18 @@ static function color GetColor(
 
 defaultproperties
 {
-	TeamScoreSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamScores'
-	TeamScoreSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamScores'
-	TeamScoreSounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamIncreasesTheirLead'
-	TeamScoreSounds(3)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamIncreasesTheirLead'
-	TeamScoreSounds(4)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamTakesTheLead'
-	TeamScoreSounds(5)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamTakesTheLead'
-	TeamScoreSounds(6)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_HatTrick'
-	TeamScoreSounds(7)=None
-	FontSize=2
-	DrawColor=(R=255,G=255,B=255,A=255)
-	AnnouncementPriority=11
+   TeamScoreSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamScores'
+   TeamScoreSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamScores'
+   TeamScoreSounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamIncreasesTheirLead'
+   TeamScoreSounds(3)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamIncreasesTheirLead'
+   TeamScoreSounds(4)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamTakesTheLead'
+   TeamScoreSounds(5)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamTakesTheLead'
+   TeamScoreSounds(6)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Hattrick'
+   ScoreRed="punti per i Rossi!"
+   ScoreBlue="punti per i Blu!"
+   ScoreNone="punti!"
+   AnnouncementPriority=11
+   FontSize=2
+   Name="Default__UTTeamScoreMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

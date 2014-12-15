@@ -1,15 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTGameObjective extends UDKGameObjective
+class UTGameObjective extends Objective
 	abstract
-	hidecategories(VehicleUsage);
+	hidecategories(VehicleUsage)
+	native
+	nativereplication;
 
 var		bool	bAlreadyRendered;
 
 /** Allow use if player is within Pawn's VehicleCheckRadius */
 var		bool	bAllowRemoteUse;
 
+var		repnotify byte	DefenderTeamIndex;	// 0 = defended by team 0
 var		byte			StartTeam;
 
 /* Nodes with Higher DefensePriority are defended first */
@@ -18,6 +21,7 @@ var(Objective)	byte			DefensePriority;
 var UTSquadAI		DefenseSquad;	// squad defending this objective;
 var	UTDefensePoint	DefensePoints;
 
+var		localized String	LocationPrefix, LocationPostfix;
 var(Objective)	localized String	ObjectiveName;
 
 /** bots in vehicles should go to one of these and then proceed on foot */
@@ -39,8 +43,10 @@ var		bool				bFirstObjective;		// First objective in list of objectives defended
 var		UTGameObjective		NextObjective;			// list of objectives defended by the same team
 
 var LinearColor ControlColor[3];
+var vector HUDLocation;
 
 var TextureCoordinates AttackCoords;
+var TextureCoordinates IconCoords;
 
 var float IconPosX, IconPosY;
 var float IconExtentX, IconExtentY;
@@ -52,6 +58,11 @@ var float CameraViewDistance;				/** distance away for camera when viewtarget */
 
 var array<UTVehicleFactory> VehicleFactories;
 
+/** list of deployable lockers at this objective */
+var array<UTDeployableNodeLocker> DeployableLockers;
+
+var repnotify bool bUnderAttack;
+
 /** true when in the constructing state */
 var bool bIsConstructing;
 
@@ -62,6 +73,11 @@ var bool bIsDisabled;
 var bool bIsActive;
 
 var array<PlayerStart> PlayerStarts;
+
+/** precalculated list of nearby NavigationPoints this objective is shootable from */
+var array<NavigationPoint> ShootSpots;
+/** if true, allow this objective to be unreachable as long as we could find some ShootSpots for it */
+var bool bAllowOnlyShootable;
 
 /** list of teamskinned static meshes that we should notify when our team changes */
 var array<UTTeamStaticMesh> TeamStaticMeshes;
@@ -95,9 +111,33 @@ var bool bHasLocationSpeech;
 
 var(VoiceMessage) Array<SoundNodeWave> LocationSpeech;
 
+var const Texture2D IconHudTexture;
+
 var LinearColor AttackLinearColor;
 
 var bool bScriptRenderAdditionalMinimap;
+
+/** Locker to get weapons from for spawning player */
+var UTWeaponLocker BestLocker;
+
+/** True if tried and failed to find a best locker */
+var bool bNoLockerFound;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+replication
+{
+	if ( (Role==ROLE_Authority) && bNetDirty )
+		DefenderTeamIndex, bUnderAttack;
+}
 
 simulated function PostBeginPlay()
 {
@@ -142,8 +182,8 @@ simulated function PostBeginPlay()
 
 	// add to local HUD's post-rendered list
 	ForEach LocalPlayerControllers(class'PlayerController', PC)
-		if ( PC.MyHUD != None )
-			PC.MyHUD.AddPostRenderedActor(self);
+		if ( UTHUD(PC.MyHUD) != None )
+			UTHUD(PC.MyHUD).AddPostRenderedActor(self);
 
 	// clear out any empty parking spot entries
 	while (i < VehicleParkingSpots.length)
@@ -157,6 +197,28 @@ simulated function PostBeginPlay()
 			i++;
 		}
 	}
+}
+
+function UTWeaponLocker GetBestLocker()
+{
+	local UTWeaponLocker Locker;
+	local float Dist, BestDist;
+
+	if ( (BestLocker == None) && !bNoLockerFound )
+	{
+		// find nearest weapon locker and provide the weapons
+		ForEach DynamicActors(class'UTWeaponLocker', Locker)
+		{
+			Dist = VSizeSq(Location - Locker.Location);
+			if ( (BestLocker == None) || (BestDist > Dist) )
+			{
+				BestDist = Dist;
+				BestLocker = Locker;
+			}
+		}
+		bNoLockerFound = ( BestLocker == None );
+	}
+	return BestLocker;
 }
 
 simulated function bool IsStandalone()
@@ -175,6 +237,11 @@ simulated function vector GetHUDOffset(PlayerController PC, Canvas Canvas)
 	}
 
 	return Z*vect(0,0,1);
+}
+
+simulated function string GetLocationStringFor(PlayerReplicationInfo PRI)
+{
+	return LocationPrefix$GetHumanReadableName()$LocationPostfix;
 }
 
 simulated function int GetLocationMessageIndex(UTBot B, Pawn StatusPawn)
@@ -201,8 +268,8 @@ simulated function Destroyed()
 
 	// remove from local HUD's post-rendered list
 	ForEach LocalPlayerControllers(class'PlayerController', PC)
-		if ( PC.MyHUD != None )
-			PC.MyHUD.RemovePostRenderedActor(self);
+		if ( UTHUD(PC.MyHUD) != None )
+			UTHUD(PC.MyHUD).RemovePostRenderedActor(self);
 }
 
 /** adds the given team static mesh to our list and initializes its team */
@@ -243,6 +310,11 @@ function UTGameObjective FindNearestFriendlyNode(int TeamIndex)
 	return None;
 }
 
+/** function used to update where icon for this actor should be rendered on the HUD
+ *  @param NewHUDLocation is a vector whose X and Y components are the X and Y components of this actor's icon's 2D position on the HUD
+ */
+simulated native function SetHUDLocation(vector NewHUDLocation);
+
 function bool UsedBy(Pawn P)
 {
 	return false;
@@ -279,6 +351,10 @@ simulated function HighlightOnMinimap(int Switch)
 		LastHighlightUpdate = WorldInfo.TimeSeconds;
 	}
 }
+
+simulated native function DrawIcon(Canvas Canvas, vector IconLocation, float IconWidth, float IconAlpha, UTPlayerController PlayerOwner, LinearColor DrawColor);
+
+simulated native function RenderMyLinks( UTMapInfo MP, Canvas Canvas, UTPlayerController PlayerOwner, float ColorPercent );
 
 /**
   * Called if bScriptRenderAdditionalMinimap=true
@@ -339,16 +415,15 @@ simulated function bool NeedsHealing()
 	return false;
 }
 
+simulated native function byte GetTeamNum();
+
 function bool CanDoubleJump(Pawn Other)
 {
 	return true;
 }
 
-function bool BotNearObjective(AIController C)
+function bool BotNearObjective(UTBot B)
 {
-	local UTBot B;
-	
-	B = UTBot(C); // FIXMESTEVE!!! UDKBot should be passed in param
 	if ( NearObjective(B.Pawn)
 		|| ((B.RouteGoal == self) && (B.RouteDist < 2500))
 		|| (B.bWasNearObjective && (VSize(Location - B.Pawn.Location) < BaseRadius)) )
@@ -363,16 +438,9 @@ function bool BotNearObjective(AIController C)
 
 function bool NearObjective(Pawn P)
 {
-	local Volume V;
-
 	if (MyBaseVolume != None)
 	{
-		ForEach P.TouchingActors(class'Volume',V)
-		{
-			if ( V == MyBaseVolume )
-				return true;
-		}
-		return false;
+		return P.IsInVolume(MyBaseVolume);
 	}
 	else
 	{
@@ -391,7 +459,7 @@ return true if valid/useable instructions were given
 */
 function bool TellBotHowToDisable(UTBot B)
 {
-	return UTSquadAI(B.Squad).FindPathToObjective(B,self);
+	return B.Squad.FindPathToObjective(B,self);
 }
 
 function int GetNumDefenders()
@@ -411,6 +479,23 @@ function bool BetterObjectiveThan(UTGameObjective Best, byte DesiredTeamNum, byt
 		return true;
 
 	return false;
+}
+
+/** returns the rating of the highest rated locked vehicle available at this node */
+function float GetBestAvailableVehicleRating()
+{
+	local int i;
+	local float BestRating;
+
+	for (i = 0; i < VehicleFactories.length; i++)
+	{
+		if (VehicleFactories[i].ChildVehicle != None && VehicleFactories[i].ChildVehicle.bTeamLocked)
+		{
+			BestRating = FMax(BestRating, VehicleFactories[i].ChildVehicle.MaxDesireability);
+		}
+	}
+
+	return BestRating;
 }
 
 /* Reset()
@@ -480,6 +565,13 @@ function SetTeam(byte TeamIndex)
 	UpdateTeamStaticMeshes();
 }
 
+/**
+ * Returns the actual viewtarget for this actor.  Should be subclassed
+ */
+event actor GetBestViewTarget()
+{
+	return self;
+}
 
 /** Used by PlayerController.FindGoodView() in RoundEnded State */
 simulated function FindGoodEndView(PlayerController PC, out Rotator GoodRotation)
@@ -507,6 +599,11 @@ simulated function FindGoodEndView(PlayerController PC, out Rotator GoodRotation
 		ViewRotation.Yaw += 4096;
 	}
 }
+
+/**
+ * Used for a notification chain when an objective changes
+ */
+function ObjectiveChanged();
 
 /**
  * Will attempt to teleport a pawn to this objective
@@ -583,33 +680,53 @@ function bool ReachedParkingSpot(Pawn P)
 
 defaultproperties
 {
-	bHasSensor=false
-	Score=5
-	BaseRadius=+2000.0
-	bReplicateMovement=false
-	bOnlyDirtyReplication=true
-	bMustBeReachable=true
-	bFirstObjective=true
-	NetUpdateFrequency=1
-	DefenderTeamIndex=2
-
-	ControlColor(0)=(R=1,G=0,B=0,A=1)
-	ControlColor(1)=(R=0,G=0,B=1,A=1)
-	ControlColor(2)=(R=1,G=1,B=1,A=1)
-
-	HudMaterial=Material'UI_HUD.Icons.M_UI_HUD_Icons01'
-	MaxSensorRange=2800.0
-
-	CameraViewDistance=400.0
-
-	SupportedEvents.Add(class'UTSeqEvent_FlagEvent')
-
-	MaxHighlightScale=8.0
-	HighlightSpeed=10.0
-	MinimapIconScale=20.0
-
-	AttackCoords=(U=583,V=266,UL=52,VL=57)
-	IconCoords=(U=537,V=296,UL=46,VL=31)
-	IconHudTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseB'
-	AttackLinearColor=(R=1.0,G=1.0,B=1.0,A=1.0)
+   bFirstObjective=True
+   DefenderTeamIndex=2
+   LocationPrefix="Vicino "
+   ObjectiveName="Obiettivo"
+   BaseRadius=2000.000000
+   Score=5
+   ControlColor(0)=(R=1.000000,G=0.000000,B=0.000000,A=1.000000)
+   ControlColor(1)=(R=0.000000,G=0.000000,B=1.000000,A=1.000000)
+   ControlColor(2)=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   AttackCoords=(U=583.000000,V=266.000000,UL=52.000000,VL=57.000000)
+   IconCoords=(U=537.000000,V=296.000000,UL=46.000000,VL=31.000000)
+   HudMaterial=Material'UI_HUD.Icons.M_UI_HUD_Icons01'
+   MaxSensorRange=2800.000000
+   CameraViewDistance=400.000000
+   MaxHighlightScale=8.000000
+   HighlightSpeed=10.000000
+   MinimapIconScale=20.000000
+   IconHudTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseB'
+   AttackLinearColor=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Objective:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Objective:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Objective:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Objective:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__Objective:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__Objective:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__Objective:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__Objective:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__Objective:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__Objective:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   bReplicateMovement=False
+   bOnlyDirtyReplication=True
+   NetUpdateFrequency=1.000000
+   CollisionComponent=CollisionCylinder
+   SupportedEvents(3)=Class'UTGame.UTSeqEvent_FlagEvent'
+   Name="Default__UTGameObjective"
+   ObjectArchetype=Objective'Engine.Default__Objective'
 }

@@ -1,26 +1,107 @@
 /**
  * Base class for data providers which provide data for static game resources.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UIResourceDataProvider extends UIPropertyDataProvider
 	native(inherit)
-	Config(Game)
-	PerObjectConfig
+	implements(UIListElementCellProvider)
 	abstract;
 
-/** Controls whether the object should be used or not. This is the only way to remove a per object config from the list */
-var config bool bSkipDuringEnumeration;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
- * Provides the data provider with the chance to perform initialization, including preloading any content that will be needed by the provider.
+ * Allows a resource data provider instance to indicate that it should be unselectable in subscribed lists
  *
- * @param	bIsEditor	TRUE if the editor is running; FALSE if running in the game.
+ * @return	FALSE to indicate that list elements which represent this data provider should be considered unselectable
+ *			or otherwise disabled (though it will still appear in the list).
  */
-event InitializeProvider( bool bIsEditor );
+event bool IsProviderDisabled();
 
-DefaultProperties
+defaultproperties
 {
-	//@fixme ronp - it might be better to handle this via the script custom handlers
-	ComplexPropertyTypes.Remove(class'ArrayProperty')
+   Name="Default__UIResourceDataProvider"
+   ObjectArchetype=UIPropertyDataProvider'Engine.Default__UIPropertyDataProvider'
 }

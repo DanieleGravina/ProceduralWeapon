@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Weapon recoil bone controller.
  * Add a small recoil to a bone (similar to camera shakes).
@@ -74,21 +73,23 @@ var		transient	bool	bOldPlayRecoil;
 /** Internal, evaluates recoil is doing an effect and needs to be applied */
 var		transient	bool	bApplyControl;
 
-cpptext
-{
-	/** Pull aim information from Pawn */
-	virtual FVector2D GetAim(USkeletalMeshComponent* InSkelComponent);
-
-	/** Is skeleton currently mirrored */
-	virtual UBOOL IsMirrored(USkeletalMeshComponent* InSkelComponent);
-
-	// USkelControlBase interface
-	virtual void TickSkelControl(FLOAT DeltaSeconds, USkeletalMeshComponent* SkelComp);
-	virtual void GetAffectedBones(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<INT>& OutBoneIndices);
-	virtual void CalculateNewBoneTransforms(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<FBoneAtom>& OutBoneTransforms);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	CategoryDesc = "Recoil"
+   Recoil=(TimeDuration=0.330000)
+   Name="Default__GameSkelCtrl_Recoil"
+   ObjectArchetype=SkelControlBase'Engine.Default__SkelControlBase'
 }

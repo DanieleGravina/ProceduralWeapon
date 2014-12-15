@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSayMsg extends UTLocalMessage;
@@ -19,9 +19,11 @@ static function color GetConsoleColor( PlayerReplicationInfo RelatedPRI_1 )
 
 defaultproperties
 {
-	bBeep=true
-	DrawColor=(R=255,G=255,B=0,A=255)
-	RedTeamColor=(R=255,G=64,B=64,A=255)
-	BlueTeamColor=(R=64,G=192,B=255,A=255)
-	LifeTime=6
+   RedTeamColor=(B=64,G=64,R=255,A=255)
+   BlueTeamColor=(B=255,G=192,R=64,A=255)
+   bBeep=True
+   Lifetime=6.000000
+   DrawColor=(B=0,G=255,R=255,A=255)
+   Name="Default__UTSayMsg"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

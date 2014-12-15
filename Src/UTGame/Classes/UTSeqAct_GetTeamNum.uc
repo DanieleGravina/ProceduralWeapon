@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -26,9 +26,11 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjCategory="Team"
-	ObjName="Get Team Number"
-	VariableLinks(0)=(MaxVars=1)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Int',LinkDesc="Team Number",PropertyName=TeamNum,MaxVars=1,bWriteable=true)
+   bCallHandler=False
+   VariableLinks(0)=(MaxVars=1)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="Team Number",PropertyName="TeamNum",bWriteable=True,MinVars=1,MaxVars=1)
+   ObjName="Get Team Number"
+   ObjCategory="Team"
+   Name="Default__UTSeqAct_GetTeamNum"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

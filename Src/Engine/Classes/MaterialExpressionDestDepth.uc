@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionDestDepth extends MaterialExpression
 	native(Material)
@@ -15,15 +15,15 @@ class MaterialExpressionDestDepth extends MaterialExpression
 /** normalize the depth values to [near,far] -> [0,1] */
 var() bool bNormalize;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Destination"
-	MenuCategories(1)="Depth"
-	Outputs(0)=(OutputName="",Mask=1,MaskR=1,MaskG=0,MaskB=0,MaskA=0)
+   Name="Default__MaterialExpressionDestDepth"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

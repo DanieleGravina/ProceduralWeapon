@@ -1,12 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTVehicle_Hoverboard extends UTVehicle
-	abstract;
+class UTVehicle_Hoverboard extends UTHoverVehicle
+	native(Vehicle);
 
 /** Hoverboard mesh visible attachment */
-var     UDKSkeletalMeshComponent HoverboardMesh;
+var     UTSkeletalMeshComponent HoverboardMesh;
 var()   vector                  MeshLocationOffset;
 var()   rotator                 MeshRotationOffset;
 
@@ -17,8 +17,18 @@ var()	float	DodgeForceMag;
 
 var()	float	TrickJumpWarmupMax;
 var()   float   JumpCheckTraceDist;
+var		float	TrickJumpWarmup;
 var		float	TrickSpinWarmup;
 var     float	JumpDelay, LastJumpTime;
+var		bool	bInAJump; // True when in-air as the result of a jump
+var		bool	bLeftGround;
+
+var		float	TakeoffYaw;
+var		float	AutoSpin;
+var		float	SpinHeadingOffset;
+var()	float	SpinSpeed;
+
+var		float	LandedCountdown;
 
 var repnotify bool bDoHoverboardJump;
 
@@ -28,7 +38,16 @@ var bool bIsDodging;
 /** Dodge force to apply (has direction) */
 var vector DodgeForce;
 
+var		bool	bTrickJumping;
 var		bool	bGrabbingBoard;
+var		bool	bGrab1;
+var		bool	bGrab2;
+var		bool	bForceSpinWarmup;
+
+/** Special StayUpright system based on lean */
+/** Angle at which the vehicle will resist rolling */
+var()      float    LeanUprightStiffness;
+var()      float    LeanUprightDamping;
 
 var editinline export	    RB_StayUprightSetup     LeanUprightConstraintSetup;
 var editinline export	    RB_ConstraintInstance   LeanUprightConstraintInstance;
@@ -37,14 +56,34 @@ var editinline export		RB_ConstraintSetup		FootBoardConstraintSetup;
 var editinline export		RB_ConstraintInstance	LeftFootBoardConstraintInstance;
 var editinline export		RB_ConstraintInstance	RightFootBoardConstraintInstance;
 
+var	transient vector GroundNormal;
+
+/** The current angle (in radians) between the way the board is pointing and the way the player is looking. */
+var transient float	CurrentLookYaw;
+
 /** Controller used to turn the spine. */
 var SkelControlSingleBone	SpineTurnControl;
+
+/** Controller used to point arm at vehicle you are towed behind. */
+var SkelControlLookAt		TowControl;
 
 /** Max yaw applied to have head/spine track looking direction. */
 var(HeadTracking)	float	MaxTrackYaw;
 
 /** Used internally for limiting how quickly the head tracks. */
 var	transient float	CurrentHeadYaw;
+
+/** disable repulsors if the vehicle has negative Z velocity exceeds the Driver's MaxFallSpeed */
+var bool bDisableRepulsorsAtMaxFallSpeed;
+
+/** Using strafe keys adds this offset to current look direction. */
+var() float	HoverboardSlalomMaxAngle;
+
+/** How quickly the 'slalom' offset can change (controlled by strafe) */
+var() float	SlalomSpeed;
+
+/** Current offset applied to look direction for board */
+var	float CurrentSteerOffset;
 
 // TurnLeanFactor adjusts how much the hoverboard leans when turning
 // MaxTurnLean is the maximum amount the hoverboard can lean in unreal angular units
@@ -53,10 +92,56 @@ var	transient float	CurrentHeadYaw;
 var()   float   TurnLeanFactor;
 var()	float	MaxLeanPitchSpeed;
 var		transient float TargetPitch;
+var()	float	DownhillDownForce;
+
+// WaterCheckLevel is the distance to trace down to determine if water is too deep to travel over
+var()   float           WaterCheckLevel;
 
 var editinline export	    RB_DistanceJointSetup   DistanceJointSetup;
 var editinline export	    RB_ConstraintInstance   DistanceJointInstance;
 
+/** Tow Cable */
+var     bool					bInTow;
+var()   float                   MaxTowDistance;
+
+struct native TowInfoData
+{
+	/** The vehicle we are attached to */
+	var UTVehicle 	TowTruck;
+	var Name		TowAttachPoint;
+};
+
+var repnotify TowInfoData TowInfo;
+
+/** Location for towing constraint in vehicle space. */
+var vector	TowLocalAttachPos;
+
+/** When being towed, using strafe keys adds this offset to current look direction. */
+var() float	HoverboardTowSlalomMaxAngle;
+
+/** Used internally - current length of tow 'rope'. */
+var	const float	CurrentTowDistance;
+
+/** Controls how quickly length of tow rope changes when holding throttle. */
+var float	TowDistanceChangeSpeed;
+
+/** Time that tow line has to be blocked before it breaks. */
+var float	TowLineBlockedBreakTime;
+
+/** How long the tow line has been blocked for so far. */
+var	float	TowLineBlockedFor;
+
+/** The emitter that shows the attachment */
+var ParticleSystemComponent TowBeamEmitter;
+
+/** The emitter on the end point of the towbeam*/
+var ParticleSystemComponent TowBeamEndPointEffect;
+
+/** This is the name to use to control the intensity of the tow beam **/
+var name TowBeamIntensityName;
+
+/** Emitter under the board making dust. */
+var ParticleSystemComponent HoverboardDust;
 var ParticleSystem			RedDustEffect;
 var ParticleSystem			BlueDustEffect;
 
@@ -68,6 +153,14 @@ var	ParticleSystemComponent	ThrusterEffect;
 var name					ThrusterEffectSocket;
 var ParticleSystem			RedThrusterEffect;
 var ParticleSystem			BlueThrusterEffect;
+
+/** The reference particle systems for the beam emitter (per team) */
+var ParticleSystem TowBeamTeamEmitters[2];
+
+/** The reference particle systems for the end point emitter (per team) */
+var ParticleSystem TowBeamTeamEndPoints[2];
+/** parameter for tow beam endpoint */
+var name TowBeamEndParameterName;
 
 /** Effect when moving quickly over water. */
 var ParticleSystemComponent	RoosterEffect;
@@ -84,6 +177,13 @@ var SoundCue        EngineThrustSound;
 var SoundCue        TurnSound;
 var SoundCue        JumpSound;
 
+/** Cue played when over water. */
+var SoundCue		OverWaterSound;
+
+var AudioComponent TowLoopComponent;
+var SoundCue TowLoopCue;
+var SoundCue TowStartedSound;
+var SoundCue TowEndedSound;
 /** camera smooth out */
 var float CameraInitialOut;
 
@@ -119,38 +219,31 @@ var() float	ImpactGroundResetPhysRiderThresh;
 /** If we do hit the ground harder than ImpactGroundResetPhysRiderThresh - set the rider Z vel to be this instead. */
 var() float BigImpactPhysRiderZVel;
 
+/** AI property for tow cable use */
+var float LastTryTowCableTime;
 /** If bot's speed is less than this for a while, it leaves the hoverboard to go on foot fot a bit instead */
 var float DesiredSpeedSquared;
-
 /** last time bot's speed was at or above DesiredSpeedSquared */
 var float LastDesiredSpeedTime;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 replication
 {
+	if(Role == ROLE_Authority)
+		bTrickJumping;
+	if (bNetDirty)
+		TowInfo, bGrab1, bGrab2;
 	if (!bNetOwner)
-		bDoHoverboardJump;
-}
-
-/**
-  * Give script a chance to do some rigid body post initialization
-  */
-event PostInitRigidBody(PrimitiveComponent PrimComp)
-{
-	local bool bOldDriving;
-
-	LeanUprightConstraintSetup.PriAxis1 = vect(0,0,1);
-	LeanUprightConstraintSetup.SecAxis1 = vect(0,1,0);
-
-	LeanUprightConstraintSetup.PriAxis2 = vect(0,0,1);
-	LeanUprightConstraintSetup.SecAxis2 = vect(0,1,0);
-
-	LeanUprightConstraintInstance.InitConstraint(None, CollisionComponent, LeanUprightConstraintSetup, 1.0, self, None, true);
-
-	// Hack to init all the wheels with 'driving' params (ie not parked ones), to avoid updating each frame.
-	bOldDriving=bDriving;
-	bDriving = TRUE;
-	UDKVehicleSimHoverboard(SimObj).InitWheels(self);
-	bDriving = bOldDriving;
+		bDoHoverboardJump, bForceSpinWarmup;
 }
 
 /** Used by PlayerController.FindGoodView() in RoundEnded State */
@@ -256,334 +349,19 @@ unreliable server function ServerRequestDodge(bool bDodgeLeft)
 	DodgeForce.Z = -0.3f * JumpForceMag;
 }
 
-event UpdateHoverboardDustEffect(float DustHeight)
-{
-	HoverboardDust.SetFloatParameter(DustVelMagParamName, VSize(Velocity));
-	HoverboardDust.SetFloatParameter(DustBoardHeightParamName, DustHeight);
-	HoverboardDust.SetVectorParameter(DustVelParamName, Velocity);
-
-}
-
+/** Creates a physics attachment to */
+native final function AttachTowCable();
 
 /**
   * Get double click status from playercontroller
   */
-simulated function Tick(float DeltaSeconds)
+simulated function Tick(float deltatime)
 {
-	local UDKVehicleSimHoverboard SimHoverboard;
-	local float BlendDelta, TurnAngVel, Speed, Steer, PitchAngle, NewTargetPitch, MaxPitchChange, DeltaPitch, DesiredYaw, MaxDeltaYaw;
-	local bool bWindingUp, bJumpNow;
-	local vector DirX, DirY, LocalUp, AngVel, ForwardInZPlane, LeanX, LeanY, LeanZ, HitLocation, HitNormal;
-	local rotator LeanRot;
-	local PlayerController PC;
-	local Actor HitActor;
-
-	if ( (Driver == None) || (Controller == None) )
-	{
-		// Hack - make extra sure we have no hoverboards without riders.
-		if ( Role == ROLE_Authority )
-		{
-			`log("Uncontrolled hoverboard left around - destroying...");
-			Destroy();
-		}
-		return;
-	}
-	Super.Tick(DeltaSeconds);
+	Super.Tick(deltatime);
 
 	if ( (PlayerController(Controller) != None) && (PlayerController(Controller).PlayerInput != None) )
 	{
-		DoubleClickMove = PlayerController(Controller).PlayerInput.CheckForDoubleClickMove(DeltaSeconds);
-	}
-
-	SimHoverboard = UDKVehicleSimHoverboard(SimObj);
-
-	// Blend PhysicsWeight smoothly over time.
-	if( PhysWeightBlendTimeToGo != 0.0 )
-	{
-		// Amount we want to change PhysicsWeight by.
-		BlendDelta = TargetPhysicsWeight - Driver.Mesh.PhysicsWeight; 
-
-		if( Abs(BlendDelta) > 0.0001 && PhysWeightBlendTimeToGo > DeltaSeconds )
-		{
-			Driver.Mesh.PhysicsWeight += (BlendDelta / PhysWeightBlendTimeToGo) * DeltaSeconds;
-			PhysWeightBlendTimeToGo	-= DeltaSeconds;
-		}
-		else
-		{
-			Driver.Mesh.PhysicsWeight = TargetPhysicsWeight;
-			PhysWeightBlendTimeToGo	= 0.0;
-		}
-	}
-
-	SimHoverboard.LandedCountdown -= DeltaSeconds;
-
-	// Handle landing and taking off.
-	if ( SimHoverboard.bInAJump || bTrickJumping )
-	{
-		// Note when we first leave the ground.
-		if( !SimHoverboard.bLeftGround && !bVehicleOnGround )
-		{
-			SimHoverboard.bLeftGround = true;
-		}
-
-		// If we were off the ground, and have landed (or we never left the ground) for a second.
-		if( bVehicleOnGround && (SimHoverboard.bLeftGround || (WorldInfo.TimeSeconds > LastJumpTime + 1.0)) )
-		{
-			SimHoverboard.bInAJump = false;
-			HoverboardLanded();
-			SimHoverboard.CurrentSteerOffset = 0.0;
-
-			// This is done on the server and replicated to clients.
-			if(Role == ROLE_Authority)
-			{
-				bTrickJumping = false;
-			}
-
-			SimHoverboard.bLeftGround = false;
-			if(bGrabbingBoard)
-			{
-				ToggleAnimBoard(false, 0.0);
-			}
-			SimHoverboard.LandedCountdown = 1.0;	
-			SimHoverboard.AutoSpin = 0.0;
-		}
-		else if( bTrickJumping )
-		{
-			if((bGrab1 || bGrab2) && !bGrabbingBoard)
-			{
-				ToggleAnimBoard(true, 0.f);
-			}
-			else if(!(bGrab1 || bGrab2) && bGrabbingBoard)
-			{
-				if( IsLocallyControlled() && IsHumanControlled() )
-				{
-					TargetPhysicsWeight = 1.0;
-					PhysWeightBlendTimeToGo = 0.1;
-				}
-
-				ToggleAnimBoard(false, 0.1);
-			}
-		}
-	}
-
-	// See if we are winding up for a jump
-	bWindingUp = (OutputRise < 0.0);
-
-	// Don't allow you to wind up for a jump while in the air
-	if( bWindingUp && !SimHoverboard.bInAJump )
-	{
-		SimHoverboard.TrickJumpWarmup = FMin(SimHoverboard.TrickJumpWarmup + DeltaSeconds, TrickJumpWarmupMax);
-
-		if( Abs(Steering) > 0.2 )
-		{
-			TrickSpinWarmup += DeltaSeconds;
-			if(Steering > 0.0)
-			{
-				SimHoverboard.AutoSpin = 1.0;
-			}
-			else
-			{
-				SimHoverboard.AutoSpin = -1.0;
-			}
-		}
-		else
-		{
-			TrickSpinWarmup = 0.0;
-			SimHoverboard.AutoSpin = 0.0;
-		}
-	}
-
-	// Calculate Local Up Vector
-	GetAxes(Rotation, DirX, DirY, LocalUp);
-
-	AngVel = CollisionComponent.BodyInstance.GetUnrealWorldAngularVelocity();
-	TurnAngVel = AngVel dot vect(0,0,0);
-
-	// When over water - enable 'rooster tail'
-	if( bVehicleOnWater )
-	{
-		if ( RoosterEffect == None )
-		{
-			SpawnRoosterEffect();
-		}
-		if ( RoosterEffect !=  None )
-		{
-			if (RoosterEffect.bSuppressSpawning || !RoosterEffect.bIsActive)
-			{
-				RoosterEffect.ActivateSystem();
-				RoosterNoise.Play();
-			}
-
-			Speed = FClamp((VSize(Velocity)/MaxSpeed), 0.0, 1.0);
-			RoosterEffect.SetFloatParameter('WaterAmount', Speed);
-			if ( RoosterNoise != None )
-			{
-				RoosterNoise.SetFloatParameter('WaterSpeed', Speed);
-			}
-
-			Steer = 0.5 + FClamp(TurnAngVel*RoosterTurnScale, -0.5, 0.5);
-			RoosterEffect.SetVectorParameter('WaterDirection', vect(1,1,1)*Steer);
-		}
-	}
-	else
-	{
-		if(RoosterEffect != None && !RoosterEffect.bSuppressSpawning)
-		{
-			RoosterEffect.DeactivateSystem();
-			if (RoosterNoise != None)
-			{
-				RoosterNoise.Stop();
-			}
-		}
-	}
-
-	// Constrain the hoverboard pitch and roll to a dynamically generated orientation
-	// YAW
-	LeanRot.Yaw = Rotation.Yaw;
-
-	// PITCH
-	// Project forward vector into Z plane and normalize.
-	ForwardInZPlane = DirX;
-	ForwardInZPlane.Z = 0.0;
-	ForwardInZPlane = Normal(ForwardInZPlane);
-
-	PitchAngle = -1.0 * Asin(SimHoverboard.GroundNormal dot ForwardInZPlane);
-	NewTargetPitch = 10430.2192 * PitchAngle; // 10430.2192 = Rad2U
-	MaxPitchChange = MaxLeanPitchSpeed * DeltaSeconds;
-	DeltaPitch = FClamp(NewTargetPitch - TargetPitch, -MaxPitchChange, MaxPitchChange);
-	TargetPitch += DeltaPitch;
-	LeanRot.Pitch = int(TargetPitch);
-
-	// Add torque to lean as we turn.
-	if( !SimHoverboard.bInAJump)
-	{
-		AddTorque( -1.0 * DirX * ForwardVel * TurnAngVel * TurnLeanFactor );
-	}
-
-	GetAxes(LeanRot, LeanX, LeanY, LeanZ);
-
-	SimHoverboard.UpdateLeanConstraint(LeanUprightConstraintInstance, LeanY, LeanZ);
-
-	// Carving sound
-	if ( !CurveSound.bWasPlaying )
-		CurveSound.Play();	
-	CurveSound.VolumeMultiplier = Abs(TurnAngVel)/8192.0;
-
-	PC = PlayerController(Controller);
-	if ( PC != None )
-	{
-		if ( HasWheelsOnGround() && (DoubleClickMove != DCLICK_None) )
-		{
-			RequestDodge();
-			DoubleClickMove = DCLICK_None;
-		}
-	}
-	else if ( HasWheelsOnGround() )
-	{
-		if ( (LocalUp.Z < WalkableFloorZ) && (VSizeSq(Velocity) < Square(Driver.GroundSpeed)) ) 
-		{
-			// AI bails if moving slowly and ground is too steep
-			BelowSpeedThreshold();
-			if (bDeleteMe)
-			{
-				return;
-			}
-		}
-		else if (LastDesiredSpeedTime == 0.0 || !Controller.InLatentExecution(Controller.LATENT_MOVETOWARD) || (VSizeSq2D(Velocity) > DesiredSpeedSquared) )
-		{
-			LastDesiredSpeedTime = WorldInfo.TimeSeconds;
-		}
-		else if (WorldInfo.TimeSeconds - LastDesiredSpeedTime > 1.0)
-		{
-			// bail because moving too slowly
-			BelowSpeedThreshold();
-			if (bDeleteMe)
-			{
-				return;
-			}
-		}
-	}
-
-	// First see if we want to try and jump
-	bJumpNow = (OutputRise > 0.0 || (OutputRise == 0.0 && SimHoverboard.TrickJumpWarmup > 0.0) || bIsDodging);
-
-	// Disallow if already doing one
-	if(bJumpNow && SimHoverboard.bInAJump)
-	{
-		bJumpNow = false;
-	}
-
-	// Disallow if it hasn't been long enough since last jump
-	if( bJumpNow && (WorldInfo.TimeSeconds < LastJumpTime + JumpDelay) )
-	{
-		bJumpNow = false;
-		// make sure bot doesn't queue up a jump (it checks frequently enough that this isn't likely to be helpful)
-		if ( UDKBot(Controller) != None )
-		{
-			Rise = 0.0;
-		}
-	}
-
-	// Disallow if not over suitable surface
-	if( bJumpNow )
-	{
-		// Don't jump if we are at a steep angle
-		if ( LocalUp.Z < 0.5 )
-		{
-			bJumpNow = false;
-		}
-		else
-		{
-			HitActor = Trace(HitLocation, HitNormal, Location - (LocalUp * JumpCheckTraceDist), Location, true);
-			bJumpNow = (HitActor != None);
-		}
-	}
-
-	// Ok - jumping now!
-	if ( bJumpNow )
-	{	
-		BoardJumpEffect();
-
-		if ( UDKBot(Controller) != None )
-		{
-			Rise = 0.0;
-		}
-
-		SimHoverboard.bInAJump = TRUE;
-		SimHoverboard.bLeftGround = FALSE;
-
-		// Remember the yaw we have when we take off.
-		SimHoverboard.TakeoffYaw = DriverViewYaw;
-
-		// If trick jumping
-		if ( SimHoverboard.TrickJumpWarmup > 0.0 && !bIsDodging)
-		{
-			bTrickJumping = TRUE;
-			SimHoverboard.SpinHeadingOffset = 0.f;
-		}
-
-		AddImpulse( JumpForceMag*vect(0,0,1) + DodgeForce );
-		DodgeForce = vect(0,0,0);
-		LastJumpTime = WorldInfo.TimeSeconds;
-	}
-
-	bIsDodging = false;
-	bNoZDamping = (WorldInfo.TimeSeconds - 0.25 < LastJumpTime);
-
-	if(OutputRise == 0.0)
-	{
-		SimHoverboard.TrickJumpWarmup = 0.0;
-		TrickSpinWarmup = 0.0;
-	}
-
-	// If we have control for turning body to match look direction, update them here.
-	if( SpineTurnControl != None )
-	{
-		DesiredYaw = FClamp(SimHoverboard.CurrentLookYaw, -MaxTrackYaw, MaxTrackYaw);
-		MaxDeltaYaw = DeltaSeconds * 3.0;
-		CurrentHeadYaw += FClamp(DesiredYaw - CurrentHeadYaw, -MaxDeltaYaw, MaxDeltaYaw);
-
-		SpineTurnControl.BoneRotation.Yaw = int(CurrentHeadYaw * 10430.2192);  // 10430.2192 = Rad2U
+		DoubleClickMove = PlayerController(Controller).PlayerInput.CheckForDoubleClickMove(DeltaTime);
 	}
 }
 
@@ -592,7 +370,7 @@ simulated function WeaponRotationChanged(int SeatIndex)
 	return;
 }
 
-function DriverDied(class<DamageType> DamageType)
+function DriverDied()
 {
 	// to get more dual enforcer opportunities, throw out enforcer when kill player on hoverboard
 	if ( Driver != None )
@@ -600,7 +378,7 @@ function DriverDied(class<DamageType> DamageType)
 		Driver.Weapon = None;
 		Driver.ThrowActiveWeapon();
 	}
-	Super.DriverDied(DamageType);
+	Super.DriverDied();
 }
 
 simulated function InitializeEffects()
@@ -756,7 +534,7 @@ simulated function VehicleCalcCamera(float DeltaTime, int SeatIndex, out vector 
 	}
 
 	TargetRoll = 0;
-	if(!UDKVehicleSimHoverboard(SimObj).bInAJump && Mesh.BodyInstance != None)
+	if(!bInAJump && Mesh.BodyInstance != None)
 	{
 		AngVel = Mesh.BodyInstance.GetUnrealWorldAngularVelocity();
 		TargetRoll = VelRollFactor * AngVel.Z * VelSize;
@@ -795,6 +573,10 @@ simulated function AttachDriver( Pawn P )
 		HandleMesh.SetShadowParent(UTP.Mesh);
 		HandleMesh.SetLightEnvironment( UTP.LightEnvironment );
 		UTP.Mesh.AttachComponentToSocket(HandleMesh, UTP.WeaponSocket);
+		if (TowBeamEmitter != None)
+		{
+			UTP.Mesh.AttachComponentToSocket(TowBeamEmitter, UTP.WeaponSocket);
+		}
 
 		// Disable possible blending-out of hit reactions.
 		UTP.bBlendOutTakeHitPhysics = FALSE;
@@ -828,7 +610,7 @@ simulated function SitDriver(UTPawn UTP, int SeatIndex)
 	UTP.Mesh.ForceUpdate(true);
 
 	// don't reduce pawn culldistance as it's the most visible part of the hoverboard
-	UTP.Mesh.SetCullDistance(UTP.default.Mesh.CachedMaxDrawDistance);
+	UTP.Mesh.SetCullDistance(UTP.default.Mesh.CachedCullDistance);
 }
 
 /** Set whether the flag is attached directly to kinematic bodies on the rider. */
@@ -969,7 +751,7 @@ exec function HandDamp(float LinDamp)
 
 simulated exec function TestResetPhys()
 {
-	`log("Reset Char Phys");
+	LogInternal("Reset Char Phys");
 	UTPawn(Driver).ResetCharPhysState();
 }
 
@@ -1043,6 +825,8 @@ simulated function InitPhysicsAnimPawn()
 			SpineTurnControl.BoneRotation = rot(0,0,0);
 			SpineTurnControl.SetSkelControlStrength(1.0, 0.5);
 		}
+
+		TowControl = SkelControlLookAt(UTP.Mesh.FindSkelControl('TowControl'));
 	}
 }
 
@@ -1058,6 +842,13 @@ simulated function DetachDriver( Pawn P )
 		SpineTurnControl = None;
 	}
 
+	if(TowControl != None)
+	{
+		// Make sure tow control is turned off.
+		TowControl.SetSkelControlStrength(0.0, 0.0);
+		TowControl = None;
+	}
+
 	// Make sure bones are in correct position when falling off board.
 	P.Mesh.UpdateRBBonesFromSpaceBases(TRUE,TRUE);
 
@@ -1068,6 +859,14 @@ simulated function DetachDriver( Pawn P )
 	P.Mesh.DetachComponent(HandleMesh);
 	HandleMesh.SetShadowParent(None);
 	HandleMesh.SetLightEnvironment( None );
+	if (TowBeamEmitter != None)
+	{
+		P.Mesh.DetachComponent(TowBeamEmitter);
+	}
+	if(TowBeamEndPointEffect != none)
+	{
+		TowBeamEndPointEffect.SetHidden(true);
+	}
 
 	if (P.Mesh != None && P.Mesh.PhysicsAssetInstance != None)
 	{
@@ -1129,10 +928,6 @@ reliable server function ServerChangeSeat(int RequestedSeat)
 
 simulated event BoardJumpEffect()
 {
-	if ( Role == ROLE_Authority )
-	{
-		bDoHoverboardJump = !bDoHoverboardJump;
-	}
 	PlaySound(JumpSound, true);
 	VehicleEvent('BoostStart');
 }
@@ -1146,7 +941,7 @@ simulated function SetInputs(float InForward, float InStrafe, float InUp)
 function ForceSpinJump()
 {
 	bForceSpinWarmup = false;
-	UDKVehicleSimHoverboard(SimObj).TrickJumpWarmup = TrickJumpWarmupMax;
+	TrickJumpWarmup = TrickJumpWarmupMax;
 }
 
 reliable server function ServerSpin(float Direction)
@@ -1200,7 +995,7 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 }
 
 // DriverRadiusDamage() ignored, since our TakeDamage() already passes damage to driver
-function DriverRadiusDamage(float DamageAmount, float DamageRadius, Controller EventInstigator, class<DamageType> DamageType, float Momentum, vector HitLocation, Actor DamageCauser, optional float DamageFalloffExp);
+function DriverRadiusDamage(float DamageAmount, float DamageRadius, Controller EventInstigator, class<DamageType> DamageType, float Momentum, vector HitLocation, Actor DamageCauser);
 
 function NotifyDriverTakeHit(Controller InstigatedBy, vector HitLocation, int Damage, class<DamageType> DamageType, vector Momentum)
 {
@@ -1248,11 +1043,23 @@ function IncomingMissile(Projectile P)
 	}
 }
 
+// AI hint
+function bool FastVehicle()
+{
+	return true;
+}
+
 event bool DriverLeave(bool bForceLeave)
 {
 	local Pawn SavedDriver;
+	local Vehicle SavedTowTruck;
 
 	SavedDriver = Driver;
+	// Check to see if we should try to get in towing vehicle
+	if (bInTow && TowInfo.TowTruck != None && VSize(TowInfo.TowTruck.Location - Driver.Location) < Driver.VehicleCheckRadius + TowInfo.TowTruck.CylinderComponent.CollisionRadius)
+	{
+		SavedTowTruck = TowInfo.TowTruck;
+	}
 
 	// turn off collision so that we can place the driver exactly where it is on the hoverboard
 	SetCollision(false, false);
@@ -1264,7 +1071,11 @@ event bool DriverLeave(bool bForceLeave)
 		if (!bNoVehicleEntry)
 		{
 			// Get into towing vehicle if close enough
-			if ( PlayerController(SavedDriver.Controller) != None )
+			if ( SavedTowTruck != None )
+			{
+				SavedTowTruck.TryToDrive(SavedDriver);
+			}
+			else if ( PlayerController(SavedDriver.Controller) != None )
 			{
 				// try to get into any vehicle if close enough and looking at it
 				PlayerController(SavedDriver.Controller).FindVehicleToDrive();
@@ -1322,9 +1133,78 @@ reliable client function SetOnlyControllableByTilt( bool bActive )
 	}
 }
 
+
+simulated function CauseMuzzleFlashLight(int SeatIndex)
+{
+	Super.CauseMuzzleFlashLight(SeatIndex);
+
+	VehicleEvent('FireTowCable');
+}
+
+function LinkUp(UTVehicle NewTowTruck)
+{
+	if ( NewTowTruck != none && !NewTowTruck.bDeleteMe && NewTowTruck.Health>0 )
+	{
+		bInTow = true;
+		TowInfo.TowTruck = NewTowTruck;
+		TowInfo.TowAttachPoint = NewTowTruck.GetHoverBoardAttachPoint(Location);
+		NewTowTruck.SetHoverBoardAttachPointInUse(TowInfo.TowAttachPoint, true);
+		SpawnTowCableEffects();
+		AttachTowCable();
+		PlaySound(TowStartedSound);
+		if(TowLoopComponent == none)
+		{
+			TowLoopComponent = CreateAudioComponent(TowLoopCue, false, true);
+		}
+		if(TowLoopComponent != none)
+		{
+			TowLoopComponent.Play();
+		}
+		// if we connected to a bot, have it re-eval now so it can start towing us
+		if (UTBot(NewTowTruck.Controller) != None)
+		{
+			UTBot(NewTowTruck.Controller).WhatToDoNext();
+		}
+	}
+}
+
+simulated event BreakTowLink()
+{
+	if(bInTow)
+	{
+		if(TowLoopComponent != none)
+		{
+			TowLoopComponent.Stop();
+			TowLoopComponent = None;
+		}
+		PlaySound(TowEndedSound);
+	}
+	bInTow = false;
+	DistanceJointInstance.TermConstraint();
+	if ( TowInfo.TowTruck != None )
+	{
+		TowInfo.TowTruck.SetHoverBoardAttachPointInUse(TowInfo.TowAttachPoint, false);
+	}
+	TowInfo.TowAttachPoint='';
+	TowInfo.TowTruck = none;
+}
+
 simulated function ReplicatedEvent(name VarName)
 {
-	if (VarName == 'bDoHoverboardJump')
+	if (VarName == 'TowInfo' )
+	{
+		if (TowInfo.TowTruck != none)
+		{
+			bInTow = true;
+			SpawnTowCableEffects();
+			AttachTowCable();
+		}
+		else
+		{
+			BreakTowLink();
+		}
+	}
+	else if (VarName == 'bDoHoverboardJump')
 	{
 		BoardJumpEffect();
 	}
@@ -1377,7 +1257,7 @@ event bool EncroachingOn(Actor Other)
 
 event RanInto(Actor Other)
 {
-	if (Role == ROLE_Authority && Pawn(Other) != None && !WorldInfo.GRI.OnSameTeam(self, Other))
+	if (Role == ROLE_Authority && Pawn(Other) != None && (!WorldInfo.GRI.OnSameTeam(self, Other) || (UTPawn(Other) != None && UTPawn(Other).IsHero())) )
 	{
 		if (Driver == None)
 		{
@@ -1475,7 +1355,7 @@ simulated event ToggleAnimBoard(bool bAnimBoard, float Delay)
 		// Create trick board mesh now
 		if(HoverboardMesh == None)
 		{
-			HoverboardMesh = new(self) class'UDKSkeletalMeshComponent';
+			HoverboardMesh = new(self) class'UTSkeletalMeshComponent';
 			HoverboardMesh.SetSkeletalMesh(Mesh.SkeletalMesh);
 			HoverboardMesh.SetLightEnvironment(Mesh.LightEnvironment);
 			HoverboardMesh.CastShadow = TRUE;
@@ -1556,7 +1436,7 @@ simulated event HoverboardLanded()
 }
 
 /** Check the bIgnoreHoverboards flag. */
-function bool OnTouchForcedDirVolume(UDKForcedDirectionVolume Vol)
+function bool OnTouchForcedDirVolume(ForcedDirVolume Vol)
 {
 	if(Vol.bIgnoreHoverboards)
 	{
@@ -1585,6 +1465,164 @@ simulated event SpawnRoosterEffect()
 	RoosterNoise = new(self) class'AudioComponent';
 	RoosterNoise.SoundCue = RoosterSoundCue;
 	RoosterNoise.VolumeMultiplier = 5.0;
+}
+
+/** spawn and attach tow cable effects if they don't already exist */
+simulated event SpawnTowCableEffects()
+{
+	local byte TeamNum;
+	local UTPawn P;
+
+	TeamNum = GetTeamNum();
+	if (TowBeamEmitter == None)
+	{
+		TowBeamEmitter = new(self) class'UTParticleSystemComponent';
+		TowBeamEmitter.SetTickGroup(TG_PostAsyncWork); // so endpoint gets updated after the target vehicle has finished movement
+		TowBeamEmitter.SetTranslation(vect(0.0, 8.0, 0.0));
+		TowBeamEmitter.SecondsBeforeInactive = 1.0;
+		TowBeamEmitter.bDeferredBeamUpdate = true;
+		TowBeamEmitter.SetTemplate((TeamNum == 1) ? TowBeamTeamEmitters[1] : TowBeamTeamEmitters[0]);
+		P = UTPawn(Driver);
+		if (P != None && P.Mesh != None)
+		{
+			P.Mesh.AttachComponentToSocket(TowBeamEmitter, P.WeaponSocket);
+		}
+	}
+
+	if (TowBeamEndPointEffect == None)
+	{
+		TowBeamEndPointEffect = new(self) class'UTParticleSystemComponent';
+		TowBeamEndPointEffect.SetAbsolute(true, true, false);
+		TowBeamEndPointEffect.SecondsBeforeInactive = 1.0;
+		TowBeamEndPointEffect.bDeferredBeamUpdate = true;
+		TowBeamEndPointEffect.SetTemplate((TeamNum == 1) ? TowBeamTeamEndPoints[1] : TowBeamTeamEndPoints[0]);
+		AttachComponent(TowBeamEndPointEffect);
+	}
+}
+
+/** Kismet hook to use the tow cable in scripted sequences */
+function OnAttachTowCable(UTSeqAct_AttachTowCable InAction)
+{
+	local UTVWeap_TowCable TowCable;
+
+	TowCable = UTVWeap_TowCable(Weapon);
+	if (TowCable != None)
+	{
+		TowCable.PotentialTowTruck = InAction.AttachTo;
+		StartFire(0);
+	}
+}
+
+function UTVehicle GetTowingVehicle()
+{
+	return TowInfo.TowTruck;
+}
+
+function bool CanAttachTo(UTVehicle TowingVehicle, UTVWeap_TowCable TowCable)
+{
+	return ( TowingVehicle.HoverboardSocketInUse.Find(false) != INDEX_NONE &&
+		VSize(TowingVehicle.Location - Location) < TowCable.MaxAttachRange &&
+		FastTrace(TowingVehicle.Location, Location) );
+}
+
+/** hooked to bot's custom action interface to tell them to attach tow cable */
+function bool AIAttachTowCable(UTBot B)
+{
+	local UTVehicle TowingVehicle;
+	local UTVWeap_TowCable TowCable;
+	local vector Dir;
+
+	if (B.Focus == B.Enemy)
+	{
+		// got distracted
+		return false;
+	}
+	else
+	{
+		TowCable = UTVWeap_TowCable(Weapon);
+		TowingVehicle = UTVehicle(B.Focus);
+		if (TowCable == None || TowingVehicle == None || TowingVehicle.Controller == None || !CanAttachTo(TowingVehicle, TowCable))
+		{
+			// failed
+			return true;
+		}
+		else if (TowCable.PotentialTowTruck == TowingVehicle)
+		{
+			// success, fire the tow cable
+			StartFire(0);
+			return true;
+		}
+		else
+		{
+			// still turning
+			if (WorldInfo.TimeSeconds - LastTryTowCableTime < 2.0)
+			{
+				return false;
+			}
+			else
+			{
+				Dir = TowingVehicle.Location - Location;
+				Dir.Z = 0.0;
+				return (vector(Rotation) dot Normal(Dir) < 0.9);
+			}
+		}
+	}
+}
+
+function bool TryAttachingTowCable(UTBot B, UTVehicle TowingVehicle)
+{
+	local UTVWeap_TowCable TowCable;
+	local UTBot OtherB;
+
+	TowCable = UTVWeap_TowCable(Weapon);
+	if (TowCable == None)
+	{
+		bHasTowCable = false;
+		return false;
+	}
+	else if (WorldInfo.TimeSeconds - LastTryTowCableTime > 10.0 && CanAttachTo(TowingVehicle, TowCable))
+	{
+		B.GoalString = "Attach tow cable to" @ TowingVehicle.GetHumanReadableName();
+		B.Focus = TowingVehicle;
+		B.PerformCustomAction(AIAttachTowCable);
+		LastTryTowCableTime = WorldInfo.TimeSeconds;
+		// if other is a bot, ask it to turn around and wait for us
+		OtherB = UTBot(TowingVehicle.Controller);
+		if (OtherB != None)
+		{
+			OtherB.CampTime = 2.0;
+			OtherB.Focus = None;
+			OtherB.FocalPoint = TowingVehicle.Location + vector(Rotation) * 1000.0;
+			OtherB.GotoState('Defending', 'Pausing');
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+function DetachTowCable()
+{
+	if (TowInfo.TowTruck != None)
+	{
+		BreakTowLink();
+	}
+}
+
+function bool ShouldLeaveForCombat(UTBot B)
+{
+	// if being towed and carrying flag, sometimes push our luck and stay on
+	// never if would fall very far
+	if (TowInfo.TowTruck != None && ((B.PlayerReplicationInfo.bHasFlag && FRand() >= 0.1) || FastTrace(Location - vect(0,0,1000), Location)))
+	{
+		return false;
+	}
+	else
+	{
+		return Super.ShouldLeaveForCombat(B);
+	}
 }
 
 function bool TooCloseToAttack(Actor Other)
@@ -1630,142 +1668,294 @@ event bool ContinueOnFoot()
 
 defaultproperties
 {
-	MaxGroundEffectDist=256.0
-	GroundEffectDistParameterName=DistToGround
-
-	Begin Object Name=CollisionCylinder
-		CollisionHeight=+44.0
-		CollisionRadius=+40.0
-		Translation=(Z=25.0)
-	End Object
-
-	MeshLocationOffset=(X=5,Y=5,Z=15)
-	MeshRotationOffset=(Pitch=10012,Roll=16382,Yaw=18204)
-
-	MeleeRange=-100.0
-	bDrawHealthOnHUD=false
-
-	COMOffset=(x=10.0,y=0.0,z=-35.0)
-
-	JumpForceMag=5000.0
-	DodgeForceMag=5000.0
-	JumpCheckTraceDist=90.0
-	TrickJumpWarmupMax=0.5
-	JumpDelay=1.0
-	WaterDamage=0.0
-
-	MaxAngularVelocity=110000.0
-
-	AirSpeed=900
-	GroundSpeed=900.0
-	MaxSpeed=3500.0
-	MomentumMult=2.0
-	bDisableRepulsorsAtMaxFallSpeed=true
-
-	bCanCarryFlag=true
-	bFollowLookDir=true
-	bTurnInPlace=true
-	bScriptedRise=True
-	bCanStrafe=false
-	ObjectiveGetOutDist=750.0
-	MaxDesireability=0.6
-	SpawnRadius=125.0
-	CollisionDamageMult=0.0013
-	bValidLinkTarget=false
-
-	bStayUpright=false
-
-	TurnLeanFactor=0.0013
-	MaxLeanPitchSpeed=10000.0
-
-	MaxTrackYaw=1.0
-
-	bUseSuspensionAxis=true
-
-	Seats(0)={(GunClass=class'UTVWeap_TowCable',
-				GunSocket=(FireSocket),
-				CameraTag=b_Hips,
-				CameraOffset=-200,
-				DriverDamageMult=1.0,
-				bSeatVisible=true,
-				SeatBone=UpperBody,
-				SeatOffset=(X=0,Y=0,Z=51))}
-
-	InertiaTensorMultiplier=(x=1.0,y=1.0,z=1.0)
-
-	GroundEffectIndices=(0)
-
-	RoosterTurnScale=1.0
-
-	bTeamLocked=false
-	Team=255
-	bAttachDriver=true
-	bDriverIsVisible=true
-	Eyeheight=35
-	BaseEyeheight=35
-	bShouldLeaveForCombat=true
-
-	BurnOutTime=2.0
-
-	//@TEXTURECHANGEFIXME - Needs actual UV's
-	IconCoords=(U=0,V=0,UL=0,VL=0)
-
-	// Tow Cable
-	Begin Object Class=RB_DistanceJointSetup Name=MyDistanceJointSetup
-	End Object
-	DistanceJointSetup=MyDistanceJointSetup
-	Begin Object Class=RB_ConstraintInstance Name=MyDistanceJointInstance
-	End Object
-	DistanceJointInstance=MyDistanceJointInstance
-
-	Begin Object Class=UTParticleSystemComponent Name=HoverboardDust0
-		AbsoluteTranslation=true
-		AbsoluteRotation=true
-		bAutoActivate=false
-		SecondsBeforeInactive=1.0f
-	End Object
-	Components.Add(HoverboardDust0);
-	HoverboardDust=HoverboardDust0
-
-	DustVelMagParamName=BoardVelMag
-	DustBoardHeightParamName=BoardHeight
-	DustVelParamName=BoardVel
-
-	SeatCameraScale=0.8
-	bRotateCameraUnderVehicle=true
-	bNoZSmoothing=false
-	bNoFollowJumpZ=true
-
-	DefaultFOV=90
-	CameraLag=0.0
-	bDriverCastsShadow=true
-	bDriverHoldsFlag=true
-
-	MinCameraDistSq=144.0
-	bStickDeflectionThrottle=true
-
-	ExplosionSound=None
-
-	PhysWeightBlendTime=1.0
-
-	FallingDamageRagdollThreshold=10
-
-	bAlwaysRelevant=false
-	bDoExtraNetRelevancyTraces=false
-
-	HoverCamOffset=(X=60,Y=-20,Z=-15)
-	HoverCamRotOffset=(Pitch=728)
-	VelLookAtOffset=(X=-0.07,Y=-0.07,Z=-0.03)
-	VelBasedCamOffset=(Z=-0.02)
-	VelRollFactor=0.4
-	HoverCamMaxVelUsed=800
-	ViewRollRate=100
-
-	ImpactGroundResetPhysRiderThresh=400.0
-	BigImpactPhysRiderZVel=-400.0
-
-	AIPurpose=AIP_Any
-	bPathfindsAsVehicle=false
-
-	bEjectKilledBodies=true
+   MeshLocationOffset=(X=5.000000,Y=5.000000,Z=15.000000)
+   MeshRotationOffset=(Pitch=10012,Yaw=18204,Roll=16382)
+   JumpForceMag=5000.000000
+   DodgeForceMag=5000.000000
+   TrickJumpWarmupMax=0.500000
+   JumpCheckTraceDist=90.000000
+   JumpDelay=1.000000
+   bDisableRepulsorsAtMaxFallSpeed=True
+   SpinSpeed=11.000000
+   LeanUprightStiffness=1000.000000
+   LeanUprightDamping=100.000000
+   Begin Object Class=RB_StayUprightSetup Name=MyLeanUprightSetup ObjName=MyLeanUprightSetup Archetype=RB_StayUprightSetup'Engine.Default__RB_StayUprightSetup'
+      bSwingLimited=False
+      Name="MyLeanUprightSetup"
+      ObjectArchetype=RB_StayUprightSetup'Engine.Default__RB_StayUprightSetup'
+   End Object
+   LeanUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTVehicle_Hoverboard:MyLeanUprightSetup'
+   Begin Object Class=RB_ConstraintInstance Name=MyLeanUprightConstraintInstance ObjName=MyLeanUprightConstraintInstance Archetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+      bSwingPositionDrive=True
+      Name="MyLeanUprightConstraintInstance"
+      ObjectArchetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+   End Object
+   LeanUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Hoverboard:MyLeanUprightConstraintInstance'
+   Begin Object Class=RB_ConstraintSetup Name=MyFootBoardConstraintSetup ObjName=MyFootBoardConstraintSetup Archetype=RB_ConstraintSetup'Engine.Default__RB_ConstraintSetup'
+      bSwingLimited=True
+      bTwistLimited=True
+      Name="MyFootBoardConstraintSetup"
+      ObjectArchetype=RB_ConstraintSetup'Engine.Default__RB_ConstraintSetup'
+   End Object
+   FootBoardConstraintSetup=RB_ConstraintSetup'UTGame.Default__UTVehicle_Hoverboard:MyFootBoardConstraintSetup'
+   Begin Object Class=RB_ConstraintInstance Name=MyLeftFootBoardConstraintInstance ObjName=MyLeftFootBoardConstraintInstance Archetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+      Name="MyLeftFootBoardConstraintInstance"
+      ObjectArchetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+   End Object
+   LeftFootBoardConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Hoverboard:MyLeftFootBoardConstraintInstance'
+   Begin Object Class=RB_ConstraintInstance Name=MyRightFootBoardConstraintInstance ObjName=MyRightFootBoardConstraintInstance Archetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+      Name="MyRightFootBoardConstraintInstance"
+      ObjectArchetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+   End Object
+   RightFootBoardConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Hoverboard:MyRightFootBoardConstraintInstance'
+   MaxTrackYaw=1.000000
+   HoverboardSlalomMaxAngle=45.000000
+   SlalomSpeed=5.000000
+   TurnLeanFactor=0.001300
+   MaxLeanPitchSpeed=10000.000000
+   WaterCheckLevel=110.000000
+   Begin Object Class=RB_DistanceJointSetup Name=MyDistanceJointSetup ObjName=MyDistanceJointSetup Archetype=RB_DistanceJointSetup'Engine.Default__RB_DistanceJointSetup'
+      Name="MyDistanceJointSetup"
+      ObjectArchetype=RB_DistanceJointSetup'Engine.Default__RB_DistanceJointSetup'
+   End Object
+   DistanceJointSetup=RB_DistanceJointSetup'UTGame.Default__UTVehicle_Hoverboard:MyDistanceJointSetup'
+   Begin Object Class=RB_ConstraintInstance Name=MyDistanceJointInstance ObjName=MyDistanceJointInstance Archetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+      Name="MyDistanceJointInstance"
+      ObjectArchetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+   End Object
+   DistanceJointInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Hoverboard:MyDistanceJointInstance'
+   MaxTowDistance=1000.000000
+   TowLocalAttachPos=(X=50.000000,Y=0.000000,Z=50.000000)
+   HoverboardTowSlalomMaxAngle=30.000000
+   TowDistanceChangeSpeed=300.000000
+   TowLineBlockedBreakTime=0.250000
+   TowBeamIntensityName="Grow"
+   Begin Object Class=UTParticleSystemComponent Name=HoverboardDust0 ObjName=HoverboardDust0 Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      bAutoActivate=False
+      AbsoluteTranslation=True
+      AbsoluteRotation=True
+      Name="HoverboardDust0"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   HoverboardDust=HoverboardDust0
+   RedDustEffect=ParticleSystem'Envy_Effects.Smoke.P_HoverBoard_Ground_Dust'
+   BlueDustEffect=ParticleSystem'Envy_Effects.Smoke.P_HoverBoard_Ground_Dust_Blue'
+   DustVelMagParamName="BoardVelMag"
+   DustBoardHeightParamName="BoardHeight"
+   DustVelParamName="BoardVel"
+   Begin Object Class=ParticleSystemComponent Name=ThrusterEffect0 ObjName=ThrusterEffect0 Archetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+      SecondsBeforeInactive=1.000000
+      Name="ThrusterEffect0"
+      ObjectArchetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+   End Object
+   ThrusterEffect=ThrusterEffect0
+   ThrusterEffectSocket="RearCenterThrusterSocket"
+   RedThrusterEffect=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_Jet_Red01'
+   BlueThrusterEffect=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_Jet_Blue01'
+   TowBeamTeamEmitters(0)=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_TetherBeam_Red'
+   TowBeamTeamEmitters(1)=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_TetherBeam_Blue'
+   TowBeamTeamEndPoints(0)=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_TetherBeam_RedEnd'
+   TowBeamTeamEndPoints(1)=ParticleSystem'VH_Hoverboard.Effects.P_VH_Hoverboard_TetherBeam_BlueEnd'
+   TowBeamEndParameterName="TetherEnd"
+   RoosterEffectTemplate=ParticleSystem'Envy_Level_Effects_2.Vehicle_Water_Effects.P_Hoverboard_Water_Towed'
+   RoosterTurnScale=1.000000
+   RoosterSoundCue=SoundCue'VH_Hoverboard.Hoverboard_Water_Sound'
+   Begin Object Class=AudioComponent Name=CarveSound ObjName=CarveSound Archetype=AudioComponent'Engine.Default__AudioComponent'
+      SoundCue=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_CurveCue'
+      Name="CarveSound"
+      ObjectArchetype=AudioComponent'Engine.Default__AudioComponent'
+   End Object
+   CurveSound=CarveSound
+   EngineThrustSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_EngineThrustCue'
+   TurnSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_TurnCue'
+   JumpSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_JumpCue'
+   OverWaterSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_WaterDisruptCue'
+   TowLoopCue=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_Hoverboard_GrappleLoopCue'
+   TowStartedSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_Hoverboard_GrappleReleaseCue'
+   TowEndedSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_Hoverboard_GrappleRetractCue'
+   HoverCamOffset=(X=60.000000,Y=-20.000000,Z=-15.000000)
+   HoverCamRotOffset=(Pitch=728,Yaw=0,Roll=0)
+   VelLookAtOffset=(X=-0.070000,Y=-0.070000,Z=-0.030000)
+   VelBasedCamOffset=(X=0.000000,Y=0.000000,Z=-0.020000)
+   VelRollFactor=0.400000
+   HoverCamMaxVelUsed=800.000000
+   ViewRollRate=100.000000
+   PhysWeightBlendTime=1.000000
+   Begin Object Class=StaticMeshComponent Name=Handle ObjName=Handle Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'VH_Hoverboard.Mesh.S_Hoverboard_Handle'
+      bUseAsOccluder=False
+      CollideActors=False
+      Translation=(X=0.000000,Y=0.000000,Z=-1.000000)
+      Rotation=(Pitch=0,Yaw=16384,Roll=-16384)
+      Scale=0.500000
+      Name="Handle"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   HandleMesh=Handle
+   FallingDamageRagdollThreshold=10
+   ImpactGroundResetPhysRiderThresh=400.000000
+   BigImpactPhysRiderZVel=-400.000000
+   GroundEffectIndices(0)=0
+   bDriverHoldsFlag=True
+   bCanCarryFlag=True
+   bTeamLocked=False
+   bValidLinkTarget=False
+   bHasTowCable=True
+   bStickDeflectionThrottle=True
+   bEjectKilledBodies=True
+   bLightArmor=True
+   bShouldLeaveForCombat=True
+   bDrawHealthOnHUD=False
+   bDriverCastsShadow=True
+   bRotateCameraUnderVehicle=True
+   bNoFollowJumpZ=True
+   bDisplayHealthBar=False
+   AIPurpose=AIP_Any
+   Team=255
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHoverVehicle:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHoverVehicle:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   MaxDesireability=0.600000
+   ObjectiveGetOutDist=750.000000
+   VehiclePositionString="in un Hoverboard"
+   VehicleNameString="Hoverboard"
+   TeamBeaconMaxDist=3000.000000
+   WaterDamage=0.000000
+   Seats(0)=(GunClass=Class'UTGame.UTVWeap_TowCable',GunSocket=("FireSocket"),CameraTag="b_Hips",CameraOffset=-200.000000,bSeatVisible=True,SeatBone="UpperBody",SeatOffset=(X=0.000000,Y=0.000000,Z=51.000000),DriverDamageMult=1.000000)
+   BurnOutTime=2.000000
+   Begin Object Class=AudioComponent Name=BaseScrapeSound ObjName=BaseScrapeSound Archetype=AudioComponent'Engine.Default__AudioComponent'
+      SoundCue=SoundCue'A_Gameplay.A_Gameplay_Onslaught_MetalScrape01Cue'
+      Name="BaseScrapeSound"
+      ObjectArchetype=AudioComponent'Engine.Default__AudioComponent'
+   End Object
+   ScrapeSound=BaseScrapeSound
+   SpawnRadius=125.000000
+   BoostPadSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_JumpBoostCue'
+   IconCoords=(U=0.000000,V=0.000000,UL=0.000000,VL=0.000000)
+   CollisionDamageMult=0.001300
+   SeatCameraScale=0.800000
+   DefaultFOV=90.000000
+   CameraLag=0.000000
+   MinCameraDistSq=144.000000
+   Begin Object Class=UTVehicleSimHoverboard Name=SimObject ObjName=SimObject Archetype=UTVehicleSimHoverboard'UTGame.Default__UTVehicleSimHoverboard'
+      MaxThrustForce=200.000000
+      UphillHelpThrust=150.000000
+      MaxUphillHelpThrust=100.000000
+      MaxReverseForce=40.000000
+      MaxReverseVelocity=200.000000
+      LongDamping=0.300000
+      MaxStrafeForce=150.000000
+      LatDamping=0.300000
+      TurnTorqueFactor=800.000000
+      SpinTurnTorqueScale=3.500000
+      MaxTurnTorque=1000.000000
+      TurnDampingSpeedFunc=(Points=((OutVal=0.050000),(InVal=300.000000,OutVal=0.110000),(InVal=800.000000,OutVal=0.120000)))
+      FlyingTowTurnDamping=0.200000
+      FlyingTowRelVelDamping=0.200000
+      TowRelVelDamping=0.010000
+      WheelSuspensionStiffness=200.000000
+      WheelSuspensionDamping=20.000000
+      WheelLatExtremumValue=0.700000
+      Name="SimObject"
+      ObjectArchetype=UTVehicleSimHoverboard'UTGame.Default__UTVehicleSimHoverboard'
+   End Object
+   SimObj=SimObject
+   Begin Object Class=UTHoverWheel Name=HoverWheelFL ObjName=HoverWheelFL Archetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+      bPoweredWheel=True
+      bHoverWheel=True
+      SteerFactor=1.000000
+      BoneName="Front_Wheel"
+      BoneOffset=(X=25.000000,Y=0.000000,Z=-50.000000)
+      WheelRadius=10.000000
+      SuspensionTravel=50.000000
+      Side=SIDE_Left
+      LongSlipFactor=0.000000
+      LatSlipFactor=100.000000
+      HandbrakeLongSlipFactor=0.000000
+      HandbrakeLatSlipFactor=150.000000
+      Name="HoverWheelFL"
+      ObjectArchetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+   End Object
+   Wheels(0)=HoverWheelFL
+   Begin Object Class=UTHoverWheel Name=HoverWheelRL ObjName=HoverWheelRL Archetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+      bPoweredWheel=True
+      bHoverWheel=True
+      SkelControlName="BoardTire"
+      BoneName="Rear_Wheel"
+      BoneOffset=(X=0.000000,Y=0.000000,Z=-50.000000)
+      WheelRadius=10.000000
+      SuspensionTravel=50.000000
+      Side=SIDE_Left
+      LongSlipFactor=0.000000
+      LatSlipFactor=100.000000
+      HandbrakeLongSlipFactor=0.000000
+      HandbrakeLatSlipFactor=150.000000
+      Name="HoverWheelRL"
+      ObjectArchetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+   End Object
+   Wheels(1)=HoverWheelRL
+   COMOffset=(X=10.000000,Y=0.000000,Z=-35.000000)
+   bUseSuspensionAxis=True
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup_3 ObjName=MyStayUprightSetup_3 Archetype=RB_StayUprightSetup'UTGame.Default__UTHoverVehicle:MyStayUprightSetup'
+      Name="MyStayUprightSetup_3"
+      ObjectArchetype=RB_StayUprightSetup'UTGame.Default__UTHoverVehicle:MyStayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTVehicle_Hoverboard:MyStayUprightSetup_3'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance_3 ObjName=MyStayUprightConstraintInstance_3 Archetype=RB_ConstraintInstance'UTGame.Default__UTHoverVehicle:MyStayUprightConstraintInstance'
+      Name="MyStayUprightConstraintInstance_3"
+      ObjectArchetype=RB_ConstraintInstance'UTGame.Default__UTHoverVehicle:MyStayUprightConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Hoverboard:MyStayUprightConstraintInstance_3'
+   MaxSpeed=3500.000000
+   MaxAngularVelocity=110000.000000
+   Begin Object Class=AudioComponent Name=HoverboardEngineSound ObjName=HoverboardEngineSound Archetype=AudioComponent'Engine.Default__AudioComponent'
+      SoundCue=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_EngineCue'
+      Name="HoverboardEngineSound"
+      ObjectArchetype=AudioComponent'Engine.Default__AudioComponent'
+   End Object
+   EngineSound=HoverboardEngineSound
+   CollisionSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_Hoverboard_CollideCue'
+   EnterVehicleSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_EngineStartCue'
+   ExitVehicleSound=SoundCue'A_Vehicle_Hoverboard.Cue.A_Vehicle_HoverBoard_EngineStopCue'
+   EngineStartOffsetSecs=0.300000
+   bDriverIsVisible=True
+   bTurnInPlace=True
+   bFollowLookDir=True
+   bScriptedRise=True
+   bDoExtraNetRelevancyTraces=False
+   bPathfindsAsVehicle=False
+   MeleeRange=-100.000000
+   GroundSpeed=900.000000
+   AirSpeed=900.000000
+   BaseEyeHeight=35.000000
+   EyeHeight=35.000000
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTHoverVehicle:SVehicleMesh'
+      SkeletalMesh=SkeletalMesh'VH_Hoverboard.Mesh.SK_VH_Hoverboard'
+      AnimTreeTemplate=AnimTree'VH_Hoverboard.Anims.AT_Hoverboard'
+      PhysicsAsset=PhysicsAsset'VH_Hoverboard.Mesh.SK_VH_Hoverboard_Physics'
+      bUseAsOccluder=False
+      RBDominanceGroup=16
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTHoverVehicle:SVehicleMesh'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTHoverVehicle:CollisionCylinder'
+      CollisionHeight=44.000000
+      CollisionRadius=40.000000
+      Translation=(X=0.000000,Y=0.000000,Z=25.000000)
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTHoverVehicle:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Components(2)=MyLightEnvironment
+   Components(3)=SimObject
+   Components(4)=HoverboardEngineSound
+   Components(5)=BaseScrapeSound
+   Components(6)=CarveSound
+   Components(7)=HoverboardDust0
+   bAlwaysRelevant=False
+   CollisionComponent=SVehicleMesh
+   Name="Default__UTVehicle_Hoverboard"
+   ObjectArchetype=UTHoverVehicle'UTGame.Default__UTHoverVehicle'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -17,9 +17,7 @@ enum EOnlineDataAdvertisementType
 	/** Advertise via the online service only */
 	ODAT_OnlineService,
 	/** Advertise via the QoS data only */
-	ODAT_QoS,
-	/** Advertise via the online service and via the QoS data */
-	ODAT_OnlineServiceAndQoS
+	ODAT_QoS
 };
 
 /**
@@ -192,7 +190,7 @@ struct native SettingsData
 		 * @param InData1 the first part to assign
 		 * @param InData2 the second part to assign
 		 */
-		void GetData(INT& InData1,INT& InData2) const;
+		void GetData(INT& InData1,INT& InData2);
 
 		/**
 		 * Increments the value by the specified amount
@@ -288,33 +286,6 @@ struct native SettingsData
 		 * @param OutData out value that receives the copied data
 		 */
 		void GetData(DOUBLE& OutData) const;
-
-		/** @return The type as a string */
-		const TCHAR* GetTypeString(void) const
-		{
-			switch (Type)
-			{
-				case SDT_Empty: return TEXT("Empty");
-				case SDT_Int32: return TEXT("Int32");
-				case SDT_Int64: return TEXT("Int64");
-				case SDT_Double: return TEXT("Double");
-				case SDT_String: return TEXT("String");
-				case SDT_Float: return TEXT("Float");
-				case SDT_Blob: return TEXT("Blob");
-				case SDT_DateTime: return TEXT("DateTime");
-			};
-			return TEXT("Empty");
-		}
-
-		/**
-		 * Comparison of two settings data classes
-		 *
-		 * @param Other the other settings data to compare against
-		 *
-		 * @return TRUE if they are equal, FALSE otherwise
-		 */
-		UBOOL operator==(const FSettingsData& Other) const;
-		UBOOL operator!=(const FSettingsData& Other) const;
 	}
 };
 
@@ -344,7 +315,7 @@ struct native SettingsProperty
 		FSettingsProperty(EEventParm) :
 			PropertyId(0),
 			Data(EC_EventParm),
-			AdvertisementType(ODAT_DontAdvertise)
+			AdvertisementType(0)
 		{
 		}
 
@@ -353,13 +324,12 @@ struct native SettingsProperty
 		 *
 		 * @param Other the other structure to copy
 		 */
-		FSettingsProperty(const FSettingsProperty& Other) :
-			Data(EC_EventParm)
+		FSettingsProperty(const FSettingsProperty& Other)
 		{
 			PropertyId = Other.PropertyId;
-			AdvertisementType = Other.AdvertisementType;
 			// This will do a deep copy
 			Data = Other.Data;
+			AdvertisementType = Other.AdvertisementType;
 		}
 
 		/**
@@ -372,9 +342,9 @@ struct native SettingsProperty
 			if (&Other != this)
 			{
 				PropertyId = Other.PropertyId;
-				AdvertisementType = Other.AdvertisementType;
 				// This will do a deep copy
 				Data = Other.Data;
+				AdvertisementType = Other.AdvertisementType;
 			}
 			return *this;
 		}
@@ -462,91 +432,99 @@ var array<LocalizedStringSettingMetaData> LocalizedSettingsMappings;
 /** Used to map a property to a human readable string and validate its range */
 var array<SettingsPropertyPropertyMetaData> PropertyMappings;
 
-cpptext
-{
-	/**
-	 * Finds the specified property
-	 *
-	 * @param PropertyId to search for
-	 *
-	 * @return pointer to the property or NULL if not found
-	 */
-	FORCEINLINE FSettingsProperty* FindProperty(INT PropertyId)
-	{
-		for (INT PropertyIndex = 0; PropertyIndex < Properties.Num(); PropertyIndex++)
-		{
-			FSettingsProperty& Property = Properties(PropertyIndex);
-			if (Property.PropertyId == PropertyId)
-			{
-				return &Property;
-			}
-		}
-		return NULL;
-	}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-	/**
-	 * Finds the specified localized string setting
-	 *
-	 * @param SettingId id of the setting to search for
-	 *
-	 * @return pointer to the string setting or NULL if not found
-	 */
-	FORCEINLINE FLocalizedStringSetting* FindStringSetting(INT SettingId)
-	{
-		for (INT SettingsIndex = 0; SettingsIndex < LocalizedSettings.Num(); SettingsIndex++)
-		{
-			FLocalizedStringSetting& Setting = LocalizedSettings(SettingsIndex);
-			if (Setting.Id == SettingId)
-			{
-				return &Setting;
-			}
-		}
-		return NULL;
-	}
-
-	/**
-	 * Finds the specified localized string setting's meta data
-	 *
-	 * @param SettingId id of the setting to search the meta data for
-	 *
-	 * @return pointer to the string meta data or NULL if not found
-	 */
-	FORCEINLINE FLocalizedStringSettingMetaData* FindStringSettingMetaData(INT SettingId)
-	{
-		for (INT MetaDataIndex = 0; MetaDataIndex < LocalizedSettingsMappings.Num(); MetaDataIndex++)
-		{
-			FLocalizedStringSettingMetaData& MetaData = LocalizedSettingsMappings(MetaDataIndex);
-			if (MetaData.Id == SettingId)
-			{
-				return &MetaData;
-			}
-		}
-		return NULL;
-	}
-
-	/**
-	 * Finds the specified property's meta data
-	 *
-	 * @param PropertyId id of the property to search the meta data for
-	 *
-	 * @return pointer to the property meta data or NULL if not found
-	 */
-	FORCEINLINE FSettingsPropertyPropertyMetaData* FindPropertyMetaData(INT PropertyId)
-	{
-		for (INT MetaDataIndex = 0; MetaDataIndex < PropertyMappings.Num(); MetaDataIndex++)
-		{
-			FSettingsPropertyPropertyMetaData& MetaData = PropertyMappings(MetaDataIndex);
-			if (MetaData.Id == PropertyId)
-			{
-				return &MetaData;
-			}
-		}
-		return NULL;
-	}
-
-	/** Finalize the clean up process */
-	virtual void FinishDestroy(void);
-}
+/**
+ * Static function for setting members of the SettingsData union.
+ *
+ * @param Data the data structure to set the fields of
+ * @param InString the string data to set in the union
+ */
+static native function SetSettingsDataString(out SettingsData Data,string InString);
 
 /**
  * Static function for setting members of the SettingsData union
@@ -597,6 +575,13 @@ static native function SetSettingsData(out SettingsData Data,out SettingsData Da
 static native function EmptySettingsData(out SettingsData Data);
 
 /**
+ * Static function for copying data out of the SettingsData union.
+ *
+ * @param Data the data structure to copy the data from
+ */
+static native function string GetSettingsDataString(out SettingsData Data);
+
+/**
  * Static function for copying data out of the SettingsData union
  *
  * @param Data the data structure to copy the data from
@@ -634,7 +619,7 @@ static native function GetSettingsDataDateTime(out SettingsData Data,out int Out
  * @param ValueIndex the value of the string setting
  * @param bShouldAutoAdd whether to add the context if it is missing
  */
-native function SetStringSettingValue(int StringSettingId,int ValueIndex,optional bool bShouldAutoAdd);
+native function SetStringSettingValue(int StringSettingId,int ValueIndex,bool bShouldAutoAdd);
 
 /**
  * Searches the localized string setting array for the matching id and returns its value
@@ -645,18 +630,6 @@ native function SetStringSettingValue(int StringSettingId,int ValueIndex,optiona
  * @return true if found, false otherwise
  */
 native function bool GetStringSettingValue(int StringSettingId,out int ValueIndex);
-
-/**
- * Searches the localized string setting array for the matching id and sets the selected value
- * to the next (or prev) item in the list, wrapping if required
- *
- * @param StringSettingId the string setting to find the value of
- * @param Direction the direction to move in the list (1 forward, -1 backward)
- * @param bShouldWrap if true out of bound access wraps around, false clamps to min/max
- *
- * @return true if found, false otherwise
- */
-native function bool IncrementStringSettingValue(int StringSettingId,int Direction,bool bShouldWrap);
 
 /**
  * Searches the localized string setting array for the matching id and
@@ -879,26 +852,6 @@ native function SetStringProperty(int PropertyId,string Value);
 native function bool GetStringProperty(int PropertyId,out string Value);
 
 /**
- * Change the current value for a mapped property's using a value id.
- *
- * @param	PropertyId	the property to change the value of
- * @param	ValueId		the id for the value to set.
- *
- * @return true if the property was found and id mapped, false otherwise
- */
-native function bool SetPropertyValueId(int PropertyId,int ValueId);
-
-/**
- * Retrieves the id for a mapped property's current value.
- *
- * @param	PropertyId	the property to change the value of
- * @param	ValueId		receives the id of the property value
- *
- * @return true if the property was found and id mapped, false otherwise
- */
-native function bool GetPropertyValueId(int PropertyId, out int ValueId);
-
-/**
  * Determines the property type for the specified property id
  *
  * @param PropertyId the property to change the value of
@@ -1036,3 +989,29 @@ native function BuildURL(out string URL);
  * @param URL the URL to parse for settings
  */
 native function UpdateFromURL(const out string URL, GameInfo Game);
+
+
+/**
+ * Outputs the names of properties in the class which are databinding, and which can be manipulated using GetDataBindingValue and SetDataBindingValue.
+ * Property types which are not returned are: Object, Delegate, Array and Struct
+ */
+native final function GetDataBindingProperties(out array<name> DataBindingProperties);
+
+/**
+ * Outputs the value of the specified databinding property, returning True if successful
+ * NOTE: This has the same restrictions on property types as 'GetDataBindingProperties'
+ * @param bIgnoreDefaults	If true, then the function returns false and does not output a value if the property is still at it's default value
+ */
+native final function bool GetDataBindingValue(name Property, out string Value, optional bool bIgnoreDefaults);
+
+/**
+ * Sets the value of the specified databinding property to the specified input value, returning True if successful
+ * NOTE: This has the same restrictions on property types as 'GetDataBindingProperties'
+ */
+native final function bool SetDataBindingValue(name Property, string Value);
+
+defaultproperties
+{
+   Name="Default__Settings"
+   ObjectArchetype=Object'Core.Default__Object'
+}

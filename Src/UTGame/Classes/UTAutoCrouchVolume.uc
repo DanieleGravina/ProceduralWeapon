@@ -1,6 +1,6 @@
 /** this volume automatically crouches console players as there's no manual crouch on the console controls  
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTAutoCrouchVolume extends Volume
 	placeable;
@@ -66,9 +66,16 @@ simulated function CrouchTimer()
 
 defaultproperties
 {
-	bCollideActors=true
-	bColored=true
-	bStatic=false
-	bNoDelete=true
-	BrushColor=(R=64,G=64,B=255,A=255)
+   BrushColor=(B=255,G=64,R=64,A=255)
+   bColored=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bStatic=False
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTAutoCrouchVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

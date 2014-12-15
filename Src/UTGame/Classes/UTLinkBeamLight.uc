@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -10,16 +10,18 @@ var PointLightComponent BeamLight;
 
 defaultproperties
 {
-	RemoteRole=ROLE_None
-	bGameRelevant=true
-
-    Begin Object Class=PointLightComponent Name=LightComponentB
-		bEnabled=true
-		Brightness=3
-		CastShadows=false
-        LightColor=(R=173,G=211,B=200,A=255)
-        Radius=130
-    End Object
-    BeamLight=LightComponentB
-	Components.Add(LightComponentB)
+   Begin Object Class=PointLightComponent Name=LightComponentB ObjName=LightComponentB Archetype=PointLightComponent'Engine.Default__PointLightComponent'
+      Radius=130.000000
+      Brightness=3.000000
+      LightColor=(B=200,G=211,R=173,A=255)
+      CastShadows=False
+      Name="LightComponentB"
+      ObjectArchetype=PointLightComponent'Engine.Default__PointLightComponent'
+   End Object
+   BeamLight=LightComponentB
+   Components(0)=LightComponentB
+   bGameRelevant=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTLinkBeamLight"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

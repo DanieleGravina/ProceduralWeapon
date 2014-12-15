@@ -1,10 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTSeqAct_ActivateRocketBoosters extends SequenceAction;
 
 defaultproperties
 {
-	ObjName="Activate Rocket Boosters"
-	ObjCategory="Vehicle"
+   ObjName="Activate Rocket Boosters"
+   ObjCategory="Vehicle"
+   Name="Default__UTSeqAct_ActivateRocketBoosters"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

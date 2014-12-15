@@ -1,4 +1,4 @@
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 class UTMutator_LowGrav extends UTMutator;
 
 /** Gravity along Z axis applied to objects in physics volumes which had default gravity. */
@@ -12,6 +12,12 @@ function InitMutator(string Options, out string ErrorMessage)
 
 defaultproperties
 {
-	GroupNames[0]="JUMPING"
-	GravityZ=-100.0
+   GravityZ=-100.000000
+   GroupNames(0)="JUMPING"
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTMutator_LowGrav"
+   ObjectArchetype=UTMutator'UTGame.Default__UTMutator'
 }

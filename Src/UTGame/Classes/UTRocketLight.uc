@@ -1,17 +1,19 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
-class UTRocketLight extends UDKExplosionLight;
+class UTRocketLight extends UTExplosionLight;
 
 defaultproperties
 {
-	HighDetailFrameTime=+0.02
-	Brightness=2
-	Radius=192
-	LightColor=(R=255,G=255,B=255,A=255)
-
-	TimeShift=((StartTime=0.0,Radius=192,Brightness=2,LightColor=(R=255,G=255,B=192,A=255)),(StartTime=2.0,Radius=128,Brightness=2,LightColor=(R=255,G=255,B=192,A=255)),(StartTime=2.5,Radius=128,Brightness=0,LightColor=(R=255,G=255,B=192,A=255)))
+   HighDetailFrameTime=0.020000
+   TimeShift(0)=(Radius=192.000000,Brightness=2.000000,LightColor=(B=192,G=255,R=255,A=255))
+   TimeShift(1)=(StartTime=2.000000,Radius=128.000000,Brightness=2.000000,LightColor=(B=192,G=255,R=255,A=255))
+   TimeShift(2)=(StartTime=2.500000,Radius=128.000000,LightColor=(B=192,G=255,R=255,A=255))
+   Radius=192.000000
+   Brightness=2.000000
+   Name="Default__UTRocketLight"
+   ObjectArchetype=UTExplosionLight'UTGame.Default__UTExplosionLight'
 }

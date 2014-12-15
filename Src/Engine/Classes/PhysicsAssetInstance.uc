@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PhysicsAssetInstance extends Object
 	hidecategories(Object)
@@ -55,30 +55,26 @@ var		const float										AngularDampingScale;
 /** Scaling factor to AngularDriveForceLimit in all RB_ConstraintInstances within this instance. */
 var		const float										AngularForceLimitScale;
 
-/** Allows initialization of bodies to be deferred */
-var		const bool										bInitBodies;
 
 
-cpptext
-{
-	// UObject interface
-	virtual void			Serialize(FArchive& Ar);
-
-	// UPhysicsAssetInstance interface
-	void					InitInstance(class USkeletalMeshComponent* SkelComp, class UPhysicsAsset* PhysAsset, UBOOL bFixed, FRBPhysScene* InRBScene);
-	UBOOL					TermInstance(FRBPhysScene* Scene);
-
-	/** Terminate physics on all bodies below the named bone */
-	void					TermBodiesBelow(FName ParentBoneName, class USkeletalMeshComponent* SkelComp);
-	/** Enable/Disable collision on all bodies below the named bone */
-	void					EnableCollisionBodiesBelow(UBOOL bEnable, FName ParentBoneName, class USkeletalMeshComponent* SkelComp);
-
-	void					DisableCollision(class URB_BodyInstance* BodyA, class URB_BodyInstance* BodyB);
-	void					EnableCollision(class URB_BodyInstance* BodyA, class URB_BodyInstance* BodyB);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 final native function	SetLinearDriveScale(float InLinearSpringScale, float InLinearDampingScale, float InLinearForceLimitScale);
 final native function	SetAngularDriveScale(float InAngularSpringScale, float InAngularDampingScale, float InAngularForceLimitScale);
+
+/** Set angular motors strength */
+final native function	SetAllMotorsAngularDriveStrength(float InAngularSpringStrength, float InAngularDampingStrength, float InAngularForceLimitStrength, SkeletalMeshComponent SkelMeshComp);
 
 /** Utility which returns total mass of all bones below the supplied one in the hierarchy (including this one). */
 final native function	float	GetTotalMassBelowBone(name InBoneName, PhysicsAsset InAsset, SkeletalMesh InSkelMesh);
@@ -87,34 +83,22 @@ final native function	float	GetTotalMassBelowBone(name InBoneName, PhysicsAsset 
 final native function	SetAllBodiesFixed(bool bNewFixed);
 
 /** Fix or unfix a list of bodies, by name */
-final native function	SetNamedBodiesFixed(bool bNewFixed, Array<Name> BoneNames, SkeletalMeshComponent SkelMesh, optional bool bSetOtherBodiesToComplement, optional bool bSkipFullAnimWeightBodies);
-
-/** 
- * Set all of the bones below passed in bone to be UnFixed AND also set the bForceUnfixed flag to TRUE.
- * @param InbInstanceAlwaysFullAnimWeight whether or not the bones below should be bInstanceAlwaysFullAnimWeight
- **/
-final native function	ForceAllBodiesBelowUnfixed(const out name InBoneName, PhysicsAsset InAsset, SkeletalMeshComponent InSkelMesh, bool InbInstanceAlwaysFullAnimWeight );
+final native function	SetNamedBodiesFixed(bool bNewFixed, Array<Name> BoneNames, SkeletalMeshComponent SkelMesh, optional bool bSetOtherBodiesToComplement);
 
 /** Enable or Disable AngularPositionDrive */
-final native function	SetAllMotorsAngularPositionDrive(bool bEnableSwingDrive, bool bEnableTwistDrive, optional SkeletalMeshComponent SkelMesh, optional bool bSkipFullAnimWeightBodies);
-/** Enable or Disable AngularVelocityDrive based on a list of bone names */
-final native function	SetAllMotorsAngularVelocityDrive(bool bEnableSwingDrive, bool bEnableTwistDrive, SkeletalMeshComponent SkelMeshComp, optional bool bSkipFullAnimWeightBodies);
-/** Set Angular Drive motors params for all constraint instance */
-final native function	SetAllMotorsAngularDriveParams(float InSpring, float InDamping, float InForceLimit, optional SkeletalMeshComponent SkelMesh, optional bool bSkipFullAnimWeightBodies);
+final native function	SetAllMotorsAngularPositionDrive(bool bEnableSwingDrive, bool bEnableTwistDrive);
 
 /** Enable or Disable AngularPositionDrive based on a list of bone names */
 final native function	SetNamedMotorsAngularPositionDrive(bool bEnableSwingDrive, bool bEnableTwistDrive, Array<Name> BoneNames, SkeletalMeshComponent SkelMeshComp, optional bool bSetOtherBodiesToComplement);
-/** Enable or Disable AngularVelocityDrive based on a list of bone names */
-final native function	SetNamedMotorsAngularVelocityDrive(bool bEnableSwingDrive, bool bEnableTwistDrive, Array<Name> BoneNames, SkeletalMeshComponent SkelMeshComp, optional bool bSetOtherBodiesToComplement);
+
+/** Set Angular Drive motors params for all constraint instance */
+final native function	SetAllMotorsAngularDriveParams(float InSpring, float InDamping, float InForceLimit);
 
 /** Use to toggle and set RigidBody angular and linear bone springs (see RB_BodyInstance). */
 final native function	SetNamedRBBoneSprings(bool bEnable, Array<Name> BoneNames, float InBoneLinearSpring, float InBoneAngularSpring, SkeletalMeshComponent SkelMeshComp);
 
 /** Use to toggle collision on particular bodies in the asset. */
 final native function	SetNamedBodiesBlockRigidBody(bool bNewBlockRigidBody, Array<Name> BoneNames, SkeletalMeshComponent SkelMesh);
-
-/** Use to toggle collision on particular bodies in the asset. */
-final native function	SetFullAnimWeightBlockRigidBody(bool bNewBlockRigidBody, SkeletalMeshComponent SkelMesh);
 
 /** Allows you to fix/unfix bodies where bAlwaysFullAnimWeight is set to TRUE in the BodySetup. */
 final native function	SetFullAnimWeightBonesFixed(bool bNewFixed, SkeletalMeshComponent SkelMesh);
@@ -127,13 +111,12 @@ final native function RB_ConstraintInstance FindConstraintInstance(name ConName,
 
 defaultproperties
 {
-	LinearSpringScale=1.0
-	LinearDampingScale=1.0
-	LinearForceLimitScale=1.0
-
-	AngularSpringScale=1.0
-	AngularDampingScale=1.0
-	AngularForceLimitScale=1.0
-
-	bInitBodies=true
+   LinearSpringScale=1.000000
+   LinearDampingScale=1.000000
+   LinearForceLimitScale=1.000000
+   AngularSpringScale=1.000000
+   AngularDampingScale=1.000000
+   AngularForceLimitScale=1.000000
+   Name="Default__PhysicsAssetInstance"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,14 +1,13 @@
-/** 
- * sets who gets credit for damage caused by the Target Actor
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
+/** sets who gets credit for damage caused by the Target Actor */
 class SeqAct_SetDamageInstigator extends SequenceAction;
 
 var Actor DamageInstigator;
 
 defaultproperties
 {
-	ObjCategory="Actor"
-	ObjName="Set Damage Instigator"
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Damage Instigator",PropertyName=DamageInstigator,MinVars=1,MaxVars=1)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Damage Instigator",PropertyName="DamageInstigator",MinVars=1,MaxVars=1)
+   ObjName="Set Damage Instigator"
+   ObjCategory="Actor"
+   Name="Default__SeqAct_SetDamageInstigator"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

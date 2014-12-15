@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionBumpOffset extends MaterialExpression
 	native(Material)
@@ -10,27 +10,26 @@ class MaterialExpressionBumpOffset extends MaterialExpression
 
 var ExpressionInput	Coordinate;
 var ExpressionInput	Height;
-var ExpressionInput	HeightRatioInput;
 var() float			HeightRatio;	// Perceived height as a fraction of width.
 var() float			ReferencePlane;	// Height at which no offset is applied.
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-
-	/**
-	 * Replaces references to the passed in expression with references to a different expression or NULL.
-	 * @param	OldExpression		Expression to find reference to.
-	 * @param	NewExpression		Expression to replace reference with.
-	 */
-	virtual void SwapReferenceTo(UMaterialExpression* OldExpression,UMaterialExpression* NewExpression = NULL);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	HeightRatio=0.05
-	ReferencePlane=0.5
-
-	MenuCategories(0)="Utility"
+   HeightRatio=0.050000
+   ReferencePlane=0.500000
+   Name="Default__MaterialExpressionBumpOffset"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

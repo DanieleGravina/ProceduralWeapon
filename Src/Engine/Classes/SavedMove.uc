@@ -1,7 +1,7 @@
 //=============================================================================
 // SavedMove is used during network play to buffer recent client moves,
 // for use when the server modifies the clients actual position, etc.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class SavedMove extends Object
 	native;
@@ -16,7 +16,6 @@ var bool	bPressedJump;
 var bool	bDoubleJump;
 var bool	bPreciseDestination;
 var bool	bForceRMVelocity;			// client-side only (for replaying moves) - not replicated
-var bool bForceMaxAccel;
 var EDoubleClickDir DoubleClickMove;	// Double click info.
 var EPhysics SavedPhysics;
 var vector StartLocation, StartRelativeLocation, StartVelocity, StartFloor, SavedLocation, SavedVelocity, SavedRelativeLocation, RMVelocity, Acceleration;
@@ -24,12 +23,6 @@ var rotator Rotation;
 var Actor StartBase, EndBase;
 var float CustomTimeDilation;
 var float AccelDotThreshold;	// threshold for deciding this is an "important" move based on DP with last acked acceleration
-
-// Root motion correction variables
-var bool			bRootMotionFromInterpCurve;
-var float			RootMotionInterpCurrentTime;
-var Vector			RootMotionInterpCurveLastValue;
-var ERootMotionMode	RootMotionMode;
 
 function Clear()
 {
@@ -67,17 +60,9 @@ function bool IsImportantMove(vector CompareAccel)
 	local vector AccelNorm;
 
 	// check if any important movement flags set
-	if ( bPressedJump || 
-		 bDoubleJump  || 
-		 ((DoubleClickMove != DCLICK_None) && (DoubleClickMove != DCLICK_Active) && (DoubleClickMove != DCLICK_Done)) )
-	{
+	if ( bPressedJump || bDoubleJump
+		|| ((DoubleClickMove != DCLICK_None) && (DoubleClickMove != DCLICK_Active) && (DoubleClickMove != DCLICK_Done)) )
 		return true;
-	}
-
-	if( bRootMotionFromInterpCurve )
-	{
-		return TRUE;
-	}
 
 	// check if acceleration has changed significantly
 	AccelNorm = Normal(Acceleration);
@@ -102,30 +87,16 @@ function SetInitialPosition(Pawn P)
 	StartBase = P.Base;
 	StartFloor = P.Floor;
 	CustomTimeDilation = P.CustomTimeDilation;
-
+	
 	if( (StartBase != None) && !StartBase.bWorldGeometry )
 	{
 		StartRelativeLocation = P.Location - StartBase.Location;
-	}
-
-	// Store root motion information
-	bRootMotionFromInterpCurve = P.bRootMotionFromInterpCurve;
-	if( bRootMotionFromInterpCurve )
-	{
-		RootMotionInterpCurrentTime		= P.RootMotionInterpCurrentTime;
-		RootMotionInterpCurveLastValue	= P.RootMotionInterpCurveLastValue;
-		RootMotionMode					= P.Mesh.RootMotionMode;
 	}
 }
 
 function bool CanCombineWith(SavedMove NewMove, Pawn InPawn, float MaxDelta)
 {
 	if( InPawn == None )
-	{
-		return FALSE;
-	}
-
-	if( bRootMotionFromInterpCurve )
 	{
 		return FALSE;
 	}
@@ -170,12 +141,9 @@ function SetMoveFor(PlayerController P, float DeltaTime, vector NewAccel, EDoubl
 
 	// NOTE: max replicated vector component magnitude is 2^18, and acceleration is multiplied by 10 before replication
 	// quick check to make sure we never cross this limit of 2^18/10
-	if( VSize(NewAccel) > 26214 )
-	{
+	if ( VSize(NewAccel) > 26214 )
 		NewAccel = 26214 * Normal(NewAccel);
-	}
-
-	if( P.Pawn != None )
+	if ( P.Pawn != None )
 	{
 		SetInitialPosition(P.Pawn);
 	}
@@ -187,52 +155,8 @@ function SetMoveFor(PlayerController P, float DeltaTime, vector NewAccel, EDoubl
 	bDoubleJump = P.bDoubleJump;
 	bPreciseDestination = P.bPreciseDestination;
 	bForceRMVelocity = P.bPreciseDestination ||
-						(P.Pawn != None && P.Pawn.Mesh != None && !P.Pawn.bRootMotionFromInterpCurve && 
-							(P.Pawn.Mesh.RootMotionMode == RMM_Accel || P.Pawn.Mesh.RootMotionMode == RMM_Velocity));
-
-	bForceMaxAccel = P.Pawn != None && P.Pawn.bForceMaxAccel;
+						(P.Pawn != None) && (P.Pawn.Mesh != None) && ((P.Pawn.Mesh.RootMotionMode == RMM_Accel) || (P.Pawn.Mesh.RootMotionMode == RMM_Velocity));
 	TimeStamp = P.WorldInfo.TimeSeconds;
-}
-
-/**
- * Called before PlayerController.ClientUpdatePosition uses this SavedMove to make a predictive correction
- */
-function PrepMoveFor( Pawn P )
-{
-	if( P != None )
-	{
-		P.bForceRMVelocity = bForceRMVelocity;
-		P.bForceMaxAccel = bForceMaxAccel;
-
-		// Reset root motion information
-		P.bRootMotionFromInterpCurve = bRootMotionFromInterpCurve;
-		if( P.bRootMotionFromInterpCurve )
-		{
-			P.Mesh.RootMotionMode = RootMotionMode;
-			P.RootMotionInterpCurveLastValue = RootMotionInterpCurveLastValue;
-			P.SetRootMotionInterpCurrentTime( RootMotionInterpCurrentTime, Delta, TRUE );			
-		}
-	}
-}
-
-
-/**
- * Called after PlayerController.ClientUpdatePosition used this SavedMove to make a predictive correction
- */
-function ResetMoveFor( Pawn P )
-{
-	if( P != None )
-	{
-		SavedLocation = P.Location;
-		SavedVelocity = P.Velocity;
-		EndBase = P.Base;
-		if( EndBase != None && !EndBase.bWorldGeometry )
-		{
-			SavedRelativeLocation = P.Location - EndBase.Location;
-		}	
-		
-		P.bForceRMVelocity = false;
-	}
 }
 
 /* CompressedFlags()
@@ -297,15 +221,9 @@ static function EDoubleClickDir SetFlags(byte Flags, PlayerController PC)
 		return DCLICK_None;
 }
 
-function String GetDebugString()
-{
-	local String Str;
-
-	Str = self@`showvar(Delta)@`showvar(SavedPhysics)@`showvar(StartLocation)@`showvar(StartVelocity)@`showvar(SavedLocation)@`showvar(SavedVelocity)@`showvar(RMVelocity)@`showvar(Acceleration)@`showvar(bRootMotionFromInterpCurve)@`showvar(RootMotionInterpCurrentTime);
-	return Str;
-}
-
 defaultproperties
 {
-	AccelDotThreshold=+0.9
+   AccelDotThreshold=0.900000
+   Name="Default__SavedMove"
+   ObjectArchetype=Object'Core.Default__Object'
 }

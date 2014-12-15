@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -16,10 +16,10 @@ var() float ScalarValue;
 
 defaultproperties
 {
-	ObjName="Set Particle Param"
-	ObjCategory="Particles"
-
-	bOverrideScalar=TRUE
-
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Float',LinkDesc="Scalar Value",PropertyName=ScalarValue)
+   bOverrideScalar=True
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="Scalar Value",PropertyName="ScalarValue",MinVars=1,MaxVars=255)
+   ObjName="Set Particle Param"
+   ObjCategory="Particles"
+   Name="Default__SeqAct_SetParticleSysParam"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,18 +1,19 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTVehicleScorpionWheel extends UDKVehicleWheel;
+class UTVehicleScorpionWheel extends UTVehicleWheel;
 
 defaultproperties
 {
-	WheelRadius=27
-	SuspensionTravel=40
-	bPoweredWheel=true
-	SteerFactor=0.0
-	LongSlipFactor=2.0
-	LatSlipFactor=2.75
-	HandbrakeLongSlipFactor=0.7
-	HandbrakeLatSlipFactor=0.3
-	ParkedSlipFactor=10.0
-	bUseMaterialSpecificEffects=true
+   bUseMaterialSpecificEffects=True
+   bPoweredWheel=True
+   WheelRadius=27.000000
+   SuspensionTravel=40.000000
+   LongSlipFactor=2.000000
+   LatSlipFactor=2.750000
+   HandbrakeLongSlipFactor=0.700000
+   HandbrakeLatSlipFactor=0.300000
+   ParkedSlipFactor=10.000000
+   Name="Default__UTVehicleScorpionWheel"
+   ObjectArchetype=UTVehicleWheel'UTGame.Default__UTVehicleWheel'
 }

@@ -1,7 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTActorFactoryVehicle extends ActorFactoryVehicle;
+class UTActorFactoryVehicle extends ActorFactoryVehicle
+	native;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** whether the vehicle starts out locked and can only be used by the owning team */
 var() bool bTeamLocked;
@@ -9,34 +15,13 @@ var() bool bTeamLocked;
 var() byte TeamNum;
 /** if set, force vehicle to be a key vehicle (displayed on map and considered more important by AI) */
 var() bool bKeyVehicle;
-
-
-/** 
-  * Initialize factory created vehicle
-  */
-simulated event PostCreateActor(Actor NewActor, optional SeqAct_ActorFactory ActorFactoryData)
-{
-	local UTVehicle NewVehicle;
-	
-	NewVehicle = UTVehicle(NewActor);
-	if ( NewVehicle != None )
-	{
-		NewVehicle.SetTeamNum(TeamNum);
-		NewVehicle.bTeamLocked = bTeamLocked;
-		if (bKeyVehicle)
-		{
-			NewVehicle.SetKeyVehicle();
-		}
-		// actor factories could spawn the vehicle anywhere, so make sure it's awake so it doesn't end up floating or something
-		if ( NewVehicle.Mesh != None)
-		{
-			NewVehicle.Mesh.WakeRigidBody();
-		}
-	}
-}
+/** if set, vehicle is on a track (so can only move between UTTrackTurretPathNodes) */
+var() bool bIsOnTrack;
 
 defaultproperties
 {
-	VehicleClass=class'UTVehicle'
-	bTeamLocked=true
+   bTeamLocked=True
+   VehicleClass=Class'UTGame.UTVehicle'
+   Name="Default__UTActorFactoryVehicle"
+   ObjectArchetype=ActorFactoryVehicle'Engine.Default__ActorFactoryVehicle'
 }

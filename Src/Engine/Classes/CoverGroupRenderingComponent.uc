@@ -1,17 +1,19 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CoverGroupRenderingComponent extends PrimitiveComponent
 	native(AI);
 
-cpptext
-{
-	virtual FPrimitiveSceneProxy* CreateSceneProxy();
-	virtual void UpdateBounds();
-	virtual UBOOL ShouldRecreateProxyOnUpdateTransform() const;
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	HiddenGame=TRUE
+   HiddenGame=True
+   Name="Default__CoverGroupRenderingComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

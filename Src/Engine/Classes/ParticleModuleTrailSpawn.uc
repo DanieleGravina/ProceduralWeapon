@@ -2,11 +2,12 @@
  *	ParticleModuleTrailSpawn
  *	The trail spawn module.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleTrailSpawn extends ParticleModuleTrailBase
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object);
 
 //*************************************************************************************************
@@ -23,6 +24,7 @@ enum ETrail2SpawnMethod
 };
 
 /** 
+ *	SpawnDistanceMap
  *	This parameter will map a given distance range [MinInput..MaxInput]
  *	to the given spawn values [MinOutput..MaxOutput]
  *	Anything below the MinOutput will result in no particles being spawned
@@ -33,41 +35,49 @@ enum ETrail2SpawnMethod
 var(Spawn)	export noclear		distributionfloatparticleparameter	SpawnDistanceMap;
 
 /** 
+ *	MinSpawnVelocity
  *	The minimum velocity the source must be travelling at in order to spawn particles.
  */
-var(Spawn)						float								MinSpawnVelocity;
+var(Spawn)									float								MinSpawnVelocity;
 
 //*************************************************************************************************
 // C++ Text
 //*************************************************************************************************
-cpptext
-{
-	virtual void	PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void	PostLoad();
-
-	// Trail
-//	virtual void	GetDataPointers(FParticleEmitterInstance* Owner, const BYTE* ParticleBase, 
-//			INT& CurrentOffset, FBeam2TypeDataPayload*& BeamData, FVector*& InterpolatedPoints, 
-//			FLOAT*& NoiseRate, FVector*& TargetNoisePoints, FVector*& CurrentNoisePoints, 
-//			FLOAT*& TaperValues);
-
-			UINT	GetSpawnCount(FParticleTrail2EmitterInstance* TrailInst, FLOAT DeltaTime);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //*************************************************************************************************
 // Default properties
 //*************************************************************************************************
+
 defaultproperties
-{	
-	Begin Object Class=DistributionFloatParticleParameter Name=DistributionSpawnDistanceMap
-		ParameterName="None"
-		MinInput=10.0
-		MaxInput=100.0
-		MinOutput=1.0
-		MaxOutput=5.0
-		Constant=1.0
-	End Object
-	SpawnDistanceMap=DistributionSpawnDistanceMap
-	
-	MinSpawnVelocity=0.0
+{
+   Begin Object Class=DistributionFloatParticleParameter Name=DistributionSpawnDistanceMap ObjName=DistributionSpawnDistanceMap Archetype=DistributionFloatParticleParameter'Engine.Default__DistributionFloatParticleParameter'
+      MinInput=10.000000
+      MaxInput=100.000000
+      MinOutput=1.000000
+      MaxOutput=5.000000
+      Constant=1.000000
+      Name="DistributionSpawnDistanceMap"
+      ObjectArchetype=DistributionFloatParticleParameter'Engine.Default__DistributionFloatParticleParameter'
+   End Object
+   SpawnDistanceMap=DistributionSpawnDistanceMap
+   Name="Default__ParticleModuleTrailSpawn"
+   ObjectArchetype=ParticleModuleTrailBase'Engine.Default__ParticleModuleTrailBase'
 }

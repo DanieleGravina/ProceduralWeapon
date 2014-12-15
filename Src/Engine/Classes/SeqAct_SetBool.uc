@@ -1,21 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetBool extends SeqAct_SetSequenceVariable
 	native(Sequence);
 
-cpptext
-{
-	void Activated();
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-var() bool DefaultValue<autocomment=true>;
+var() bool DefaultValue;
 
 defaultproperties
 {
-	ObjName="Bool"
-
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Value",MinVars=0)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Target",bWriteable=true)
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Bool',PropertyName=,bWriteable=True)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Bool',LinkDesc="Value",MaxVars=255)
+   ObjName="Bool"
+   Name="Default__SeqAct_SetBool"
+   ObjectArchetype=SeqAct_SetSequenceVariable'Engine.Default__SeqAct_SetSequenceVariable'
 }

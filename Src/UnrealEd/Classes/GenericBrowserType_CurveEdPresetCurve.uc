@@ -1,20 +1,22 @@
 /**
  * Generic browser type for editing UIScenes
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved
  */
 class GenericBrowserType_CurveEdPresetCurve extends GenericBrowserType
 	native;
 
-cpptext
-{
-	/**
-	 * Initialize the supported classes for this browser type.
-	 */
-	virtual void Init();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-DefaultProperties
+defaultproperties
 {
-	Description="Preset curve for curve editor"
+   Description="Preset curve for curve editor"
+   Name="Default__GenericBrowserType_CurveEdPresetCurve"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

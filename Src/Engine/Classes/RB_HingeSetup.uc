@@ -1,16 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class RB_HingeSetup extends RB_ConstraintSetup
 	native(Physics);
 
-
 defaultproperties
 {
-	bSwingLimited=true
-	bTwistLimited=false
-
-	Swing1LimitAngle=0.0
-	Swing2LimitAngle=0.0
-	TwistLimitAngle=45.0
+   bSwingLimited=True
+   TwistLimitAngle=45.000000
+   Name="Default__RB_HingeSetup"
+   ObjectArchetype=RB_ConstraintSetup'Engine.Default__RB_ConstraintSetup'
 }

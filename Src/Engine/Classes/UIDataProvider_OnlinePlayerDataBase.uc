@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -12,28 +12,28 @@ class UIDataProvider_OnlinePlayerDataBase extends UIDataProvider
 	abstract;
 
 /** Holds the player that this provider is getting friends for */
-var int PlayerControllerId;
+var LocalPlayer Player;
 
-cpptext
-{
-	/**
-	 * Provides the data provider with the player they were just bound to
-	 *
-	 * @param Player the local player associated with this player settings provider
-	 */
-	virtual void OnRegister(ULocalPlayer* InPlayer)
-	{
-		eventOnRegister(InPlayer);
-	}
-
-	/**
-	 * Tells the provider that the player is no longer valid
-	 */
-	virtual void OnUnregister(void)
-	{
-		eventOnUnregister();
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Binds the player to this provider
@@ -42,10 +42,7 @@ cpptext
  */
 event OnRegister(LocalPlayer InPlayer)
 {
-	if (InPlayer != None)
-	{
-		PlayerControllerId = InPlayer.ControllerId;
-	}
+	Player = InPlayer;
 }
 
 /**
@@ -53,10 +50,11 @@ event OnRegister(LocalPlayer InPlayer)
  */
 event OnUnregister()
 {
-	PlayerControllerId = -1;
+	Player = None;
 }
 
 defaultproperties
 {
-	PlayerControllerId=-1
+   Name="Default__UIDataProvider_OnlinePlayerDataBase"
+   ObjectArchetype=UIDataProvider'Engine.Default__UIDataProvider'
 }

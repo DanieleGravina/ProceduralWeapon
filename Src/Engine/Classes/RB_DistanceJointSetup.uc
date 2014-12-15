@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -10,11 +10,8 @@
 class RB_DistanceJointSetup extends RB_ConstraintSetup
     native(Physics);
 
-DefaultProperties
+defaultproperties
 {
-    LinearXSetup=(bLimited=1)
-    LinearYSetup=(bLimited=1)
-    LinearZSetup=(bLimited=1)
-    bLinearLimitSoft=false
-    bSwingLimited=false
+   Name="Default__RB_DistanceJointSetup"
+   ObjectArchetype=RB_ConstraintSetup'Engine.Default__RB_ConstraintSetup'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class LineBatchComponent extends PrimitiveComponent
 	native
@@ -13,6 +13,11 @@ var	native const noexport pointer FPrimitiveDrawInterfaceVfTable;
 // FPrimitiveDrawInterface FSceneView*
 var native const noexport pointer FPrimitiveDrawInterfaceView;
 
-var native transient const array<pointer> BatchedLines;	
-var native transient const array<pointer> BatchedPoints;
+var native transient const array<pointer> BatchedLines;
 var native transient const float DefaultLifeTime;
+
+defaultproperties
+{
+   Name="Default__LineBatchComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
+}

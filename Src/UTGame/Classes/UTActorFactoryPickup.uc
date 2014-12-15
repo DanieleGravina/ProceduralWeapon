@@ -1,43 +1,24 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
+
 /** creates a pickup (NOT pickup factory) in the world */
-class UTActorFactoryPickup extends ActorFactory;
+class UTActorFactoryPickup extends ActorFactory
+	native;
 
 var() class<Inventory> InventoryClass;
 
-/** 
-  * Initialize factory created pickup
-  */
-simulated event PostCreateActor(Actor NewActor, optional SeqAct_ActorFactory ActorFactoryData)
-{
-	local DroppedPickup Pickup;
-	local Inventory NewInventory;
-
-	// spawn the inventory actor
-	Pickup = UTDroppedPickup(NewActor);
-	
-	if ( Pickup != None )
-	{
-		NewInventory = NewActor.Spawn(InventoryClass);
-	}
-	if (NewInventory != None)
-	{
-		Pickup.setPhysics(PHYS_Falling);
-		Pickup.Inventory = NewInventory;
-		Pickup.InventoryClass = InventoryClass;
-		Pickup.SetPickupMesh(Pickup.Inventory.DroppedPickupMesh);
-	}
-	else
-	{
-		NewActor.Destroy();
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	NewActorClass=class'UTDroppedPickup'
-	bPlaceable=false
+   NewActorClass=Class'UTGame.UTDroppedPickup'
+   bPlaceable=False
+   Name="Default__UTActorFactoryPickup"
+   ObjectArchetype=ActorFactory'Engine.Default__ActorFactory'
 }

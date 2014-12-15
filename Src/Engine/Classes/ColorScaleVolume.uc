@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -52,20 +52,17 @@ event UnTouch(Actor Other)
 			// defult to the level color scale
 			DesiredColorScale = WorldInfo.DefaultColorScale;
 			DesiredInterpTime = 1.f;
-			if (P.Touching.Length > 0)
+			// look for any other color scale volumes
+			for (Idx = P.Touching.Length; Idx >= 0; --Idx)
 			{
-				// look for any other color scale volumes
-				for (Idx = P.Touching.Length; Idx >= 0; --Idx)
+				CSV = ColorScaleVolume(P.Touching[Idx]);
+				if (CSV != None && CSV != self)
 				{
-					CSV = ColorScaleVolume(P.Touching[Idx]);
-					if (CSV != None && CSV != self)
-					{
-						// set the desired values based on the CSV's
-						DesiredColorScale = CSV.ColorScale;
-						DesiredInterpTime = CSV.InterpTime;
-						// and stop looking
-						break;
-					}
+					// set the desired values based on the CSV's
+					DesiredColorScale = CSV.ColorScale;
+					DesiredInterpTime = CSV.InterpTime;
+					// and stop looking
+					break;
 				}
 			}
 			// apply the exit scale
@@ -76,6 +73,15 @@ event UnTouch(Actor Other)
 
 defaultproperties
 {
-	ColorScale=(X=1.f,Y=1.f,Z=1.f)
-	InterpTime=1.f
+   ColorScale=(X=1.000000,Y=1.000000,Z=1.000000)
+   InterpTime=1.000000
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__ColorScaleVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

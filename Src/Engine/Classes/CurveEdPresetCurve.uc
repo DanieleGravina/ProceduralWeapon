@@ -1,7 +1,7 @@
 //=============================================================================
 // CurveEdPresetCurve
 // A preset curve data object
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class CurveEdPresetCurve extends object
 	native
@@ -26,11 +26,13 @@ var()	localized string     			CurveName;
 /** The points of the curve							*/
 var		array<PresetGeneratedPoint>		Points;
 
-cpptext
-{
-	UBOOL	StoreCurvePoints(INT CurveIndex, FCurveEdInterface* Distribution);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__CurveEdPresetCurve"
+   ObjectArchetype=Object'Core.Default__Object'
 }

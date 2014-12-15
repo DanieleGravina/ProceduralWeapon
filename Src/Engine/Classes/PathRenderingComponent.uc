@@ -1,25 +1,27 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PathRenderingComponent extends PrimitiveComponent
 	native(AI)
 	hidecategories(Object)
 	editinlinenew;
 
-cpptext
-{
-	/**
-	 * Creates a new scene proxy for the path rendering component.
-	 * @return	Pointer to the FPathRenderingSceneProxy
-	 */
-	virtual FPrimitiveSceneProxy* CreateSceneProxy();
-
-	virtual void UpdateBounds();
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	HiddenGame=true
-	AlwaysLoadOnClient=false
-	AlwaysLoadOnServer=false
+   HiddenGame=True
+   AlwaysLoadOnClient=False
+   AlwaysLoadOnServer=False
+   Name="Default__PathRenderingComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

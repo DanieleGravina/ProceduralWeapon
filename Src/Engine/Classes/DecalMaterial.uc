@@ -1,27 +1,23 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DecalMaterial extends Material
 	native(Decal);
 
-cpptext
-{
-	// UMaterial interface.
-	virtual FMaterialResource* AllocateResource();
-
-	// UObject interface.
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void PreSave();
-	virtual void PostLoad();
-	virtual void Serialize(FArchive& Ar);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
-{	
-	bUsedWithStaticLighting=TRUE
-	bUsedWithSkeletalMesh=TRUE
-	bUsedWithMorphTargets=TRUE
-	bUsedWithDecals=TRUE
-	bUsedWithFluidSurfaces=TRUE
-	bUsedWithFracturedMeshes=TRUE
+{
+   bUsedWithSkeletalMesh=True
+   Name="Default__DecalMaterial"
+   ObjectArchetype=Material'Engine.Default__Material'
 }

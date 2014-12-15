@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SpeechRecognition extends Object
 	native
@@ -21,16 +21,16 @@ struct native RecogVocabulary
 	var()		array<RecognisableWord>	WhoDictionary;
 	var()		array<RecognisableWord>	WhatDictionary;
 	var()		array<RecognisableWord>	WhereDictionary;
-
+	
 	/** Name of vocab file */
 	var			string					VocabName;
-
+	
 	/** Cached processed vocabulary data */
 	var			array<byte>				VocabData;
-
+	
 	/** Working copy of vocab data */
 	var			array<byte>				WorkingVocabData;
-
+	
 	structcpptext
 	{
 		/**
@@ -38,48 +38,48 @@ struct native RecogVocabulary
 		 */
 		UBOOL CreateSpeechRecognitionData( class USpeechRecognition* Owner, FString Folder, INT Index );
 
-		/**
+		/** 
 		 * Loads the created vocabulary after it has been modified by BuildVoice
 		 */
 		UBOOL LoadSpeechRecognitionData( void );
 
-		/**
+		/** 
 		 * Clear out all the created vocab data
 		 */
 		void Clear( void );
 
-		/**
+		/** 
 		 * Returns name of created vocab file
 		 */
 		FString GetVocabName( void );
-
-		/**
+	
+		/** 
 		 * Returns address of converted vocab data
 		 */
 		void* GetVocabData( void );
-
-		/**
+		
+		/** 
 		 * Return the number of items in this vocabulary
 		 */
 		INT GetNumItems( void );
-
-		/**
+	
+		/** 
 		 * Return the number of bytes allocated by this resource
 		 */
 		INT GetResourceSize( void );
-
+	
 		/**
 		 * Write dictionary to a text file
 		 */
 		void OutputDictionary( TArrayNoInit<struct FRecognisableWord>& Dictionary, FString& Line );
 		UBOOL SaveDictionary( FString& TextFile );
-
-		/**
+		
+		/** 
 		 * Looks up the word in the dictionary
-		 */
+		 */		
 		FString GetStringFromWordId( DWORD WordId );
-
-		/**
+		
+		/** 
 		 * Initialise the recogniser
 		 */
 		UBOOL InitSpeechRecognition( class USpeechRecognition* Owner );
@@ -110,7 +110,7 @@ var			array<byte>				WorkingVoiceData;
 var			array<byte>				UserData;
 
 /** Cached user data - max users */
-var			RecogUserData	InstanceData[4];
+var			array<RecogUserData>	InstanceData[4];
 
 /** Whether this object has been altered */
 var duplicatetransient transient	bool	bDirty;
@@ -120,86 +120,88 @@ var duplicatetransient transient	bool	bInitialised;
 /** Cached pointers to Fonix data */
 var	duplicatetransient native const pointer	FnxVoiceData;
 
-cpptext
-{
-	/**
-	 * Initialise the recogniser
-	 */
-	UBOOL InitSpeechRecognition( INT MaxLocalTalkers );
-
-	/**
-	 * Validates a word from a dictionary
-	 */
-	UBOOL ValidateRecognitionItem( BYTE* UniqueIDs, FRecognisableWord& Word );
-
-	/**
-	 * Validates the source speech recognition data
-	 */
-	UBOOL ValidateRecognitionData( void );
-
-	/**
-	 * Creates the work data required for speech recognition
-	 */
-	UBOOL CreateSpeechRecognitionData( void );
-
-	/**
-	 * Process input samples
-	 */
-	DWORD RecogniseSpeech( DWORD UserIndex, SWORD* Samples, INT NumSamples );
-
-	/**
-	 * Select vocabularies
-	 */
-	UBOOL SelectVocabularies( DWORD LocalTalker, DWORD VocabBitField );
-
-	/**
-	 * Returns an array of recognised words based on the grammer rules $who $what [$where]
-	 */
-	UBOOL GetResult( DWORD UserIndex, TArray<struct FSpeechRecognizedWord>& Words );
-
-	/**
-	 * Looks up the word in the dictionary
-	 */
-	FString GetStringFromWordId( DWORD WordID );
-
-	/**
-	 * Returns a one line description of an object for viewing in the thumbnail view of the generic browser
-	 */
-	virtual FString GetDesc( void );
-
-	/**
-	 * Returns detailed info to populate listview columns
-	 */
-	virtual FString GetDetailedDescription( INT InIndex );
-
-	/**
-	 * @return		The size of the asset.
-	 */
-	virtual INT GetResourceSize( void );
-
-	/**
-	 * Callback after any property has changed
-	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	/**
-	 * Called before the package is saved
-	 */
-	virtual void PreSave( void );
-
-	/**
-	 * Manages any error codes that may have occurred
-	 */
-	FString HandleError( INT Error );
-
-	/**
-	 * Convert the language code to Fonix folder
-	 */
-	FString GetLanguageFolder( void );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Language="INT"
-	ConfidenceThreshhold=50
+   Language="INT"
+   ConfidenceThreshhold=50.000000
+   Name="Default__SpeechRecognition"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,15 +1,17 @@
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 class UTMutator_Handicap extends UTMutator;
+
+var array< class<Inventory> > HandicapInventory;
 
 /* called by GameInfo.RestartPlayer()
 	change the players jumpz, etc. here
 */
 function ModifyPlayer(Pawn P)
 {
-	local int HandicapNeed;
+	local int i, HandicapNeed;
 	local UTPawn PlayerPawn;
-	local UTWeap_LinkGun PlayerGun;
-	
+	local UTWeap_Enforcer Enforcer;
+
 	PlayerPawn = UTPawn(P);
 	if ( PlayerPawn == None )
 	{
@@ -18,10 +20,11 @@ function ModifyPlayer(Pawn P)
 
 	HandicapNeed = UTGame(WorldInfo.Game).GetHandicapNeed(PlayerPawn);
 
-	if ( HandicapNeed > 2 )
+	if ( HandicapNeed > HandicapInventory.Length-1 )
 	{
 		// give a shieldbelt as well
 		PlayerPawn.ShieldBeltArmor = Max(100, PlayerPawn.ShieldBeltArmor);
+		HandicapNeed = HandicapInventory.Length - 1;
 	}
 
 	if ( HandicapNeed >= 1 )
@@ -30,19 +33,35 @@ function ModifyPlayer(Pawn P)
 	}
 	if ( HandicapNeed >= 2 )
 	{
-		PlayerGun = UTWeap_LinkGun(PlayerPawn.FindInventoryType(class'UTWeap_LinkGun'));
-		if ( PlayerGun != None )
+		// always give an extra enforcer
+		Enforcer = UTWeap_Enforcer(PlayerPawn.FindInventoryType(HandicapInventory[1]));
+		if ( Enforcer != None )
 		{
-			PlayerGun.BoostPower();
+			Enforcer.DelayedBecomeDual();
+
 		}
 	}
-
+	for ( i=2; i<HandicapNeed; i++ )
+	{
+		// Ensure we don't give duplicate items
+		if (PlayerPawn.FindInventoryType( HandicapInventory[i] ) == None)
+		{
+			PlayerPawn.CreateInventory(HandicapInventory[i]);
+		}
+	}
 	Super.ModifyPlayer(PlayerPawn);
 }
 
 defaultproperties
 {
-	GroupNames[0]="HANDICAP"
+   HandicapInventory(0)=None
+   HandicapInventory(1)=Class'UTGame.UTWeap_Enforcer'
+   HandicapInventory(2)=Class'UTGame.UTWeap_RocketLauncher'
+   GroupNames(0)="HANDICAP"
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTMutator_Handicap"
+   ObjectArchetype=UTMutator'UTGame.Default__UTMutator'
 }
-
-

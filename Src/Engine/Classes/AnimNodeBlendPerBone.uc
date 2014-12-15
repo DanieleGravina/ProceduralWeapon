@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNodeBlendPerBone extends AnimNodeBlend
 	native(Anim);
@@ -18,28 +17,23 @@ var					Array<FLOAT>	Child2PerBoneWeight;
 /** Required bones for local to component space conversion */
 var					Array<BYTE>		LocalToCompReqBones;
 
-cpptext
-{
-	/** Do any initialisation, and then call InitAnim on all children. Should not discard any existing anim state though. */
-	virtual void InitAnim(USkeletalMeshComponent* meshComp, UAnimNodeBlendBase* Parent);
-	// AnimNode interface
-	virtual	void TickAnim(FLOAT DeltaSeconds);
-	// AnimNode interface
-	virtual void GetBoneAtoms(FBoneAtomArray& Atoms, const TArray<BYTE>& DesiredBones, FBoneAtom& RootMotionDelta, INT& bHasRootMotion, FCurveKeyArray& CurveKeys);
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void BuildWeightList();
-}
-
-/**
- * Overridden so we can keep child zero weight at 1.
- */
-native function SetBlendTarget( float BlendTarget, float BlendTime );
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Children(0)=(Name="Source",Weight=1.0)
-	Children(1)=(Name="Target")
-	bFixNumChildren=TRUE
-
-	CategoryDesc = "Filter"
+   Children(0)=(Name="Source")
+   Children(1)=(Name="Target")
+   Name="Default__AnimNodeBlendPerBone"
+   ObjectArchetype=AnimNodeBlend'Engine.Default__AnimNodeBlend'
 }

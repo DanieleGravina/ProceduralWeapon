@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTKillerMessage extends UTWeaponKillMessage;
 
@@ -14,27 +14,29 @@ static function string GetString(
 	optional Object OptionalObject
 	)
 {
-	if (RelatedPRI_1 == None || RelatedPRI_2.PlayerName == "")
+	if (RelatedPRI_1 == None || RelatedPRI_2.GetPlayerAlias() == "")
 	{
 		return "";
 	}
 	else if (bPRI1HUD)
 	{
 		return ((RelatedPRI_1.Team == None) || (RelatedPRI_1.Team != RelatedPRI_2.Team))
-				? (default.YouKilled @ RelatedPRI_2.PlayerName @ default.YouKilledTrailer)
-				: (default.YouTeamKilled @ RelatedPRI_2.PlayerName @ default.YouTeamKilledTrailer);
+				? (default.YouKilled @ RelatedPRI_2.GetPlayerAlias() @ default.YouKilledTrailer)
+				: (default.YouTeamKilled @ RelatedPRI_2.GetPlayerAlias() @ default.YouTeamKilledTrailer);
 	}
 	else
 	{
-		return (default.OtherKilledPrefix @ RelatedPRI_1.PlayerName @ default.OtherKilled @ RelatedPRI_2.PlayerName @ default.OtherKilledTrailer);
+		return (default.OtherKilledPrefix @ RelatedPRI_1.GetPlayerAlias() @ default.OtherKilled @ RelatedPRI_2.GetPlayerAlias() @ default.OtherKilledTrailer);
 	}
 }
 
 defaultproperties
 {
-	bIsSpecial=True
-	bIsUnique=True
-	DrawColor=(R=255,G=255,B=255,A=255)
-	FontSize=2
-	MessageArea=1
+   YouKilled="Hai ucciso"
+   YouTeamKilled="Hai ucciso una squadra"
+   OtherKilled="ucciso"
+   bIsUnique=True
+   FontSize=2
+   Name="Default__UTKillerMessage"
+   ObjectArchetype=UTWeaponKillMessage'UTGame.Default__UTWeaponKillMessage'
 }

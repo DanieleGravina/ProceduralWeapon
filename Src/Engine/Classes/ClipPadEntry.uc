@@ -2,7 +2,7 @@
 * class ClipPadEntry
 *
 * A block of text that can be pasted into the level.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ClipPadEntry extends Object
 	native
@@ -14,11 +14,13 @@ var() string	Title;
 /** The text copied/pasted */
 var() string	Text;
 
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Title="Untitled"
+   Title="Untitled"
+   Name="Default__ClipPadEntry"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,16 +1,17 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class UTTimedPowerup extends UTInventory
+	native
 	abstract;
 
-/** the amount of time remaining before the powerup expires 
+/** the amount of time remaining before the powerup expires (automatically decremented in C++ tick)
  * @note: only counts down while the item is owned by someone (not when on a dropped pickup)
  */
-var float TimeRemaining;
+var databinding	float TimeRemaining;
 
 /** Used to determine which symbol represents this object on the paperdoll */
 var int HudIndex;
@@ -21,9 +22,7 @@ var SoundCue PowerupOverSound;
 /** Name used for the stats system */
 var name PowerupStatName;
 
-/** Coordinates on icon texture for this powerup's icon */
-var TextureCoordinates IconCoords;	
-
+var TextureCoordinates IconCoords;	// Coords of the icon for this powerup
 var float TransitionTime;
 var float TransitionDuration;
 var float WarningTime;	// Beging flashing when there is < this amount of time
@@ -32,24 +31,18 @@ var float WarningTime;	// Beging flashing when there is < this amount of time
 var vector PP_Scene_HighLights;
 var float PP_Scene_Desaturation;
 
-simulated event Tick(float DeltaTime)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+simulated function PostBeginPlay()
 {
-	if ( (Owner != None) && (TimeRemaining > 0.0) )
-	{
-		CustomTimeDilation = Owner.CustomTimeDilation;
-		TimeRemaining -= DeltaTime;
-		if (TimeRemaining <= 0.0)
-		{
-			TimeExpired();
-		}
-	}
-	else
-	{
-		CustomTimeDilation = 1.0;
-	}
+	Super.PostBeginPlay();
+	AddWeaponOverlay(UTGameReplicationInfo(WorldInfo.GRI));
 }
 
-function GivenTo(Pawn NewOwner, optional bool bDoNotActivate)
+function GivenTo(Pawn NewOwner, bool bDoNotActivate)
 {
 	Super.GivenTo(NewOwner, bDoNotActivate);
 	ClientSetTimeRemaining(TimeRemaining);
@@ -176,14 +169,7 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 			TimeRemaining += default.TimeRemaining;
 		}
 		ClientSetTimeRemaining(TimeRemaining);
-		if ( PickupFactory(Pickup) != None )
-		{
-			PickupFactory(Pickup).PickedUpBy(Instigator);
-		}
-		else if ( DroppedPickup(Pickup) != None )
-		{
-			DroppedPickup(Pickup).PickedUpBy(Instigator);
-		}
+		Pickup.PickedUpBy(Instigator);
 		AnnouncePickup(Instigator);
 		return true;
 	}
@@ -192,7 +178,7 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 }
 
 /** called when TimeRemaining reaches zero */
-function TimeExpired()
+event TimeExpired()
 {
 	local UTPlayerReplicationInfo UTPRI;
 	if(PowerUpOverSound != none)
@@ -242,13 +228,18 @@ function name GetPowerupStatName()
 
 defaultproperties
 {
-	bPredictRespawns=true
-	bDelayedSpawn=true
-	bDropOnDeath=true
-	RespawnTime=90.000000
-	MaxDesireability=2.0
-
-	TimeRemaining=30.0
-	TransitionDuration=0.5
-	WarningTime=3.0
+   TimeRemaining=30.000000
+   TransitionDuration=0.500000
+   WarningTime=3.000000
+   bDropOnDeath=True
+   bDelayedSpawn=True
+   bPredictRespawns=True
+   RespawnTime=90.000000
+   MaxDesireability=2.000000
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTTimedPowerup"
+   ObjectArchetype=UTInventory'UTGame.Default__UTInventory'
 }

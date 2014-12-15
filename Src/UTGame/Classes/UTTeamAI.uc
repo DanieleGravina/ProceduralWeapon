@@ -1,13 +1,15 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // UTTeamAI.
 // strategic team AI control for TeamGame
 //
 //=============================================================================
-class UTTeamAI extends UDKTeamOwnedInfo;
+class UTTeamAI extends Info
+	native;
 
+var UTTeamInfo Team;
 var UTTeamInfo EnemyTeam;
 var	int	NumSupportingPlayer;
 
@@ -58,7 +60,7 @@ function FindSuperItems()
 
 	foreach WorldInfo.AllNavigationPoints(class'UTVehicleFactory', V)
 	{
-		if (V.bStartNeutral || V.bKeyVehicle || (class<UTVehicle>(V.VehicleClass) != None && class<UTVehicle>(V.VehicleClass).default.bKeyVehicle))
+		if (V.bStartNeutral || V.bKeyVehicle || (V.VehicleClass != None && V.VehicleClass.default.bKeyVehicle))
 		{
 			ImportantVehicleFactories[ImportantVehicleFactories.length] = V;
 		}
@@ -73,9 +75,35 @@ function Reset()
 	PickedObjective = None;
 }
 
-/** 
-  * Look at current strategic situation, and decide whether to update squad objectives
-  */
+function ClearEnemies()
+{
+	local UTSquadAI S;
+	local int i;
+	local UTBot M;
+
+	Reset();
+	for ( S=Squads; S!=None; S=S.NextSquad )
+	{
+		for ( i=0; i<8; i++ )
+			S.Reset();
+		for	( M=S.SquadMembers; M!=None; M=M.NextSquadMember )
+			M.Reset();
+	}
+}
+
+function UTSquadAI GetSquadLedBy(Controller C)
+{
+	local UTSquadAI S;
+
+	for ( S=Squads; S!=None; S=S.NextSquad )
+		if ( S.SquadLeader == C )
+			return S;
+	return None;
+}
+
+// ReAssessStrategy()
+//Look at current strategic situation, and decide whether to update squad objectives
+
 function ReAssessStrategy()
 {
 	local UTGameObjective O;
@@ -120,12 +148,12 @@ function ReAssessStrategy()
 		FreelanceSquad.SetObjective(O,true);
 }
 
-function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType)
+function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn)
 {
 	local UTSquadAI S;
 
 	for ( S=Squads; S!=None; S=S.NextSquad )
-		S.NotifyKilled(Killer,Killed,KilledPawn,damageType);
+		S.NotifyKilled(Killer,Killed,KilledPawn);
 }
 
 function FindNewObjectives(UTGameObjective DisabledObjective)
@@ -192,10 +220,26 @@ function RemoveSquad(UTSquadAI Squad)
 	}
 }
 
+
+function UTSquadAI FindSquadOf(Controller C)
+{
+	local UTSquadAI S;
+
+	if ( UTBot(C) != None )
+		return UTBot(C).Squad;
+
+	for ( S=Squads; S!=None; S=S.NextSquad )
+		if ( S.SquadLeader == C )
+			return S;
+	return None;
+}
+
 function bool FriendlyToward(Pawn Other)
 {
 	return WorldInfo.GRI.OnSameTeam(self,Other);
 }
+
+simulated native function byte GetTeamNum();
 
 function SetObjectiveLists()
 {
@@ -263,7 +307,7 @@ function UTSquadAI AddSquadWithLeader(Controller C, UTGameObjective O)
 	local UTSquadAI S;
 
 	S = spawn(SquadType);
-	S.Initialize(UTTeamInfo(Team),O,C);
+	S.Initialize(Team,O,C);
 	S.NextSquad = Squads;
 	Squads = S;
 	return S;
@@ -513,6 +557,7 @@ function SetBotOrders(UTBot NewBot)
 function SetOrders(UTBot B, name NewOrders, Controller OrderGiver)
 {
 	local UTPlayerReplicationInfo PRI;
+	local UTCarriedObject CarriedObject;
 
 	PRI = UTPlayerReplicationInfo(B.PlayerReplicationInfo);
 	if ( UTHoldSpot(B.DefensePoint) != None )
@@ -547,8 +592,16 @@ function SetOrders(UTBot B, name NewOrders, Controller OrderGiver)
 	}
 	else if ( NewOrders == 'DropFlag' )
 	{
-		B.TossFlagToPlayer(OrderGiver);
+		CarriedObject = PRI.GetFlag();
+		if ( CarriedObject != None )
+		{
+			B.TossFlagToPlayer(OrderGiver);
+		}
 	}
+}
+
+function CallForHelp(UTBot B)
+{
 }
 
 function RemoveFromTeam(Controller Other)
@@ -569,16 +622,16 @@ function RemoveFromTeam(Controller Other)
 
 defaultproperties
 {
-	RemoteRole=ROLE_None
-	bAlwaysRelevant=false
-	SquadType=class'UTGame.UTSquadAI'
-
-	OrderList(0)=FOLLOW
-	OrderList(1)=ATTACK
-	OrderList(2)=DEFEND
-	OrderList(3)=FREELANCE
-	OrderList(4)=FOLLOW
-	OrderList(5)=ATTACK
-	OrderList(6)=DEFEND
-	OrderList(7)=FREELANCE
+   SquadType=Class'UTGame.UTSquadAI'
+   OrderList(0)="Follow"
+   OrderList(1)="ATTACK"
+   OrderList(2)="Defend"
+   OrderList(3)="Freelance"
+   OrderList(4)="Follow"
+   OrderList(5)="ATTACK"
+   OrderList(6)="Defend"
+   OrderList(7)="Freelance"
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTTeamAI"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

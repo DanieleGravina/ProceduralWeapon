@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Animation Node used to synch childs.
  * Would be typically used to synch several walk/run/crouch cycles together.
@@ -37,14 +36,15 @@ struct native SynchGroup
 /** List of groups to synchronize */
 var()	Array<SynchGroup>	Groups;
 
-cpptext
-{
-	virtual void	InitAnim(USkeletalMeshComponent* MeshComp, UAnimNodeBlendBase* Parent);
-	virtual	void	TickAnim(FLOAT DeltaSeconds);
-
-	void			UpdateMasterNodeForGroup(FSynchGroup& SynchGroup);
-	void			RepopulateGroups();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
 
 /** Add a node to an existing group */
@@ -67,6 +67,8 @@ native final function SetGroupRateScale(Name GroupName, FLOAT NewRateScale);
 
 defaultproperties
 {
-	Children(0)=(Name="Input",Weight=1.0)
-	bFixNumChildren=TRUE
+   Children(0)=(Name="Input",Weight=1.000000)
+   bFixNumChildren=True
+   Name="Default__AnimNodeSynch"
+   ObjectArchetype=AnimNodeBlendBase'Engine.Default__AnimNodeBlendBase'
 }

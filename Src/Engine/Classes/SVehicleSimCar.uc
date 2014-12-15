@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SVehicleSimCar extends SVehicleSimBase
 	native(Physics);
@@ -23,14 +23,16 @@ var		bool				bIsDriving;
 var		float				ActualSteering;
 var     float               TimeSinceThrottle;
 
-cpptext
-{
-	// SVehicleSimBase interface.
-	virtual void ProcessCarInput(ASVehicle* Vehicle);
-	virtual void UpdateHandbrake(ASVehicle* Vehicle);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ReverseThrottle=-1.0
+   ReverseThrottle=-1.000000
+   Name="Default__SVehicleSimCar"
+   ObjectArchetype=SVehicleSimBase'Engine.Default__SVehicleSimBase'
 }

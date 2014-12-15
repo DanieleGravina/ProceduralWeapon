@@ -1,58 +1,28 @@
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 class UTMutator_SlowTimeKills extends UTMutator;
 
-var float SlowTime;
-var float RampUpTime;
-var float SlowSpeed;
+var class<GameRules> GRClass;
 
 function bool MutatorIsAllowed()
 {
 	return (WorldInfo.NetMode == NM_Standalone);
 }
 
-
-function ScoreKill(Controller Killer, Controller Killed)
+function InitMutator(string Options, out string ErrorMessage)
 {
-	if ( PlayerController(Killer) != None )
-	{
-		WorldInfo.Game.SetGameSpeed(SlowSpeed);
-		SetTimer(SlowTime, false);
-	}
-	if ( NextMutator != None )
-	{
-		NextMutator.ScoreKill(Killer,Killed);
-	}
-}
+	WorldInfo.Game.AddGameRules(GRClass);
 
-function Timer()
-{
-	GotoState('Rampup');
-}
-
-state Rampup
-{
-	function Tick(float DeltaTime)
-	{
-		local float NewGameSpeed;
-
-		NewGameSpeed = WorldInfo.Game.GameSpeed + DeltaTime/RampUpTime;
-		if ( NewGameSpeed >= 1 )
-		{
-			WorldInfo.Game.SetGameSpeed(1.0);
-			GotoState('');
-		}
-		else
-		{
-			WorldInfo.Game.SetGameSpeed(NewGameSpeed);
-		}
-	}
+	Super.InitMutator(Options, ErrorMessage);
 }
 
 defaultproperties
 {
-	RampUpTime=0.1
-	SlowTime=0.3
-	SlowSpeed=0.25
-
-	GroupNames[0]="GAMESPEED"
+   GRClass=Class'UTGame.UTGameRules_SlowTimeKills'
+   GroupNames(0)="GAMESPEED"
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTMutator_SlowTimeKills"
+   ObjectArchetype=UTMutator'UTGame.Default__UTMutator'
 }

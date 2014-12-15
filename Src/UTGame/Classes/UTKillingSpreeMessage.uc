@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //
 // Switch is the note.
@@ -55,24 +55,24 @@ static function string GetString(
 		if (RelatedPRI_1 == None)
 			return "";
 
-		if (RelatedPRI_1.PlayerName != "")
-			return RelatedPRI_1.PlayerName@Default.SpreeNote[Switch];
+		if (RelatedPRI_1.GetPlayerAlias() != "")
+			return RelatedPRI_1.GetPlayerAlias()@Default.SpreeNote[Switch];
 	}
 	else
 	{
 		if (RelatedPRI_1 == None)
 		{
-			if (RelatedPRI_2.PlayerName != "")
+			if (RelatedPRI_2.GetPlayerAlias() != "")
 			{
-				if ( UTPlayerReplicationInfo(RelatedPRI_2).bIsFemale )
-					return RelatedPRI_2.PlayerName@Default.EndFemaleSpree;
+				if ( RelatedPRI_2.bIsFemale )
+					return RelatedPRI_2.GetPlayerAlias()@Default.EndFemaleSpree;
 				else
-					return RelatedPRI_2.PlayerName@Default.EndSelfSpree;
+					return RelatedPRI_2.GetPlayerAlias()@Default.EndSelfSpree;
 			}
 		}
 		else
 		{
-			return RelatedPRI_1.PlayerName$Default.EndSpreeNote@RelatedPRI_2.PlayerName@Default.EndSpreeNoteTrailer;
+			return RelatedPRI_1.GetPlayerAlias()$Default.EndSpreeNote@RelatedPRI_2.GetPlayerAlias()@Default.EndSpreeNoteTrailer;
 		}
 	}
 	return "";
@@ -111,14 +111,30 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	 FontSize=1
-	 bBeep=False
-	 SpreeSound(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_KillingSpree'
-	 SpreeSound(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Rampage'
-	 SpreeSound(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Dominating'
-	 SpreeSound(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Unstoppable'
-	 SpreeSound(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_GodLike'
-	 SpreeSound(5)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Massacre'
-	MessageArea=3
-	AnnouncementPriority=7
+   EndSpreeNote=" ha terminato la sua furia omicida a causa di"
+   EndSelfSpree="ha terminato il suo raptus."
+   EndFemaleSpree="ha terminato il suo raptus."
+   SpreeNote(0)="ha un raptus omicida!"
+   SpreeNote(1)="è fuori di sé!"
+   SpreeNote(2)="sta dominando!"
+   SpreeNote(3)="è implacabile!"
+   SpreeNote(4)="è divino!"
+   SpreeNote(5)="sta facendo un MASSACRO!"
+   SelfSpreeNote(0)="Raptus Omicida!"
+   SelfSpreeNote(1)="Furia!"
+   SelfSpreeNote(2)="Sto dominando!"
+   SelfSpreeNote(3)="Implacabile!"
+   SelfSpreeNote(4)="DIVINO!"
+   SelfSpreeNote(5)="MASSACRO!"
+   SpreeSound(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_KillingSpree'
+   SpreeSound(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Rampage'
+   SpreeSound(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Dominating'
+   SpreeSound(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_UnStoppable'
+   SpreeSound(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_GodLike'
+   SpreeSound(5)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Massacre'
+   MessageArea=3
+   AnnouncementPriority=7
+   FontSize=1
+   Name="Default__UTKillingSpreeMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

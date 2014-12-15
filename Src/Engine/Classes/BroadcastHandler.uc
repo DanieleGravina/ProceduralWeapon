@@ -7,7 +7,7 @@
 // GameInfos produce localized messages using their DeathMessageClass and
 // GameMessageClass classes.
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class BroadcastHandler extends Info
 	config(Game);
@@ -115,5 +115,12 @@ event AllowBroadcastLocalizedTeam( int TeamIndex, actor Sender, class<LocalMessa
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   TickGroup=TG_DuringAsyncWork
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__BroadcastHandler"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

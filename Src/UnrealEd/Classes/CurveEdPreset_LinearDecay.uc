@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CurveEdPreset_LinearDecay extends CurveEdPresetBase
 	native
@@ -127,15 +127,16 @@ function bool GenerateCurve(out array<float> RequiredKeyInTimes, out array<Prese
 }
 
 /** */
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** */
+
 defaultproperties
 {
-	StartDecay=0.0
-	StartValue=1.0
-	EndDecay=1.0
-	EndValue=0.0
+   StartValue=1.000000
+   EndDecay=1.000000
+   Name="Default__CurveEdPreset_LinearDecay"
+   ObjectArchetype=CurveEdPresetBase'UnrealEd.Default__CurveEdPresetBase'
 }

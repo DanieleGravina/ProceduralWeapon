@@ -3,7 +3,7 @@
  *
  * Kismet action exposing associating/ dissociating of levels.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_LevelVisibility extends SeqAct_Latent
 	native(Sequence);
@@ -12,29 +12,20 @@ class SeqAct_LevelVisibility extends SeqAct_Latent
 var() LevelStreaming Level;
 
 /** LevelStreaming object name */
-var() Name LevelName<autocomment=true>;
+var() Name LevelName;
 
-var transient bool bStatusIsOk;
-
-cpptext
-{
-	void Activated();
-	UBOOL UpdateOp(FLOAT DeltaTime);
-	virtual void UpdateStatus();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-#if WITH_EDITOR
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& BoxCenter);
-#endif
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Change Level Visibility"
-	ObjCategory="Level"
-	VariableLinks.Empty
-	OutputLinks.Empty
-	InputLinks(0)=(LinkDesc="Make Visible")
-	InputLinks(1)=(LinkDesc="Hide")
-	OutputLinks(0)=(LinkDesc="Finished")
+   InputLinks(0)=(LinkDesc="Make Visible")
+   InputLinks(1)=(LinkDesc="Hide")
+   ObjName="Change Level Visibility"
+   ObjCategory="Level"
+   Name="Default__SeqAct_LevelVisibility"
+   ObjectArchetype=SeqAct_Latent'Engine.Default__SeqAct_Latent'
 }

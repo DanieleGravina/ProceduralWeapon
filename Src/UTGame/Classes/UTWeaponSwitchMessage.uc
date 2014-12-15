@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //
 // OptionalObject is an Pickup class
@@ -23,9 +23,9 @@ static function string GetString(
 
 defaultproperties
 {
-	bIsUnique=true
-	DrawColor=(R=255,G=255,B=255,A=255)
-	FontSize=2
-	bIsConsoleMessage=false
-	MessageArea=4
+   MessageArea=4
+   bIsUnique=True
+   FontSize=2
+   Name="Default__UTWeaponSwitchMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

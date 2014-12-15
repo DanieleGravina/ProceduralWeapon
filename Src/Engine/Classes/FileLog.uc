@@ -6,7 +6,7 @@
  * This functionality has been moved to the new FileWriter class.  Stubs
  * have been left here for compatibility
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class FileLog extends FileWriter
 	native;
@@ -37,4 +37,12 @@ function CloseLog()
 	CloseFile();
 }
 
-
+defaultproperties
+{
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__FileWriter:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__FileWriter:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__FileLog"
+   ObjectArchetype=FileWriter'Engine.Default__FileWriter'
+}

@@ -1,18 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpTrackInstMove extends InterpTrackInst
 	native(Interpolation);
 
 
-cpptext
-{
-	/** Will save the current position of the Actor as the 'initial position', used if MoveFrame == IMF_RelativeToInitial. */
-	virtual void InitTrackInst(UInterpTrack* Track);
-
-	/** Initialise InitialTMand InitialQuat. */
-	void CalcInitialTransform(UInterpTrack* Track, UBOOL bZeroFromHere);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Saved position. Used in editor for resetting when quitting Matinee. */
 var	vector	ResetLocation;
@@ -25,3 +25,9 @@ var	matrix	InitialTM;
 
 /** Orientation of group's actor when sequence was started. @see InitialTM */
 var quat	InitialQuat;
+
+defaultproperties
+{
+   Name="Default__InterpTrackInstMove"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
+}

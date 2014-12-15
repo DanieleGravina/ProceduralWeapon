@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CurveEdPreset_UserSet extends CurveEdPresetBase
 	native
@@ -98,7 +98,7 @@ function bool GenerateCurve(out array<float> RequiredKeyInTimes, out array<Prese
 		GeneratedPoints[PointCount].TangentIn		= UserCurve.Points[PointCount].TangentIn;
 		GeneratedPoints[PointCount].TangentOut		= UserCurve.Points[PointCount].TangentOut;
 
-		`Log("    Key " $ PointCount $ " - " $ CurrentKeyIn $ " - " $ GeneratedPoints[PointCount].KeyOut);
+		LogInternal("    Key " $ PointCount $ " - " $ CurrentKeyIn $ " - " $ GeneratedPoints[PointCount].KeyOut);
 	}
 
 	return bRetval;
@@ -135,11 +135,14 @@ function bool SaveUserSetPointFile()
 }
 
 /** */
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** */
+
 defaultproperties
 {
+   Name="Default__CurveEdPreset_UserSet"
+   ObjectArchetype=CurveEdPresetBase'UnrealEd.Default__CurveEdPresetBase'
 }

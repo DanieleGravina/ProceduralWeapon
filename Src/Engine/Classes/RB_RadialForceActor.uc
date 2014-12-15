@@ -1,9 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- * DO NOT USE, try the NxForceField classes instead!
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class RB_RadialForceActor extends RigidBodyBase
-	native(ForceField)
+class RB_RadialForceActor extends Actor
+	native(Physics)
 	placeable;
 
 enum ERadialForceType
@@ -36,6 +35,9 @@ var()	bool	bForceActive;
 /** Indicates which type of force mode is used. */
 var()	ERadialForceType	RadialForceMode;
 
+/** Force field channel, used to identify which force field exclude volumes apply to this force field */
+var()	int		ForceFieldChannel;
+
 /** Apply force field to cloth */
 var()	bool	bForceApplyToCloth;
 
@@ -53,14 +55,12 @@ var()	bool	bForceApplyToProjectiles;
 var()	const RBCollisionChannelContainer CollideWithChannels;
 
 
-cpptext
-{	
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void TickSpecial(FLOAT DeltaSeconds);
-#if WITH_EDITOR
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -69,7 +69,7 @@ replication
 }
 
 /** Handling Toggle event from Kismet. */
-simulated function OnToggle(SeqAct_Toggle inAction)
+simulated function onToggle(SeqAct_Toggle inAction)
 {
 	if(inAction.InputLinks[0].bHasImpulse)
 	{
@@ -89,53 +89,36 @@ simulated function OnToggle(SeqAct_Toggle inAction)
 
 defaultproperties
 {
-	Begin Object Class=DrawSphereComponent Name=DrawSphere0
-		SphereColor=(R=64,G=70,B=255,A=255)
-		SphereRadius=200.0
-		bDrawOnlyIfSelected=True
-	End Object
-	RenderComponent=DrawSphere0
-	Components.Add(DrawSphere0)
-
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_RadForce'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Physics"
-	End Object
-	Components.Add(Sprite)
-
-	TickGroup=TG_PreAsyncWork
-
-	ForceStrength=10.0
-	ForceRadius=200.0
-	ForceFalloff=RIF_Constant
-	RadialForceMode=RFT_Force
-
-	RemoteRole=ROLE_SimulatedProxy
-	bNoDelete=true
-	bAlwaysRelevant=true
-	NetUpdateFrequency=0.1
-	bOnlyDirtyReplication=true
-	
-	bForceApplyToCloth=True
-	bForceApplyToFluid=True
-	bForceApplyToRigidBodies=True
-	bForceApplyToProjectiles=False
-	
-	CollideWithChannels={( 
-                Default=True,
-                Pawn=True,
-                Vehicle=True,
-                Water=True,
-                GameplayPhysics=True,
-                EffectPhysics=True,
-                Untitled1=True,
-                Untitled2=True,
-                Untitled3=True,
-                Untitled4=True,
-                Cloth=True,
-                FluidDrain=True,
-                )}
+   Begin Object Class=DrawSphereComponent Name=DrawSphere0 ObjName=DrawSphere0 Archetype=DrawSphereComponent'Engine.Default__DrawSphereComponent'
+      SphereColor=(B=255,G=70,R=64,A=255)
+      SphereRadius=200.000000
+      Name="DrawSphere0"
+      ObjectArchetype=DrawSphereComponent'Engine.Default__DrawSphereComponent'
+   End Object
+   RenderComponent=DrawSphere0
+   ForceStrength=10.000000
+   ForceRadius=200.000000
+   bForceApplyToCloth=True
+   bForceApplyToFluid=True
+   bForceApplyToRigidBodies=True
+   ForceFieldChannel=1
+   CollideWithChannels=(Default=True,Pawn=True,Vehicle=True,Water=True,GameplayPhysics=True,EffectPhysics=True,Untitled1=True,Untitled2=True,Untitled3=True,Untitled4=True,Cloth=True,FluidDrain=True)
+   Components(0)=DrawSphere0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_RadForce'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(1)=Sprite
+   RemoteRole=ROLE_SimulatedProxy
+   bNoDelete=True
+   bAlwaysRelevant=True
+   bOnlyDirtyReplication=True
+   NetUpdateFrequency=0.100000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__RB_RadialForceActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

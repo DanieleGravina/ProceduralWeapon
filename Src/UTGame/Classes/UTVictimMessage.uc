@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVictimMessage extends UTWeaponKillMessage;
 
@@ -18,12 +18,14 @@ static function string GetString(
 	
 	if (RelatedPRI_1 == None)
 	{
+		if ( class<UTDmgType_OrbReturn>(OptionalObject) != None )
+			return default.OrbSuicideString;
 		return "";
 	}
 
-	if (RelatedPRI_1.PlayerName != "")
+	if (RelatedPRI_1.GetPlayerAlias() != "")
 	{
-		VictimString = Default.YouWereKilledBy@RelatedPRI_1.PlayerName$Default.KilledByTrailer;
+		VictimString = Default.YouWereKilledBy@RelatedPRI_1.GetPlayerAlias()$Default.KilledByTrailer;
 		VictimDamageType = Class<UTDamageType>(OptionalObject);
 		if ( VictimDamageType != None )
 		{
@@ -63,9 +65,18 @@ static function string GetString(
 
 defaultproperties
 {
-	bIsUnique=True
-	Lifetime=6
-	DrawColor=(R=255,G=0,B=0,A=255)
-	FontSize=2
-	MessageArea=1
+   YouWereKilledBy="Sei stato ucciso da"
+   KilledByTrailer="!"
+   OrbSuicideString="Hai deciso di essere un eroe."
+   RunOverString="(Colpisci e fuggi)"
+   SpiderMineString="(Mine robot)"
+   ScorpionKamikazeString="(Autodistruzione Scorpion)"
+   ViperKamikazeString="(Autodistruzione Viper)"
+   TelefragString="(Fragmentato)"
+   bIsUnique=True
+   Lifetime=6.000000
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=2
+   Name="Default__UTVictimMessage"
+   ObjectArchetype=UTWeaponKillMessage'UTGame.Default__UTWeaponKillMessage'
 }

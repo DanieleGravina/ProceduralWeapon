@@ -1,8 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Texture2DComposite extends Texture
-	native(Texture)
+	native
 	hidecategories(Object);
 
 /**
@@ -14,8 +14,6 @@ struct native SourceTexture2DRegion
 	var int OffsetY;
 	var int SizeX;
 	var int SizeY;
-	var int DestOffsetX;
-	var int DestOffsetY;
 	var Texture2D Texture2D;
 };
 
@@ -27,13 +25,6 @@ var array<SourceTexture2DRegion> SourceRegions;
 * defaults to deriving the texture size using texture LOD bias settings from the source textures 
 */
 var int	MaxTextureSize;
-
-/** 
-*  Dimensions of the composite texture. A value of 0 is ignored and defaults to deriving the 
-*  texture size using the size of the source textures 
-*/
-var int DestSizeX;
-var int DestSizeY;
 
 /** Utility that checks to see if all Texture2Ds specified in the SourceRegions array are fully streamed in. */
 native final function bool SourceTexturesFullyStreamedIn();
@@ -49,39 +40,40 @@ native final function UpdateCompositeTexture(int NumMipsToGenerate);
 /** Utils to reset all source region info. */
 native final function ResetSourceRegions();
 
-cpptext
-{
-private:
-	/**
-	 * Calculate the first available mip from a set of textures based on the LOD bias for each
-	 * texture.
-	 *
-	 * @return first available mip index from the source regions
-	 */
-	INT GetFirstAvailableMipIndex(const TArray<FSourceTexture2DRegion>& ValidRegions);
-
-	/**
-	* Locks each region of the source RHI texture 2d resources and copies the block of data
-	* for that region to the destination mip buffer. This is done for all mip levels.
-	*
-	* (Only called by the rendering thread)
-	*/
-	void RenderThread_CopyRectRegions(const TArray<FSourceTexture2DRegion>& ValidRegions);
-
-	// UTexture interface.
-	virtual FTextureResource* CreateResource();
-	virtual EMaterialValueType GetMaterialType()  { return MCT_Texture2D; }
-
-	// USurface interface.
-	virtual FLOAT GetSurfaceWidth() const;
-	virtual FLOAT GetSurfaceHeight() const;
-
-	// UObject interface.
-	virtual void Serialize(FArchive& Ar);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// all mip levels will be resident in memory
-	NeverStream=True
+   NeverStream=True
+   Name="Default__Texture2DComposite"
+   ObjectArchetype=Texture'Engine.Default__Texture'
 }

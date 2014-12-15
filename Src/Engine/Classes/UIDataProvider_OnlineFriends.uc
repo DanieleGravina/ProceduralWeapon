@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -8,6 +8,7 @@
  */
 class UIDataProvider_OnlineFriends extends UIDataProvider_OnlinePlayerDataBase
 	native(inherit)
+	implements(UIListElementCellProvider)
 	dependson(OnlineSubsystem)
 	transient;
 
@@ -19,9 +20,6 @@ var localized string NickNameCol;
 
 /** The column name to display in the UI */
 var localized string PresenceInfoCol;
-
-/** The column name to display in the UI */
-var localized string FriendStateCol;
 
 /** The column name to display in the UI */
 var localized string bIsOnlineCol;
@@ -38,23 +36,82 @@ var localized string bIsJoinableCol;
 /** The column name to display in the UI */
 var localized string bHasVoiceSupportCol;
 
-/** The column name to display in the UI */
-var localized string bHaveInvitedCol;
-
-/** The column name to display in the UI */
-var localized string bHasInvitedYouCol;
-
-/** The text to use when offline */
-var localized string OfflineText;
-
-/** The text to use when online */
-var localized string OnlineText;
-
-/** The text to use when away */
-var localized string AwayText;
-
-/** The text to use when busy */
-var localized string BusyText;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Binds the player to this provider. Starts the async friends list gathering
@@ -68,7 +125,7 @@ event OnRegister(LocalPlayer InPlayer)
 
 	Super.OnRegister(InPlayer);
 	// If the player is None, we are in the editor
-	if (PlayerControllerId != -1)
+	if (Player != None)
 	{
 		// Figure out if we have an online subsystem registered
 		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
@@ -79,17 +136,25 @@ event OnRegister(LocalPlayer InPlayer)
 			if (PlayerInterface != None)
 			{
 				// Register that we are interested in any sign in change for this player
-				PlayerInterface.AddLoginChangeDelegate(OnLoginChange);
+				PlayerInterface.AddLoginChangeDelegate(OnLoginChange,Player.ControllerId);
 				// Set our callback function per player
-				PlayerInterface.AddReadFriendsCompleteDelegate(PlayerControllerId,OnFriendsReadComplete);
-				// Don't read people that aren't signed in or are guest accounts
-				if (PlayerInterface.GetLoginStatus(PlayerControllerId) > LS_NotLoggedIn &&
-					!PlayerInterface.IsGuestLogin(PlayerControllerId))
+				PlayerInterface.AddReadFriendsCompleteDelegate(Player.ControllerId,OnFriendsReadComplete);
+				// Start the async task
+				if (PlayerInterface.ReadFriendsList(Player.ControllerId) == false)
 				{
-					// Start the async task
-					PlayerInterface.ReadFriendsList(PlayerControllerId);
+					WarnInternal("Can't retrieve friends for player ("$Player.ControllerId$")");
 				}
 			}
+			else
+			{
+				WarnInternal("OnlineSubsystem does not support the player interface. Can't retrieve friends for player ("$
+					Player.ControllerId$")");
+			}
+		}
+		else
+		{
+			WarnInternal("No OnlineSubsystem present. Can't retrieve friends for player ("$
+				Player.ControllerId$")");
 		}
 	}
 }
@@ -111,9 +176,9 @@ event OnUnregister()
 		if (PlayerInterface != None)
 		{
 			// Set our callback function per player
-			PlayerInterface.ClearReadFriendsCompleteDelegate(PlayerControllerId,OnFriendsReadComplete);
+			PlayerInterface.ClearReadFriendsCompleteDelegate(Player.ControllerId,OnFriendsReadComplete);
 			// Clear our delegate
-			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange);
+			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange,Player.ControllerId);
 		}
 	}
 	Super.OnUnregister();
@@ -140,23 +205,23 @@ function OnFriendsReadComplete(bool bWasSuccessful)
 			if (PlayerInterface != None)
 			{
 				// Make a copy of the friends data for the UI
-				PlayerInterface.GetFriendsList(PlayerControllerId,FriendsList);
+				PlayerInterface.GetFriendsList(Player.ControllerId,FriendsList);
 			}
 		}
+		// Notify any subscribers that we have new data
+		NotifyPropertyChanged();
 	}
 	else
 	{
-		`Log("Failed to read friends list",,'DevOnline');
+		LogInternal("Failed to read friends list");
 	}
 }
 
 /**
  * Executes a refetching of the friends data when the login for this player
  * changes
- *
- * @param LocalUserNum the player that logged in/out
  */
-function OnLoginChange(byte LocalUserNum)
+function OnLoginChange()
 {
 	local OnlineSubsystem OnlineSub;
 	local OnlinePlayerInterface PlayerInterface;
@@ -168,12 +233,15 @@ function OnLoginChange(byte LocalUserNum)
 	{
 		// Grab the player interface to verify the subsystem supports it
 		PlayerInterface = OnlineSub.PlayerInterface;
-		if (PlayerInterface != None &&
-			PlayerInterface.GetLoginStatus(PlayerControllerId) > LS_NotLoggedIn &&
-			!PlayerInterface.IsGuestLogin(PlayerControllerId))
+		if (PlayerInterface != None)
 		{
 			// Start the async task
-			PlayerInterface.ReadFriendsList(PlayerControllerId);
+			if (PlayerInterface.ReadFriendsList(Player.ControllerId) == false)
+			{
+				WarnInternal("Can't retrieve friends for player ("$Player.ControllerId$")");
+				// Notify any subscribers that we have changed data
+				NotifyPropertyChanged();
+			}
 		}
 	}
 }
@@ -185,7 +253,7 @@ event RefreshFriendsList()
 	local OnlinePlayerInterface PlayerInterface;
 
 	// If the player is None, we are in the editor
-	if (PlayerControllerId != -1)
+	if (Player != None)
 	{
 		// Figure out if we have an online subsystem registered
 		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
@@ -193,14 +261,29 @@ event RefreshFriendsList()
 		{
 			// Grab the player interface to verify the subsystem supports it
 			PlayerInterface = OnlineSub.PlayerInterface;
-			if (PlayerInterface != None &&
-				PlayerInterface.GetLoginStatus(PlayerControllerId) > LS_NotLoggedIn &&
-				!PlayerInterface.IsGuestLogin(PlayerControllerId))
+			if (PlayerInterface != None)
 			{
 				// Start the async task
-				PlayerInterface.ReadFriendsList(PlayerControllerId);
-				`log("Refreshing friends list",,'DevOnline');
+				PlayerInterface.ReadFriendsList(Player.ControllerId);
+				LogInternal("Refreshing friends list");
 			}
 		}
 	}
+	else
+	{
+		WarnInternal("No player to refresh the friends list for");
+	}
+}
+
+defaultproperties
+{
+   NickNameCol="Name"
+   PresenceInfoCol="Online Status"
+   bIsOnlineCol="Is Online"
+   bIsPlayingCol="Is Playing"
+   bIsPlayingThisGameCol="Is Playing This Game"
+   bIsJoinableCol="Is Joinable"
+   bHasVoiceSupportCol="Has Voice Support"
+   Name="Default__UIDataProvider_OnlineFriends"
+   ObjectArchetype=UIDataProvider_OnlinePlayerDataBase'Engine.Default__UIDataProvider_OnlinePlayerDataBase'
 }

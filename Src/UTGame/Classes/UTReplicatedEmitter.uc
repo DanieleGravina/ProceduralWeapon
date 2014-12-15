@@ -1,7 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTReplicatedEmitter extends UTEmitter
+	native
 	notplaceable
 	abstract;
 
@@ -26,8 +27,15 @@ simulated function PostBeginPlay()
 
 defaultproperties
 {
-	ServerLifeSpan=0.2
-	bNetInitialRotation=true
-	RemoteRole=ROLE_SimulatedProxy
-	bNetTemporary=true
+   ServerLifeSpan=0.200000
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTEmitter:ParticleSystemComponent0'
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTEmitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   RemoteRole=ROLE_SimulatedProxy
+   bNetTemporary=True
+   bNetInitialRotation=True
+   Name="Default__UTReplicatedEmitter"
+   ObjectArchetype=UTEmitter'UTGame.Default__UTEmitter'
 }

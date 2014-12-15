@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTCTFBase extends UTGameObjective
@@ -35,6 +35,9 @@ var Array<SoundNodeWave> NearLocationSpeech;
 var Array<SoundNodeWave> MidfieldHighSpeech;
 var Array<SoundNodeWave> MidfieldLowSpeech;
 
+var AudioComponent AmbientSound;
+var SoundCue GreedAmbientSound;
+
 simulated function PostBeginPlay()
 {
 //	local UTDefensePoint W;
@@ -50,7 +53,7 @@ simulated function PostBeginPlay()
 
 		if (myFlag==None)
 		{
-			`warn(Self$" could not spawn flag of type '"$FlagType$"' at "$location);
+			WarnInternal(Self$" could not spawn flag of type '"$FlagType$"' at "$location);
 			return;
 		}
 		else
@@ -191,7 +194,7 @@ simulated function SetAlarm(bool bNowOn)
 			{
 				TakenSound.Stop();
 			}
-			if(FlagEmptyParticles != none)
+			if(FlagEmptyParticles != none && !ClassIsChildOf(WorldInfo.GRI.GameClass, class'UTGreedGame'))
 			{
 				FlagEmptyParticles.DeactivateSystem();
 			}
@@ -216,14 +219,45 @@ simulated event bool IsActive()
 	return true;
 }
 
-
 defaultproperties
 {
-	NearBaseRadius=+4000.0
-	MidFieldHighZOffset=250.0
-	MidFieldLowZOffset=-250.0
-	MinimapIconScale=7.0
+   MidFieldHighZOffset=250.000000
+   MidFieldLowZOffset=-250.000000
+   NearBaseRadius=4000.000000
+   Begin Object Class=AudioComponent Name=AmbientSoundComponent ObjName=AmbientSoundComponent Archetype=AudioComponent'Engine.Default__AudioComponent'
+      bStopWhenOwnerDestroyed=True
+      bShouldRemainActiveIfDropped=True
+      Name="AmbientSoundComponent"
+      ObjectArchetype=AudioComponent'Engine.Default__AudioComponent'
+   End Object
+   AmbientSound=AmbientSoundComponent
+   GreedAmbientSound=SoundCue'A_Gameplay.ONS.A_Gameplay_ONS_ConduitAmbient'
+   MinimapIconScale=7.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTGameObjective:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTGameObjective:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTGameObjective:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTGameObjective:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'UTGame.Default__UTGameObjective:Sprite2'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTGameObjective:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'UTGame.Default__UTGameObjective:Arrow'
+      ObjectArchetype=ArrowComponent'UTGame.Default__UTGameObjective:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTGameObjective:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTGameObjective:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   Components(5)=AmbientSoundComponent
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTCTFBase"
+   ObjectArchetype=UTGameObjective'UTGame.Default__UTGameObjective'
 }
-
-
-

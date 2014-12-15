@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqAct_PlayAnim extends SequenceAction;
@@ -11,9 +11,10 @@ var() name AnimName;
 /** Whether or not to loop the anim **/
 var() bool bLooping;
 
-
 defaultproperties
 {
-	ObjName="Pawn Anim"
-	ObjCategory="Pawn"
+   ObjName="Pawn Anim"
+   ObjCategory="Pawn"
+   Name="Default__UTSeqAct_PlayAnim"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

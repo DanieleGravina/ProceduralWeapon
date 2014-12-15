@@ -1,30 +1,30 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqVar_Player extends SeqVar_Object
 	native(Sequence);
 
-cpptext
-{
-	UObject** GetObjectRef( INT Idx );
-
-	virtual FString GetValueStr()
-	{
-		if (!bAllPlayers)
-		{
-			return FString::Printf(TEXT("Player %d"),PlayerIdx);
-		}
-		else
-		{
-			return FString(TEXT("All Players"));
-		}
-	}
-
-	virtual UBOOL SupportsProperty(UProperty *Property)
-	{
-		return FALSE;
-	}
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Local list of players in the game */
 var transient array<Object> Players;
@@ -35,35 +35,28 @@ var() bool bAllPlayers;
 /** Individual player selection for multiplayer scripting */
 var() int PlayerIdx;
 
-/** updates the Players array with the list of Controllers in the game that count as players (humans or bot-players) */
-native final function UpdatePlayersList();
-
 function Object GetObjectValue()
 {
-	local Controller C;
+	local PlayerController PC;
 
-	UpdatePlayersList();
-
-	if (Players.length > 0)
+	PC = PlayerController(ObjValue);
+	if (PC == None)
 	{
-		if (bAllPlayers || PlayerIdx < 0 || PlayerIdx >= Players.length)
+		foreach GetWorldInfo().AllControllers(class'PlayerController', PC)
 		{
-			C = Controller(Players[0]);
-		}
-		else
-		{
-			C = Controller(Players[PlayerIdx]);
+			ObjValue = PC;
+			break;
 		}
 	}
 
 	// we usually want the pawn, so return that if possible
-	return (C != None && C.Pawn != None) ? C.Pawn : C;
+	return (PC.Pawn != None) ? PC.Pawn : PC;
 }
 
 defaultproperties
 {
-	ObjName="Player"
-	ObjCategory="Player"
-	bAllPlayers=TRUE
-	SupportedClasses=(class'Controller',class'Pawn')
+   bAllPlayers=True
+   ObjName="Player"
+   Name="Default__SeqVar_Player"
+   ObjectArchetype=SeqVar_Object'Engine.Default__SeqVar_Object'
 }

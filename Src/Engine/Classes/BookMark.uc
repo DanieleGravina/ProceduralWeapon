@@ -2,7 +2,7 @@
 * class BookMark
 *
 * A camera position the current level.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class BookMark extends Object
 	hidecategories(Object)
@@ -12,13 +12,12 @@ class BookMark extends Object
 var() vector	Location;
 var() rotator	Rotation;
 
-/** Array of levels that are hidden */
-var() array<string> HiddenLevels;
-
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__BookMark"
+   ObjectArchetype=Object'Core.Default__Object'
 }

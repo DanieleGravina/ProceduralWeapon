@@ -1,12 +1,10 @@
 /**
  *	Camera: defines the Point of View of a player in world space.
- * 	Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * 	Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Camera extends Actor
 	notplaceable
-	native(Camera)
-	dependson(EngineBaseTypes)
-	transient;
+	native;
 
 /** PlayerController Owning this Camera Actor */
 var		PlayerController	PCOwner;
@@ -27,12 +25,6 @@ var		float	ConstrainedAspectRatio;
 /** Default aspect ratio */
 var		float	DefaultAspectRatio;
 
-/** Off-axis yaw angle offset */
-var		float	OffAxisYawAngle;
-
-/** Off-axis pitch angle offset */
-var		float	OffAxisPitchAngle;
-
 /** If we should apply FadeColor/FadeAmount to the screen. */
 var		bool	bEnableFading;
 /** Color to fade to. */
@@ -40,23 +32,11 @@ var		color	FadeColor;
 /** Amount of fading to apply. */
 var		float	FadeAmount;
 
-/** Apply fading of audio alongside the video */
-var     bool    bFadeAudio;
-
 /** Indicates if CamPostProcessSettings should be used when using this Camera to view through. */
-var		float				CamOverridePostProcessAlpha;
+var		bool				bCamOverridePostProcess;
 
 /** Post-process settings to use if bCamOverridePostProcess is TRUE. */
 var		PostProcessSettings	CamPostProcessSettings;
-
-/** Rendering overrides that are active on this camera. */
-var		RenderingPerformanceOverrides	RenderingOverrides;
-
-/** 
- * Forces Temporal AA to be disabled when True. 
- * This is useful for hiding reprojection artifacts while certain game specific translucent effects are active.
- */
-var		transient bool bForceDisableTemporalAA;
 
 /** Turn on scaling of color channels in final image using ColorScale property. */
 var		bool	bEnableColorScaling;
@@ -84,7 +64,7 @@ struct native TCameraCache
 	/** cached Point of View */
 	var TPOV	POV;
 };
-var	TCameraCache	CameraCache, LastFrameCameraCache;
+var	TCameraCache	CameraCache;
 
 
 /**
@@ -136,15 +116,11 @@ struct native ViewTargetTransitionParams
 	var() EViewTargetBlendFunction	BlendFunction;
 	/** Exponent, used by certain blend functions to control the shape of the curve. */
 	var() float						BlendExp;
-	/** If TRUE, lock outgoing viewtarget to last frame's camera position for the remainder of the blend.
-	 *  This is useful if you plan to teleport the viewtarget, but want to keep the camera motion smooth. */
-	var() bool                      bLockOutgoing;
 
 	structdefaultproperties
 	{
 		BlendFunction=VTBlend_Cubic
 		BlendExp=2.f
-		bLockOutgoing=FALSE
 	}
 
 	// providing the constructor by hand here, because we pass this as an optional parameter
@@ -152,10 +128,11 @@ struct native ViewTargetTransitionParams
 	structcpptext
 	{
 		FViewTargetTransitionParams()
-		{}
-		FViewTargetTransitionParams(EEventParm)
-		: BlendTime(0.f), BlendFunction(VTBlend_Cubic), BlendExp(2.f), bLockOutgoing(FALSE)
-		{}
+		{
+			BlendTime = 0.f;
+			BlendFunction = VTBlend_Cubic;
+			BlendExp = 2.f;
+		}
 	}
 };
 
@@ -170,132 +147,15 @@ var float		FreeCamDistance;
 /** Offset to Z free camera position */
 var vector		FreeCamOffset;
 
-/** camera fade management */
-var vector2d FadeAlpha;
-var float FadeTime, FadeTimeRemaining;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-// "Lens" effects (e.g. blood, dirt on camera)
-/** CameraBlood emitter attached to this camera */
-var protected transient array<EmitterCameraLensEffectBase> CameraLensEffects;
-
-
-
-/////////////////////
-// Camera Modifiers
-/////////////////////
-
-/** Camera modifier for cone-driven screen shakes */
-var() editinline transient CameraModifier_CameraShake   CameraShakeCamMod;
-/** Class to use when instantiating screenshake modifier object.  Provided to support overrides. */
-var() protected class<CameraModifier_CameraShake>       CameraShakeCamModClass;
-
-enum ECameraAnimPlaySpace
-{
-	/** This anim is applied in camera space */
-	CAPS_CameraLocal,
-	/** This anim is applied in world space */
-	CAPS_World,
-	/** This anim is applied in a user-specified space (defined by UserPlaySpaceMatrix) */
-	CAPS_UserDefined,
-};
-
-////////////////////////
-// CameraAnim support
-////////////////////////
-
-const MAX_ACTIVE_CAMERA_ANIMS = 8;
-
-/** Pool of anim instance objects available with which to play camera animations */
-var protected CameraAnimInst			AnimInstPool[MAX_ACTIVE_CAMERA_ANIMS];
-
-/** Array of anim instances that are currently playing and in-use */
-var protected array<CameraAnimInst>		ActiveAnims;
-/** Array of anim instances that are not playing and available */
-var protected array<CameraAnimInst>		FreeAnims;
-
-/** Internal.  Receives the output of individual camera animations. */
-var protected transient DynamicCameraActor AnimCameraActor;
-
-/** if true, server will use camera positions replicated from the client instead of calculating locally. */
-var bool bUseClientSideCameraUpdates;
-
-/** If true, replicate the client side camera position but don't use it, and draw the positions on the server */
-var bool bDebugClientSideCamera;
-
-/** if true, send a camera update to the server on next update */
-var bool bShouldSendClientSideCameraUpdate;
-
-cpptext
-{
-protected:
-	void InitTempCameraActor(class ACameraActor* CamActor, class UCameraAnim* AnimToInitFor) const;
-	void ApplyAnimToCamera(class ACameraActor const* AnimatedCamActor, class UCameraAnimInst const* AnimInst, FTPOV& OutPOV);
-
-	UCameraAnimInst* AllocCameraAnimInst();
-	void ReleaseCameraAnimInst(UCameraAnimInst* Inst);
-	UCameraAnimInst* FindExistingCameraAnimInst(UCameraAnim const* Anim);
-
-public:
-	virtual void ModifyPostProcessSettings(FPostProcessSettings& PPSettings) const;
-
-	void	AssignViewTarget(AActor* NewTarget, FTViewTarget& VT, struct FViewTargetTransitionParams TransitionParams=FViewTargetTransitionParams(EC_EventParm));
-	AActor* GetViewTarget();
-	virtual UBOOL	PlayerControlled();
-}
-
-/**
- * Internal. Creates and initializes a new camera modifier of the specified class, returns the object ref.
- */
-protected function CameraModifier CreateCameraModifier(class<CameraModifier> ModifierClass)
-{
-	local CameraModifier NewMod;
-	NewMod = new(Outer) ModifierClass;
-	NewMod.Init();
-	NewMod.AddCameraModifier(Self);
-	return NewMod;
-}
-
-
-function PostBeginPlay()
-{
-	local int Idx;
-
-	super.PostBeginPlay();
-
- 	// Setup camera modifiers
- 	if( (CameraShakeCamMod == None) && (CameraShakeCamModClass != None) )
- 	{
- 		CameraShakeCamMod = CameraModifier_CameraShake(CreateCameraModifier(CameraShakeCamModClass));
- 	}
-
-	// create CameraAnimInsts in pool
-	for (Idx=0; Idx<MAX_ACTIVE_CAMERA_ANIMS; ++Idx)
-	{
-		AnimInstPool[Idx] = new(Self) class'CameraAnimInst';
-
-		// add everything to the free list initially
-		FreeAnims[Idx] = AnimInstPool[Idx];
-	}
-
-	// spawn the two temp CameraActors used for updating CameraAnims
-	AnimCameraActor = Spawn(class'DynamicCameraActor', self,,,,, TRUE);
-}
-
-event Destroyed()
-{
-	// clean up the temp camera actors
-	AnimCameraActor.Destroy();
-	super.Destroyed();
-}
-
-/**
- * Apply modifiers on Camera.
- * @param	DeltaTime	Time is seconds since last update
- * @param	OutPOV		Point of View
- */
-
-native function ApplyCameraModifiers(float DeltaTime, out TPOV OutPOV);
 
 /**
  * Initialize Camera for associated PlayerController
@@ -371,11 +231,6 @@ final function GetCameraViewPoint(out vector OutCamLoc, out rotator OutCamRot)
 	OutCamRot = CameraCache.POV.Rotation;
 }
 
-final function rotator GetCameraRotation()
-{
-	return CameraCache.POV.Rotation;
-}
-
 /**
  * Sets the new desired color scale and enables interpolation.
  */
@@ -409,23 +264,8 @@ simulated function SetDesiredColorScale(vector NewColorScale, float InterpTime)
 /**
  * Performs camera update.
  * Called once per frame after all actors have been ticked.
- * Non-local players replicate the POV if bUseClientSideCameraUpdates is true
  */
 simulated event UpdateCamera(float DeltaTime)
-{
-	if ( PCOwner.IsLocalPlayerController() || !bUseClientSideCameraUpdates || bDebugClientSideCamera )
-	{
-		DoUpdateCamera(DeltaTime);
-
-		if (WorldInfo.NetMode == NM_Client && bShouldSendClientSideCameraUpdate)
-		{
-			PCOwner.ServerUpdateCamera(CameraCache.POV.Location, (CameraCache.POV.Rotation.Pitch & 65535) + ((CameraCache.POV.Rotation.Yaw & 65535) << 16));
-			bShouldSendClientSideCameraUpdate = FALSE;
-		}
-	}
-}
-
-simulated function DoUpdateCamera(float DeltaTime)
 {
 	local TPOV		NewPOV;
 	local float		DurationPct, BlendPct;
@@ -433,7 +273,7 @@ simulated function DoUpdateCamera(float DeltaTime)
 	// update color scale interpolation
 	if (bEnableColorScaleInterp)
 	{
-		BlendPct = FClamp(`TimeSince(ColorScaleInterpStartTime)/ColorScaleInterpDuration,0.f,1.f);
+		BlendPct = FClamp(TimeSince(ColorScaleInterpStartTime)/ColorScaleInterpDuration,0.f,1.f);
 		ColorScale = VLerp(OriginalColorScale,DesiredColorScale,BlendPct);
 		// if we've maxed
 		if (BlendPct == 1.f)
@@ -445,15 +285,11 @@ simulated function DoUpdateCamera(float DeltaTime)
 
 	// Reset aspect ratio and postprocess override associated with CameraActor.
 	bConstrainAspectRatio = FALSE;
-	CamOverridePostProcessAlpha = 0.f;
+	bCamOverridePostProcess = FALSE;
 
-	// Don't update outgoing viewtarget during an interpolation when bLockOutgoing is set.
-	if( PendingViewTarget.Target == None || !BlendParams.bLockOutgoing )
-	{
-		// Update current view target
-		CheckViewTarget(ViewTarget);
-		UpdateViewTarget(ViewTarget, DeltaTime);
-	}
+	// Update main view target
+	CheckViewTarget(ViewTarget);
+	UpdateViewTarget(ViewTarget, DeltaTime);
 
 	// our camera is now viewing there
 	NewPOV					= ViewTarget.POV;
@@ -464,9 +300,6 @@ simulated function DoUpdateCamera(float DeltaTime)
 	{
 		BlendTimeToGo -= DeltaTime;
 
-		// Reset aspect ratio.  The call to UpdateViewTarget() may turn this back on.
-		bConstrainAspectRatio = FALSE;
-
 		// Update pending view target
 		CheckViewTarget(PendingViewTarget);
 		UpdateViewTarget(PendingViewTarget, DeltaTime);
@@ -474,7 +307,7 @@ simulated function DoUpdateCamera(float DeltaTime)
 		// blend....
 		if( BlendTimeToGo > 0 )
 		{
-			DurationPct	= (BlendParams.BlendTime - BlendTimeToGo) / BlendParams.BlendTime;
+			DurationPct	= 1.f - BlendTimeToGo / BlendParams.BlendTime;
 
 			switch (BlendParams.BlendFunction)
 			{
@@ -498,15 +331,13 @@ simulated function DoUpdateCamera(float DeltaTime)
 
 			// Update pending view target blend
 			NewPOV = BlendViewTargets(ViewTarget, PendingViewTarget, BlendPct);
+			ConstrainedAspectRatio = Lerp(ViewTarget.AspectRatio, PendingViewTarget.AspectRatio, BlendPct);
 		}
 		else
 		{
-			// Let the controller know we're finished blending between cameras
-			PCOwner.CameraTransitionFinished();
-
 			// we're done blending, set new view target
 			ViewTarget = PendingViewTarget;
-			
+
 			// clear pending view target
 			PendingViewTarget.Target		= None;
 			PendingViewTarget.Controller	= None;
@@ -515,47 +346,20 @@ simulated function DoUpdateCamera(float DeltaTime)
 
 			// our camera is now viewing there
 			NewPOV = PendingViewTarget.POV;
-		}
-
-		if( bConstrainAspectRatio )
-		{
-			// NOTE: We don't interpolate aspect ratio since either the prior or pending view target's AspectRatio
-			//       may be the default value (1.3333) unless the view target has a camera actor set to override
-			//       the aspect ratio.  We'll just use the pending view target's aspect.
 			ConstrainedAspectRatio = PendingViewTarget.AspectRatio;
 		}
 	}
 
 	// Cache results
 	FillCameraCache(NewPOV);
-
-	if (bEnableFading && FadeTimeRemaining > 0.0)
-	{
-		FadeTimeRemaining = FMax(FadeTimeRemaining - DeltaTime, 0.0);
-		if (FadeTime > 0.0)
-		{
-			FadeAmount = FadeAlpha.X + ((1.f - FadeTimeRemaining/FadeTime) * (FadeAlpha.Y - FadeAlpha.X));
-		}
-
-		if (bFadeAudio)
-		{
-			ApplyAudioFade();
-			if (FadeAmount == 0)
-			{
-				bFadeAudio = false;
-			}
-		}
-	}
 }
 
-/** Apply audio fading */
-native function ApplyAudioFade();
 
 /**
  * Blend 2 viewtargets.
  *
  * @param	A		Source view target
- * @param	B		destination view target
+ * @paramn	B		destination view target
  * @param	Alpha	Alpha, % of blend from A to B.
  */
 final function TPOV BlendViewTargets(const out TViewTarget A,const out TViewTarget B, float Alpha)
@@ -575,11 +379,6 @@ final function TPOV BlendViewTargets(const out TViewTarget A,const out TViewTarg
  */
 final function FillCameraCache(const out TPOV NewPOV)
 {
-	// Backup last frame results.
-	if( CameraCache.TimeStamp != WorldInfo.TimeSeconds )
-	{
-		LastFrameCameraCache = CameraCache;
-	}
 	CameraCache.TimeStamp	= WorldInfo.TimeSeconds;
 	CameraCache.POV			= NewPOV;
 }
@@ -605,13 +404,6 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 	local CameraActor	CamActor;
 	local bool			bDoNotApplyModifiers;
 	local TPOV			OrigPOV;
-	local Pawn          TPawn;
-
-	// Don't update outgoing viewtarget during an interpolation 
-	if( PendingViewTarget.Target != None && OutVT == ViewTarget && BlendParams.bLockOutgoing )
-	{
-		return;
-	}
 
 	// store previous POV, in case we need it later
 	OrigPOV = OutVT.POV;
@@ -630,15 +422,15 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 		OutVT.AspectRatio		= CamActor.AspectRatio;
 
 		// See if the CameraActor wants to override the PostProcess settings used.
-		CamOverridePostProcessAlpha = CamActor.CamOverridePostProcessAlpha;
+		bCamOverridePostProcess = CamActor.bCamOverridePostProcess;
 		CamPostProcessSettings = CamActor.CamOverridePostProcess;
 	}
 	else
 	{
-		TPawn = Pawn(OutVT.Target);
 		// Give Pawn Viewtarget a chance to dictate the camera position.
 		// If Pawn doesn't override the camera view, then we proceed with our own defaults
-		if( TPawn == None || !TPawn.CalcCamera(DeltaTime, OutVT.POV.Location, OutVT.POV.Rotation, OutVT.POV.FOV) )
+		if( Pawn(OutVT.Target) == None ||
+			!Pawn(OutVT.Target).CalcCamera(DeltaTime, OutVT.POV.Location, OutVT.POV.Rotation, OutVT.POV.FOV) )
 		{
 			// don't apply modifiers when using these debug camera modes.
 			bDoNotApplyModifiers = TRUE;
@@ -652,25 +444,17 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 
 				case 'ThirdPerson'	: // Simple third person view implementation
 				case 'FreeCam'		:
-				case 'FreeCam_Default':
 										Loc = OutVT.Target.Location;
 										Rot = OutVT.Target.Rotation;
 
-										// Take into account Mesh Translation so it takes into account the PostProcessing we do there.
-										if ((TPawn != None) && (TPawn.Mesh != None))
-										{
-											Loc += (TPawn.Mesh.Translation - TPawn.default.Mesh.Translation) >> OutVT.Target.Rotation;
-										}
-
 										//OutVT.Target.GetActorEyesViewPoint(Loc, Rot);
-										if( CameraStyle == 'FreeCam' || CameraStyle == 'FreeCam_Default' )
+										if( CameraStyle == 'FreeCam' )
 										{
 											Rot = PCOwner.Rotation;
 										}
 										Loc += FreeCamOffset >> Rot;
 
 										Pos = Loc - Vector(Rot) * FreeCamDistance;
-										// @fixme, respect BlockingVolume.bBlockCamera=false
 										HitActor = Trace(HitLocation, HitNormal, Pos, Loc, FALSE, vect(12,12,12));
 										OutVT.POV.Location = (HitActor == None) ? Pos : HitLocation;
 										OutVT.POV.Rotation = Rot;
@@ -678,11 +462,6 @@ function UpdateViewTarget(out TViewTarget OutVT, float DeltaTime)
 
 				case 'FirstPerson'	: // Simple first person, view through viewtarget's 'eyes'
 				default				:	OutVT.Target.GetActorEyesViewPoint(OutVT.POV.Location, OutVT.POV.Rotation);
-										// Take into account Mesh Translation so it takes into account the PostProcessing we do there.
-										if ((TPawn != None) && (TPawn.Mesh != None))
-										{
-											OutVT.POV.Location += (TPawn.Mesh.Translation - TPawn.default.Mesh.Translation) >> OutVT.Target.Rotation;
-										}
 										break;
 
 			}
@@ -723,6 +502,39 @@ function ProcessViewRotation(float DeltaTime, out rotator OutViewRotation, out R
 	}
 }
 
+
+/**
+ * Apply modifiers on Camera.
+ * @param	DeltaTime	Time is seconds since last update
+ * @param	OutPOV		Point of View
+ */
+event ApplyCameraModifiers(float DeltaTime, out TPOV OutPOV)
+{
+	local int	ModifierIdx;
+
+	// Loop through each camera modifier
+	for( ModifierIdx = 0; ModifierIdx < ModifierList.Length; ModifierIdx++ )
+	{
+		// Apply camera modification and output into DesiredCameraOffset/DesiredCameraRotation
+		if( ModifierList[ModifierIdx] != None &&
+			!ModifierList[ModifierIdx].IsDisabled() )
+		{
+			// If ModifyCamera returns true, exit loop
+			// Allows high priority things to dictate if they are
+			// the last modifier to be applied
+			if( ModifierList[ModifierIdx].ModifyCamera(Self, DeltaTime, OutPOV) )
+			{
+				break;
+			}
+		}
+	}
+}
+
+function bool AllowPawnRotation()
+{
+	return TRUE;
+}
+
 /**
  * list important Camera variables on canvas.  HUD will call DisplayDebug() on the current ViewTarget when
  * the ShowDebug exec is used
@@ -761,213 +573,18 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 	}
 }
 
-
-
-////////////////////////////////
-// Camera Lens Effects
-////////////////////////////////
-
-/** Finds the first instance of a lens effect of the given class, using linear search. */
-function EmitterCameraLensEffectBase FindCameraLensEffect(class<EmitterCameraLensEffectBase> LensEffectEmitterClass)
-{
-	local EmitterCameraLensEffectBase LensEffect;
-
-	foreach CameraLensEffects(LensEffect)
-	{
-		if ( !LensEffect.bDeleteMe &&
-			 ( (LensEffect.Class == LensEffectEmitterClass) ||
-			   (LensEffect.EmittersToTreatAsSame.Find(LensEffectEmitterClass) != INDEX_NONE) ||
-			   (LensEffectEmitterClass.default.EmittersToTreatAsSame.Find(LensEffect.Class) != INDEX_NONE ) ) )
-		{
-			return LensEffect;
-		}
-	}
-
-	return None;
-}
-
-/**
- *  Initiates a camera lens effect of the given class on this camera.
- */
-function AddCameraLensEffect(class<EmitterCameraLensEffectBase> LensEffectEmitterClass)
-{
-	local vector CamLoc;
-	local rotator CamRot;
-	local EmitterCameraLensEffectBase LensEffect;
-
-	if (LensEffectEmitterClass != None)
-	{
-		if (!LensEffectEmitterClass.default.bAllowMultipleInstances)
-		{
-			LensEffect = FindCameraLensEffect(LensEffectEmitterClass);
-
-			if (LensEffect != None)
-			{
-				LensEffect.NotifyRetriggered();
-			}
-		}
-
-		if (LensEffect == None)
-		{
-			// spawn with viewtarget as the owner so bOnlyOwnerSee works as intended
-			LensEffect = Spawn( LensEffectEmitterClass, PCOwner.GetViewTarget() );
-			if (LensEffect != None)
-			{
-				GetCameraViewPoint(CamLoc, CamRot);
-				LensEffect.UpdateLocation(CamLoc, CamRot, GetFOVAngle());
-				LensEffect.RegisterCamera(self);
-
-				CameraLensEffects.AddItem(LensEffect);
-			}
-		}
-	}
-}
-
-/** Removes this particular lens effect from the camera. */
-function RemoveCameraLensEffect(EmitterCameraLensEffectBase Emitter)
-{
-	CameraLensEffects.RemoveItem(Emitter);
-}
-
-/** Removes all Camera Lens Effects. */
-function ClearCameraLensEffects()
-{
-	local EmitterCameraLensEffectBase LensEffect;
-
-	foreach CameraLensEffects(LensEffect)
-	{
-		LensEffect.Destroy();
-	}
-
-	// empty the array.  unnecessary, since destruction will call RemoveCameraLensEffect,
-	// but this gets it done in one fell swoop.
-	CameraLensEffects.length = 0;
-}
-
-/** ------------------------------------------------------------
- *  Camera Shakes
- *  ------------------------------------------------------------ */
-
-
-/**
- * Play a camera shake
- */
-function PlayCameraShake(CameraShake Shake, float Scale, optional ECameraAnimPlaySpace PlaySpace=CAPS_CameraLocal, optional rotator UserPlaySpaceRot)
-{
-	if (Shake != None)
-	{
-		CameraShakeCamMod.AddCameraShake(Shake, Scale, PlaySpace, UserPlaySpaceRot);
-	}
-}
-
-/** Stop playing a camera shake. */
-function StopCameraShake(CameraShake Shake)
-{
-	if (Shake != None)
-	{
-		CameraShakeCamMod.RemoveCameraShake(Shake);
-	}
-}
-
-
-/** Internal.  Returns intensity scalar in the range [0..1] for a shake originating at Epicenter. */
-static function float CalcRadialShakeScale(Camera Cam, vector Epicenter, float InnerRadius, float OuterRadius, float Falloff)
-{
-	local Vector			POVLoc;
-	local float				DistPct;
-
-	// using camera location so stuff like spectator cameras get shakes applied sensibly as well
-	// need to ensure server has reasonably accurate camera position
-	POVLoc = Cam.Location;
-
-	if (InnerRadius < OuterRadius)
-	{
-		DistPct = (VSize(Epicenter - POVLoc) - InnerRadius) / (OuterRadius - InnerRadius);
-		DistPct = 1.f - FClamp(DistPct, 0.f, 1.f);
-		return DistPct ** Falloff;
-	}
-	else
-	{
-		// ignore OuterRadius and do a cliff falloff at InnerRadius
-		return (VSize(Epicenter - POVLoc) < InnerRadius) ? 1.f : 0.f;
-	}
-}
-
-
-/**
- * Static.  Plays an in-world camera shake that affects all nearby players, with distance-based attenuation.
- */
-static function PlayWorldCameraShake(CameraShake Shake, Actor ShakeInstigator, vector Epicenter, float InnerRadius, float OuterRadius, float Falloff, bool bTryForceFeedback, optional bool bOrientShakeTowardsEpicenter )
-{
-	local PlayerController	PC;
-	local float ShakeScale;
-	local Rotator CamRot;
-	local vector CamLoc;
-
-	if( ShakeInstigator != None )
-	{
-		foreach ShakeInstigator.LocalPlayerControllers(class'PlayerController', PC)
-		{
-			if (PC.PlayerCamera != None)
-			{
-				ShakeScale = CalcRadialShakeScale(PC.PlayerCamera, Epicenter, InnerRadius, OuterRadius, Falloff);
-
-				if (bOrientShakeTowardsEpicenter && PC.Pawn != None)
-				{
-					PC.PlayerCamera.GetCameraViewPoint(CamLoc, CamRot);
-					PC.ClientPlayCameraShake(Shake, ShakeScale, bTryForceFeedback, CAPS_UserDefined, rotator(Epicenter - CamLoc));
-				}
-				else
-				{
-					PC.ClientPlayCameraShake(Shake, ShakeScale, bTryForceFeedback);
-
-				}
-			}
-		}
-	}
-}
-
-function ClearAllCameraShakes()
-{
-	CameraShakeCamMod.RemoveAllCameraShakes();
-//	StopAllCameraAnims(TRUE);
-}
-
-
-/** ------------------------------------------------------------
- *  CameraAnim support
- *  ------------------------------------------------------------ */
-
-/** Play the indicated CameraAnim on this camera.  Returns the CameraAnim instance. */
-simulated native function CameraAnimInst PlayCameraAnim(CameraAnim Anim, optional float Rate=1.f, optional float Scale=1.f, optional float BlendInTime, optional float BlendOutTime, optional bool bLoop, optional bool bRandomStartTime, optional float Duration, optional bool bSingleInstance);
-
-/**
- * Stop playing all instances of the indicated CameraAnim.
- * bImmediate: TRUE to stop it right now, FALSE to blend it out over BlendOutTime.
- */
-simulated native function StopAllCameraAnims(optional bool bImmediate);
-
-/**
- * Stop playing all instances of the indicated CameraAnim.
- * bImmediate: TRUE to stop it right now, FALSE to blend it out over BlendOutTime.
- */
-simulated native function StopAllCameraAnimsByType(CameraAnim Anim, optional bool bImmediate);
-
-/**
- * Stops the given CameraAnim instance from playing.  The given pointer should be considered invalid after this.
- */
-simulated native function StopCameraAnim(CameraAnimInst AnimInst, optional bool bImmediate);
-
-
 defaultproperties
 {
-	DefaultFOV=90.f
-	DefaultAspectRatio=AspectRatio4x3
-	bHidden=TRUE
-	RemoteRole=ROLE_None
-	FreeCamDistance=256.f
-	bUseClientSideCameraUpdates=TRUE
-	bDebugClientSideCamera=FALSE
-
-	CameraShakeCamModClass=class'CameraModifier_CameraShake'
+   DefaultFOV=90.000000
+   DefaultAspectRatio=1.333333
+   CamPostProcessSettings=(bEnableBloom=True,bEnableSceneEffect=True,Bloom_Scale=1.000000,Bloom_InterpolationDuration=1.000000,DOF_FalloffExponent=4.000000,DOF_BlurKernelSize=16.000000,DOF_MaxNearBlurAmount=1.000000,DOF_MaxFarBlurAmount=1.000000,DOF_ModulateBlurColor=(B=255,G=255,R=255,A=255),DOF_FocusInnerRadius=2000.000000,DOF_InterpolationDuration=1.000000,MotionBlur_MaxVelocity=1.000000,MotionBlur_Amount=0.500000,MotionBlur_FullMotionBlur=True,MotionBlur_CameraRotationThreshold=45.000000,MotionBlur_CameraTranslationThreshold=10000.000000,MotionBlur_InterpolationDuration=1.000000,Scene_HighLights=(X=1.000000,Y=1.000000,Z=1.000000),Scene_MidTones=(X=1.000000,Y=1.000000,Z=1.000000),Scene_InterpolationDuration=1.000000)
+   CameraCache=(POV=(FOV=90.000000))
+   ViewTarget=(POV=(FOV=90.000000))
+   PendingViewTarget=(POV=(FOV=90.000000))
+   BlendParams=(BlendFunction=VTBlend_Cubic,BlendExp=2.000000)
+   FreeCamDistance=256.000000
+   bHidden=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Camera"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

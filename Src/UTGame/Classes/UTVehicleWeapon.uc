@@ -1,10 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTVehicleWeapon extends UTWeapon
 	abstract
-	dependson(UTVehicle);
+	native(Vehicle)
+	nativereplication
+	dependson(UTPhysicalMaterialProperty);
 
 /** Holds a link in to the Seats array in MyVehicle that represents this weapon */
 var int SeatIndex;
@@ -31,6 +33,12 @@ var float LastCorrectAimTime;
 var float LastInCorrectAimTime;
 
 var float CurrentCrosshairScaling;
+
+/** cached max range of the weapon used for aiming traces */
+var float AimTraceRange;
+
+/** actors that the aiming trace should ignore */
+var array<Actor> AimingTraceIgnoredActors;
 
 /** This value is used to cap the maximum amount of "automatic" adjustment that will be made to a shot
     so that it will travel at the crosshair.  If the angle between the barrel aim and the player aim is
@@ -60,10 +68,40 @@ var class<UTVehicle> VehicleClass;
 /** for debugging turret aiming */
 var bool bDebugTurret;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 replication
 {
-	if (bNetInitial && bNetOwner)
+	if (Role == ROLE_Authority && bNetInitial && bNetOwner)
 		SeatIndex, MyVehicle;
+}
+
+simulated function PostBeginPlay()
+{
+	Super.PostBeginPlay();
+
+	AimTraceRange = MaxRange();
+}
+
+simulated event ReplicatedEvent(name VarName)
+{
+	local UTVehicle_Deployable DeployableVehicle;
+
+	if (VarName == 'MyVehicle')
+	{
+		DeployableVehicle = UTVehicle_Deployable(MyVehicle);
+		if (DeployableVehicle != None && DeployableVehicle.IsDeployed())
+		{
+			NotifyVehicleDeployed();
+		}
+	}
+	else
+	{
+		Super.ReplicatedEvent(VarName);
+	}
 }
 
 /** checks if the weapon is actually capable of hitting the desired target, including trace test (used by crosshair)
@@ -157,7 +195,7 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 	if (bAimIsCorrect)
 	{
 		// if recently aim became correct, show center part of crosshair
-		CenterSize = UTHUDBase(HUD).ConfiguredCrosshairScaling * 24.0*HUD.Canvas.ClipX/1280;
+		CenterSize = UTHUD(HUD).ConfiguredCrosshairScaling * 20.0*HUD.Canvas.ClipX/1024;
 		Hud.Canvas.SetPos(0.5*(HUD.Canvas.ClipX - CenterSize), 0.5*(HUD.Canvas.ClipY - CenterSize));
 		Hud.Canvas.DrawTile(Texture2D'UI_HUD.HUD.UTCrossHairs', CenterSize, CenterSize, 380, 320, 26, 26);
 		LastCorrectAimTime = WorldInfo.TimeSeconds;
@@ -178,9 +216,23 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 				RealAimPoint.Y = Clamp(RealAimPoint.Y,12,Hud.Canvas.ClipY-12);
 			}
 			Hud.Canvas.SetPos(RealAimPoint.X - 10.0, RealAimPoint.Y - 10.0);
-			CenterSize = UTHUDBase(HUD).ConfiguredCrosshairScaling * 25.0*HUD.Canvas.ClipX/1280;
+			CenterSize = UTHUD(HUD).ConfiguredCrosshairScaling * 21.0*HUD.Canvas.ClipX/1024;
 			Hud.Canvas.DrawTile(Texture2D'UI_HUD.HUD.UTCrossHairs', CenterSize, CenterSize, 380, 320, 26, 26);
 		}
+	}
+
+	DrawTowingIndicator(HUD,CenterSize);
+}
+
+simulated function DrawTowingIndicator(Hud HUD, Float CenterSize)
+{
+
+	if ( (myVehicle != None) && myVehicle.bIsTowingHoverboard )
+	{
+		// draw towing indicator
+		CenterSize = UTHUD(HUD).ConfiguredCrosshairScaling * 64.0*HUD.Canvas.ClipX/1280;
+		Hud.Canvas.SetPos(0.5*(HUD.Canvas.ClipX - CenterSize), 0.5*(HUD.Canvas.ClipY + CenterSize));
+		Hud.Canvas.DrawTile(Texture2D'UI_HUD.HUD.UTCrossHairs', CenterSize, CenterSize, 256, 188, 64, 64);
 	}
 }
 
@@ -210,7 +262,7 @@ simulated event vector GetDesiredAimPoint(optional out Actor TargetActor)
 	}
 	else if ( C != None )
 	{
-		DesiredAimPoint = C.GetFocalPoint();
+		DesiredAimPoint = C.FocalPoint;
 		TargetActor = C.Focus;
 	}
 	return DesiredAimPoint;
@@ -426,7 +478,7 @@ simulated function vector InstantFireEndTrace(vector StartTrace)
 	if  (MyVehicle == None )
 	{
 		return StartTrace;
-	}
+	}	
 	return StartTrace + vector(AddSpread(MyVehicle.GetWeaponAim(self))) * GetTraceRange();;
 }
 
@@ -499,17 +551,26 @@ simulated function EndZoom(UTPlayerController PC)
 
 defaultproperties
 {
-	TickGroup=TG_PostAsyncWork
-	InventoryGroup=100
-	GroupWeight=0.5
-	bExportMenuData=false
-
-	ShotCost[0]=0
-	ShotCost[1]=0
-
-	// ~ 5 Degrees
-	MaxFinalAimAdjustment=0.995;
-
-	CrossHairCoordinates=(U=320,V=320,UL=60,VL=56)
-	AimError=600
+   DefaultImpactEffect=(DurationOfDecal=4.000000,DecalDissolveParamName="DissolveAmount")
+   DefaultAltImpactEffect=(DurationOfDecal=4.000000,DecalDissolveParamName="DissolveAmount")
+   MaxFinalAimAdjustment=0.995000
+   bExportMenuData=False
+   ShotCost(0)=0
+   ShotCost(1)=0
+   CrossHairCoordinates=(U=320.000000,V=320.000000,UL=60.000000,VL=56.000000)
+   InventoryGroup=100
+   GroupWeight=0.500000
+   aimerror=600.000000
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   TickGroup=TG_PostAsyncWork
+   Name="Default__UTVehicleWeapon"
+   ObjectArchetype=UTWeapon'UTGame.Default__UTWeapon'
 }

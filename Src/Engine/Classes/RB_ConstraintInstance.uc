@@ -1,21 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class RB_ConstraintInstance extends Object
 	hidecategories(Object)
 	native(Physics);
 
-cpptext
-{
-	// Object interface
-	virtual void FinishDestroy();
-
-	// RB_ConstraintInstance interface
-
-	UBOOL TermConstraint(FRBPhysScene* Scene, UBOOL bFireBrokenEvent);
-
-	void CopyInstanceParamsFrom(class URB_ConstraintInstance* fromInstance);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  *	Actor that owns this constraint instance.
@@ -89,9 +89,6 @@ final native function			InitConstraint(PrimitiveComponent PrimComp1, PrimitiveCo
 
 final native noexport function	TermConstraint();
 
-/** Returns the PhysicsAssetInstance that owns this RB_ConstraintInstance (if there is one) */
-final native function PhysicsAssetInstance GetPhysicsAssetInstance();
-
 /** Get the position of this constraint in world space. */
 final native function vector GetConstraintLocation();
 
@@ -104,7 +101,7 @@ final native function	SetLinearPositionTarget(vector InPosTarget);
 final native function	SetLinearVelocityTarget(vector InVelTarget);
 final native function	SetLinearDriveParams(float InSpring, float InDamping, float InForceLimit);
 
-final native function	SetAngularPositionTarget(const out quat InPosTarget);
+final native function	SetAngularPositionTarget(quat InPosTarget);
 final native function	SetAngularVelocityTarget(vector InVelTarget);
 final native function	SetAngularDriveParams(float InSpring, float InDamping, float InForceLimit);
 
@@ -119,13 +116,11 @@ final native function	MoveKinActorTransform(out matrix NewTM);
 
 defaultproperties
 {
-	LinearDriveSpring=50.0
-	LinearDriveDamping=1.0
-
-	bAngularSlerpDrive=false
-
-	AngularPositionTarget=(W=1.0)
-
-	AngularDriveSpring=50.0
-	AngularDriveDamping=1.0
+   LinearDriveSpring=50.000000
+   LinearDriveDamping=1.000000
+   AngularPositionTarget=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000)
+   AngularDriveSpring=50.000000
+   AngularDriveDamping=1.000000
+   Name="Default__RB_ConstraintInstance"
+   ObjectArchetype=Object'Core.Default__Object'
 }

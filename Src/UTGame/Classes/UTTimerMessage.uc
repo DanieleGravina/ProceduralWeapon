@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** this plays the "X minutes/seconds remaining" announcements */
@@ -74,26 +74,26 @@ static function int GetFontSize( int Switch, PlayerReplicationInfo RelatedPRI1, 
 
 defaultproperties
 {
-	FontSize=1
-	bIsConsoleMessage=false
-	bIsUnique=true
-	bBeep=false
-	DrawColor=(R=255,G=255,B=255)
-
-	Announcements[1]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_01')
-	Announcements[2]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_02')
-	Announcements[3]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_03')
-	Announcements[4]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_04')
-	Announcements[5]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_05')
-	Announcements[6]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_06')
-	Announcements[7]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_07')
-	Announcements[8]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_08')
-	Announcements[9]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_09')
-	Announcements[10]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_10')
-	Announcements[12]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_30SecondsLeft')
-	Announcements[13]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_1MinutesRemain')
-	Announcements[14]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_2MinutesRemain')
-	Announcements[15]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_3MinutesRemain')
-	Announcements[16]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_5MinutesRemain')
-	Announcements[17]=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_overtime')
+   Announcements(0)=
+   Announcements(1)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_01',AnnouncementText="1...")
+   Announcements(2)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_02',AnnouncementText="2...")
+   Announcements(3)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_03',AnnouncementText="3...")
+   Announcements(4)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_04',AnnouncementText="4...")
+   Announcements(5)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_05',AnnouncementText="5...")
+   Announcements(6)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_06',AnnouncementText="6...")
+   Announcements(7)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_07',AnnouncementText="7...")
+   Announcements(8)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_08',AnnouncementText="8...")
+   Announcements(9)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_09',AnnouncementText="9...")
+   Announcements(10)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Countdown_10',AnnouncementText="10...")
+   Announcements(11)=(AnnouncementText="Restano 20 secondi!")
+   Announcements(12)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_30SecondsLeft',AnnouncementText="Restano 30 secondi!")
+   Announcements(13)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_1MinutesRemain',AnnouncementText="Resta un minuto!")
+   Announcements(14)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_2MinutesRemain',AnnouncementText="Restano due minuti!")
+   Announcements(15)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_3MinutesRemain',AnnouncementText="Restano tre minuti!")
+   Announcements(16)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_5MinutesRemain',AnnouncementText="Cinque minuti rimasti!")
+   Announcements(17)=(AnnouncementSound=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_Overtime',AnnouncementText="TEMPO EXTRA!")
+   bIsUnique=True
+   FontSize=1
+   Name="Default__UTTimerMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

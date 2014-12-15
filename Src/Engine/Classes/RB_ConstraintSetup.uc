@@ -4,7 +4,7 @@
 // Defaults here will give you a ball and socket joint.
 // Positions are in Physics scale.
 // When adding stuff here, make sure to update URB_ConstraintSetup::CopyConstraintParamsFrom
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 
@@ -54,12 +54,6 @@ var vector SecAxis2;
 // Pulley info
 var	vector	PulleyPivot1;
 var	vector	PulleyPivot2;
-
-/** 
- * If distance error between bodies exceeds 0.1 units, or rotation error exceeds 10 degrees, body will be projected to fix this.
- * For example a chain spinning too fast will have its elements appear detached due to velocity, this will project all bodies so they still appear attached to each other. 
- */
-var()	bool	bEnableProjection;
 
 ///////////////////////////// LINEAR DOF
 
@@ -126,35 +120,35 @@ var(Pulley)		bool		bIsPulley;
 var(Pulley)		bool		bMaintainMinDistance;
 var(Pulley)		float		PulleyRatio;
 
-cpptext
-{
-	// UObject interface
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// Get/SetRefFrameMatrix only used in PhAT
-	FMatrix GetRefFrameMatrix(INT BodyIndex);
-	void SetRefFrameMatrix(INT BodyIndex, const FMatrix& RefFrame);
-
-	void CopyConstraintGeometryFrom(class URB_ConstraintSetup* fromSetup);
-	void CopyConstraintParamsFrom(class URB_ConstraintSetup* fromSetup);
-
-	void DrawConstraint(class FPrimitiveDrawInterface* PDI, 
-		FLOAT Scale, FLOAT LimitDrawScale, UBOOL bDrawLimits, UBOOL bDrawSelected, UMaterialInterface* LimitMaterial,
-		const FMatrix& Con1Frame, const FMatrix& Con2Frame, UBOOL bDrawAsPoint);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Pos1=(X=0,Y=0,Z=0)
-	PriAxis1=(X=1,Y=0,Z=0)
-	SecAxis1=(X=0,Y=1,Z=0)
-
-	Pos2=(X=0,Y=0,Z=0)
-	PriAxis2=(X=1,Y=0,Z=0)
-	SecAxis2=(X=0,Y=1,Z=0)
-
-	LinearBreakThreshold=300.0
-	AngularBreakThreshold=500.0
-	
-	PulleyRatio=1.0
+   PriAxis1=(X=1.000000,Y=0.000000,Z=0.000000)
+   SecAxis1=(X=0.000000,Y=1.000000,Z=0.000000)
+   PriAxis2=(X=1.000000,Y=0.000000,Z=0.000000)
+   SecAxis2=(X=0.000000,Y=1.000000,Z=0.000000)
+   LinearXSetup=(bLimited=1)
+   LinearYSetup=(bLimited=1)
+   LinearZSetup=(bLimited=1)
+   LinearBreakThreshold=300.000000
+   AngularBreakThreshold=500.000000
+   PulleyRatio=1.000000
+   Name="Default__RB_ConstraintSetup"
+   ObjectArchetype=Object'Core.Default__Object'
 }

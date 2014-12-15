@@ -31,17 +31,20 @@ function SetProceduralWeapon()
 	
 		myWeapon = ProceduralWeapon(Weapon);
 	
-		//TODO better code
-		myWeapon.Spread[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Spread;
-		myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).RoF;
-		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).MaxAmmo;
-		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).ShotCost;
-		myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Range;
-	
-		myWeapon.AmmoCount = myWeapon.MaxAmmoCount;
-		myWeapon.Spread[1] = myWeapon.Spread[0];
-		myWeapon.FireInterval[1] = myWeapon.FireInterval[0];
-		myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
+		if(ServerGame(WorldInfo.Game).mapBotPar.Length != 0)
+		{
+			//TODO better code
+			myWeapon.Spread[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Spread;
+			myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).RoF;
+			myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).MaxAmmo;
+			myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).ShotCost;
+			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Range;
+		
+			myWeapon.AmmoCount = myWeapon.MaxAmmoCount;
+			myWeapon.Spread[1] = myWeapon.Spread[0];
+			myWeapon.FireInterval[1] = myWeapon.FireInterval[0];
+			myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
+		}
 		
 	
 		if(myWeapon.WeaponRange >= MinRangeSniping)

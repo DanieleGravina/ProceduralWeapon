@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_PlayFaceFXAnim extends SequenceAction
 	native(Sequence);
@@ -17,13 +17,11 @@ var()	string			FaceFXGroupName;
  */
 var()	string			FaceFXAnimName;
 
-/** The SoundCue to play with this FaceFX. **/
-var() SoundCue SoundCueToPlay;
-
 defaultproperties
 {
-	ObjName="Play FaceFX Anim"
-	ObjCategory="Sound"
-
-	InputLinks(0)=(LinkDesc="Play")
+   InputLinks(0)=(LinkDesc="Play")
+   ObjName="Play FaceFX Anim"
+   ObjCategory="Sound"
+   Name="Default__SeqAct_PlayFaceFXAnim"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,6 +1,6 @@
 //=============================================================================
 // Scene - script exposed scene enums
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Scene extends Object
 	native(Scene);
@@ -33,3 +33,9 @@ enum EDetailMode
 
 /** bits needed to store DPG value */
 const SDPG_NumBits = 3;
+
+defaultproperties
+{
+   Name="Default__Scene"
+   ObjectArchetype=Object'Core.Default__Object'
+}

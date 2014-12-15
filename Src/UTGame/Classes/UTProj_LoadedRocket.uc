@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTProj_LoadedRocket extends UTProj_Rocket;
@@ -100,11 +100,17 @@ simulated function FlockTimer()
 
 defaultproperties
 {
-	checkradius=20.0
-
-	// Flocking
-	FlockRadius=12
-	FlockStiffness=-40
-	FlockMaxForce=600
-	FlockCurlForce=450
+   FlockRadius=12.000000
+   FlockStiffness=-40.000000
+   FlockMaxForce=600.000000
+   FlockCurlForce=450.000000
+   CheckRadius=20.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProj_Rocket:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProj_Rocket:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTProj_LoadedRocket"
+   ObjectArchetype=UTProj_Rocket'UTGame.Default__UTProj_Rocket'
 }

@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -38,7 +38,24 @@ event Tick(float DeltaSeconds)
 
 defaultproperties
 {
-	Begin Object Name=SkeletalMeshComponent0
-		Animations=None
-	End Object
+   Begin Object Class=SkeletalMeshComponent Name=SkeletalMeshComponent0 ObjName=SkeletalMeshComponent0 Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshActor:SkeletalMeshComponent0'
+      Animations=None
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshActor:SkeletalMeshComponent0'
+   End Object
+   SkeletalMeshComponent=SkeletalMeshComponent0
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__SkeletalMeshActor:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__SkeletalMeshActor:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   Begin Object Class=AudioComponent Name=FaceAudioComponent ObjName=FaceAudioComponent Archetype=AudioComponent'Engine.Default__SkeletalMeshActor:FaceAudioComponent'
+      ObjectArchetype=AudioComponent'Engine.Default__SkeletalMeshActor:FaceAudioComponent'
+   End Object
+   FacialAudioComp=FaceAudioComponent
+   Components(0)=MyLightEnvironment
+   Components(1)=SkeletalMeshComponent0
+   Components(2)=FaceAudioComponent
+   CollisionComponent=SkeletalMeshComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__MorphTestActor"
+   ObjectArchetype=SkeletalMeshActor'Engine.Default__SkeletalMeshActor'
 }

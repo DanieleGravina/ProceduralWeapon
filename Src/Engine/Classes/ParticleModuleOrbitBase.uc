@@ -1,9 +1,10 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleOrbitBase extends ParticleModule
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object)
 	abstract;
 
@@ -12,3 +13,9 @@ class ParticleModuleOrbitBase extends ParticleModule
  *	If FALSE (default), they will be retrieved using the Particle.RelativeTime.
  */
 var(Orbit)	bool	bUseEmitterTime;
+
+defaultproperties
+{
+   Name="Default__ParticleModuleOrbitBase"
+   ObjectArchetype=ParticleModule'Engine.Default__ParticleModule'
+}

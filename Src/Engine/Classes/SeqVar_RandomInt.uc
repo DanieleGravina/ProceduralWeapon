@@ -1,34 +1,27 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqVar_RandomInt extends SeqVar_Int
 	native(Sequence);
 
-cpptext
-{
-	virtual INT* GetRef()
-	{
-		if( Min < Max )
-		{
-			IntValue = Min + (appRand() % (Max - Min + 1));
-		}
-		else
-		{
-			IntValue = Max + (appRand() % (Min - Max + 1));
-		}
-		return &IntValue;
-	}
-
-	virtual FString GetValueStr()
-	{
-		return FString::Printf(TEXT("%d..%d"),Min,Max);
-	}
-
-	virtual UBOOL SupportsProperty(UProperty *Property)
-	{
-		return FALSE;
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Min value for randomness */
 var() int Min;
@@ -38,9 +31,8 @@ var() int Max;
 
 defaultproperties
 {
-	ObjName="Random Int"
-	ObjCategory="Int"
-
-	Min=0
-	Max=100
+   Max=100
+   ObjName="Random Int"
+   Name="Default__SeqVar_RandomInt"
+   ObjectArchetype=SeqVar_Int'Engine.Default__SeqVar_Int'
 }

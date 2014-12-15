@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -31,3 +31,9 @@ native function bool GetViewId(name ViewName,out int ViewId);
  * @return the name of the view that matches the id or NAME_None if not found
  */
 native function name GetViewName(int ViewId);
+
+defaultproperties
+{
+   Name="Default__OnlineStats"
+   ObjectArchetype=Object'Core.Default__Object'
+}

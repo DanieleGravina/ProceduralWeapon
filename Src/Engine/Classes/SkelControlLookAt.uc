@@ -1,33 +1,31 @@
-/**
- *	Controller that rotates a single bone to 'look at' a given target.
- *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
 class SkelControlLookAt extends SkelControlBase
 	native(Anim);
-
- 
-cpptext
-{
-	// USkelControlBase interface
-	/** LookAtAlpha allows to cancel head look when going beyond boundaries */
-	virtual	FLOAT	GetControlAlpha();
-	virtual void	TickSkelControl(FLOAT DeltaSeconds, USkeletalMeshComponent* SkelComp);
-	virtual void	GetAffectedBones(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<INT>& OutBoneIndices);
-	virtual void	CalculateNewBoneTransforms(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<FBoneAtom>& OutBoneTransforms);	
 	
-	virtual INT		GetWidgetCount() { return 1; }
-	virtual FBoneAtom GetWidgetTM(INT WidgetIndex, USkeletalMeshComponent* SkelComp, INT BoneIndex);
-	virtual void	HandleWidgetDrag(INT WidgetIndex, const FVector& DragVec);
-	virtual void	DrawSkelControl3D(const FSceneView* View, FPrimitiveDrawInterface* PDI, USkeletalMeshComponent* SkelComp, INT BoneIndex);
-
-	virtual void SetControlTargetLocation(const FVector& InTargetLocation);
-
-protected:
-	virtual UBOOL	ApplyLookDirectionLimits(FVector& DesiredLookDir, const FVector &CurrentLookDir, INT BoneIndex, USkeletalMeshComponent* SkelComp);
-
-public:
-}
+/**
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ *
+ *	Controller that rotates a single bone to 'look at' a given target.
+ */
+ 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Position in world space that this bone is looking at. */
 var(LookAt)		vector				TargetLocation;
@@ -57,9 +55,7 @@ var(LookAt)		bool				bInvertUpAxis;
 var(LookAt)		float				TargetLocationInterpSpeed;
 
 /** Interpolation target for TargetLocation */
-var vector DesiredTargetLocation;
-/** Actor Space Look At Normal. So interpolation done is relative to the owner */
-var protected const transient vector ActorSpaceLookAtTarget;
+var				vector				DesiredTargetLocation;
 
 /** If true, only allow a certain adjustment from the reference pose of the bone. */
 var(Limit)		bool				bEnableLimit;
@@ -76,9 +72,6 @@ var(Limit)		bool				bShowLimit;
 /** The maximum rotation applied from the reference pose of the bone, in degrees. */
 var(Limit)		float				MaxAngle;
 
-/** The outer maximum rotation applied from the reference pose of the bone, in degrees, that allows bone to stay in the MaxAngle */
-var(Limit)		float				OuterMaxAngle;
-
 /** Allowed error between the current look direction and the desired look direction. */
 var(Limit)		float				DeadZoneAngle;
 
@@ -86,13 +79,6 @@ var(Limit)		float				DeadZoneAngle;
 var(Limit)		bool				bAllowRotationX;
 var(Limit)		bool				bAllowRotationY;
 var(Limit)		bool				bAllowRotationZ;
-
-/** Per rotation axis range of motion in degrees, relative to reference pose of the bone. First (negative) value is lowest relative angle, second is highest. */
-var(Limit)      Vector2D            RotationAngleRangeX;
-var(Limit)      Vector2D            RotationAngleRangeY;
-var(Limit)      Vector2D            RotationAngleRangeZ;
-
-/** Rotation space to check limits within */
 var(Limit)		EBoneControlSpace	AllowRotationSpace;
 var(Limit)		Name				AllowRotationOtherBoneName;
 
@@ -113,14 +99,21 @@ var const transient Vector	BaseBonePos;
  */
 var const transient float	LastCalcTime;
 
-/** Cached control bone index - which one index is this skelcontrol for **/
-var const transient INT     ControlBoneIndex;
+function SetTargetLocation(Vector NewTargetLocation)
+{
+	DesiredTargetLocation = NewTargetLocation;
 
-/** Sets DesiredTargetLocation to a new location */
-final virtual native function SetTargetLocation(Vector NewTargetLocation);
+	// If control is not relevant, update TargetLocation right away, with no interpolation.
+	if( ControlStrength * LookAtAlpha < 0.00001f )
+	{
+		TargetLocation = NewTargetLocation;
+	}
+}
 
-/** Interpolate TargetLocation towards DesiredTargetLocation based on TargetLocationInterpSpeed */
-final native function InterpolateTargetLocation(float DeltaTime);
+simulated function InterpolateTargetLocation(float DeltaTime)
+{
+	TargetLocation = VInterpTo(TargetLocation, DesiredTargetLocation, DeltaTime, TargetLocationInterpSpeed);
+}
 
 /** 
  * Set LookAtAlpha. 
@@ -139,30 +132,15 @@ final native function bool CanLookAtPoint(vector PointLoc, optional bool bDrawDe
 
 defaultproperties
 {
-	ActorSpaceLookAtTarget=(X=256.f)  // Looking straight ahead is default.
-	LookAtAxis=AXIS_X
-	UpAxis=AXIS_Z
-	bShowLimit=TRUE
-	bLimitBasedOnRefPose=TRUE
-
-	TargetLocationInterpSpeed=10.f
-	BlendInTime=0.33f
-	BlendOutTime=0.33f
-
-	LookAtAlphaTarget=1.f
-	LookAtAlpha=1.f
-
-	bAllowRotationX=TRUE
-	bAllowRotationY=TRUE
-	bAllowRotationZ=TRUE
-	AllowRotationSpace=BCS_BoneSpace
-
-	RotationAngleRangeX=(X=-90.f, Y=90.f)
-	RotationAngleRangeY=(X=-90.f, Y=90.f)
-	RotationAngleRangeZ=(X=-90.f, Y=90.f)
-
-	// default outer max angle
-	OuterMaxAngle=90
-	bIgnoreWhenNotRendered=TRUE
-	ControlBoneIndex = INDEX_NONE
+   LookAtAxis=AXIS_X
+   UpAxis=AXIS_Z
+   AllowRotationSpace=BCS_BoneSpace
+   bLimitBasedOnRefPose=True
+   bShowLimit=True
+   bAllowRotationX=True
+   bAllowRotationY=True
+   bAllowRotationZ=True
+   TargetLocationInterpSpeed=10.000000
+   Name="Default__SkelControlLookAt"
+   ObjectArchetype=SkelControlBase'Engine.Default__SkelControlBase'
 }

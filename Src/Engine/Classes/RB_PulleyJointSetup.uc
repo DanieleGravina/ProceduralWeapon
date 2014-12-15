@@ -1,10 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class RB_PulleyJointSetup extends RB_ConstraintSetup
 	native(Physics);
 
 defaultproperties
 {
-	bIsPulley=true
+   bIsPulley=True
+   Name="Default__RB_PulleyJointSetup"
+   ObjectArchetype=RB_ConstraintSetup'Engine.Default__RB_ConstraintSetup'
 }

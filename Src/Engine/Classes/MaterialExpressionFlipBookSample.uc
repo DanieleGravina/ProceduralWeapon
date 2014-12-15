@@ -1,16 +1,17 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionFlipBookSample extends MaterialExpressionTextureSample
 	native(Material);
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Texture"
+   Name="Default__MaterialExpressionFlipBookSample"
+   ObjectArchetype=MaterialExpressionTextureSample'Engine.Default__MaterialExpressionTextureSample'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleTypeDataBeam extends ParticleModuleTypeDataBase
 	native(Particle)
@@ -44,57 +44,36 @@ var(Beam)					bool					RenderLines;
 var(Beam)					bool					RenderTessellation;
 //@todo. Remove these once finialized - END
 
-cpptext
-{
-	virtual void	Spawn(FParticleEmitterInstance* Owner, INT Offset, FLOAT SpawnTime);
-	virtual void	PreUpdate(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-
-	FVector			DetermineEndPointPosition(FParticleEmitterInstance* Owner, FLOAT DeltaTime);
-	FVector			DetermineParticlePosition(FParticleEmitterInstance* Owner, FBaseParticle* pkParticle, FLOAT DeltaTime);
-
-	virtual UINT	RequiredBytes(FParticleEmitterInstance* Owner = NULL);
-
-	virtual FParticleEmitterInstance* CreateInstance(UParticleEmitter* InEmitterParent, UParticleSystemComponent* InComponent);
-
-	virtual void	PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSpawnModule=true
-	bUpdateModule=true
-
-	TessellationFactor=1
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionDistance
-	End Object
-	Distance=(Distribution=DistributionDistance)
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionEndPoint
-	End Object
-	EndPoint=(Distribution=DistributionEndPoint)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionEmitterStrength
-		Constant=1000.0
-	End Object
-	EmitterStrength=(Distribution=DistributionEmitterStrength)
-	
-	Begin Object Class=DistributionFloatConstant Name=DistributionTargetStrength
-		Constant=1000.0
-	End Object
-	TargetStrength=(Distribution=DistributionTargetStrength)
-
-	EndPointMethod=PEBEPM_Calculated
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionEndPointDirection
-		Constant=(X=1,Y=0,Z=0)
-	End Object
-	EndPointDirection=(Distribution=DistributionEndPointDirection)
-
-//@todo. Remove these once finialized - START
-	RenderGeometry=true
-	RenderDirectLine=false
-	RenderLines=false
-	RenderTessellation=false
-//@todo. Remove these once finialized - END
+   Distance=(Distribution=DistributionDistance,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   EndPoint=(Distribution=DistributionEndPoint,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   TessellationFactor=1
+   EmitterStrength=(Distribution=DistributionEmitterStrength,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1000.000000,1000.000000,1000.000000,1000.000000))
+   TargetStrength=(Distribution=DistributionTargetStrength,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1000.000000,1000.000000,1000.000000,1000.000000))
+   EndPointDirection=(Distribution=DistributionEndPointDirection,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,1.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000))
+   RenderGeometry=True
+   bSpawnModule=True
+   bUpdateModule=True
+   Name="Default__ParticleModuleTypeDataBeam"
+   ObjectArchetype=ParticleModuleTypeDataBase'Engine.Default__ParticleModuleTypeDataBase'
 }

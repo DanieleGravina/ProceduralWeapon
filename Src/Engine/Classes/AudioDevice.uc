@@ -1,63 +1,11 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
 class AudioDevice extends Subsystem
 	config( engine )
 	native( AudioDevice )
-	dependson( SoundClass )
 	transient;
 
-/** 
- * Filled out with entries from DefaultEngine.ini
- */
-enum ESoundClassName
-{
-	Master
-};
-
-/** 
- * Debug state of the audio system
- */
-enum EDebugState
-{
-	// No debug sounds
-	DEBUGSTATE_None,
-	// No reverb sounds
-	DEBUGSTATE_IsolateDryAudio,
-	// Only reverb sounds
-	DEBUGSTATE_IsolateReverb,
-	// Force LPF on all sources
-	DEBUGSTATE_TestLPF,
-	// Bleed stereo sounds fully to the rear speakers
-	DEBUGSTATE_TestStereoBleed,
-	// Bleed all sounds to the LFE speaker
-	DEBUGSTATE_TestLFEBleed,
-	// Disable any LPF filter effects
-	DEBUGSTATE_DisableLPF,
-	// Disable any radio filter effects
-	DEBUGSTATE_DisableRadio,
-};
-
-/**
- * The different voices available for TTS
- */
-enum ETTSSpeaker
-{
-	TTSSPEAKER_Paul,
-	TTSSPEAKER_Harry,
-	TTSSPEAKER_Frank,
-	TTSSPEAKER_Dennis,
-	TTSSPEAKER_Kit,
-	TTSSPEAKER_Betty,
-	TTSSPEAKER_Ursula,
-	TTSSPEAKER_Rita,
-	TTSSPEAKER_Wendy,
-};
-
-/** 
- * Defines the properties of the listener
- */
 struct native Listener
 {
 	var const PortalVolume PortalVolume;
@@ -65,117 +13,451 @@ struct native Listener
 	var vector Up;
 	var vector Right;
 	var vector Front;
-	var vector Velocity;
 };
-
-/** 
- * Structure for collating info about sound classes
- */
-struct native AudioClassInfo 
-{
-	var const int NumResident;
-	var const int SizeResident;
-	var const int NumRealTime;
-	var const int SizeRealTime;
-};
-
-/** The maximum number of concurrent audible sounds */
-var		config const	int								MaxChannels;
-/** The amount of memory to reserve for always resident sounds */
-var		config const	int								CommonAudioPoolSize;
-/** Low pass filter OneOverQ value */
-var		config const	float							LowPassFilterResonance;
-/** Sound duration in seconds below which sounds are entirely expanded to PCM at load time in the Editor. */
-var		config const	float							MinCompressedDurationEditor;
-/** Sound duration in seconds below which sounds are entirely expanded to PCM at load time in the Game. */
-var		config const	float							MinCompressedDurationGame;
-
-/** Sound node wave to use for the radio chirp in sound */
-var		config const	string							ChirpInSoundNodeWaveName;
-var			   const	SoundNodeWave					ChirpInSoundNodeWave;
-/** Sound node wave to use for the radio chirp out sound */
-var		config const	string							ChirpOutSoundNodeWaveName;
-var			   const	SoundNodeWave					ChirpOutSoundNodeWave;
-
-/** Pointer to permanent memory allocation stack. */
-var		native const	pointer							CommonAudioPool;
-/** Available size in permanent memory stack */
-var		native const	int								CommonAudioPoolFreeBytes;
-
-var		transient const	array<AudioComponent>			AudioComponents;
-var		native const	array<pointer>					Sources{FSoundSource};
-var		native const	array<pointer>					FreeSources{FSoundSource};
-var		native const	Map{FWaveInstance*, FSoundSource*}	WaveInstanceSourceMap;
-
-var		native const	bool							bGameWasTicking;
-
-var		native const	array<Listener>					Listeners;
-var		native const	QWORD							CurrentTick;
-
-/** Map of available sound classes */
-var()					Map{FName, class USoundClass*}	SoundClasses;
-
-/** Source, current and destination properties of all sound classes */
-var						Map{FName, struct FSoundClassProperties}	SourceSoundClasses;
-var						Map{FName, struct FSoundClassProperties}	CurrentSoundClasses;
-var						Map{FName, struct FSoundClassProperties}	DestinationSoundClasses;
-
-/** Map of available sound modes */
-var		native const	Map{FName, class USoundMode*}	SoundModes;
-
-/** Interface to audio effects processing */
-var		native const	pointer							Effects{class FAudioEffectsManager};
-
-var		native const	name							BaseSoundModeName;
-var		native const	SoundMode						CurrentMode;
-var		native const	double							SoundModeStartTime;
-var		native const	double							SoundModeFadeInStartTime;
-var		native const	double							SoundModeFadeInEndTime;
-var		native const	double							SoundModeEndTime;
-
-/** The index of the volume the listener resides in */
-var		native const	int								ListenerVolumeIndex;
-var		native const	InteriorSettings				ListenerInteriorSettings;
-
-/** The times of interior volumes fading in and out */
-var		native const	double							InteriorStartTime;
-var		native const	double							InteriorEndTime;
-var		native const	double							ExteriorEndTime;
-var		native const	double							InteriorLPFEndTime;
-var		native const	double							ExteriorLPFEndTime;
-
-var		native const	float							InteriorVolumeInterp;
-var		native const	float							InteriorLPFInterp;
-var		native const	float							ExteriorVolumeInterp;
-var		native const	float							ExteriorLPFInterp;
-
-/** An AudioComponent to play test sounds on */
-var			   const	AudioComponent					TestAudioComponent;
-
-/** Interface to text to speech processor */
-var		native const	pointer							TextToSpeech{class FTextToSpeech};
-
-/** The debug state of the audio device */
-var		native const	EDebugState						DebugState;
-
-/** transient master volume multiplier that can be modified at runtime without affecting user settings automatically reset to 1.0 on level change */
-var		transient		float							TransientMasterVolume;
-
-/** Timestamp of the last update */
-var     transient       float                           LastUpdateTime;
-
-/** flag to stop audio component spawning, used on map change */
-var     transient		bool							bSoundSpawningEnabled;
 
 /**
- * Sets a new sound mode and applies it to all appropriate sound classes
+ * Enum describing the sound modes available for use in game.
  */
-native final function bool SetSoundMode( name NewMode );
+enum ESoundMode
+{
+	/** Normal - No EQ applied */
+	SOUNDMODE_NORMAL,
+	/** Slowmo */
+	SOUNDMODE_SLOWMOTION,
+	/** Death - Death EQ applied */
+	SOUNDMODE_DEATH,
+	/** Cover - EQ applied to indicate player is in cover */
+	SOUNDMODE_COVER,
+	/** Roadie Run - Accentuates high-pitched bullet whips, etc. */
+	SOUNDMODE_ROADIE_RUN,
+	/** TacCom - Tactical command EQ lowers game volumes */
+	SOUNDMODE_TACCOM,
+	/** Applied to the radio effect */
+	SOUNDMODE_RADIO,
+};
 
-/** Find SoundClass given a Name */
-native final function SoundClass FindSoundClass( Name SoundClassName );
+/**
+ * Structure defining a sound mode (used for EQ and volume ducking)
+ */
+struct native ModeSettings
+{
+	var	ESoundMode Mode;
+	var	float FadeTime;
+
+	structdefaultproperties
+	{
+		Mode=SOUNDMODE_NORMAL
+		FadeTime=0.1
+	}
+};
+
+/**
+ * Structure containing configurable properties of a sound group.
+ */
+struct native SoundGroupProperties
+{
+	/** Volume multiplier. */
+	var() float Volume;
+	/** Pitch multiplier. */
+	var() float Pitch;
+	/** Voice center channel volume - Not a multiplier (no propagation)	*/
+	var() float VoiceCenterChannelVolume;
+	/** Radio volume multiplier - Not a multiplier (no propagation) */
+	var() float VoiceRadioVolume;
+
+	/** Sound mode voice - whether to apply audio effects */
+	var() bool bApplyEffects;
+	/** Whether to artificially prioritise the component to play */
+	var() bool bAlwaysPlay;
+	/** Whether or not this sound plays when the game is paused in the UI */
+	var() bool bIsUISound;
+	/** Whether or not this is music (propagates only if parent is TRUE) */
+	var() bool bIsMusic;
+	/** Whether or not this sound group is excluded from reverb EQ */
+	var() bool bNoReverb;
+
+	structdefaultproperties
+	{
+		Volume=1
+		Pitch=1
+		VoiceCenterChannelVolume=0
+		VoiceRadioVolume=0
+		bApplyEffects=FALSE
+		bAlwaysPlay=FALSE
+		bIsUISound=FALSE
+		bIsMusic=FALSE
+		bNoReverb=FALSE
+	}
+
+	structcpptext
+	{
+		/** Interpolate the data in sound groups */
+		void Interpolate( FLOAT InterpValue, FSoundGroupProperties& Start, FSoundGroupProperties& End );
+	}
+};
+
+/**
+ * Structure containing information about a sound group.
+ */
+struct native SoundGroup
+{
+	/** Configurable properties like volume and priority. */
+	var() SoundGroupProperties	Properties;
+	/** Name of this sound group. */
+	var() name					GroupName;
+	/** Array of names of child sound groups. Empty for leaf groups. */
+	var() array<name>			ChildGroupNames;
+};
+
+/**
+ * Elements of data for sound group volume control
+ */
+struct native SoundGroupAdjuster
+{
+	var	name	GroupName;
+	var	float	VolumeAdjuster;
+	var float	PitchAdjuster;
+
+	structdefaultproperties
+	{
+		GroupName="Master"
+		VolumeAdjuster=1
+		PitchAdjuster=1
+	}
+};
+
+/**
+ * Group of adjusters
+ */
+struct native SoundGroupEffect
+{
+	var array<SoundGroupAdjuster>	GroupEffect;
+};
+
+var		config const	int							MaxChannels;
+var		config const	bool						UseEffectsProcessing;
+
+var		transient const	array<AudioComponent>		AudioComponents;
+var		native const	array<pointer>				Sources{FSoundSource};
+var		native const	array<pointer>				FreeSources{FSoundSource};
+var		native const	DynamicMap_Mirror			WaveInstanceSourceMap{TDynamicMap<FWaveInstance*, FSoundSource*>};
+
+var		native const	bool						bGameWasTicking;
+
+var		native const	array<Listener>				Listeners;
+var		native const	QWORD						CurrentTick;
+
+/** Map from name to the sound group index - used to index the following 4 arrays */
+var		native const	Map_Mirror					NameToSoundGroupIndexMap{TMap<FName, INT>};
+
+/** The sound group constants that we are interpolating from */
+var		native const	array<SoundGroup>			SourceSoundGroups;
+/** The current state of sound group constants */
+var		native const	array<SoundGroup>			CurrentSoundGroups;
+/** The sound group constants that we are interpolating to */
+var		native const	array<SoundGroup>			DestinationSoundGroups;
+
+/** Array of sound groups read from ini file */
+var()	config			array<SoundGroup>			SoundGroups;
+
+/** Array of presets that modify sound groups */
+var()	config			array<SoundGroupEffect>		SoundGroupEffects;
+
+/** Interface to audio effects processing */
+var		native const	pointer						Effects{class FAudioEffectsManager};
+
+var		native const	ESoundMode					CurrentMode;
+var		native const	double						SoundModeStartTime;
+var		native const	double						SoundModeEndTime;
+
+/** Interface to text to speech processor */
+var		native const	pointer						TextToSpeech{class FTextToSpeech};
+
+var		native const	bool						bTestLowPassFilter;
+var		native const	bool						bTestEQFilter;
+
+/** transient master volume multiplier that can be modified at runtime without affecting user settings
+ * automatically reset to 1.0 on level change
+ */
+var transient float TransientMasterVolume;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	TransientMasterVolume=1.0
+   SoundGroups(0)=(Properties=(Volume=0.240000,Pitch=1.000000),GroupName="Ambient")
+   SoundGroups(1)=(Properties=(Volume=1.000000,Pitch=1.000000,bAlwaysPlay=True,bNoReverb=True),GroupName="Announcer")
+   SoundGroups(2)=(Properties=(Volume=1.000000,Pitch=1.000000,bAlwaysPlay=True,bIsUISound=True),GroupName="Briefing")
+   SoundGroups(3)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Character")
+   SoundGroups(4)=(Properties=(Volume=1.000000,Pitch=1.000000,bNoReverb=True),GroupName="Cinematic")
+   SoundGroups(5)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="CinematicDialog")
+   SoundGroups(6)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Dialog",ChildGroupNames=("StoryDialog","CinematicDialog","Taunts","Briefing"))
+   SoundGroups(7)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Item")
+   SoundGroups(8)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Master",ChildGroupNames=("SFX","Cinematic","Music","Announcer","VoiceChat","Dialog","MovieEffects","MovieVoice","UI"))
+   SoundGroups(9)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="MovieEffects")
+   SoundGroups(10)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="MovieVoice")
+   SoundGroups(11)=(Properties=(Volume=1.000000,Pitch=1.000000,bAlwaysPlay=True,bNoReverb=True),GroupName="Music")
+   SoundGroups(12)=(Properties=(Volume=1.000000,Pitch=1.000000,bNoReverb=True),GroupName="SFX",ChildGroupNames=("Character","Item","Stinger","Vehicle","Weapon"))
+   SoundGroups(13)=(Properties=(Volume=1.000000,Pitch=1.000000,bNoReverb=True),GroupName="Stinger")
+   SoundGroups(14)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="StoryDialog")
+   SoundGroups(15)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Taunts")
+   SoundGroups(16)=(Properties=(Volume=1.000000,Pitch=1.000000,bIsUISound=True,bNoReverb=True),GroupName="UI")
+   SoundGroups(17)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Vehicle")
+   SoundGroups(18)=(Properties=(Volume=1.000000,Pitch=1.000000,bNoReverb=True),GroupName="VoiceChat")
+   SoundGroups(19)=(Properties=(Volume=1.000000,Pitch=1.000000),GroupName="Weapon")
+   SoundGroupEffects(0)=
+   SoundGroupEffects(1)=(GroupEffect=((GroupName="Weapon",PitchAdjuster=0.400000),(GroupName="Ambient",PitchAdjuster=0.400000),(GroupName="Character",PitchAdjuster=0.400000),(GroupName="Item",PitchAdjuster=0.400000),(GroupName="Vehicle",PitchAdjuster=0.400000)))
+   Name="Default__AudioDevice"
+   ObjectArchetype=Subsystem'Core.Default__Subsystem'
 }

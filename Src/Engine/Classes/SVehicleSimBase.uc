@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SVehicleSimBase extends ActorComponent
 	native(Physics);
@@ -31,42 +31,31 @@ var()	bool				bClampedFrictionModel;
 var()	bool				bAutoDrive;
 var()	float				AutoDriveSteer;
 
-cpptext
-{
-	virtual void ProcessCarInput(ASVehicle* Vehicle) {}
-	virtual void UpdateVehicle(ASVehicle* Vehicle, FLOAT DeltaTime) {}
-
-#if WITH_NOVODEX
-	virtual void SetNxWheelShapeParams(class NxWheelShape* WheelShape, class USVehicleWheel* VW, FLOAT LongGripScale=1.f, FLOAT LatGripScale=1.f);
-	virtual void SetNxWheelShapeTireForceFunctions(class NxWheelShape* WheelShape, class USVehicleWheel* VW, FLOAT LongGripScale=1.f, FLOAT LatGripScale=1.f);
-#endif
-
-	/** Returns a float representative of the vehcile's engine output. */
-	virtual FLOAT GetEngineOutput(ASVehicle* Vehicle) { return 0.0f; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-    // Force
-    // ^		extremum
-    // |    _*_
-    // |   ~   \     asymptote
-    // |  /     \~__*______________
-    // | /
-    // |/
-    // ---------------------------> Slip
-
-    // Longitudinal tire model based on 10% slip ratio peak
-	WheelLongExtremumSlip=0.1
-	WheelLongExtremumValue=1.0
-	WheelLongAsymptoteSlip=2.0
-	WheelLongAsymptoteValue=0.6
-
-    // Lateral tire model based on slip angle (radians)
-   	WheelLatExtremumSlip=0.35     // 20 degrees
-	WheelLatExtremumValue=0.85
-	WheelLatAsymptoteSlip=1.4     // 80 degrees
-	WheelLatAsymptoteValue=0.7
-
-	WheelInertia=1.0
+   WheelLongExtremumSlip=0.100000
+   WheelLongExtremumValue=1.000000
+   WheelLongAsymptoteSlip=2.000000
+   WheelLongAsymptoteValue=0.600000
+   WheelLatExtremumSlip=0.350000
+   WheelLatExtremumValue=0.850000
+   WheelLatAsymptoteSlip=1.400000
+   WheelLatAsymptoteValue=0.700000
+   WheelInertia=1.000000
+   Name="Default__SVehicleSimBase"
+   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'
 }

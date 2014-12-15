@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //
 // A Death Message.
@@ -30,33 +30,33 @@ static function string GetString(
 	)
 {
 	local string KillerName, VictimName;
-	local class<UTDamageType> KillDamageType;
 
-	KillDamageType = (Class<UTDamageType>(OptionalObject) != None) ? Class<UTDamageType>(OptionalObject) : class'UTDamageType';
+	if (Class<DamageType>(OptionalObject) == None)
+		return "";
 
 	if (RelatedPRI_1 == None)
 		KillerName = Default.SomeoneString;
 	else
-		KillerName = RelatedPRI_1.PlayerName;
+		KillerName = RelatedPRI_1.GetPlayerAlias();
 
 	if (RelatedPRI_2 == None)
 		VictimName = Default.SomeoneString;
 	else
-		VictimName = RelatedPRI_2.PlayerName;
+		VictimName = RelatedPRI_2.GetPlayerAlias();
 
 	if ( Switch == 1 )
 	{
 		// suicide
-		return class'UTGame'.Static.ParseKillMessage(
+		return class'GameInfo'.Static.ParseKillMessage(
 			KillerName,
 			VictimName,
-			KillDamageType.Static.SuicideMessage(RelatedPRI_2) );
+			Class<DamageType>(OptionalObject).Static.SuicideMessage(RelatedPRI_2) );
 	}
 
-	return class'UTGame'.Static.ParseKillMessage(
+	return class'GameInfo'.Static.ParseKillMessage(
 		KillerName,
 		VictimName,
-		KillDamageType.Static.DeathMessage(RelatedPRI_1, RelatedPRI_2) );
+		Class<DamageType>(OptionalObject).Static.DeathMessage(RelatedPRI_1, RelatedPRI_2) );
 }
 
 static function ClientReceive(
@@ -71,13 +71,32 @@ static function ClientReceive(
 	{
 		if ( RelatedPRI_2 == P.PlayerReplicationInfo )
 		{
-			UTPlayerController(P).ClientMusicEvent(2);
+			if (  class<UTDmgType_OrbReturn>(OptionalObject) != None )
+			{
+				// special centered message for orb return
+				if ( P.myHud != None )
+					P.myHUD.LocalizedMessage(
+						class'UTVictimMessage',
+						RelatedPRI_1,
+						class'UTVictimMessage'.static.GetString(Switch, true, RelatedPRI_1, RelatedPRI_2, OptionalObject),
+						0,
+						class'UTVictimMessage'.static.GetPos(Switch, P.myHUD),
+						class'UTVictimMessage'.static.GetLifeTime(Switch),
+						class'UTVictimMessage'.static.GetFontSize(Switch, RelatedPRI_1, RelatedPRI_2, P.PlayerReplicationInfo),
+						class'UTVictimMessage'.static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2),
+						OptionalObject );
+
+				// returning orb is a good thing
+				UTPlayerController(P).ClientMusicEvent(3);
+			}
+			else
+			{
+				UTPlayerController(P).ClientMusicEvent(2);
+			}
 			UTPlayerReplicationInfo(RelatedPRI_2).MultiKillLevel = 0;
 		}
 		if ( !Default.bNoConsoleDeathMessages )
-		{
 			Super.ClientReceive(P, Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
-		}
 		return;
 	}
 	if ( (RelatedPRI_1 == P.PlayerReplicationInfo)
@@ -89,7 +108,6 @@ static function ClientReceive(
 			P.myHUD.LocalizedMessage(
 				class'UTKillerMessage',
 				RelatedPRI_1,
-				RelatedPRI_2,
 				class'UTKillerMessage'.static.GetString(Switch, RelatedPRI_1 == P.PlayerReplicationInfo, RelatedPRI_1, RelatedPRI_2, OptionalObject),
 				Switch,
 				class'UTKillerMessage'.static.GetPos(Switch, P.myHUD),
@@ -134,7 +152,6 @@ static function ClientReceive(
 			P.myHUD.LocalizedMessage(
 				class'UTVictimMessage',
 				RelatedPRI_1,
-				RelatedPRI_2,
 				class'UTVictimMessage'.static.GetString(Switch, true, RelatedPRI_1, RelatedPRI_2, OptionalObject),
 				0,
 				class'UTVictimMessage'.static.GetPos(Switch, P.myHUD),
@@ -152,7 +169,10 @@ static function ClientReceive(
 
 defaultproperties
 {
-	MessageArea=1
-	DrawColor=(R=255,G=0,B=0,A=255)
-    bIsSpecial=false
+   KilledString="è stato ucciso da"
+   SomeoneString="qualcuno"
+   bIsSpecial=False
+   DrawColor=(B=0,G=0,R=255,A=255)
+   Name="Default__UTDeathMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

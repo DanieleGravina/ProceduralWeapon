@@ -1,10 +1,10 @@
 /**
  * LevelStreaming
  *
- * Abstract base class of container object encapsulating data required for streaming and providing
+ * Abstract base class of container object encapsulating data required for streaming and providing 
  * interface for when a level should be streamed in and out of memory.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class LevelStreaming extends Object
 	abstract
@@ -20,11 +20,8 @@ var transient const	level							LoadedLevel;
 /** Offset applied to actors after loading.																					*/
 var() const			vector							Offset;
 
-/** Transform applied to actors after loading.                                                                              */
-var() const         Matrix                          LevelTransform;
-
 /** Current/ old offset required for changing the offset at runtime, e.g. in the Editor.									*/
-var const			vector							OldOffset;
+var const			vector							OldOffset;	
 
 /** Whether the level is currently visible/ associated with the world														*/
 var const transient bool							bIsVisible;
@@ -36,7 +33,7 @@ var const transient	bool							bHasLoadRequestPending;
 var const transient bool							bHasUnloadRequestPending;
 
 /** Whether this level should be visible in the Editor																		*/
-var() editoronly const bool							bShouldBeVisibleInEditor;
+var() const			bool							bShouldBeVisibleInEditor;
 
 /** Whether this level's bounding box should be visible in the Editor.														*/
 var const			bool							bBoundingBoxVisible;
@@ -62,9 +59,6 @@ var() const			color							DrawColor;
 /** The level streaming volumes bound to this level.																		*/
 var() const editconst array<LevelStreamingVolume>	EditorStreamingVolumes;
 
-/** If TRUE, will be drawn on the 'level streaming status' map (STAT LEVELMAP console command) */
-var()				bool							bDrawOnLevelStatusMap;
-
 /** Cooldown time in seconds between volume-based unload requests.  Used in preventing spurious unload requests.			*/
 var() float											MinTimeBetweenVolumeUnloadRequests;
 
@@ -74,52 +68,38 @@ var const transient float							LastVolumeUnloadRequestTime;
 /** Whether this level streaming object's level should be unloaded and the object be removed from the level list.			*/
 var const transient bool							bIsRequestingUnloadAndRemoval;
 
-/** List of keywords to filter on in the level browser */
-var editoronly array<string> Keywords;
-
-/** The grid volume bound to this level, if any */
-var() const editconst LevelGridVolume EditorGridVolume;
-
-/** Row, column and depth of this streaming level in a streaming grid network */
-var() const editconst int GridPosition[ 3 ];
-
-
-cpptext
-{
-	/**
-	 * Returns whether this level should be present in memory which in turn tells the
-	 * streaming code to stream it in. Please note that a change in value from FALSE
-	 * to TRUE only tells the streaming code that it needs to START streaming it in
-	 * so the code needs to return TRUE an appropriate amount of time before it is
-	 * needed.
-	 *
-	 * @param ViewLocation	Location of the viewer
-	 * @return TRUE if level should be loaded/ streamed in, FALSE otherwise
-	 */
-	virtual UBOOL ShouldBeLoaded( const FVector& ViewLocation );
-
-	/**
-	 * Returns whether this level should be visible/ associated with the world if it is
-	 * loaded.
-	 *
-	 * @param ViewLocation	Location of the viewer
-	 * @return TRUE if the level should be visible, FALSE otherwise
-	 */
-	virtual UBOOL ShouldBeVisible( const FVector& ViewLocation );
-
-	/** Get a bounding box around the streaming volumes associated with this LevelStreaming object */
-	FBox GetStreamingVolumeBounds();
-
-	// UObject interface.
-	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bShouldBeVisibleInEditor=TRUE
-	DrawColor=(R=255,G=255,B=255,A=255)
-
-	MinTimeBetweenVolumeUnloadRequests=2.0
-
-	bDrawOnLevelStatusMap=TRUE
+   bShouldBeVisibleInEditor=True
+   DrawColor=(B=255,G=255,R=255,A=255)
+   MinTimeBetweenVolumeUnloadRequests=2.000000
+   Name="Default__LevelStreaming"
+   ObjectArchetype=Object'Core.Default__Object'
 }

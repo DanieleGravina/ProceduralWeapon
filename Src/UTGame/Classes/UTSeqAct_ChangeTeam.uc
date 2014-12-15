@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTSeqAct_ChangeTeam extends SequenceAction;
 
@@ -59,7 +59,9 @@ event Activated()
 
 defaultproperties
 {
-	ObjCategory="Team"
-	ObjName="Change Team"
-	bCallHandler=false
+   bCallHandler=False
+   ObjName="Change Team"
+   ObjCategory="Team"
+   Name="Default__UTSeqAct_ChangeTeam"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

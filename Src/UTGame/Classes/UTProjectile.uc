@@ -1,11 +1,15 @@
 /**
+ * UTProjectile
+ *
  * This is our base projectile class.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTProjectile extends UDKProjectile
-	abstract;
+class UTProjectile extends Projectile
+	abstract
+	native
+	nativereplication;
 
 /** Additional Sounds */
 var bool bSuppressSounds;
@@ -31,10 +35,8 @@ var bool bAdvanceExplosionEffect;
 /** decal for explosion */
 var MaterialInterface ExplosionDecal;
 var float DecalWidth, DecalHeight;
-
 /** How long the decal should last before fading out **/
 var float DurationOfDecal;
-
 /** MaterialInstance param name for dissolving the decal **/
 var name DecalDissolveParamName;
 
@@ -43,29 +45,70 @@ var float MaxEffectDistance;
 
 /** used to prevent effects when projectiles are destroyed (see LimitationVolume) */
 var bool bSuppressExplosionFX;
-
 /** if True, this projectile will remain alive (but hidden) until the flight effect is done */
 var bool bWaitForEffects;
+/** if true, the shutdown function has been called and 'new' effects shouldn't happen */
+var bool bShuttingDown;
+
+/** Acceleration magnitude. By default, acceleration is in the same direction as velocity */
+var float AccelRate;
 
 var float TossZ;
 
-/** FIXME TEMP for tweaking global checkradius */
-var float GlobalCheckRadiusTweak;
+/** for console games (wider collision w/ enemy players) */
+var bool bWideCheck;
+var float CheckRadius;
 
 /** If true, attach explosion effect to vehicles */
 var bool bAttachExplosionToVehicles;
+/** If true, attach explosion effect to pawns */
+var bool bAttachExplosionToPawns;
 
+/** Make true if want to spawn ProjectileLight.  Set false in TickSpecial() once it's been determined whether Instigator is local player.  Done there to make sure instigator has been replicated */
+var bool bCheckProjectileLight;
 /** Class of ProjectileLight */
 var class<PointLightComponent> ProjectileLightClass;
-
 /** LightComponent for this projectile (spawned only if projectile fired by the local player) */
 var PointLightComponent ProjectileLight;
 
 /** Class of ExplosionLight */
-var class<UDKExplosionLight> ExplosionLightClass;
-
+var class<UTExplosionLight> ExplosionLightClass;
 /** Max distance to create ExplosionLight */
 var float MaxExplosionLightDistance;
+
+/** TerminalVelocity for this projectile when falling */
+var float TerminalVelocity;
+/** Water buoyancy. A ratio (1.0 = neutral buoyancy, 0.0 = no buoyancy) */
+var float Buoyancy;
+
+/** custom gravity multiplier */
+var float CustomGravityScaling;
+
+/** if this projectile is fired by a vehicle passenger gun, this is the base vehicle
+ * considered the same as Instigator for purposes of bBlockedByInstigator
+ */
+var Vehicle InstigatorBaseVehicle;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+replication
+{
+	if (bNetInitial)
+		bWideCheck;
+	if (bNetDirty && bReplicateInstigator)
+		InstigatorBaseVehicle;
+}
+
+/** returns terminal velocity (max speed while falling) for this actor.  Unless overridden, it returns the TerminalVelocity of the PhysicsVolume in which this actor is located.
+*/
+native function float GetTerminalVelocity();
 
 /** CreateProjectileLight() called from TickSpecial() once if Instigator is local player
 */
@@ -126,10 +169,6 @@ simulated function PostBeginPlay()
 	if (Role == ROLE_Authority)
 	{
 		// If on console, init wide check
-		if ( !bWideCheck )
-		{
-			CheckRadius *= GlobalCheckRadiusTweak;
-		}
 		bWideCheck = bWideCheck || ((CheckRadius > 0) && (Instigator != None) && (UTPlayerController(Instigator.Controller) != None) && UTPlayerController(Instigator.Controller).AimingHelp(false));
 	}
 
@@ -141,7 +180,7 @@ simulated function PostBeginPlay()
 	// Set its Ambient Sound
 	if (AmbientSound != None && WorldInfo.NetMode != NM_DedicatedServer && !bSuppressSounds)
 	{
-		if ( bImportantAmbientSound || (!WorldInfo.bDropDetail && (WorldInfo.GetDetailMode() != DM_Low)) )
+		if ( bImportantAmbientSound || (!WorldInfo.bDropDetail && (WorldInfo.GetDetailMode() != DM_Low) && !class'Engine'.static.IsSplitScreen()) )
 		{
 			AmbientComponent = CreateAudioComponent(AmbientSound, true, true);
 			if ( AmbientComponent != None )
@@ -151,14 +190,14 @@ simulated function PostBeginPlay()
 		}
 	}
 
+	// hack the leviathan shock projectile to use the normal shock ball (leviathan ball is ugly with detail dropping)
+	if (class.name == 'UTProj_LeviathanShockBall')
+	{
+		ProjFlightTemplate = class'UTProj_ShockBall'.default.ProjFlightTemplate;
+	}
+
 	// Spawn any effects needed for flight
 	SpawnFlightEffects();
-
-	// shorter lifespan on mobile devices
-	if (WorldInfo.IsConsoleBuild(CONSOLE_Mobile) )
-	{
-		LifeSpan = FMin(LifeSpan, 0.5*default.LifeSpan);
-	}
 }
 
 simulated event SetInitialState()
@@ -212,16 +251,82 @@ simulated function Explode(vector HitLocation, vector HitNormal)
 	{
 		if ( Role == ROLE_Authority )
 			MakeNoise(1.0);
-		if ( !bShuttingDown )
-		{
-			ProjectileHurtRadius(HitLocation, HitNormal );
-		}
+		ProjectileHurtRadius(Damage,DamageRadius, MyDamageType, MomentumTransfer, HitLocation, HitNormal );
 	}
 	SpawnExplosionEffects(HitLocation, HitNormal);
 
 	ShutDown();
 }
 
+/**
+ * Hurt locally authoritative actors within the radius.
+ * Projectile version if needed offsets the start of the radius check to prevent hits embedded in walls from failing to cause damage
+ */
+simulated function bool ProjectileHurtRadius( float DamageAmount, float InDamageRadius, class<DamageType> DamageType, float Momentum,
+						vector HurtOrigin, vector HitNormal, optional class<DamageType> ImpactedActorDamageType )
+{
+	local bool bCausedDamage, bInitializedAltOrigin, bFailedAltOrigin;
+	local Actor	Victim;
+	local vector AltOrigin;
+
+	// Prevent HurtRadius() from being reentrant.
+	if ( bHurtEntry || bShuttingDown )
+		return false;
+
+	bHurtEntry = true;
+	bCausedDamage = false;
+
+	// if ImpactedActor is set, we actually want to give it full damage, and then let him be ignored by super.HurtRadius()
+	if ( (ImpactedActor != None) && (ImpactedActor != self)  )
+	{
+		ImpactedActor.TakeRadiusDamage( InstigatorController, DamageAmount, InDamageRadius,
+						(ImpactedActorDamageType != None) ? ImpactedActorDamageType : DamageType,
+						Momentum, HurtOrigin, true, self );
+		// need to check again in case TakeRadiusDamage() did something that went through our explosion path a second time
+		if (ImpactedActor != None)
+		{
+			bCausedDamage = ImpactedActor.bProjTarget;
+		}
+	}
+
+	foreach CollidingActors( class'Actor', Victim, DamageRadius, HurtOrigin )
+	{
+		if ( !Victim.bWorldGeometry && (Victim != self) && (Victim != ImpactedActor) && (Victim.bProjTarget || (NavigationPoint(Victim) == None)) )
+		{
+			if ( !FastTrace(HurtOrigin, Victim.Location,, TRUE) )
+			{
+				// try out from wall, in case trace start was embedded
+				if ( !bInitializedAltOrigin )
+				{
+					// initialize alternate trace start
+					bInitializedAltOrigin = true;
+					AltOrigin = HurtOrigin + class'UTPawn'.Default.MaxStepHeight * HitNormal;
+					if ( !FastTrace(HurtOrigin, AltOrigin,, TRUE) )
+					{
+						if ( Velocity == vect(0,0,0) )
+						{
+							bFailedAltOrigin = true;
+						}
+						else
+						{
+							AltOrigin = HurtOrigin - class'UTPawn'.Default.MaxStepHeight * normal(Velocity);
+							bFailedAltOrigin = !FastTrace(HurtOrigin, AltOrigin,, TRUE);
+						}
+					}
+				}
+				if ( bFailedAltOrigin || !FastTrace(AltOrigin, Victim.Location,, TRUE) )
+				{
+					continue;
+				}
+			}
+			Victim.TakeRadiusDamage(InstigatorController, DamageAmount, DamageRadius, DamageType, Momentum, HurtOrigin, false, self);
+			bCausedDamage = bCausedDamage || Victim.bProjTarget;
+		}
+	}
+	bHurtEntry = false;
+
+	return bCausedDamage;
+}
 
 /**
  * Spawns any effects needed for the flight of this projectile
@@ -239,6 +344,47 @@ simulated function SpawnFlightEffects()
 	}
 }
 
+simulated function bool CheckMaxEffectDistance(PlayerController P, vector SpawnLocation, optional float CullDistance)
+{
+	local float Dist;
+
+	if ( P.ViewTarget == None )
+		return true;
+
+	if ( (Vector(P.Rotation) Dot (SpawnLocation - P.ViewTarget.Location)) < 0.0 )
+	{
+		return (VSize(P.ViewTarget.Location - SpawnLocation) < 1000);
+	}
+
+	Dist = VSize(SpawnLocation - P.ViewTarget.Location);
+
+	if (CullDistance > 0 && CullDistance < Dist * P.LODDistanceFactor)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+simulated function bool EffectIsRelevant(vector SpawnLocation, bool bForceDedicated, optional float CullDistance)
+{
+	local PlayerController PC;
+
+	// always spawn effect if local player is close, even if not rendered recently
+	if (WorldInfo.NetMode != NM_DedicatedServer && SpawnLocation == Location)
+	{
+		foreach LocalPlayerControllers(class'PlayerController', PC)
+		{
+			if (PC.ViewTarget != None && VSize(PC.ViewTarget.Location - Location) < 256.0)
+			{
+				return true;
+			}
+		}
+	}
+
+	return Super.EffectIsRelevant(SpawnLocation, bForceDedicated, CullDistance);
+}
+
 /** sets any additional particle parameters on the explosion effect required by subclasses */
 simulated function SetExplosionEffectParameters(ParticleSystemComponent ProjExplosion);
 
@@ -252,6 +398,7 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 	local ParticleSystemComponent ProjExplosion;
 	local Actor EffectAttachActor;
 	local MaterialInstanceTimeVarying MITV_Decal;
+	local bool bIsPawn, bIsVehicle;
 
 	if (WorldInfo.NetMode != NM_DedicatedServer)
 	{
@@ -262,9 +409,11 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 		}
 		if (ProjExplosionTemplate != None && EffectIsRelevant(Location, false, MaxEffectDistance))
 		{
-			// Disabling for the demo to prevent explosions from attaching to the pawn...
-//			EffectAttachActor = (bAttachExplosionToVehicles || (UTVehicle(ImpactedActor) == None)) ? ImpactedActor : None;
-			EffectAttachActor = None;
+			//Attach to non-pawns, pawns if we allow it, or vehicles if we allow it
+			bIsPawn = (Pawn(ImpactedActor) != None) ? True : False;
+			bIsVehicle = (UTVehicle(ImpactedActor) != None) ? True : False;
+			EffectAttachActor = (!bIsPawn || (bAttachExplosionToPawns && !bIsVehicle) || (bAttachExplosionToVehicles && bIsVehicle)) ? ImpactedActor : None;
+
 			if (!bAdvanceExplosionEffect)
 			{
 				ProjExplosion = WorldInfo.MyEmitterPool.SpawnEmitter(ProjExplosionTemplate, HitLocation, rotator(HitNormal), EffectAttachActor);
@@ -291,24 +440,24 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 						LightLoc = HitLocation + (0.5 * VSize(HitLocation - LightHitLocation) * (vect(1,0,0) >> ProjExplosion.Rotation));
 					}
 
-					UDKEmitterPool(WorldInfo.MyEmitterPool).SpawnExplosionLight(ExplosionLightClass, LightLoc, EffectAttachActor);
+					UTEmitterPool(WorldInfo.MyEmitterPool).SpawnExplosionLight(ExplosionLightClass, LightLoc, EffectAttachActor);
 				}
 
 				// this code is mostly duplicated in:  UTGib, UTProjectile, UTVehicle, UTWeaponAttachment be aware when updating
-				if (ExplosionDecal != None && Pawn(ImpactedActor) == None )
+				if (ExplosionDecal != None && Pawn(ImpactedActor) == None && (UTOnslaughtNodeObjective(ImpactedActor) == None) )
 				{
 					if( MaterialInstanceTimeVarying(ExplosionDecal) != none )
 					{
 						// hack, since they don't show up on terrain anyway
 						if ( Terrain(ImpactedActor) == None )
 						{
-						MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
-						MITV_Decal.SetParent( ExplosionDecal );
+							MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
+							MITV_Decal.SetParent( ExplosionDecal );
 
-						WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
-						//here we need to see if we are an MITV and then set the burn out times to occur
-						MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
-					}
+							WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
+							//here we need to see if we are an MITV and then set the burn out times to occur
+							MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
+						}
 					}
 					else
 					{
@@ -572,24 +721,26 @@ simulated static function float GetRange()
 
 defaultproperties
 {
-	DamageRadius=+0.0
-	TossZ=0.0
-	bWaitForEffects=false
-	MaxEffectDistance=+10000.0
-	MaxExplosionLightDistance=+4000.0
-	CheckRadius=0.0
-	bBlockedByInstigator=false
-	TerminalVelocity=3500.0
-	bCollideComplex=true
-	bSwitchToZeroCollision=true
-	CustomGravityScaling=1.0
-	bAttachExplosionToVehicles=true
-
-	bShuttingDown=false
-
-	DurationOfDecal=24.0
-	DecalDissolveParamName="DissolveAmount"
-
-	GlobalCheckRadiusTweak=0.5
+   bAttachExplosionToVehicles=True
+   bAttachExplosionToPawns=True
+   DurationOfDecal=4.000000
+   DecalDissolveParamName="DissolveAmount"
+   MaxEffectDistance=10000.000000
+   MaxExplosionLightDistance=4000.000000
+   TerminalVelocity=3500.000000
+   CustomGravityScaling=1.000000
+   bSwitchToZeroCollision=True
+   bBlockedByInstigator=False
+   bInitRotationFromVelocity=True
+   DamageRadius=0.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Projectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Projectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   bNeverReplicateRotation=True
+   bCollideComplex=True
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTProjectile"
+   ObjectArchetype=Projectile'Engine.Default__Projectile'
 }
-

@@ -1,31 +1,28 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
+
+
 class UTRotatingDroppedPickup extends UTDroppedPickup;
-
-var() float YawRotationRate;
-
-simulated event Tick(float DeltaTime)
-{
-	Local Rotator NewRotation;
-
-	if( PickupMesh != None && WorldInfo.NetMode != NM_DedicatedServer && (WorldInfo.TimeSeconds - LastRenderTime < 0.2) )
-	{
-		NewRotation = PickupMesh.Rotation;
-		NewRotation.Yaw += DeltaTime * YawRotationRate;
-		PickupMesh.SetRotation(NewRotation);
-
-		if ( PickupParticles != None )
-		{
-			NewRotation = PickupParticles.Rotation;
-			NewRotation.Yaw += DeltaTime * YawRotationRate;
-			PickupParticles.SetRotation(NewRotation);
-		}
-	}
-}
 
 defaultproperties
 {
-	YawRotationRate=32768
+   bRotatingPickup=True
+   Begin Object Class=DynamicLightEnvironmentComponent Name=DroppedPickupLightEnvironment ObjName=DroppedPickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTDroppedPickup:DroppedPickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTDroppedPickup:DroppedPickupLightEnvironment'
+   End Object
+   MyLightEnvironment=DroppedPickupLightEnvironment
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTDroppedPickup:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTDroppedPickup:Sprite'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTDroppedPickup:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTDroppedPickup:CollisionCylinder'
+   End Object
+   Components(1)=CollisionCylinder
+   Components(2)=DroppedPickupLightEnvironment
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTRotatingDroppedPickup"
+   ObjectArchetype=UTDroppedPickup'UTGame.Default__UTDroppedPickup'
 }

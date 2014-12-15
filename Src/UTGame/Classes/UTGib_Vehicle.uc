@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTGib_Vehicle extends UTGib
@@ -79,21 +79,20 @@ simulated function ActivateGibExplosionEffect()
 	}
 }
 
-
-
 defaultproperties
 {
-	BurnDuration=3.5f
-	BurnName="BurnTime"
-
-	TimeBeforeGibExplosionEffect=0.100f
-
-	PS_GibExplosionEffect=ParticleSystem'Envy_Effects.Particles.P_VH_Gib_Explosion'
-	PS_GibTrailEffect=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
-
-	LoopedSound=SoundCue'A_Vehicle_Generic.Fire.VehicleDerbisLoop_Cue'
-
-	HitSound=SoundCue'A_Vehicle_Generic.Vehicle.VehicleImpact_MetalSmallCue'
-
-	//MITV_DecalTemplate=MaterialInstanceTimeVarying'VH_All.Decals.MITV_VehicleDebrisImpactDecal'
+   TimeBeforeGibExplosionEffect=0.100000
+   PS_GibExplosionEffect=ParticleSystem'Envy_Effects.Particles.P_VH_Gib_Explosion'
+   PS_GibTrailEffect=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
+   LoopedSound=SoundCue'A_Vehicle_Generic.Fire.VehicleDerbisLoop_Cue'
+   BurnName="BurnTime"
+   BurnDuration=3.500000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=GibLightEnvironmentComp ObjName=GibLightEnvironmentComp Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTGib:GibLightEnvironmentComp'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTGib:GibLightEnvironmentComp'
+   End Object
+   GibLightEnvironment=GibLightEnvironmentComp
+   HitSound=SoundCue'A_Vehicle_Generic.Vehicle.VehicleImpact_MetalSmallCue'
+   Components(0)=GibLightEnvironmentComp
+   Name="Default__UTGib_Vehicle"
+   ObjectArchetype=UTGib'UTGame.Default__UTGib'
 }

@@ -1,13 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_Destroy extends SequenceAction;
 
-var() bool bDestroyBasedActors;
-var() array< class<Actor> > IgnoreBasedClasses;
-
 defaultproperties
 {
-	ObjName="Destroy"
-	ObjCategory="Actor"
+   ObjName="Destroy"
+   ObjCategory="Actor"
+   Name="Default__SeqAct_Destroy"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

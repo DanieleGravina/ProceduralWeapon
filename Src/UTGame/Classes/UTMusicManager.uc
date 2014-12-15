@@ -2,7 +2,7 @@
  *
  * @todo:  add ability to use the TempoOverride
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTMusicManager extends Info
 	config(Game);
@@ -296,7 +296,7 @@ function Tick(float DeltaTime)
 		{
 			LastActionEventTime = WorldInfo.TimeSeconds;
 		}
-		else if ( UTPawn(PlayerOwner.Pawn) != None && UTPawn(PlayerOwner.Pawn).InCombat() )
+		else if ( PlayerOwner.Pawn.InCombat() )
 		{
 			LastActionEventTime = WorldInfo.TimeSeconds;
 			if ( CurrentState != MST_Action )
@@ -307,13 +307,13 @@ function Tick(float DeltaTime)
 	if ( (CurrentState != MST_Action) || (WorldInfo.TimeSeconds - LastActionEventTime > 8) )
 	{
 		// determine if music state needs to change
-		if ( (UTPawn(PlayerOwner.Pawn) != None) && UTPawn(PlayerOwner.Pawn).PoweredUp() )
+		if ( (PlayerOwner.Pawn != None) && PlayerOwner.Pawn.PoweredUp() )
 		{
 			NewState = MST_Victory;
 		}
 		else if ( !UTGameReplicationInfo(WorldInfo.GRI).FlagsAreHome() )
 		{
-			if ( UTPlayerReplicationInfo(PlayerOwner.PlayerReplicationInfo).bHasFlag )
+			if ( PlayerOwner.PlayerReplicationInfo.bHasFlag )
 				NewState = MST_Victory;
 			else
 			{
@@ -325,7 +325,14 @@ function Tick(float DeltaTime)
 		}
 		else
 		{
-			NewState = MST_Ambient;
+			if ( (CurrentState == MST_Action) && (WorldInfo.TimeSeconds - LastActionEventTime < 16) )
+			{
+				NewState = MST_Action;
+			}
+			else
+			{
+				NewState = MST_Ambient;
+			}
 		}
 
 		if ( NewState != CurrentState )
@@ -460,8 +467,15 @@ function ChangeTrack(EMusicState NewState)
 
 defaultproperties
 {
-	LastActionEventTime=-1000.0
-	PendingEventDelay=0.125
+   MusicVolume=0.360000
+   LastActionEventTime=-1000.000000
+   StingerVolumeMultiplier=1.100000
+   PendingEventDelay=0.125000
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTMusicManager"
+   ObjectArchetype=Info'Engine.Default__Info'
 }
-
-

@@ -3,7 +3,7 @@
  *	Allows you to register extra editor functionality for a specific AnimNode class.
  *	One of each class of these will be instanced for each AnimTreeEditor context.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class AnimNodeEditInfo extends Object
@@ -12,13 +12,19 @@ class AnimNodeEditInfo extends Object
 	
 var		const class<AnimNode>		AnimNodeClass;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual void OnDoubleClickNode(UAnimNode* InNode, class WxAnimTreeEditor* InEditor) {}
-	virtual void OnCloseAnimTreeEditor() {}
-	virtual UBOOL ShouldDrawWidget() { return FALSE; }
-	virtual UBOOL IsRotationWidget() { return TRUE; }
-	virtual FMatrix GetWidgetTM() { return FMatrix::Identity; }
-	virtual void HandleWidgetDrag(const FQuat& DeltaQuat, const FVector& DeltaTranslate) {}
-	virtual void Draw3DInfo(const FSceneView* View, FPrimitiveDrawInterface* PDI) {}
+   Name="Default__AnimNodeEditInfo"
+   ObjectArchetype=Object'Core.Default__Object'
 }

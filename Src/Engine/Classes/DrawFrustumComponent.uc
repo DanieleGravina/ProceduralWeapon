@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawFrustumComponent extends PrimitiveComponent
 	native
@@ -33,12 +33,12 @@ var()	Texture			Texture;
 
 defaultproperties
 {
-	FrustumColor=(R=255,G=0,B=255,A=255)
-	FrustumAngle=90.0
-	FrustumAspectRatio=AspectRatio4x3
-	FrustumStartDist=100
-	FrustumEndDist=1000
-
-	HiddenGame=true
-	CollideActors=false
+   FrustumColor=(B=255,G=0,R=255,A=255)
+   FrustumAngle=90.000000
+   FrustumAspectRatio=1.333000
+   FrustumStartDist=100.000000
+   FrustumEndDist=1000.000000
+   HiddenGame=True
+   Name="Default__DrawFrustumComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

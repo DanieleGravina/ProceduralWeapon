@@ -1,18 +1,25 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleKillBox extends ParticleModuleKillBase
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object);
 
-/** The lower left corner of the box. */
+/**
+ *	The lower left corner of the box
+ */
 var(Kill)		rawdistributionvector	LowerLeftCorner;
 
-/** The upper right corner of the box. */
+/**
+ *	The upper right corner of the box
+ */
 var(Kill)		rawdistributionvector	UpperRightCorner;
 
-/** If TRUE, the box coordinates are in world space./ */
+/**
+ *	If TRUE, the box coordinates is in world space
+ */
 var(Kill)		bool					bAbsolute;
 
 /**
@@ -21,28 +28,19 @@ var(Kill)		bool					bAbsolute;
  */
 var(Kill)		bool					bKillInside;
 
-/** If TRUE, the box will always be axis aligned and non-scalable. */
-var(Kill)		bool					bAxisAlignedAndFixedSize;
-
-cpptext
-{
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-	virtual void	Render3DPreview(FParticleEmitterInstance* Owner, const FSceneView* View,FPrimitiveDrawInterface* PDI);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bUpdateModule=true
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionLowerLeftCorner
-	End Object
-	LowerLeftCorner=(Distribution=DistributionLowerLeftCorner)
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionUpperRightCorner
-	End Object
-	UpperRightCorner=(Distribution=DistributionUpperRightCorner)
-
-	bSupported3DDrawMode=true
-	
-	bAxisAlignedAndFixedSize=true
+   LowerLeftCorner=(Distribution=DistributionLowerLeftCorner,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   UpperRightCorner=(Distribution=DistributionUpperRightCorner,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   bUpdateModule=True
+   bSupported3DDrawMode=True
+   Name="Default__ParticleModuleKillBox"
+   ObjectArchetype=ParticleModuleKillBase'Engine.Default__ParticleModuleKillBase'
 }

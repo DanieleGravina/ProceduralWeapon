@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class HeightFogComponent extends ActorComponent
 	native
@@ -22,16 +22,16 @@ var()	const	interp	float	ExtinctionDistance;
 /** distance at which fog starts affecting the scene */
 var()	const	interp	float	StartDistance;
 
-cpptext
-{
-protected:
-	// ActorComponent interface.
-	virtual void SetParentToWorld(const FMatrix& ParentToWorld);
-	virtual void Attach();
-	virtual void UpdateTransform();
-	virtual void Detach( UBOOL bWillReattach = FALSE );
-public:
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Changes the enabled state of the height fog component.
@@ -41,12 +41,11 @@ final native function SetEnabled(bool bSetEnabled);
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	bEnabled=TRUE
-	Density=0.00005
-	LightBrightness=0.1
-	LightColor=(R=255,G=255,B=255)
-	ExtinctionDistance=100000000
-	StartDistance=0
+   bEnabled=True
+   Density=0.000050
+   LightBrightness=0.100000
+   LightColor=(B=255,G=255,R=255,A=0)
+   ExtinctionDistance=100000000.000000
+   Name="Default__HeightFogComponent"
+   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'
 }

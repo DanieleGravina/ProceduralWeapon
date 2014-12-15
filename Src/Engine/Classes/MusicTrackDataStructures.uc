@@ -1,25 +1,25 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MusicTrackDataStructures extends Object
 	native;
 
-struct native MusicTrackStruct
+
+/**
+ * These are the parameters we can control on a track that is being faded in / out
+ **/
+struct native MusicTrackParamStruct
 {
-	/** The soundCue to play **/
-	var() SoundCue TheSoundCue;
-
-	/** Controls whether or not the track is auto-played when it is attached to the scene. */
-	var() bool bAutoPlay;
-
-	/** Controls whether the sound is not stopped on a map change */
-	var() bool bPersistentAcrossLevels;
-
 	/** Time taken for sound to fade in when action is activated. */
 	var() float FadeInTime;
 
 	/** Volume the sound to should fade in to */
 	var() float FadeInVolumeLevel;
+
+
+	/** Amount of delay between playing the new track */
+	var() float DelayBetweenOldAndNewTrack;
+
 
 	/** Time take for sound to fade out when Stop input is fired. */
 	var() float FadeOutTime;
@@ -27,15 +27,42 @@ struct native MusicTrackStruct
 	/** Volume the sound to should fade out to */
 	var() float FadeOutVolumeLevel;
 
-	/** Alternate Mp3 file to play on devices (iPhone, not PC) that support it.*/
-	var(Mobile) string	MP3Filename;
+	structcpptext
+	{
+	}
 
 	structdefaultproperties
 	{
 		FadeInTime=5.0f
 		FadeInVolumeLevel=1.0f
+		DelayBetweenOldAndNewTrack = 0.0f
 		FadeOutTime=5.0f
 		FadeOutVolumeLevel=0.0f
 	}
+
 };
 
+
+struct native MusicTrackStruct
+{
+	var() MusicTrackParamStruct Params;
+
+	/** which type this track is **/
+	var() name TrackType;
+
+	/** The soundCue to play **/
+	var() SoundCue TheSoundCue;
+
+	/** Controls whether or not the track is auto-played when it is attached to the scene. */
+	var() bool bAutoPlay;
+
+	structdefaultproperties
+	{
+	}
+};
+
+defaultproperties
+{
+   Name="Default__MusicTrackDataStructures"
+   ObjectArchetype=Object'Core.Default__Object'
+}

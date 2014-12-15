@@ -1,12 +1,41 @@
 /**
  * This data store class is responsible for parsing and applying inline font changes.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UIDataStore_Fonts extends UIDataStore
 	native(inherit);
 
-DefaultProperties
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	Tag=Fonts
+   Tag="Fonts"
+   Name="Default__UIDataStore_Fonts"
+   ObjectArchetype=UIDataStore'Engine.Default__UIDataStore'
 }

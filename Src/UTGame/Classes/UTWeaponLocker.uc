@@ -1,8 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTWeaponLocker extends UTPickupFactory
-	abstract;
+	abstract
+	native;
 
 struct native WeaponEntry
 {
@@ -66,6 +67,12 @@ var float ScaleRate;
 
 /** Next proximity check time */
 var float NextProximityCheckTime;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -188,7 +195,7 @@ simulated event ReplicatedEvent(name VarName)
 	{
 		for (i = 0; i < ArrayCount(ReplacementWeapons); i++)
 		{
-			if ( ReplacementWeapons[i].bReplaced )
+			if (ReplacementWeapons[i].bReplaced)
 			{
 				if (i >= Weapons.length)
 				{
@@ -290,7 +297,7 @@ function float DetourWeight(Pawn Other,float PathWeight)
 		else if ( AlreadyHas.NeedAmmo() )
 			desire += 0.15;
 	}
-	if ( UTBot(Other.Controller).PriorityObjective()
+	if ( AIController(Other.Controller).PriorityObjective()
 		&& ((Other.Weapon.AIRating > 0.5) || (PathWeight > 400)) )
 		return 0.2/PathWeight;
 	return desire/PathWeight;
@@ -300,12 +307,11 @@ simulated function InitializePickup() {}
 simulated function ShowActive();
 simulated function NotifyLocalPlayerDead(PlayerController PC);
 
-simulated event SetPlayerNearby(PlayerController PC, bool bNewPlayerNearby, bool bPlayEffects)
+simulated event SetPlayerNearby(bool bNewPlayerNearby, bool bPlayEffects)
 {
 	local int i;
 	local vector NewScale;
 	local PrimitiveComponent DefaultMesh;
-	local UTInventoryManager InvManager;
 
 	if (bNewPlayerNearby != bPlayerNearby)
 	{
@@ -319,50 +325,34 @@ simulated event SetPlayerNearby(PlayerController PC, bool bNewPlayerNearby, bool
 			LightEnvironment.bDynamic = true;
 			bScalingUp = true;
 			CurrentWeaponScaleX = 0.1;
-			if ( (PC != None) && (PC.Pawn != None) )
+			for (i = 0; i < Weapons.length; i++)
 			{
-				if ( UTPawn(PC.Pawn) != None )
+				if (Weapons[i].WeaponClass.default.PickupFactoryMesh != None)
 				{
-					InvManager = UTInventoryManager(PC.Pawn.InvManager);
-				}
-				else if (UTVehicle(PC.Pawn) != None )
-				{
-					InvManager = UTInventoryManager(UTVehicle(PC.Pawn).Driver.InvManager);
-				}
-			}
-
-			if ( InvManager != None )
-			{
-				for (i = 0; i < Weapons.length; i++)
-				{
-					if ( (Weapons[i].WeaponClass.default.PickupFactoryMesh != None)
-						 && (InvManager.HasInventoryOfClass(Weapons[i].WeaponClass) == None) )
+					if ( Weapons[i].PickupMesh == None )
 					{
-						if ( Weapons[i].PickupMesh == None )
+						DefaultMesh = Weapons[i].WeaponClass.default.PickupFactoryMesh;
+						Weapons[i].PickupMesh = new(self) DefaultMesh.Class(DefaultMesh);
+						Weapons[i].PickupMesh.SetTranslation(LockerPositions[i] + Weapons[i].WeaponClass.default.LockerOffset);
+						Weapons[i].PickupMesh.SetRotation(Weapons[i].WeaponClass.default.LockerRotation);
+						Weapons[i].PickupMesh.SetLightEnvironment(LightEnvironment);
+						// Force skeletal mesh weapons to be in reference pose.
+						if( SkeletalMeshComponent(Weapons[i].PickupMesh) != None )
 						{
-							DefaultMesh = Weapons[i].WeaponClass.default.PickupFactoryMesh;
-							Weapons[i].PickupMesh = new(self) DefaultMesh.Class(DefaultMesh);
-							Weapons[i].PickupMesh.SetTranslation(LockerPositions[i] + Weapons[i].WeaponClass.default.LockerOffset);
-							Weapons[i].PickupMesh.SetRotation(Weapons[i].WeaponClass.default.LockerRotation);
-							Weapons[i].PickupMesh.SetLightEnvironment(LightEnvironment);
-							// Force skeletal mesh weapons to be in reference pose.
-							if( SkeletalMeshComponent(Weapons[i].PickupMesh) != None )
-							{
-								SkeletalMeshComponent(Weapons[i].PickupMesh).bForceRefPose = 1;
-							}
-							NewScale = Weapons[i].PickupMesh.Scale3D;
-							NewScale.X = 0.1;
-							Weapons[i].PickupMesh.SetScale3D(NewScale);
+							SkeletalMeshComponent(Weapons[i].PickupMesh).bForceRefPose = 1;
 						}
-						if (Weapons[i].PickupMesh != None)
-						{
-							Weapons[i].PickupMesh.SetHidden(false);
-							AttachComponent(Weapons[i].PickupMesh);
+						NewScale = Weapons[i].PickupMesh.Scale3D;
+						NewScale.X = 0.1;
+						Weapons[i].PickupMesh.SetScale3D(NewScale);
+					}
+					if (Weapons[i].PickupMesh != None)
+					{
+						Weapons[i].PickupMesh.SetHidden(false);
+						AttachComponent(Weapons[i].PickupMesh);
 
-							if (bPlayEffects)
-							{
-								WorldInfo.MyEmitterPool.SpawnEmitter(WeaponSpawnEffectTemplate, Weapons[i].PickupMesh.GetPosition());
-							}
+						if (bPlayEffects)
+						{
+							WorldInfo.MyEmitterPool.SpawnEmitter(WeaponSpawnEffectTemplate, Weapons[i].PickupMesh.GetPosition());
 						}
 					}
 				}
@@ -410,42 +400,13 @@ simulated function ShowHidden()
 {
 	bIsActive = false;
 	AmbientEffect.SetTemplate(InactiveEffectTemplate);
-	SetPlayerNearby(None, false, false);
+	SetPlayerNearby(false, false);
 }
+
+function GiveLockerWeapons(Actor Other, bool bHideWeapons);
 
 auto state LockerPickup
 {
-	simulated event Tick(FLOAT DeltaTime)
-	{
-		local bool bNewPlayerNearby;
-		local PlayerController NearbyPC, PC;
-
-		if ( WorldInfo.NetMode == NM_DedicatedServer )
-		{
-			Disable('Tick');
-		}
-		else if ( bIsActive )
-		{
-			if ( WorldInfo.TimeSeconds > NextProximityCheckTime )
-			{
-				NextProximityCheckTime = WorldInfo.TimeSeconds + 0.2 + 0.1 * FRand();
-				ForEach LocalPlayerControllers(class'PlayerController', PC)
-				{
-					if ( PC.Pawn != None && (VSizeSq(Location - PC.Pawn.Location) < ProximityDistanceSquared) )
-					{
-						bNewPlayerNearby = TRUE;
-						NearbyPC = PC;
-						break;
-					}
-				}
-				if ( bNewPlayerNearby != bPlayerNearby )
-				{
-					SetPlayerNearby(NearbyPC, bNewPlayerNearby, true);
-				}
-			}
-		}
-	}
-
 	function bool ReadyToPickup(float MaxWait)
 	{
 		return true;
@@ -512,26 +473,43 @@ auto state LockerPickup
 	// When touched by an actor.
 	simulated event Touch( actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 	{
-		local int		i;
-		local UTWeapon Copy;
-		local Pawn Recipient;
-
 		// If touched by a player pawn, let him pick this up.
 		if( ValidTouch(Other) )
 		{
+			GiveLockerWeapons(Other, true);
+		}
+	}
+
+	simulated function GiveLockerWeapons(Actor Other, bool bHideWeapons)
+	{
+		local int		i;
+		local UTWeapon Copy;
+		local Pawn Recipient;
+		local UTConsolePlayerController UTPC;
+
 			Recipient = Pawn(Other);
 			if ( (Recipient.Controller != None && Recipient.Controller.IsLocalPlayerController()) ||
 				(Recipient.DrivenVehicle != None && Recipient.DrivenVehicle.Controller != None && Recipient.DrivenVehicle.Controller.IsLocalPlayerController()) )
 			{
 				if ( bIsActive )
 				{
-					ShowHidden();
-					SetTimer(30,false,'ShowActive');
+				//Play some rumble when we pick up the weapons
+				UTPC = UTConsolePlayerController(Recipient.Controller);
+				if(UTPC != None)
+				{
+					UTPC.ClientPlayForceFeedbackWaveform(PickUpWaveForm);
+				}
+
+					if ( bHideWeapons )
+					{
+						ShowHidden();
+						SetTimer(30,false,'ShowActive');
+					}
 				}
 			}
 			if ( Role < ROLE_Authority )
 				return;
-			if ( !AddCustomer(Recipient) )
+			if ( bHideWeapons && !AddCustomer(Recipient) )
 				return;
 
 			for ( i=0; i<Weapons.Length; i++ )
@@ -542,7 +520,10 @@ auto state LockerPickup
 				{
 					if ( Copy.LockerAmmoCount - Copy.AmmoCount > 0 )
 						Copy.AddAmmo(Copy.LockerAmmoCount - Copy.AmmoCount);
-					Copy.AnnouncePickup(Recipient);
+				if ( Copy.PickupSound != None )
+				{
+					Recipient.PlaySound(Copy.PickupSound);
+				}
 				}
 				else if (WorldInfo.Game.PickupQuery(Recipient, InventoryType, self))
 				{
@@ -550,16 +531,18 @@ auto state LockerPickup
 					if ( Copy != None )
 					{
 						Copy.GiveTo(Recipient);
-						Copy.AnnouncePickup(Recipient);
+						if ( bHideWeapons )
+						{
+							Copy.AnnouncePickup(Recipient);
+						}
 						if ( Copy.LockerAmmoCount - Copy.Default.AmmoCount > 0 )
 							Copy.AddAmmo(Copy.LockerAmmoCount - Copy.Default.AmmoCount);
 					}
 					else
-						`log(self$" failed to spawn "$inventorytype);
+						LogInternal(self$" failed to spawn "$inventorytype);
 				}
 			}
 		}
-	}
 
 	simulated event BeginState(name PreviousStateName)
 	{
@@ -580,28 +563,36 @@ State Disabled
 
 defaultproperties
 {
-	//PickupSound=Sound'NewWeaponSounds.WeaponsLocker_01'
-	NetUpdateFrequency=1
-
-	//MessageClass=class'UTPickupMessage'
-	bRotatingPickup=false
-	bMovable=FALSE
-	bStatic=FALSE
-
-	LockerPositions[0]=(X=18.0,Y=-30.0)
-	LockerPositions[1]=(X=-15.0,Y=25.0)
-	LockerPositions[2]=(X=34.0,Y=-2.0)
-	LockerPositions[3]=(X=-30.0,Y=0.0)
-	LockerPositions[4]=(X=16.0,Y=22.0)
-	LockerPositions[5]=(X=-19.0,Y=-32.0)
-
-	ProximityDistanceSquared=600000.0
-	ScaleRate=2.0
-
-	Begin Object NAME=CollisionCylinder
-		CollisionRadius=+00080.000000
-		CollisionHeight=+00050.000000
-		CollideActors=true
-	End Object
+   LockerPositions(0)=(X=18.000000,Y=-30.000000,Z=0.000000)
+   LockerPositions(1)=(X=-15.000000,Y=25.000000,Z=0.000000)
+   LockerPositions(2)=(X=34.000000,Y=-2.000000,Z=0.000000)
+   LockerPositions(3)=(X=-30.000000,Y=0.000000,Z=0.000000)
+   LockerPositions(4)=(X=16.000000,Y=22.000000,Z=0.000000)
+   LockerPositions(5)=(X=-19.000000,Y=-32.000000,Z=0.000000)
+   LockerString="Nascondiglio Arma"
+   ProximityDistanceSquared=600000.000000
+   ScaleRate=2.000000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTPickupFactory:PickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTPickupFactory:PickupLightEnvironment'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTPickupFactory:CollisionCylinder'
+      CollisionHeight=50.000000
+      CollisionRadius=80.000000
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTPickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTPickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTPickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'UTGame.Default__UTPickupFactory:BaseMeshComp'
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTPickupFactory:BaseMeshComp'
+   End Object
+   Components(3)=BaseMeshComp
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTWeaponLocker"
+   ObjectArchetype=UTPickupFactory'UTGame.Default__UTPickupFactory'
 }
-

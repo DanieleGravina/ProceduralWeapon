@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicleMessage extends UTLocalMessage;
 
@@ -64,21 +64,28 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	DrawColors(0)=(R=255,G=255,B=128,A=255)
-	DrawColors(1)=(R=0,G=160,B=255,A=255)
-	DrawColors(2)=(R=255,G=0,B=0,A=255)
-	DrawColors(3)=(R=255,G=0,B=0,A=255)
-	DrawColors(4)=(R=255,G=255,B=255,A=255)
-	DrawColors(5)=(R=255,G=255,B=255,A=255)
-
-	FontSize=2
-	MessageArea=2
-	bIsConsoleMessage=false
-
-	bIsUnique=false
-	bIsPartiallyUnique=true
-
-	MessageAnnouncements[4]=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Hijacked'
-	MessageAnnouncements[5]=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_CarJacked'
-	AnnouncementPriority=5
+   MessageText(0)="Sistema autodistruzione Viper non ancora attivato."
+   MessageText(1)="Il veicolo è Chiuso."
+   MessageText(2)="Stai intralciando una rinascita veicolo!"
+   MessageText(3)="Leviathan è online."
+   MessageText(4)="Dirottato!"
+   MessageText(5)="Dirottamento d'auto!"
+   DrawColors(0)=(B=128,G=255,R=255,A=255)
+   DrawColors(1)=(B=255,G=160,R=0,A=255)
+   DrawColors(2)=(B=0,G=0,R=255,A=255)
+   DrawColors(3)=(B=0,G=0,R=255,A=255)
+   DrawColors(4)=(B=255,G=255,R=255,A=255)
+   DrawColors(5)=(B=255,G=255,R=255,A=255)
+   MessageAnnouncements(0)=None
+   MessageAnnouncements(1)=None
+   MessageAnnouncements(2)=None
+   MessageAnnouncements(3)=None
+   MessageAnnouncements(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Hijacked'
+   MessageAnnouncements(5)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_CarJacked'
+   MessageArea=2
+   AnnouncementPriority=5
+   bIsPartiallyUnique=True
+   FontSize=2
+   Name="Default__UTVehicleMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

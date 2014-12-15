@@ -1,12 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqEvent_SkipCinematic extends SequenceEvent;
 
 defaultproperties
 {
-	ObjName="Skipped Cinematic"
-	VariableLinks.Empty()
-	bPlayerOnly=false
+   bPlayerOnly=False
+   ObjName="Skipped Cinematic"
+   Name="Default__UTSeqEvent_SkipCinematic"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

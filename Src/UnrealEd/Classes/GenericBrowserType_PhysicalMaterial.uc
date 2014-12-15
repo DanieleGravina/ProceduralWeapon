@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // GenericBrowserType_PhysicalMaterial: Physical properties of a material
@@ -9,13 +9,16 @@ class GenericBrowserType_PhysicalMaterial
 	extends GenericBrowserType
 	native;
 
-cpptext
-{
-	virtual void Init();
-	virtual UBOOL ShowObjectEditor( UObject* InObject );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
+
 defaultproperties
 {
-	Description="Physical Materials"
+   Description="Physical Material"
+   Name="Default__GenericBrowserType_PhysicalMaterial"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

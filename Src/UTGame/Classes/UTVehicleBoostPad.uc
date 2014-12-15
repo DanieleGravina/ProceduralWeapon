@@ -1,10 +1,9 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTVehicleBoostPad extends Actor
-	ClassGroup(Vehicles)
 	placeable;
 
 var()	bool						bInitiallyOn;
@@ -17,6 +16,10 @@ var		array<UTVehicle>			VehicleList;
 simulated event PostBeginPlay()
 {
 	bCurrentlyActive = bInitiallyOn;
+
+	// ttp 113322: Make sure the box is always hidden
+	CollisionComponent.SetHidden(true);
+
 	Disable('Tick');
 }
 
@@ -102,38 +105,37 @@ function Tick(float DT)
 	}
 }
 
-DefaultProperties
+defaultproperties
 {
-	Begin Object Class=ArrowComponent Name=ArrowComponent0
-		ArrowColor=(R=0,G=255,B=128)
-		ArrowSize=5.5
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-	End Object
-	Components.Add(ArrowComponent0)
-
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
-		StaticMesh=StaticMesh'UN_SimpleMeshes.TexPropCube_Dup'
-		Materials(0)=Material'Envy_Effects.Energy.Materials.M_EFX_Energy_Loop_Scroll_01'
-		CollideActors=True
-		CastShadow=False
-		HiddenGame=True
-		bAcceptsLights=False
-		BlockRigidBody=False
-		BlockActors=False
-		BlockZeroExtent=False
-		BlockNonZeroExtent=TRUE
-		Scale3D=(X=2.0,Y=1.0,Z=0.4)
-	End Object
-	CollisionComponent=StaticMeshComponent0
-	Components.Add(StaticMeshComponent0)
-
-	BoostPower=1500
-	BoostDamping=0.01
-
-	bCollideActors=True
-	bAlwaysRelevant=true
-	bMovable=true
-	bWorldGeometry=false
-	bInitiallyOn=true
+   bInitiallyOn=True
+   BoostPower=1500.000000
+   BoostDamping=0.010000
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowColor=(B=128,G=255,R=0,A=255)
+      ArrowSize=5.500000
+      Name="ArrowComponent0"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Components(0)=ArrowComponent0
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0 ObjName=StaticMeshComponent0 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'UN_SimpleMeshes.TexPropCube_Dup'
+      Materials(0)=Material'Envy_Effects.Energy.Materials.M_EFX_Energy_Loop_Scroll_01'
+      HiddenGame=True
+      bUseAsOccluder=False
+      CastShadow=False
+      bAcceptsLights=False
+      BlockActors=False
+      BlockZeroExtent=False
+      BlockRigidBody=False
+      Scale3D=(X=2.000000,Y=1.000000,Z=0.400000)
+      Name="StaticMeshComponent0"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   Components(1)=StaticMeshComponent0
+   bAlwaysRelevant=True
+   bCollideActors=True
+   CollisionComponent=StaticMeshComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTVehicleBoostPad"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTEmit_HitEffect extends UTEmitter;
 
@@ -25,4 +25,11 @@ simulated function PawnBaseDied()
 
 defaultproperties
 {
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTEmitter:ParticleSystemComponent0'
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTEmitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   Name="Default__UTEmit_HitEffect"
+   ObjectArchetype=UTEmitter'UTGame.Default__UTEmitter'
 }

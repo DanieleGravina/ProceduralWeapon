@@ -1,7 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTVehicle_Manta extends UTVehicle
+class UTVehicle_Manta extends UTHoverVehicle
+	native(Vehicle)
 	abstract;
 
 var(Movement)	float	JumpForceMag;
@@ -54,8 +55,10 @@ var  protected float BoneOffsetZAdjust;
 /** max speed while crouched */
 var(Movement) float CrouchedAirSpeed;
 
-/** max speed */
-var(Movement) float FullAirSpeed;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -63,193 +66,10 @@ replication
 		bDoBikeJump, bHoldingDuck;
 }
 
-event Tick(Float DeltaSeconds)
+simulated function PostBeginPlay()
 {
-	local bool bRecentlyRendered, bIsOverJumpableSurface, bAdjustSuspension;
-	local vector X,Y, DirZ, HitLocation, HitNormal;
-	local actor HitActor;
-	local float MaxImpulse, JumpImpulse, DesiredSuspensionTravel, ClampedDeltaSeconds;
-	local int i;
-	
-	super.Tick(DeltaSeconds);
-
-	if ( bDeadVehicle )
-	{
-		return;
-	}
-	
-	AirSpeed = FullAirSpeed;
-
-	if (Controller != None)
-	{
-		// trying to jump
-		if ( bPressingAltFire || (Rise < 0.0) )
-		{
-			// Duck!
-			AirSpeed = CrouchedAirSpeed;
-			if ( !bHoldingDuck )
-			{
-				bHoldingDuck = true;
-
-				MantaDuckEffect();
-				
-				if ( UTBot(Controller) != None )
-    				Rise = 0.0;
-    		}
-		}
-		else if ( Rise > 0.0 )
-		{
-			if ( !bHoldingDuck && (WorldInfo.TimeSeconds - JumpDelay >= LastJumpTime) )
-			{
-				// Calculate Local Up Vector
-				GetAxes(Rotation, X, Y, DirZ);
-
-				bIsOverJumpableSurface = false;
-
-				// Don't jump if we are at a steep angle
-				if ( DirZ.Z > 0.5 )
-				{
-					// Otherwise make sure there is ground underneath
-					// use an extent trace so what we hit matches up with what the vehicle and physics collision would hit
-					HitActor = Trace(HitLocation,HitNormal,Location - (DirZ * JumpCheckTraceDist),Location,true, vect(1,1,1),,TRACEFLAG_Blocking);
-					bIsOverJumpableSurface = (HitActor != None);
-				}
-				if (bIsOverJumpableSurface)
-				{
-					// If we are on the ground, and press Rise, and we not currently in the middle of a jump, start a new one.
-					if (Role == ROLE_Authority)
-					{
-   						bDoBikeJump = !bDoBikeJump;
-					}
-					MantaJumpEffect();
-
-					if ( UTBot(Controller) != None )
-    					Rise = 0.0;
-
-					 JumpImpulse = JumpForceMag;
-					// We limit the impulse, to limit the max vertical velocity achieved
-					if( (Mesh != None) && (Mesh.BodyInstance != None) )
-					{
-						MaxImpulse = (MaxJumpZVel - Velocity.Z) * Mesh.BodyInstance.GetBodyMass();
-						if( MaxImpulse > 0.0 )
-						{
-							JumpImpulse = FMin(MaxImpulse, JumpImpulse);
-						}
-						else
-						{
-							JumpImpulse = 0.0;
-						}
-					}
-
-					AddImpulse( vect(0.0,0.0,1.0)*JumpImpulse );
-					LastJumpTime = WorldInfo.TimeSeconds;
-				}
-			}
-			// make sure bot doesn't queue up a jump (it checks frequently enough that this isn't likely to be helpful)
-			else if ( UTBot(Controller) != None )
-			{
-				Rise = 0.0;
-			}
-			bNoZDamping = (WorldInfo.TimeSeconds - 0.25 < LastJumpTime);
-		}
-		else if (bHoldingDuck)
-		{
-			bHoldingDuck = false;
-			MantaDuckEffect();
-		}
-	}
-
-	if ( bDriving )
-	{
-		DesiredSuspensionTravel = FullWheelSuspensionTravel;
-		if ( bHoldingDuck )
-		{
-			AddForce( vect(0.0,0.0,1.0)*DuckForceMag );
-			DesiredSuspensionTravel = CrouchedWheelSuspensionTravel;
-		}
-
-		ClampedDeltaSeconds = FMin(DeltaSeconds, 0.1);
-		for ( i=0; i<Wheels.Length; i++ )
-		{
-			bAdjustSuspension = false;
-
-			if ( Wheels[i].SuspensionTravel > DesiredSuspensionTravel )
-			{
-				// instant crouch
-				bAdjustSuspension = true;
-				Wheels[i].SuspensionTravel = DesiredSuspensionTravel;
-				SimObj.WheelSuspensionStiffness = CrouchedWheelSuspensionStiffness;
-			}
-			else if ( Wheels[i].SuspensionTravel < DesiredSuspensionTravel )
-			{
-				// slow rise
-				bAdjustSuspension = true;
-				Wheels[i].SuspensionTravel = FMin(DesiredSuspensionTravel, Wheels[i].SuspensionTravel + SuspensionTravelAdjustSpeed*ClampedDeltaSeconds);
-				SimObj.WheelSuspensionStiffness = FullWheelSuspensionStiffness;
-			}
-			if ( bAdjustSuspension )
-			{
-				Wheels[i].BoneOffset.Z = -1.0 * (Wheels[i].SuspensionTravel + Wheels[i].WheelRadius + BoneOffsetZAdjust);
-				bUpdateWheelShapes = true; 
-			}
-		}
-	}
-
-	bRecentlyRendered = (LastRenderTime > WorldInfo.TimeSeconds - 1.0f);
-	if ( WorldInfo.NetMode != NM_DedicatedServer && bRecentlyRendered )
-	{
-		// client side only effects
-		if ( FanEffectIndex >= 0 && FanEffectIndex < VehicleEffects.Length && VehicleEffects[FanEffectIndex].EffectRef != None )
-		{
-			if ( bDriving )
-			{
-				if ( Velocity != vect(0,0,0) )
-				{
-					DesiredBladeBlur = 1.0 + FClamp( (0.002 * VSize(Velocity)), 0.0, 2.0);
-					BladeBlur = DesiredBladeBlur;
-					DesiredFlameJetValue = FMin(BladeBlur, 1.0);
-					FlameJetValue = DesiredFlameJetValue;
-				}
-				else
-				{
-					DesiredBladeBlur = 1.0;
-					DesiredFlameJetValue = 0.0;
-				}
-			}
-			else
-			{
-				DesiredBladeBlur = 0.0;
-				DesiredFlameJetValue = 0.0;
-			}
-		
-			if (BladeBlur!=DesiredBladeBlur)
-			{
-				if (BladeBlur > DesiredBladeBlur)
-				{
-					BladeBlur = FClamp( (BladeBlur-DeltaSeconds), DesiredBladeBlur, 3.0 );
-				}
-				else
-				{
-					BladeBlur = FClamp( (BladeBlur+DeltaSeconds), 0.0, DesiredBladeBlur );
-				}
-			}
-
-			if (FlameJetValue!=DesiredFlameJetValue)
-			{
-				if (FlameJetValue > DesiredFlameJetValue)
-				{
-					FlameJetValue = FClamp( (FlameJetValue-DeltaSeconds), DesiredFlameJetValue, 1.0 );
-				}
-				else
-				{
-					FlameJetValue = FClamp( (FlameJetValue+DeltaSeconds), 0.0, DesiredFlameJetValue );
-				}
-			}
-
-			VehicleEffects[FanEffectIndex].EffectRef.SetFloatParameter(FanEffectParameterName, BladeBlur);
-			VehicleEffects[FanEffectIndex].EffectRef.SetFloatParameter(FlameJetEffectParameterName, FlameJetValue);
-		}
-	}
+	Super.PostBeginPlay();
+	SetMaxRadius(SoundNodeAttenuation(EngineSound.SoundCue.FirstNode));
 }
 
 /**
@@ -314,9 +134,9 @@ function PossessedBy(Controller C, bool bVehicleTransition)
 	bPressingAltFire = false;
 }
 
-simulated function MantaJumpEffect();
+simulated event MantaJumpEffect();
 
-simulated function MantaDuckEffect();
+simulated event MantaDuckEffect();
 
 //========================================
 // AI Interface
@@ -332,7 +152,7 @@ function byte ChooseFireMode()
 		&& Vehicle(Controller.Focus) == None
 		&& Controller.MoveTarget == Controller.Focus
 		&& Controller.InLatentExecution(Controller.LATENT_MOVETOWARD)
-		&& VSize(Controller.GetFocalPoint() - Location) < 800
+		&& VSize(Controller.FocalPoint - Location) < 800
 		&& Controller.LineOfSightTo(Controller.Focus) )
 	{
 		return 1;
@@ -360,6 +180,12 @@ function IncomingMissile(Projectile P)
 	{
 		Super.IncomingMissile(P);
 	}
+}
+
+// AI hint
+function bool FastVehicle()
+{
+	return true;
 }
 
 simulated function DrivingStatusChanged()
@@ -439,142 +265,153 @@ function bool RecommendCharge(UTBot B, Pawn Enemy)
 
 defaultproperties
 {
-	MaxGroundEffectDist=256.0
-	GroundEffectDistParameterName=DistToGround
-	bNoZSmoothing=false
-	CollisionDamageMult=0.0008
-
-	Health=200
-	MeleeRange=-100.0
-	ExitRadius=160.0
-	bTakeWaterDamageWhileDriving=false
-
-	COMOffset=(x=0.0,y=0.0,z=0.0)
-	UprightLiftStrength=30.0
-	UprightTorqueStrength=30.0
-	bCanFlip=true
-	JumpForceMag=7000.0
-	JumpDelay=3.0
-	MaxJumpZVel=900.0
-	DuckForceMag=-350.0
-	JumpCheckTraceDist=175.0
-	FullWheelSuspensionTravel=145
-	CrouchedWheelSuspensionTravel=100
-	FullWheelSuspensionStiffness=20.0
-	CrouchedWheelSuspensionStiffness=40.0
-	SuspensionTravelAdjustSpeed=100
-	BoneOffsetZAdjust=45.0
-	CustomGravityScaling=0.8
-
-	AirSpeed=1800.0
-	GroundSpeed=1500.0
-	CrouchedAirSpeed=1200.0
-	FullAirSpeed=1800.0
-	bCanCarryFlag=false
-	bFollowLookDir=True
-	bTurnInPlace=True
-	bScriptedRise=True
-	bCanStrafe=True
-	ObjectiveGetOutDist=750.0
-	MaxDesireability=0.6
-	SpawnRadius=125.0
-	MomentumMult=3.2
-
-	bStayUpright=true
-	StayUprightRollResistAngle=5.0
-	StayUprightPitchResistAngle=5.0
-	StayUprightStiffness=450
-	StayUprightDamping=20
-
-	bRagdollDriverOnDarkwalkerHorn=true
-
-	Begin Object Class=UDKVehicleSimHover Name=SimObject
-		WheelSuspensionStiffness=20.0
-		WheelSuspensionDamping=1.0
-		WheelSuspensionBias=0.0
-		MaxThrustForce=325.0
-		MaxReverseForce=250.0
-		LongDamping=0.3
-		MaxStrafeForce=260.0
-		DirectionChangeForce=375.0
-		LatDamping=0.3
-		MaxRiseForce=0.0
-		UpDamping=0.0
-		TurnTorqueFactor=2500.0
-		TurnTorqueMax=1000.0
-		TurnDamping=0.25
-		MaxYawRate=100000.0
-		PitchTorqueFactor=200.0
-		PitchTorqueMax=18.0
-		PitchDamping=0.1
-		RollTorqueTurnFactor=1000.0
-		RollTorqueStrafeFactor=110.0
-		RollTorqueMax=500.0
-		RollDamping=0.2
-		MaxRandForce=20.0
-		RandForceInterval=0.4
-		bAllowZThrust=false
-	End Object
-	SimObj=SimObject
-	Components.Add(SimObject)
-
-	Begin Object Class=UTHoverWheel Name=RThruster
-		BoneName="Engine"
-		BoneOffset=(X=-50.0,Y=100.0,Z=-200.0)
-		WheelRadius=10
-		SuspensionTravel=145
-		bPoweredWheel=false
-		LongSlipFactor=0.0
-		LatSlipFactor=0.0
-		HandbrakeLongSlipFactor=0.0
-		HandbrakeLatSlipFactor=0.0
-		SteerFactor=1.0
-		bHoverWheel=true
-	End Object
-	Wheels(0)=RThruster
-
-	Begin Object Class=UTHoverWheel Name=LThruster
-		BoneName="Engine"
-		BoneOffset=(X=-50.0,Y=-100.0,Z=-200.0)
-		WheelRadius=10
-		SuspensionTravel=145
-		bPoweredWheel=false
-		LongSlipFactor=0.0
-		LatSlipFactor=0.0
-		HandbrakeLongSlipFactor=0.0
-		HandbrakeLatSlipFactor=0.0
-		SteerFactor=1.0
-		bHoverWheel=true
-	End Object
-	Wheels(1)=LThruster
-
-	Begin Object Class=UTHoverWheel Name=FThruster
-		BoneName="Engine"
-		BoneOffset=(X=80.0,Y=0.0,Z=-200.0)
-		WheelRadius=10
-		SuspensionTravel=145
-		bPoweredWheel=false
-		LongSlipFactor=0.0
-		LatSlipFactor=0.0
-		HandbrakeLongSlipFactor=0.0
-		HandbrakeLatSlipFactor=0.0
-		SteerFactor=1.0
-		bHoverWheel=true
-	End Object
-	Wheels(2)=FThruster
-
-	bAttachDriver=true
-	bDriverIsVisible=true
-
-	bHomingTarget=true
-
-	BaseEyeheight=110
-	Eyeheight=110
-
-	DefaultFOV=90
-	CameraLag=0.02
-	bCanBeBaseForPawns=true
-	bEjectKilledBodies=true
-
-	HornIndex=0
+   JumpForceMag=7000.000000
+   MaxJumpZVel=900.000000
+   JumpCheckTraceDist=175.000000
+   JumpDelay=3.000000
+   DuckForceMag=-350.000000
+   FullWheelSuspensionTravel=145.000000
+   CrouchedWheelSuspensionTravel=100.000000
+   SuspensionTravelAdjustSpeed=100.000000
+   FullWheelSuspensionStiffness=20.000000
+   CrouchedWheelSuspensionStiffness=40.000000
+   BoneOffsetZAdjust=45.000000
+   CrouchedAirSpeed=1200.000000
+   CustomGravityScaling=0.800000
+   FullAirSpeed=1800.000000
+   bEjectKilledBodies=True
+   bLightArmor=True
+   bHomingTarget=True
+   bTakeWaterDamageWhileDriving=False
+   bRagdollDriverOnDarkwalkerHorn=True
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHoverVehicle:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHoverVehicle:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   MaxDesireability=0.600000
+   ObjectiveGetOutDist=750.000000
+   VehicleIndex=6
+   VehiclePositionString="In un Manta"
+   VehicleNameString="Manta"
+   SpawnRadius=125.000000
+   DefaultFOV=90.000000
+   CameraLag=0.020000
+   Begin Object Class=UTVehicleSimHover Name=SimObject ObjName=SimObject Archetype=UTVehicleSimHover'UTGame.Default__UTVehicleSimHover'
+      MaxThrustForce=325.000000
+      MaxReverseForce=250.000000
+      LongDamping=0.300000
+      MaxStrafeForce=260.000000
+      LatDamping=0.300000
+      DirectionChangeForce=375.000000
+      TurnTorqueFactor=2500.000000
+      TurnTorqueMax=1000.000000
+      TurnDamping=0.250000
+      MaxYawRate=100000.000000
+      PitchTorqueFactor=200.000000
+      PitchTorqueMax=18.000000
+      PitchDamping=0.100000
+      RollTorqueTurnFactor=1000.000000
+      RollTorqueStrafeFactor=110.000000
+      RollTorqueMax=500.000000
+      RollDamping=0.200000
+      MaxRandForce=20.000000
+      RandForceInterval=0.400000
+      WheelSuspensionStiffness=20.000000
+      WheelSuspensionDamping=1.000000
+      Name="SimObject"
+      ObjectArchetype=UTVehicleSimHover'UTGame.Default__UTVehicleSimHover'
+   End Object
+   SimObj=SimObject
+   Begin Object Class=UTHoverWheel Name=RThruster ObjName=RThruster Archetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+      bHoverWheel=True
+      SteerFactor=1.000000
+      BoneName="Engine"
+      BoneOffset=(X=-50.000000,Y=100.000000,Z=-200.000000)
+      WheelRadius=10.000000
+      SuspensionTravel=145.000000
+      LongSlipFactor=0.000000
+      LatSlipFactor=0.000000
+      HandbrakeLongSlipFactor=0.000000
+      HandbrakeLatSlipFactor=0.000000
+      Name="RThruster"
+      ObjectArchetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+   End Object
+   Wheels(0)=RThruster
+   Begin Object Class=UTHoverWheel Name=LThruster ObjName=LThruster Archetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+      bHoverWheel=True
+      SteerFactor=1.000000
+      BoneName="Engine"
+      BoneOffset=(X=-50.000000,Y=-100.000000,Z=-200.000000)
+      WheelRadius=10.000000
+      SuspensionTravel=145.000000
+      LongSlipFactor=0.000000
+      LatSlipFactor=0.000000
+      HandbrakeLongSlipFactor=0.000000
+      HandbrakeLatSlipFactor=0.000000
+      Name="LThruster"
+      ObjectArchetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+   End Object
+   Wheels(1)=LThruster
+   Begin Object Class=UTHoverWheel Name=FThruster ObjName=FThruster Archetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+      bHoverWheel=True
+      SteerFactor=1.000000
+      BoneName="Engine"
+      BoneOffset=(X=80.000000,Y=0.000000,Z=-200.000000)
+      WheelRadius=10.000000
+      SuspensionTravel=145.000000
+      LongSlipFactor=0.000000
+      LatSlipFactor=0.000000
+      HandbrakeLongSlipFactor=0.000000
+      HandbrakeLatSlipFactor=0.000000
+      Name="FThruster"
+      ObjectArchetype=UTHoverWheel'UTGame.Default__UTHoverWheel'
+   End Object
+   Wheels(2)=FThruster
+   bStayUpright=True
+   bCanFlip=True
+   StayUprightRollResistAngle=5.000000
+   StayUprightPitchResistAngle=5.000000
+   StayUprightStiffness=450.000000
+   StayUprightDamping=20.000000
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup_4 ObjName=MyStayUprightSetup_4 Archetype=RB_StayUprightSetup'UTGame.Default__UTHoverVehicle:MyStayUprightSetup'
+      Name="MyStayUprightSetup_4"
+      ObjectArchetype=RB_StayUprightSetup'UTGame.Default__UTHoverVehicle:MyStayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTVehicle_Manta:MyStayUprightSetup_4'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance_4 ObjName=MyStayUprightConstraintInstance_4 Archetype=RB_ConstraintInstance'UTGame.Default__UTHoverVehicle:MyStayUprightConstraintInstance'
+      Name="MyStayUprightConstraintInstance_4"
+      ObjectArchetype=RB_ConstraintInstance'UTGame.Default__UTHoverVehicle:MyStayUprightConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Manta:MyStayUprightConstraintInstance_4'
+   UprightLiftStrength=30.000000
+   UprightTorqueStrength=30.000000
+   bDriverIsVisible=True
+   bTurnInPlace=True
+   bFollowLookDir=True
+   bScriptedRise=True
+   ExitRadius=160.000000
+   MomentumMult=3.200000
+   bCanStrafe=True
+   bCanBeBaseForPawns=True
+   MeleeRange=-100.000000
+   GroundSpeed=1500.000000
+   AirSpeed=1800.000000
+   BaseEyeHeight=110.000000
+   EyeHeight=110.000000
+   Health=200
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTHoverVehicle:SVehicleMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTHoverVehicle:SVehicleMesh'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTHoverVehicle:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTHoverVehicle:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Components(2)=MyLightEnvironment
+   Components(3)=SimObject
+   CollisionComponent=SVehicleMesh
+   Name="Default__UTVehicle_Manta"
+   ObjectArchetype=UTHoverVehicle'UTGame.Default__UTHoverVehicle'
 }

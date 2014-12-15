@@ -1,17 +1,17 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MorphNodeWeight extends MorphNodeWeightBase
 	native(Anim)
 	hidecategories(Object);
 
-cpptext
-{
-	virtual void GetActiveMorphs(TArray<FActiveMorph>& OutMorphs);
-	
-	virtual FLOAT GetSliderPosition();
-	virtual void HandleSliderMove(FLOAT NewSliderValue);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
  
 /** Weight to apply to all child nodes of this one. */
 var		float	NodeWeight;
@@ -24,6 +24,8 @@ native function		SetNodeWeight(float NewWeight);
 
 defaultproperties
 {
-	bDrawSlider=true
-	NodeConns(0)=(ConnName=In)
+   NodeConns(0)=(ConnName="In")
+   bDrawSlider=True
+   Name="Default__MorphNodeWeight"
+   ObjectArchetype=MorphNodeWeightBase'Engine.Default__MorphNodeWeightBase'
 }

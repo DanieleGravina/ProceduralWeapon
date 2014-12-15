@@ -1,31 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqCond_CompareBool extends SequenceCondition
 	native(Sequence);
 
-/** Result of comparison is written to this variable */
-var bool bResult;
-
-cpptext
-{
-	void Activated();
-};
-
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Compare Bool"
-	ObjCategory="Comparison"
-
-	InputLinks(0)=(LinkDesc="In")
-	OutputLinks(0)=(LinkDesc="True")
-	OutputLinks(1)=(LinkDesc="False")
-
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Bool")
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Result",bWriteable=true,PropertyName=bResult)
+   OutputLinks(0)=(LinkDesc="True")
+   OutputLinks(1)=(LinkDesc="False")
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Bool',LinkDesc="Bool",MinVars=1,MaxVars=255)
+   ObjName="Compare Bool"
+   ObjCategory="Comparison"
+   Name="Default__SeqCond_CompareBool"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

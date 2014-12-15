@@ -192,7 +192,7 @@ event Tick( FLOAT DeltaTime )
 function CheckTargetLock()
 {
     local Actor BestTarget, HitActor, TA;
-    local UDKBot BotController;
+    local UTBot BotController;
     local vector StartTrace, EndTrace, Aim, HitLocation, HitNormal;
     local rotator AimRot;
     local float BestAim, BestDist;
@@ -208,7 +208,7 @@ function CheckTargetLock()
         return;
     }
     BestTarget = None;                                  // We don't have a target
-    BotController = UDKBot(Instigator.Controller);      
+    BotController = UTBot(Instigator.Controller);      
     if ( BotController != None )                        // If there isn't a BotController...
     {
         // only try locking onto bot's target
@@ -239,7 +239,7 @@ function CheckTargetLock()
         if ( (HitActor == None) || !CanLockOnTo(HitActor) )     // Check for a hit
         {
             // We didn't hit a valid target?  Controller attempts to pick a good target
-            BestAim = ((UDKPlayerController(Instigator.Controller) != None) && UDKPlayerController(Instigator.Controller).bConsolePlayer) ? ConsoleLockAim : LockAim;
+            BestAim = (UTPlayerController(Instigator.Controller) != None) ? ConsoleLockAim : LockAim;
             BestDist = 0.0;
             TA = Instigator.Controller.PickTarget(class'Pawn', BestAim, BestDist, Aim, StartTrace, LockRange);
             if ( TA != None && CanLockOnTo(TA) )
@@ -274,7 +274,7 @@ function CheckTargetLock()
             if (PendingLockedTarget != BestTarget)              // Check for a new Pending Lock
             {
                 PendingLockedTarget = BestTarget;
-                PendingLockedTargetTime = ((Vehicle(PendingLockedTarget) != None) && (UDKPlayerController(Instigator.Controller) != None) && UDKPlayerController(Instigator.Controller).bConsolePlayer)
+                PendingLockedTargetTime = ((Vehicle(PendingLockedTarget) != None) && (UTPlayerController(Instigator.Controller) != None) )
                                         ? WorldInfo.TimeSeconds + 0.5*LockAcquireTime
                                         : WorldInfo.TimeSeconds + LockAcquireTime;
             }

@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -46,27 +46,29 @@ simulated function SetTeamNum(byte NewTeam)
 	{
 		if (NewTeam < TeamMaterials.length)
 		{
-			if (TeamMaterials[NewTeam] != None)
-			{
-				StaticMeshComponent.SetMaterial(0, TeamMaterials[NewTeam]);
-			}
+			StaticMeshComponent.SetMaterial(0, TeamMaterials[NewTeam]);
 		}
 		else
 		{
-			if (NeutralMaterial != None)
-			{
-				StaticMeshComponent.SetMaterial(0, NeutralMaterial);
-			}
+			StaticMeshComponent.SetMaterial(0, NeutralMaterial);
 		}
 	}
 }
 
 defaultproperties
 {
-	bStatic=false
-	bTickIsDisabled=true
-	bMovable=false
-	// pre-size array to two elements for convenience
-	TeamMaterials[0]=None
-	TeamMaterials[1]=None
+   TeamMaterials(0)=None
+   TeamMaterials(1)=None
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0 ObjName=StaticMeshComponent0 Archetype=StaticMeshComponent'Engine.Default__StaticMeshActor:StaticMeshComponent0'
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshActor:StaticMeshComponent0'
+   End Object
+   StaticMeshComponent=StaticMeshComponent0
+   Components(0)=StaticMeshComponent0
+   bStatic=False
+   bStasis=True
+   BlockRigidBody=False
+   CollisionComponent=StaticMeshComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTTeamStaticMesh"
+   ObjectArchetype=StaticMeshActor'Engine.Default__StaticMeshActor'
 }

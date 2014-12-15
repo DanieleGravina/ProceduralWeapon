@@ -3,7 +3,7 @@
 *
 * A custom coordinate system used by the editor.
 *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class EdCoordSystem extends Object
 	hidecategories(Object)
@@ -18,6 +18,8 @@ var()	string	Desc;
 
 defaultproperties
 {
-	Desc="Coord System"
-	M=(XPlane=(X=1,Y=0,Z=0,W=0),YPlane=(X=0,Y=1,Z=0,W=0),ZPlane=(X=0,Y=0,Z=1,W=0),WPlane=(X=0,Y=0,Z=0,W=1))
+   M=(XPlane=(W=0.000000,X=1.000000,Y=0.000000,Z=0.000000),YPlane=(W=0.000000,X=0.000000,Y=1.000000,Z=0.000000),ZPlane=(W=0.000000,X=0.000000,Y=0.000000,Z=1.000000),WPlane=(W=1.000000,X=0.000000,Y=0.000000,Z=0.000000))
+   Desc="Coord System"
+   Name="Default__EdCoordSystem"
+   ObjectArchetype=Object'Core.Default__Object'
 }

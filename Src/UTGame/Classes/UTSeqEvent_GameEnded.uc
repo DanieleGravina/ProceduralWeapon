@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqEvent_GameEnded extends SequenceEvent;
@@ -28,23 +28,13 @@ event Activated()
 	}
 }
 
-/**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
- *
- * @return	the version number for this specific class.
- */
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
-
 defaultproperties
 {
-	ObjName="Game Ended"
-	bPlayerOnly=false
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Focus Actor",bWriteable=true,PropertyName=Winner)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Winning Player/Team",bWriteable=true,PropertyName=ActualWinner)
+   bPlayerOnly=False
+   VariableLinks(0)=(LinkDesc="Focus Actor",PropertyName="Winner")
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Winning Player/Team",PropertyName="ActualWinner",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjClassVersion=2
+   ObjName="Game Ended"
+   Name="Default__UTSeqEvent_GameEnded"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

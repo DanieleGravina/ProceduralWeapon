@@ -1,0 +1,14 @@
+/**
+ * Testing extending a base class and the derived class implementing an 
+ * interface
+ *
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved
+ **/
+
+class Test0003_BaseClass extends Object;
+
+defaultproperties
+{
+   Name="Default__Test0003_BaseClass"
+   ObjectArchetype=Object'Core.Default__Object'
+}

@@ -1,10 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class KAsset extends Actor
 	native(Physics)
 	nativereplication
-	ClassGroup(Physics)
 	placeable;
 
 var() const editconst SkeletalMeshComponent	SkeletalMeshComponent;
@@ -16,10 +15,10 @@ var()		bool		bWakeOnLevelStart;
 var()		bool		bBlockPawns;
 
 /** Used to replicate mesh to clients */
-var repnotify transient SkeletalMesh ReplicatedMesh;
+var repnotify SkeletalMesh ReplicatedMesh;
 
 /** Used to replicate physics asset to clients */
-var repnotify transient PhysicsAsset ReplicatedPhysAsset;
+var repnotify PhysicsAsset ReplicatedPhysAsset;
 
 replication
 {
@@ -27,23 +26,24 @@ replication
 		ReplicatedMesh, ReplicatedPhysAsset;
 }
 
-cpptext
-{
-public:
-	// AActor interface.
-	virtual INT* GetOptimizedRepList(BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel);
-
-	/**
-	* Function that gets called from within Map_Check to allow this actor to check itself
-	* for any potential errors and register them with map check dialog.
-	*/
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-
-	UBOOL ShouldTrace(UPrimitiveComponent* Primitive, AActor *SourceActor, DWORD TraceFlags);
-	UBOOL IgnoreBlockingBy(const AActor* Other) const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 simulated event PostBeginPlay()
 {
@@ -55,15 +55,7 @@ simulated event PostBeginPlay()
 	}
 	ReplicatedMesh = SkeletalMeshComponent.SkeletalMesh;
 	ReplicatedPhysAsset = SkeletalMeshComponent.PhysicsAsset;
-}
-
-/** Sets the new mesh and physics asset, along with the replicated properties for clients. */
-final function SetMeshAndPhysAsset(SkeletalMesh NewMesh, PhysicsAsset NewPhysAsset)
-{
-	SkeletalMeshComponent.SetSkeletalMesh(NewMesh);
-	ReplicatedMesh = NewMesh;
-	SkeletalMeshComponent.SetPhysicsAsset(NewPhysAsset);
-	ReplicatedPhysAsset = NewPhysAsset;
+	//`log("---"@ReplicatedMesh@ReplicatedPhysAsset);
 }
 
 simulated event ReplicatedEvent( name VarName )
@@ -81,7 +73,7 @@ simulated event ReplicatedEvent( name VarName )
 /**
  * Default behaviour when shot is to apply an impulse and kick the KActor.
  */
-simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
 	local vector ApplyImpulse;
 
@@ -92,7 +84,7 @@ simulated event TakeDamage(int Damage, Controller EventInstigator, vector HitLoc
 	{
 		if ( VSize(momentum) < 0.001 )
 		{
-			`Log("Zero momentum to KActor.TakeDamage");
+			LogInternal("Zero momentum to KActor.TakeDamage");
 			return;
 		}
 
@@ -128,8 +120,7 @@ simulated function TakeRadiusDamage
 	float				Momentum,
 	vector				HurtOrigin,
 	bool				bFullDamage,
-	Actor               DamageCauser,
-	optional float      DamageFalloffExponent=1.f
+	Actor DamageCauser
 )
 {
 	if ( bDamageAppliesImpulse && damageType.default.RadialDamageImpulse > 0 && (Role == ROLE_Authority) )
@@ -169,55 +160,46 @@ function DoKismetAttachment( Actor Attachment, SeqAct_AttachToActor Action )
 	Attachment.SetBase( Self,, SkeletalMeshComponent, Action.BoneName );
 }
 
-
-
 defaultproperties
 {
-	TickGroup=TG_PostAsyncWork
-
-	Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment
-	End Object
-	Components.Add(MyLightEnvironment)
-
-	Begin Object Class=SkeletalMeshComponent Name=KAssetSkelMeshComponent
-		CollideActors=true
-		BlockActors=true
-		BlockZeroExtent=true
-		BlockNonZeroExtent=false
-		BlockRigidBody=true
-		bHasPhysicsAssetInstance=true
-		bUpdateKinematicBonesFromAnimation=false
-		bUseTickOptimization=false
-		PhysicsWeight=1.0
-		RBChannel=RBCC_GameplayPhysics
-		RBCollideWithChannels=(Default=TRUE,BlockingVolume=TRUE,GameplayPhysics=TRUE,EffectPhysics=TRUE)
-		LightEnvironment=MyLightEnvironment
-		bSkipAllUpdateWhenPhysicsAsleep=TRUE
-		bBlockFootPlacement=false
-	End Object
-	CollisionComponent=KAssetSkelMeshComponent
-	SkeletalMeshComponent=KAssetSkelMeshComponent
-	Components.Add(KAssetSkelMeshComponent)
-
-	SupportedEvents.Add(class'SeqEvent_ConstraintBroken')
-	SupportedEvents.Add(class'SeqEvent_RigidBodyCollision')
-
-	bDamageAppliesImpulse=true
-	bNetInitialRotation=true
-	Physics=PHYS_RigidBody
-	bEdShouldSnap=true
-	bStatic=false
-	bCollideActors=true
-	bBlockActors=true
-	bWorldGeometry=false
-	bCollideWorld=false
-	bProjTarget=true
-
-	bNoDelete=true
-	bAlwaysRelevant=true
-	bSkipActorPropertyReplication=false
-	bUpdateSimulatedPosition=true
-	bReplicateMovement=true
-	RemoteRole=ROLE_SimulatedProxy
-	bReplicateRigidBodyLocation=FALSE
+   Begin Object Class=SkeletalMeshComponent Name=KAssetSkelMeshComponent ObjName=KAssetSkelMeshComponent Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+      PhysicsWeight=1.000000
+      bSkipAllUpdateWhenPhysicsAsleep=True
+      bHasPhysicsAssetInstance=True
+      bUpdateKinematicBonesFromAnimation=False
+      LightEnvironment=DynamicLightEnvironmentComponent'Engine.Default__KAsset:MyLightEnvironment'
+      CollideActors=True
+      BlockActors=True
+      BlockZeroExtent=True
+      BlockRigidBody=True
+      RBChannel=RBCC_GameplayPhysics
+      RBCollideWithChannels=(Default=True,GameplayPhysics=True,EffectPhysics=True)
+      Name="KAssetSkelMeshComponent"
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+   End Object
+   SkeletalMeshComponent=KAssetSkelMeshComponent
+   bDamageAppliesImpulse=True
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+      Name="MyLightEnvironment"
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+   End Object
+   Components(0)=MyLightEnvironment
+   Components(1)=KAssetSkelMeshComponent
+   Physics=PHYS_RigidBody
+   RemoteRole=ROLE_SimulatedProxy
+   TickGroup=TG_PostAsyncWork
+   bNoDelete=True
+   bAlwaysRelevant=True
+   bUpdateSimulatedPosition=True
+   bNetInitialRotation=True
+   bCollideActors=True
+   bBlockActors=True
+   bProjTarget=True
+   bEdShouldSnap=True
+   CollisionComponent=KAssetSkelMeshComponent
+   CollisionType=COLLIDE_CustomDefault
+   SupportedEvents(3)=Class'Engine.SeqEvent_ConstraintBroken'
+   SupportedEvents(4)=Class'Engine.SeqEvent_RigidBodyCollision'
+   Name="Default__KAsset"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

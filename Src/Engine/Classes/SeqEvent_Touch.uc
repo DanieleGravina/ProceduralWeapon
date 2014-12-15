@@ -4,23 +4,20 @@
  *
  * Originator: the actor that owns this event
  * Instigator: the actor that was touched
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqEvent_Touch extends SequenceEvent
 	native(Sequence);
 
-cpptext
-{
-	virtual UBOOL CheckTouchActivate(AActor *inOriginator, AActor *inInstigator, UBOOL bTest = FALSE);
-	virtual UBOOL CheckUnTouchActivate(AActor *inOriginator, AActor *inInstigator, UBOOL bTest = FALSE);
-
-protected:
-	// hide the default implementation to force use of CheckTouchActivate/CheckUnTouchActivate
-	virtual UBOOL CheckActivate(AActor *InOriginator, AActor *InInstigator, UBOOL bTest=FALSE, TArray<INT>* ActivateIndices = NULL, UBOOL bPushTop = FALSE);
-
-	virtual void DoTouchActivation(AActor *InOriginator, AActor *InInstigator);
-	virtual void DoUnTouchActivation(AActor *InOriginator, AActor *InInstigator, INT TouchIdx);
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //==========================
 // Base variables
@@ -82,32 +79,15 @@ function NotifyTouchingPawnDied(Pawn P)
 	}
 }
 
-/**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
- *
- * @return	the version number for this specific class.
- */
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
-
 defaultproperties
 {
-	ObjName="Touch"
-	ObjCategory="Physics"
-	ClassProximityTypes(0)=class'Pawn'
-
-	OutputLinks(0)=(LinkDesc="Touched")
-	OutputLinks(1)=(LinkDesc="UnTouched")
-	OutputLinks(2)=(LinkDesc="Empty")
-
-	// default to overlap check, as this is generally the expected behavior
-	bForceOverlapping=TRUE
-
-	// set a default retrigger delay since touches are fairly frequent
-	ReTriggerDelay=0.1f
+   ClassProximityTypes(0)=Class'Engine.Pawn'
+   bForceOverlapping=True
+   ReTriggerDelay=0.100000
+   OutputLinks(0)=(LinkDesc="Touched")
+   OutputLinks(1)=(LinkDesc="UnTouched")
+   ObjName="Touch"
+   ObjCategory="Physics"
+   Name="Default__SeqEvent_Touch"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

@@ -1,10 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpTrackInstMorphWeight extends InterpTrackInst
 	native(Interpolation);
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual void RestoreActorState(UInterpTrack* Track);
+   Name="Default__InterpTrackInstMorphWeight"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
 }

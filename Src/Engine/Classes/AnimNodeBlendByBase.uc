@@ -1,18 +1,16 @@
-
 /**
  * AnimNodeBlendByBase.uc
  * Looks at the base of the Pawn that owns this node and blends accordingly.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-
 class AnimNodeBlendByBase extends AnimNodeBlendList
 		native(Anim);
 
-cpptext
-{
-	virtual	void TickAnim(FLOAT DeltaSeconds);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 enum EBaseBlendType
 {
@@ -25,16 +23,13 @@ var() EBaseBlendType	Type;
 /** Actor tag that will match the base */
 var() Name				ActorTag;
 /** Actor class that will match the base */
-var() class<Actor>		ActorClass<AllowAbstract>;
-/** Duration of blend */
-var() float				BlendTime;
-/** Cached Base Actor */
-var	transient Actor		CachedBase;
+var() class<Actor>		ActorClass;
 
 defaultproperties
 {
-	bFixNumChildren=TRUE
-	Children(0)=(Name="Normal")
-	Children(1)=(Name="Based")
-	BlendTime=0.2f
+   Children(0)=(Name="Normal")
+   Children(1)=(Name="Based")
+   bFixNumChildren=True
+   Name="Default__AnimNodeBlendByBase"
+   ObjectArchetype=AnimNodeBlendList'Engine.Default__AnimNodeBlendList'
 }

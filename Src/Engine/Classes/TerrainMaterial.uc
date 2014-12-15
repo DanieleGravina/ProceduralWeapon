@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class TerrainMaterial extends Object
 	native(Terrain)
@@ -15,40 +15,69 @@ enum ETerrainMappingType
 	TMT_YZ
 };
 
-/** Determines the mapping place to use on the terrain. */
 var(Material) ETerrainMappingType	MappingType;
-/** Uniform scale to apply to the mapping. */
 var(Material) float					MappingScale;
-/** Rotation to apply to the mapping. */
 var(Material) float					MappingRotation;
-/** Offset to apply to the mapping along U. */
-var(Material) float					MappingPanU;
-/** Offset to apply to the mapping along V. */
-var(Material) float					MappingPanV;
+var(Material) float					MappingPanU,
+									MappingPanV;
 
-/** The Material to apply to the terrain. */
 var(Material) MaterialInterface		Material;
 
-/** Grayscale image to move vertices of the terrain along the surface normal. */
 var(Displacement) Texture2D			DisplacementMap;
-/** The amount to sacle the displacement texture by. */
 var(Displacement) float				DisplacementScale;
 
-cpptext
+struct native TerrainFoliageMesh
 {
-	// UpdateMappingTransform
+	var() StaticMesh		StaticMesh;
+	var() MaterialInterface	Material;
+	var() int				Density;
+	var() float				MaxDrawRadius,
+							MinTransitionRadius,
+							MinScale,
+							MaxScale;
+	var() int				Seed;
+	var() float				SwayScale;
 
-	void UpdateMappingTransform();
+	/** The weight of the terrain material above which the foliage is spawned. */
+	var() float				AlphaMapThreshold;
+	
+	/**	
+	 *	The amount to rotate the mesh to match the slope of the terrain 
+	 *	where it is being placed. If 1.0, the mesh will match the slope
+	 *	exactly.
+	 */
+	var() float				SlopeRotationBlend;
 
-	// UObject interface.
-	virtual void PreEditChange(UProperty* PropertyAboutToChange);
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void PostLoad();
-}
+	structdefaultproperties
+	{
+		MaxDrawRadius=1024.0
+		MinScale=1.0
+		MaxScale=1.0
+		SwayScale=1.0
+	}
+};
+
+var(Foliage) array<TerrainFoliageMesh>	FoliageMeshes;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MappingScale=4.0
-	DisplacementScale=0.25
+   MappingScale=4.000000
+   DisplacementScale=0.250000
+   Name="Default__TerrainMaterial"
+   ObjectArchetype=Object'Core.Default__Object'
 }
-

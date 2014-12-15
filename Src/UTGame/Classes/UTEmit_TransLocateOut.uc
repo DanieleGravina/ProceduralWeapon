@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTEmit_TransLocateOut extends UTReplicatedEmitter;
@@ -60,31 +60,27 @@ auto state FirstTick
 
 defaultproperties
 {
-	TickGroup=TG_PostAsyncWork
-
-	EmitterTemplate=WP_Translocator.Particles.P_WP_Translocator_Teleport
-	FirstPersonTemplate=Envy_Effects.Particles.P_Player_Spawn_Blue
-
-	bCollideActors=true
-	bCollideWorld=true
-	bBlockActors=true
-	bProjTarget=true
-
-
-	Begin Object Name=ParticleSystemComponent0
-		bAcceptsLights=false
-		SecondsBeforeInactive=0
-		bOverrideLODMethod=true
-		LODMethod=PARTICLESYSTEMLODMETHOD_DirectSet
-		//bOwnerNoSee=true
-	End Object
-
-	Begin Object Class=CylinderComponent Name=CollisionCylinder
-		CollisionRadius=+0021.000000
-		CollisionHeight=+0044.000000
-	End Object
-	CollisionComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-	TLTrailKillWindow=0.1
+   TLTrailKillWindow=0.100000
+   FirstPersonTemplate=ParticleSystem'Envy_Effects.Particles.P_Player_Spawn_Blue'
+   EmitterTemplate=ParticleSystem'WP_Translocator.Particles.P_WP_Translocator_Teleport'
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__CylinderComponent'
+      CollisionHeight=44.000000
+      CollisionRadius=21.000000
+      Name="CollisionCylinder"
+      ObjectArchetype=CylinderComponent'Engine.Default__CylinderComponent'
+   End Object
+   Components(1)=CollisionCylinder
+   TickGroup=TG_PostAsyncWork
+   bCollideActors=True
+   bCollideWorld=True
+   bBlockActors=True
+   bProjTarget=True
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTEmit_TransLocateOut"
+   ObjectArchetype=UTReplicatedEmitter'UTGame.Default__UTReplicatedEmitter'
 }

@@ -1,13 +1,19 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MorphWeightSequence extends Object
 	native(Anim);
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	/** 
-	 * Returns a one line description of an object for viewing in the thumbnail view of the generic browser
-	 */
-	virtual FString GetDesc();
+   Name="Default__MorphWeightSequence"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // UTPickupInventory:
@@ -36,4 +36,10 @@ static function float BotDesireability(Actor PickupHolder, Pawn P, Controller C)
 
 defaultproperties
 {
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTInventory:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTPickupInventory"
+   ObjectArchetype=UTInventory'UTGame.Default__UTInventory'
 }

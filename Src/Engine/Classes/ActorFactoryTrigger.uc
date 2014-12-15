@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryTrigger extends ActorFactory
 	config(Editor)
@@ -9,7 +9,8 @@ class ActorFactoryTrigger extends ActorFactory
 
 defaultproperties
 {
-	MenuName="Add Trigger"
-	NewActorClass=class'Engine.Trigger'
-	bShowInEditorQuickMenu=true
+   MenuName="Add Trigger"
+   NewActorClass=Class'Engine.Trigger'
+   Name="Default__ActorFactoryTrigger"
+   ObjectArchetype=ActorFactory'Engine.Default__ActorFactory'
 }

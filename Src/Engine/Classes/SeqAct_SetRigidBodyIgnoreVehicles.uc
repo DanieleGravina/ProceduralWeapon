@@ -1,14 +1,15 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetRigidBodyIgnoreVehicles extends SequenceAction
 	native(Sequence);
 
 defaultproperties
 {
-	ObjName="Set RigidBodyIgnoreVehicles"
-	ObjCategory="Physics"
-
-	InputLinks(0)=(LinkDesc="Turn On")
-	InputLinks(1)=(LinkDesc="Turn Off")
+   InputLinks(0)=(LinkDesc="Turn On")
+   InputLinks(1)=(LinkDesc="Turn Off")
+   ObjName="Set RigidBodyIgnoreVehicles"
+   ObjCategory="Physics"
+   Name="Default__SeqAct_SetRigidBodyIgnoreVehicles"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

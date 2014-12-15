@@ -1,16 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class RB_Spring extends ActorComponent
 	native(Physics);
 
-cpptext
-{
-	// ActorComponent interface
-
-	virtual void Tick(FLOAT DeltaTime);
-	virtual void TermComponentRBPhys(FRBPhysScene* InScene);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** PrimitiveComponent attached to one end of this spring. */
 var const PrimitiveComponent	Component1;
@@ -70,8 +70,8 @@ native function Clear();
 
 defaultproperties
 {
-	// Various physics related items need to be ticked pre physics update
-	TickGroup=TG_PreAsyncWork
-
-	SpringMaxForceTimeScale=(Points=((InVal=0,OutVal=1.0)))
+   SpringMaxForceTimeScale=(Points=((OutVal=1.000000)))
+   TickGroup=TG_PreAsyncWork
+   Name="Default__RB_Spring"
+   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'
 }

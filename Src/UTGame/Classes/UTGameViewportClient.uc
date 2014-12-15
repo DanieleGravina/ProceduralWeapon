@@ -1,27 +1,37 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTGameViewportClient extends UDKGameViewportClient
+class UTGameViewportClient extends GameViewportClient
+	native
 	config(Game);
 
 var localized string LevelActionMessages[6];
 
-/** This is the remap name for UDKFrontEndMap so we can display a more friendly name **/
+/** This is the remap name for UTFrontEnd so we can display a more friendly name **/
 var localized string UTFrontEndString;
 
-/** Font used to display map name on loading screen */
-var Font LoadingScreenMapNameFont;
-/** Font used to display game type name on loading screen */
-var Font LoadingScreenGameTypeNameFont;
-/** Font used to display map hint message on loading screen */
-var Font LoadingScreenHintMessageFont;
+/** This is the remap name for UTM-MissionSelection so we can display a more friendly name **/
+var localized string UTMMissionSelectionString;
 
-/** class to use for displaying progress messages */
-var string ProgressMessageSceneClassName;
+/** Font used to display map name on loading screen */
+var font LoadingScreenMapNameFont;
+
+/** Font used to display game type name on loading screen */
+var font LoadingScreenGameTypeNameFont;
+
+/** Font used to display map hint message on loading screen */
+var font LoadingScreenHintMessageFont;
+
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 event PostRender(Canvas Canvas)
 {
 	local int i;
+	local UTPlayerController PC;
 	local ETransitionType OldTransitionType;
 	local AudioDevice AD;
 
@@ -37,6 +47,16 @@ event PostRender(Canvas Canvas)
 				{
 					Outer.TransitionType = TT_Loading;
 					break;
+				}
+				else
+				{
+					// use 'Precaching' when loading custom characters and such
+					PC = UTPlayerController(Outer.GamePlayers[i].Actor);
+					if (PC != None && !PC.bInitialProcessingComplete)
+					{
+						Outer.TransitionType = TT_Precaching;
+						break;
+					}
 				}
 			}
 		}
@@ -60,6 +80,19 @@ event PostRender(Canvas Canvas)
 	Outer.TransitionType = OldTransitionType;
 }
 
+
+/**
+ * Locates a random localized hint message string for the specified two game types.  Usually the first game type
+ * should always be "UTDeathmatch", since you always want those strings included regardless of game type
+ *
+ * @param GameType1Name Name of the first game type we're interested in
+ * @param GameType2Name Name of the second game type we're interested in
+ *
+ * @return Returns random hint string for the specified game types
+ */
+native final function string LoadRandomLocalizedHintMessage( string GameType1Name, string GameType2Name );
+
+
 function DrawTransition(Canvas Canvas)
 {
 	local int Pos;
@@ -70,17 +103,24 @@ function DrawTransition(Canvas Canvas)
 	local bool bAllowHints;
 	local string GameClassName;
 
-	// if we are doing a loading transition, set up the text overlays for the loading movie
+	// if we are doing a loading transition, set up the text overlays forthe loading movie
 	if (Outer.TransitionType == TT_Loading)
 	{
 		bAllowHints = true;
 
 		// we want to show the name of the map except for a number of maps were we want to remap their name
-		if( "UDKFrontEndMap" == Outer.TransitionDescription )
+		if( "UTFrontEnd" == Outer.TransitionDescription )
 		{
 			MapName = UTFrontEndString; //"Main Menu"
 
 			// Don't bother displaying hints while transitioning to the main menu (since it should load pretty quickly!)
+			bAllowHints = false;
+		}
+		else if( "UTM-MissionSelection" == Outer.TransitionDescription )
+		{
+			MapName = UTMMissionSelectionString; //"Mission Selection"
+
+			// No hints while loading mission selection (since it should load fast!)
 			bAllowHints = false;
 		}
 		else
@@ -140,7 +180,11 @@ function DrawTransition(Canvas Canvas)
 			Desc = GameClass.default.GameName;
 		}
 
+		LogInternal("Desc:" @ Desc);
+
+
 		// NOTE: The position and scale values are in resolution-independent coordinates (between 0 and 1).
+
 		// NOTE: The position and scale values will be automatically corrected for aspect ratio (to match the movie image)
 
 		// Game type name
@@ -188,91 +232,43 @@ function RenderHeader(Canvas Canvas)
 	Canvas.DrawText("Tell Josh Adams if you see this");
 }
 
-/**
- * Sets the value of ActiveSplitscreenConfiguration based on the desired split-screen layout type, current number of players, and any other
- * factors that might affect the way the screen should be layed out.
- */
-function UpdateActiveSplitscreenType()
+/** This version prevents splitting in the main menu. */
+function SetSplitscreenConfiguration( ESplitScreenType SplitType )
 {
-	if ( GamePlayers.Length == 0 || (GamePlayers[0].Actor != None && GamePlayers[0].Actor.IsA('UTEntryPlayerController')) )
+	local int Idx;
+
+	if (GamePlayers[0].Actor != None && GamePlayers[0].Actor.IsA('UTEntryPlayerController'))
 	{
-		ActiveSplitscreenType = eSST_NONE;
+		// when in the menus, remove split and just use top player's viewport
+		GamePlayers[0].Size.X = 1.0;
+		GamePlayers[0].Size.Y = 1.0;
+		GamePlayers[0].Origin.X = 0.0;
+		GamePlayers[0].Origin.Y = 0.0;
+		for (Idx = 1; Idx < GamePlayers.length; Idx++)
+		{
+			GamePlayers[Idx].Size.X = 0.0;
+			GamePlayers[Idx].Size.Y = 0.0;
+		}
 	}
 	else
 	{
-		Super.UpdateActiveSplitscreenType();
+		Super.SetSplitscreenConfiguration(SplitType);
 	}
 }
-
-/**
- * Sets or updates the any current progress message being displayed.
- *
- * @param	MessageType	the type of progress message
- * @param	Message		the message to display
- * @param	Title		the title to use for the progress message.
- */
-event SetProgressMessage(EProgressMessageType MessageType, string Message, optional string Title, optional bool bIgnoreFutureNetworkMessages)
-{
-	switch ( MessageType )
-	{
-	case PMT_ConnectionFailure:
-		NotifyConnectionError(MessageType, Message, Title);
-		break;
-
-	case PMT_Clear:
-		Super.SetProgressMessage(MessageType, Message, Title, bIgnoreFutureNetworkMessages);
-		break;
-
-	default:
-		Super.SetProgressMessage(MessageType, Message, Title, bIgnoreFutureNetworkMessages);
-		break;
-	}
-}
-
-/**
- * Notifies the player that an attempt to connect to a remote server failed, or an existing connection was dropped.
- *
- * @param MessageType EProgressMessageType of current connection error
- * @param	Message		a description of why the connection was lost
- * @param	Title		the title to use in the connection failure message.
- */
-function NotifyConnectionError(EProgressMessageType MessageType, optional string Message=Localize("Errors", "ConnectionFailed", "Engine"), optional string Title=Localize("Errors", "ConnectionFailed_Title", "Engine") )
-{
-	local WorldInfo WI;
-
-	WI = class'Engine'.static.GetCurrentWorldInfo();
-
-	`log(`location@`showvar(Message)@`showvar(Title));
-
-	if (WI.Game != None)
-	{
-		// Mark the server as having a problem
-		WI.Game.bHasNetworkError = true;
-	}
-
-	class'UTPlayerController'.static.SetFrontEndErrorMessage(Title, Message);
-
-	// Start quitting to the main menu
-	if (UTPlayerController(Outer.GamePlayers[0].Actor) != None)
-	{
-		UTPlayerController(Outer.GamePlayers[0].Actor).QuitToMainMenu();
-	}
-	else
-	{
-		// stop any movies currently playing before we quit out
-		class'Engine'.static.StopMovie(true);
-
-		// Call disconnect to force us back to the menu level
-		ConsoleCommand("Disconnect");
-	}
-}
-
 
 defaultproperties
 {
-	HintLocFileName="UTGameUI"
-	UIControllerClass=class'UTGame.UTGameInteraction'
-	LoadingScreenMapNameFont=MultiFont'UI_Fonts_Final.Menus.Fonts_AmbexHeavyOblique'
-	LoadingScreenGameTypeNameFont=MultiFont'UI_Fonts_Final.Menus.Fonts_AmbexHeavyOblique'
-	LoadingScreenHintMessageFont=MultiFont'UI_Fonts_Final.HUD.MF_Medium'
+   LevelActionMessages(1)="In Pausa..."
+   LevelActionMessages(2)="Caricamento..."
+   LevelActionMessages(3)="Salvataggio in Corso..."
+   LevelActionMessages(4)="Connessione in corso..."
+   LevelActionMessages(5)="Precache in Corso..."
+   UTFrontEndString="Menu Principale"
+   UTMMissionSelectionString="Seleziona missione"
+   LoadingScreenMapNameFont=MultiFont'UI_Fonts_Final.Menus.Fonts_AmbexHeavyOblique'
+   LoadingScreenGameTypeNameFont=MultiFont'UI_Fonts_Final.Menus.Fonts_AmbexHeavyOblique'
+   LoadingScreenHintMessageFont=MultiFont'UI_Fonts_Final.HUD.MF_Medium'
+   UIControllerClass=Class'UTGame.UTGameInteraction'
+   Name="Default__UTGameViewportClient"
+   ObjectArchetype=GameViewportClient'Engine.Default__GameViewportClient'
 }

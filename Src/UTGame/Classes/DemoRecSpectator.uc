@@ -1,6 +1,6 @@
 //=============================================================================
 // DemoRecSpectator - spectator for demo recordings to replicate ClientMessages
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class DemoRecSpectator extends UTPlayerController;
@@ -37,7 +37,21 @@ simulated event ReceivedPlayer()
 	// so the spectator has it when playing back the demo
 	if (Role == ROLE_Authority && WorldInfo.Game != None)
 	{
-		ClientSetHUD(WorldInfo.Game.HUDType);
+		ClientSetHUD(WorldInfo.Game.HUDType, WorldInfo.Game.ScoreBoardType);
+	}
+}
+
+event StartServerDemoRec()
+{
+	local UTPawn P;
+
+	Super.StartServerDemoRec();
+
+	// Replicate players weapons into the demo, so they can be fixed up during playback
+	foreach WorldInfo.AllPawns(Class'UTPawn', P)
+	{
+		if (P.Weapon != none)
+			P.DemoWeapon = P.Weapon;
 	}
 }
 
@@ -51,7 +65,7 @@ function InitPlayerReplicationInfo()
 	PlayerReplicationInfo.bWaitingPlayer = false;
 }
 
-exec function Slomo(float NewTimeDilation)
+exec function SloMo(float NewTimeDilation)
 {
 	WorldInfo.DemoPlayTimeDilation = NewTimeDilation;
 }
@@ -127,9 +141,9 @@ function SetViewTarget(Actor NewViewTarget, optional ViewTargetTransitionParams 
 	}
 }
 
-unreliable server function ServerViewSelf(optional ViewTargetTransitionParams TransitionParams)
+unreliable server function ServerViewSelf()
 {
-	Super.ServerViewSelf(TransitionParams);
+	Super.ServerViewSelf();
 
 	MyRealViewTarget = None;
 }
@@ -142,7 +156,7 @@ reliable client function ClientSetRealViewTarget(PlayerReplicationInfo NewTarget
 	bFindPlayer = (NewTarget == None);
 }
 
-function bool SetPause(bool bPause, optional delegate<CanUnpause> CanUnpauseDelegate = CanUnpause)
+function bool SetPause(bool bPause, optional delegate<CanUnpause> CanUnpauseDelegate)
 {
 	// allow the spectator to pause demo playback
 	if (WorldInfo.NetMode == NM_Client)
@@ -295,8 +309,20 @@ function UpdateRotation(float DeltaTime)
 
 defaultproperties
 {
-	RemoteRole=ROLE_AutonomousProxy
-	bDemoOwner=1
-	bBehindView=true
+   bBehindView=True
+   bSmoothClientDemo=False
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTPlayerController:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTPlayerController:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTPlayerController:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTPlayerController:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   RemoteRole=ROLE_AutonomousProxy
+   bDemoOwner=True
+   CollisionComponent=CollisionCylinder
+   Name="Default__DemoRecSpectator"
+   ObjectArchetype=UTPlayerController'UTGame.Default__UTPlayerController'
 }
-

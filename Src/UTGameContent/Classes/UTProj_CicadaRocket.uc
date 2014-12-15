@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTProj_CicadaRocket extends UTProjectile;
 
@@ -25,6 +25,7 @@ var bool bFinalTarget;
 var float SwitchTargetTime;
 
 var SoundCue IgniteSound;
+var ParticleSystem ProjIgnitedFlightTemplate;
 
 var float IgniteTime;
 var repnotify vector InitialAcceleration;
@@ -81,6 +82,7 @@ simulated function Ignite()
 	if ( WorldInfo.NetMode != NM_DedicatedServer )
 	{
 		PlaySound(IgniteSound, true);
+		ProjEffects.SetTemplate(ProjIgnitedFlightTemplate);
 	}
 
 	SetCollision(true, true);
@@ -206,36 +208,41 @@ simulated function Explode(vector HitLocation, vector HitNormal)
 
 defaultproperties
 {
-	Speed=1000.0
-	AccelRate=750
-	MaxSpeed=4000.0
-	SpiralForceMag=800.0
-	InwardForceMag=25.0
-	ForwardForceMag=15000.0
-	DesiredDistanceToAxis=250.0
-	DesiredDistanceDecayRate=500.0
-	InwardForceMagGrowthRate=0.0
-	DT=0.1
-	MomentumTransfer=40000
-	Damage=50
-	DamageRadius=220.0
-	MyDamageType=class'UTDmgType_CicadaRocket'
-	RemoteRole=ROLE_SimulatedProxy
-	LifeSpan=7.0
-	RotationRate=(Roll=50000)
-	DrawScale=0.5
-	bCollideWorld=True
-	bCollideActors=false
-	bNetTemporary=False
-	KillRange=2000
-	IgniteSound=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileIgnite'
-
-	ExplosionLightClass=class'UTGame.UTCicadaRocketExplosionLight'
-	ProjFlightTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_RocketTrail'
-	ProjExplosionTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_RocketExplosion'
-	
-	ExplosionSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Impact_Cue'
-	bWaitForEffects=true
-	bRotationFollowsVelocity=true
-	IgniteTime=0.2
+   SpiralForceMag=800.000000
+   InwardForceMag=25.000000
+   ForwardForceMag=15000.000000
+   DesiredDistanceToAxis=250.000000
+   DesiredDistanceDecayRate=500.000000
+   DT=0.100000
+   KillRange=2000.000000
+   IgniteSound=SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_MissileIgnite'
+   ProjIgnitedFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_MissileTrailIgnited'
+   IgniteTime=0.200000
+   bWaitForEffects=True
+   ExplosionSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Impact_Cue'
+   ProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_MissileTrail'
+   ProjExplosionTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_MissileExplosion'
+   AccelRate=750.000000
+   ExplosionLightClass=Class'UTGame.UTCicadaRocketExplosionLight'
+   Speed=1000.000000
+   MaxSpeed=4000.000000
+   bRotationFollowsVelocity=True
+   Damage=50.000000
+   DamageRadius=220.000000
+   MomentumTransfer=40000.000000
+   MyDamageType=Class'UTGameContent.UTDmgType_CicadaRocket'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   bNetTemporary=False
+   bCollideActors=False
+   LifeSpan=7.000000
+   DrawScale=0.500000
+   CollisionComponent=CollisionCylinder
+   RotationRate=(Pitch=0,Yaw=0,Roll=50000)
+   DesiredRotation=(Pitch=0,Yaw=0,Roll=900000)
+   Name="Default__UTProj_CicadaRocket"
+   ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
 }

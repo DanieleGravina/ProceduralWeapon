@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFSquadAI extends UTSquadAI;
 
@@ -23,7 +23,7 @@ function PostBeginPlay()
 	
 function bool AllowDetourTo(UTBot B,NavigationPoint N)
 {
-	if ( !UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag )
+	if ( !B.PlayerReplicationInfo.bHasFlag )
 		return true;
 
 	if ( (B.RouteGoal != FriendlyFlag.HomeBase) || !FriendlyFlag.bHome )
@@ -92,7 +92,7 @@ Returns path a bot should use moving toward a base
 function bool FindPathToObjective(UTBot B, Actor O)
 {
 	// don't ever use gather points when have flag
-	if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag )
+	if (B.PlayerReplicationInfo.bHasFlag)
 	{
 		B.bFinalStretch = true;
 	}
@@ -100,19 +100,21 @@ function bool FindPathToObjective(UTBot B, Actor O)
 	return Super.FindPathToObjective(B, O);
 }
 
+function bool AllowTranslocationBy(UTBot B)
+{
+	return ( B.Pawn != EnemyFlag.Holder );
+}
+
 /* GoPickupFlag()
 have bot go pickup dropped friendly flag
 */
 function bool GoPickupFlag(UTBot B)
 {
-	local UTTeamAI TeamAI;
-	
 	if ( FindPathToObjective(B,FriendlyFlag) )
 	{
-		TeamAI = UTTeamInfo(Team).AI;
-		if ( WorldInfo.TimeSeconds - UTCTFTeamAI(TeamAI).LastGotFlag > 6 )
+		if ( WorldInfo.TimeSeconds - UTCTFTeamAI(Team.AI).LastGotFlag > 6 )
 		{
-			UTCTFTeamAI(TeamAI).LastGotFlag = WorldInfo.TimeSeconds;
+			UTCTFTeamAI(Team.AI).LastGotFlag = WorldInfo.TimeSeconds;
 			B.SendMessage(None, 'GOTOURFLAG', 20);
 		}
 		B.GoalString = "Pickup friendly flag";
@@ -192,14 +194,85 @@ function NavigationPoint FindHidePathFor(UTBot B)
 
 function bool CheckVehicle(UTBot B)
 {
+	local UTVehicle DeployableVehicle;
+	local Pawn FocusEnemy;
+	local int i;
+	local UTVehicle V;
+
 	if (B.RouteGoal != B.MoveTarget || Vehicle(B.RouteGoal) == None) // so bot will get in obstructing vehicle to drive it out of the way
 	{
 		if ( (EnemyFlag.Holder == None) && (VSize(B.Pawn.Location - EnemyFlag.Position().Location) < 1600) )
 			return false;
-		if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag && (VSize(B.Pawn.Location - FriendlyFlag.HomeBase.Location) < 1600) )
+		if ( B.PlayerReplicationInfo.bHasFlag && (VSize(B.Pawn.Location - FriendlyFlag.HomeBase.Location) < 1600) )
 			return false;
 	}
 
+	DeployableVehicle = B.GetDeployableVehicle();
+	if ( (DeployableVehicle == None) && (UTVehicle(B.Pawn) != None) && UTVehicle(B.Pawn).IsArtillery() )
+	{
+		DeployableVehicle = UTVehicle(B.Pawn);
+	}
+	if ( DeployableVehicle != None )
+	{
+		if ( DeployableVehicle.IsArtillery() )
+		{
+			// if possible, just target and fire at nodes or important enemies
+			if ( (B.Enemy != None) && DeployableVehicle.CanDeployedAttack(B.Enemy) )
+			{
+				B.DoRangedAttackOn(B.Enemy);
+				B.GoalString = "Artillery Attack Enemy";
+				return true;
+			}
+			if ( DeployableVehicle.IsDeployed() )
+			{
+				// check if already focused on valid target
+				FocusEnemy = Pawn(B.Focus);
+				if ( (FocusEnemy != None) && (FocusEnemy.Health > 0) && !WorldInfo.GRI.OnSameTeam(B,FocusEnemy) && DeployableVehicle.CanDeployedAttack(FocusEnemy) )
+				{
+					B.DoRangedAttackOn(FocusEnemy);
+					B.GoalString = "Artillery Focus Enemy";
+					return true;
+				}
+			}			
+				
+			// check squad enemies
+			for ( i=0; i<8; i++ )
+			{
+				if ( (Enemies[i] != None) && (Enemies[i] != B.Enemy) && (Enemies[i] != FocusEnemy) && DeployableVehicle.CanDeployedAttack(Enemies[i]) )
+				{
+					B.DoRangedAttackOn(Enemies[i]);
+					B.GoalString = "Artillery Attack Squad Enemy";
+					return true;
+				}
+			}
+
+			// check important enemies
+			for ( V=UTGame(WorldInfo.Game).VehicleList; V!=None; V=V.NextVehicle )
+			{
+				if ( (V.Controller != None) && !V.bCanFly && (V != FocusEnemy) && (V.ImportantVehicle() || V.IsArtillery()) && !WorldInfo.GRI.OnSameTeam(V,B) && DeployableVehicle.CanDeployedAttack(V) )
+				{
+					B.DoRangedAttackOn(V);
+					B.GoalString = "Artillery Attack important vehicle";
+					return true;
+				}
+			}
+			if ( DeployableVehicle.CanDeployedAttack(EnemyFlag.HomeBase) )
+			{
+				B.DoRangedAttackOn(EnemyFlag.HomeBase);
+				B.GoalString = "Artillery Attack Objective";
+				return true;
+			}
+			if ( UTVehicle_Deployable(DeployableVehicle) != None )
+			{
+				UTVehicle_Deployable(DeployableVehicle).bNotGoodArtilleryPosition = true;
+			}
+		}
+		// check deployables
+		else if ( UTStealthVehicle(DeployableVehicle) != None && UTStealthVehicle(DeployableVehicle).ShouldDropDeployable() )
+		{
+			return true;
+		}
+	}
 	return Super.CheckVehicle(B);
 }
 
@@ -237,7 +310,7 @@ function bool OrdersForFlagCarrier(UTBot B)
 			}
 			else
 			{
-				if ( (B.Enemy != None) && (B.Enemy.PlayerReplicationInfo != None) && !UTPlayerReplicationInfo(B.Enemy.PlayerReplicationInfo).bHasFlag )
+				if ( (B.Enemy != None) && (B.Enemy.PlayerReplicationInfo != None) && !B.Enemy.PlayerReplicationInfo.bHasFlag )
 					FindNewEnemyFor(B,(B.Enemy != None) && B.LineOfSightTo(B.Enemy));
 				if ( WorldInfo.TimeSeconds - LastSeeFlagCarrier > 6 )
 					LastSeeFlagCarrier = WorldInfo.TimeSeconds;
@@ -325,7 +398,7 @@ function bool OrdersForFlagCarrier(UTBot B)
 
 function bool MustKeepEnemy(Pawn E)
 {
-	if ( (E != None) && (E.PlayerReplicationInfo != None) && UTPlayerReplicationInfo(E.PlayerReplicationInfo).bHasFlag && (E.Health > 0) )
+	if ( (E != None) && (E.PlayerReplicationInfo != None) && E.PlayerReplicationInfo.bHasFlag && (E.Health > 0) )
 		return true;
 	return false;
 }
@@ -345,7 +418,7 @@ function bool FlagNearBase()
 	if ( WorldInfo.TimeSeconds - FriendlyFlag.TakenTime < UTCTFBase(FriendlyFlag.HomeBase).BaseExitTime )
 		return true;
 
-	return ( VSize(FriendlyFlag.Position().Location - FriendlyFlag.HomeBase.Location) < UTGameObjective(FriendlyFlag.HomeBase).BaseRadius );
+	return ( VSize(FriendlyFlag.Position().Location - FriendlyFlag.HomeBase.Location) < FriendlyFlag.HomeBase.BaseRadius );
 }
 
 function bool OverrideFollowPlayer(UTBot B)
@@ -354,7 +427,7 @@ function bool OverrideFollowPlayer(UTBot B)
 		return false;
 
 	if ( EnemyFlag.HomeBase.BotNearObjective(B) )
-		return UTGameObjective(EnemyFlag.HomeBase).TellBotHowToDisable(B);
+		return EnemyFlag.HomeBase.TellBotHowToDisable(B);
 	return false;
 }
 
@@ -364,9 +437,37 @@ function bool CheckSquadObjectives(UTBot B)
 	local actor FlagCarrierTarget;
 	local controller FlagCarrier;
 
-	if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag )
+	if ( B.PlayerReplicationInfo.bHasFlag )
 		return OrdersForFlagCarrier(B);
 
+	// Heroes can't pick up flags
+	if ( !B.Pawn.bCanPickupInventory  && (UTPawn(B.Pawn) != None) && UTPawn(B.Pawn).IsHero() )
+	{
+		if ( FriendlyFlag.Holder != None )
+		{
+			if ( B.bPursuingFlag )
+			{
+				return ( TryToIntercept(B,FriendlyFlag.Holder,EnemyFlag.Homebase) );
+			}
+			bSeeFlag = B.LineOfSightTo(FriendlyFlag.Position());
+			if ( bSeeFlag )
+			{
+				if ( (B.Enemy == None) || ((B.Enemy.PlayerReplicationInfo != None) && !B.Enemy.PlayerReplicationInfo.bHasFlag) )
+					FindNewEnemyFor(B,(B.Enemy != None) && B.LineOfSightTo(B.Enemy));
+				if ( WorldInfo.TimeSeconds - LastSeeFlagCarrier > 6 )
+				{
+					LastSeeFlagCarrier = WorldInfo.TimeSeconds;
+					B.SendMessage(None, 'ENEMYFLAGCARRIERHERE', 14);
+				}
+				B.GoalString = "Attack enemy flag carrier";
+				B.bPursuingFlag = true;
+				return ( TryToIntercept(B,FriendlyFlag.Holder,EnemyFlag.Homebase) );
+			}
+		}
+		if ( VSize(B.Pawn.Location - EnemyFlag.Position().Location) > 1000 )
+			return FindPathToObjective(B,EnemyFlag.Position());
+		return false;
+	}
 	AddTransientCosts(B,1);
 
 	if (EnemyFlag.Holder != None)
@@ -375,6 +476,12 @@ function bool CheckSquadObjectives(UTBot B)
 		if (FlagCarrier == None && EnemyFlag.Holder.DrivenVehicle != None)
 		{
 			FlagCarrier = EnemyFlag.Holder.DrivenVehicle.Controller;
+		}
+		// check if should tow flag carrier back to base
+		if ( UTVehicle(FlagCarrier.Pawn) != None && UTVehicle(FlagCarrier.Pawn).GetTowingVehicle() == B.Pawn &&
+			CheckTowing(B, UTVehicle(B.Pawn)) )
+		{
+			return true;
 		}
 	}
 
@@ -406,7 +513,7 @@ function bool CheckSquadObjectives(UTBot B)
 			}
 			else
 			{
-				if ( (B.Enemy == None) || ((B.Enemy.PlayerReplicationInfo != None) && !UTPlayerReplicationInfo(B.Enemy.PlayerReplicationInfo).bHasFlag) )
+				if ( (B.Enemy == None) || ((B.Enemy.PlayerReplicationInfo != None) && !B.Enemy.PlayerReplicationInfo.bHasFlag) )
 					FindNewEnemyFor(B,(B.Enemy != None) && B.LineOfSightTo(B.Enemy));
 				if ( WorldInfo.TimeSeconds - LastSeeFlagCarrier > 6 )
 				{
@@ -596,14 +703,14 @@ function bool AllowTaunt(UTBot B)
 
 function bool ShouldDeferTo(Controller C)
 {
-	if ( UTPlayerReplicationInfo(C.PlayerReplicationInfo).bHasFlag )
+	if ( C.PlayerReplicationInfo.bHasFlag )
 		return true;
 	return Super.ShouldDeferTo(C);
 }
 
 function byte PriorityObjective(UTBot B)
 {
-	if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag )
+	if ( B.PlayerReplicationInfo.bHasFlag )
 	{
 		if ( FriendlyFlag.HomeBase.BotNearObjective(B) )
 			return 255;
@@ -619,7 +726,7 @@ function byte PriorityObjective(UTBot B)
 function float ModifyThreat(float current, Pawn NewThreat, bool bThreatVisible, UTBot B)
 {
 	if ( (NewThreat.PlayerReplicationInfo != None)
-		&& UTPlayerReplicationInfo(NewThreat.PlayerReplicationInfo).bHasFlag
+		&& NewThreat.PlayerReplicationInfo.bHasFlag
 		&& bThreatVisible )
 	{
 		if ( (VSize(B.Pawn.Location - NewThreat.Location) < 1500) || (B.Pawn.Weapon != None && UTWeapon(B.Pawn.Weapon).bSniping)
@@ -632,6 +739,11 @@ function float ModifyThreat(float current, Pawn NewThreat, bool bThreatVisible, 
 		return current + 0.1;
 	else
 		return current;
+}
+
+function Actor GetTowingDestination(UTVehicle Towed)
+{
+	return (Towed.PlayerReplicationInfo.bHasFlag) ? FriendlyFlag.HomeBase : EnemyFlag.Position();
 }
 
 function bool AllowContinueOnFoot(UTBot B, UTVehicle V)
@@ -653,7 +765,7 @@ function bool AllowContinueOnFoot(UTBot B, UTVehicle V)
 	}
 	// not if can cover flag carrier from here
 	if ( EnemyFlag.Holder != None && EnemyFlag.Holder != B.Pawn &&
-		(B.Enemy == None || B.Enemy.PlayerReplicationInfo == None || !UTPlayerReplicationInfo(B.Enemy.PlayerReplicationInfo).bHasFlag) &&
+		(B.Enemy == None || B.Enemy.PlayerReplicationInfo == None || !B.Enemy.PlayerReplicationInfo.bHasFlag) &&
 		B.LineOfSightTo(EnemyFlag.Holder) )
 	{
 		return false;
@@ -668,6 +780,8 @@ function ModifyAggression(UTBot B, out float Aggression);
 
 defaultproperties
 {
-	MaxSquadSize=3
-	bShouldUseGatherPoints=true
+   MaxSquadSize=3
+   bShouldUseGatherPoints=True
+   Name="Default__UTCTFSquadAI"
+   ObjectArchetype=UTSquadAI'UTGame.Default__UTSquadAI'
 }

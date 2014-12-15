@@ -1,28 +1,24 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CoverGroup extends Info
 	native
 	placeable
-	ClassGroup(Cover)
 	dependson(CoverLink);
 
-/**
+/** 
  * Defines a group of cover links they can be acted on as a single unit
  * (ie enable/disable)
  */
-cpptext
-{
-	void AutoFillGroup( ECoverGroupFillAction CGFA, TArray<class ACoverLink*>& Links );
-
-	virtual void GetActorReferences(TArray<FActorReference*> &ActorRefs, UBOOL bIsRemovingLevel);
-
-	virtual void PostLoad();
-#if WITH_EDITOR
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 enum ECoverGroupFillAction
 {
@@ -34,7 +30,7 @@ enum ECoverGroupFillAction
 };
 
 /** List of cover links in the group */
-var() array<ActorReference> CoverLinkRefs;
+var() array<NavReference> CoverLinkRefs;
 
 /** Radius around group actor to select nodes */
 var() float	AutoSelectRadius;
@@ -66,19 +62,20 @@ simulated function OnToggle( SeqAct_Toggle Action )
 
 defaultproperties
 {
-	Begin Object NAME=Sprite
-		Sprite=Texture2D'EditorMaterials.CovergroupIcon'
-		SpriteCategoryName="Cover"
-	End Object
-
-	Begin Object Class=CoverGroupRenderingComponent Name=CoverGroupRenderer
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-	End Object
-	Components.Add(CoverGroupRenderer)
-
-	AutoSelectRadius=0.f
-	AutoSelectHeight=0.f
-
-	bStatic=TRUE
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      Sprite=Texture2D'EditorMaterials.CovergroupIcon'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=CoverGroupRenderingComponent Name=CoverGroupRenderer ObjName=CoverGroupRenderer Archetype=CoverGroupRenderingComponent'Engine.Default__CoverGroupRenderingComponent'
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="CoverGroupRenderer"
+      ObjectArchetype=CoverGroupRenderingComponent'Engine.Default__CoverGroupRenderingComponent'
+   End Object
+   Components(1)=CoverGroupRenderer
+   bStatic=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__CoverGroup"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

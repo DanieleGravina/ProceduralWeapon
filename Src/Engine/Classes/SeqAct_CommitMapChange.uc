@@ -3,21 +3,21 @@
  *
  * Kismet action commiting pending map change
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_CommitMapChange extends SequenceAction
 	native(Sequence);
 
-cpptext
-{
-	void Activated();
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Commit Map Change"
-
-	ObjCategory="Level"
-	VariableLinks.Empty
-	InputLinks(0)=(LinkDesc="Commit")
+   InputLinks(0)=(LinkDesc="Commit")
+   ObjName="Commit Map Change"
+   ObjCategory="Level"
+   Name="Default__SeqAct_CommitMapChange"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

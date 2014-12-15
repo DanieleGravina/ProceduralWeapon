@@ -3,46 +3,34 @@
 // touch() and untouch() notifications to the volume as actors enter or leave it
 // enteredvolume() and leftvolume() notifications when center of actor enters the volume
 // pawns with bIsPlayer==true  cause playerenteredvolume notifications instead of actorenteredvolume()
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Volume extends Brush
 	native
 	nativereplication;
 
-/** this actor gets touch() and untouch notifications as the volume is entered or left. */
-var Actor AssociatedActor;
+var Actor AssociatedActor;			// this actor gets touch() and untouch notifications as the volume is entered or left
+var(Location) int LocationPriority;
+var(Location) localized string LocationName;
 
 /** Should pawns be forced to walk when inside this volume? */
 var() bool bForcePawnWalk;
-
 /** Should process all actors within this volume */
 var() bool bProcessAllActors;
 
-/** Should this volume only collide with pawns */
-var(Collision) bool bPawnsOnly;
 
-cpptext
-{
-	INT Encompasses(FVector point, FVector Extent=FVector(0.f));
-	void SetVolumes();
-	virtual void SetVolumes(const TArray<class AVolume*>& Volumes);
-	virtual UBOOL ShouldTrace(UPrimitiveComponent* Primitive,AActor *SourceActor, DWORD TraceFlags);
-	virtual UBOOL IsAVolume() const {return TRUE;}
-	virtual AVolume* GetAVolume() { return this; }
-	virtual INT* GetOptimizedRepList(BYTE* Recent, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel);
-	virtual void PostEditImport();
-
-#if WITH_EDITOR
-	/**
-	 * Function that gets called from within Map_Check to allow this actor to check itself
-	 * for any potential errors and register them with map check dialog.
-	 */
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 native noexport function bool Encompasses(Actor Other); // returns true if center of actor is within volume
-native noexport function bool EncompassesPoint( Vector Loc );
 
 event PostBeginPlay()
 {
@@ -53,6 +41,11 @@ event PostBeginPlay()
 		GotoState('AssociatedTouch');
 		InitialState = GetStateName();
 	}
+}
+
+simulated function string GetLocationStringFor(PlayerReplicationInfo PRI)
+{
+	return LocationName;
 }
 
 /**
@@ -103,6 +96,7 @@ simulated function OnToggle(SeqAct_Toggle Action)
 		{
 			SetCollision(true, bBlockActors);
 		}
+		CollisionComponent.SetBlockRigidBody( TRUE );
 	}
 	// Turn OFF
 	else if (Action.InputLinks[1].bHasImpulse)
@@ -111,13 +105,14 @@ simulated function OnToggle(SeqAct_Toggle Action)
 		{
 			SetCollision(false, bBlockActors);
 		}
+		CollisionComponent.SetBlockRigidBody( FALSE );
 	}
 	// Toggle
 	else if (Action.InputLinks[2].bHasImpulse)
 	{
 		SetCollision(!bCollideActors, bBlockActors);
+		CollisionComponent.SetBlockRigidBody( !CollisionComponent.BlockRigidBody );
 	}
-	CollisionComponent.SetActorCollision(bCollideActors, CollisionComponent.BlockActors);
 
 	ForceNetRelevant();
 
@@ -127,26 +122,33 @@ simulated function OnToggle(SeqAct_Toggle Action)
 simulated event CollisionChanged()
 {
 	// rigid body collision should match Unreal collision
-	CollisionComponent.SetBlockRigidBody(bCollideActors && bBlockActors);
+	CollisionComponent.SetBlockRigidBody(bCollideActors);
 }
 
 event ProcessActorSetVolume( Actor Other );
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 defaultproperties
 {
-	Begin Object Name=BrushComponent0
-		CollideActors=true
-		bAcceptsLights=true
-		LightingChannels=(Dynamic=TRUE,bInitialized=TRUE)
-		BlockActors=false
-		BlockZeroExtent=false
-		BlockNonZeroExtent=true
-		BlockRigidBody=false
-		AlwaysLoadOnClient=True
-		AlwaysLoadOnServer=True
-		bDisableAllRigidBody=true
-	End Object
-
-	bCollideActors=True
-	bSkipActorPropertyReplication=true
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Brush:BrushComponent0'
+      bAcceptsLights=True
+      LightingChannels=(bInitialized=True,Dynamic=True)
+      CollideActors=True
+      BlockNonZeroExtent=True
+      AlwaysLoadOnClient=True
+      AlwaysLoadOnServer=True
+      ObjectArchetype=BrushComponent'Engine.Default__Brush:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bSkipActorPropertyReplication=True
+   bCollideActors=True
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_TouchAllButWeapons
+   Name="Default__Volume"
+   ObjectArchetype=Brush'Engine.Default__Brush'
 }

@@ -1,0 +1,36 @@
+/**
+ * SeqAct_WaitForLevelsVisible
+ *
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ */
+
+class SeqAct_ForceMaterialMipsResident extends SeqAct_Latent
+	native(Sequence);
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/** Time to enforce the bForceMiplevelsToBeResident for. */
+var()	float						ForceDuration;
+
+/** Array of Materials to set bForceMiplevelsToBeResident on their textures for the duration of this action. */
+var()	array<MaterialInterface>		ForceMaterials;
+
+/** Time left before we reset the flag. */
+var		float						RemainingTime;
+
+/** Textures that need to reset bForceMiplevelsToBeResident to FALSE once action completes. */
+var		array<Texture2D>			ModifiedTextures;
+
+defaultproperties
+{
+   ForceDuration=1.000000
+   InputLinks(0)=(LinkDesc="Start")
+   ObjName="Force Material Mips Resident"
+   ObjCategory="Misc"
+   Name="Default__SeqAct_ForceMaterialMipsResident"
+   ObjectArchetype=SeqAct_Latent'Engine.Default__SeqAct_Latent'
+}

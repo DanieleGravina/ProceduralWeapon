@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTKillsRemainingMessage extends UTLocalMessage;
@@ -43,18 +43,14 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	KillsRemainSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_TenKillsRemain'
-	KillsRemainSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_FiveKillsRemain'
-	KillsRemainSounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_OneKillRemains'
-
-	bIsSpecial=True
-	bIsUnique=True
-	Lifetime=3
-	bBeep=False
-
-	DrawColor=(R=255,G=0,B=0)
-	FontSize=3
-	AnnouncementPriority=8
-
-	MessageArea=2
+   KillsRemainSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_TenKillsRemain'
+   KillsRemainSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_FiveKillsRemain'
+   KillsRemainSounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_OneKillRemains'
+   MessageArea=2
+   AnnouncementPriority=8
+   bIsUnique=True
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=3
+   Name="Default__UTKillsRemainingMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

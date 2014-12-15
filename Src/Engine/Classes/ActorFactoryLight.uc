@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryLight extends ActorFactory
 	config(Editor)
@@ -9,7 +9,8 @@ class ActorFactoryLight extends ActorFactory
 
 defaultproperties
 {
-	MenuName="Add Light (Point)"
-	NewActorClass=class'Engine.PointLight'
-	bShowInEditorQuickMenu=true
+   MenuName="Add Light (Point)"
+   NewActorClass=Class'Engine.PointLight'
+   Name="Default__ActorFactoryLight"
+   ObjectArchetype=ActorFactory'Engine.Default__ActorFactory'
 }

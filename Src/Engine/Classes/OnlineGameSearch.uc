@@ -1,12 +1,11 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
  * Holds the base settings for an online game search
  */
 class OnlineGameSearch extends Settings
-	dependson(OnlineSubsystem)
 	native;
 
 /** Max number of queries returned by the matchmaking service */
@@ -24,6 +23,30 @@ var databinding bool bUsesArbitration;
 /** Whether the search object in question is in progress or not. This is the union of the other flags */
 var const bool bIsSearchInProgress;
 
+/** Whether or not this is a full server refresh (as compared to just a single server update) */
+var const bool bIsFullServerUpdate;
+
+/** Whether the search object in question has a listen server search in progress or not */
+var const bool bIsListenServerSearchInProgress;
+
+/** Whether the search object in question has a dedicated server search in progress or not */
+var const bool bIsDedicatedServerSearchInProgress;
+
+/** Whether the search object in question has a list play search in progress or not */
+var const bool bIsListPlaySearchInProgress;
+
+/** Whether the search should include dedicated servers or not */
+var databinding bool bShouldIncludeDedicatedServers;
+
+/** Whether the search should include listen servers or not */
+var databinding bool bShouldIncludeListenServers;
+
+/** Whether the search should include list play servers or not */
+var databinding bool bShouldIncludeListPlayServers;
+
+/** The total number of list play servers available if a list play search */
+var databinding int NumListPlayServersAvailable;
+
 /** Struct used to return matching servers */
 struct native OnlineGameSearchResult
 {
@@ -36,6 +59,9 @@ struct native OnlineGameSearchResult
 	 */
 	var const native pointer PlatformData{void};
 
+	/** Platform/online provider specific data */
+	var const native pointer ServerSearchData{void};
+
 	structcpptext
 	{
 		/** Default constructor does nothing and is here for NoInit types */
@@ -46,7 +72,8 @@ struct native OnlineGameSearchResult
 		/** Zeroing constructor */
 		FOnlineGameSearchResult(EEventParm) :
 			GameSettings(NULL),
-			PlatformData(NULL)
+			PlatformData(NULL),
+            ServerSearchData(NULL)
 		{
 		}
 	}
@@ -55,23 +82,11 @@ struct native OnlineGameSearchResult
 /** The class to create for each returned result from the search */
 var class<OnlineGameSettings> GameSettingsClass;
 
+/** Platform specific data related to the game search */
+var native const transient private pointer SearchHandle{void};
+
 /** The list of servers and their settings that match the search */
 var const array<OnlineGameSearchResult> Results;
-
-/** Used to manually specify the skill to use when matchmaking */
-struct native OverrideSkill
-{
-	/** The skill leaderboard to read the player skill from */
-	var int LeaderboardId;
-	/** The set of players to read the skill for */
-	var array<UniqueNetId> Players;
-	/** The set of skill values to use */
-	var array<double> Mus;
-	var array<double> Sigmas;
-};
-
-/** Instance of the above to manually specify the players involved in the skill search */
-var OverrideSkill ManualSkillOverride;
 
 /**
  * Used to search for named properties on game setting objects
@@ -86,6 +101,9 @@ struct native NamedObjectProperty
 
 /** The list of named properties to search on */
 var array<NamedObjectProperty> NamedProperties;
+
+/** String that is tacked onto the end of the search query */
+var string AdditionalSearchCriteria;
 
 /** The type of data to use to fill out an online parameter */
 enum EOnlineGameSearchEntryType
@@ -158,51 +176,114 @@ struct native OnlineGameSearchQuery
 	var array<OnlineGameSearchSortClause> SortClauses;
 };
 
+
 /** Holds the query to use when filtering servers and they require non-predefined queries */
-var OnlineGameSearchQuery FilterQuery;
+var const OnlineGameSearchQuery FilterQuery;
 
-/** String that is tacked onto the end of the search query (GameSpy only) */
-var string AdditionalSearchCriteria;
 
-/**
- * Used to sort games into buckets since a the difference in terms of feel for ping
- * in the same bucket is often not a useful comparison and skill is better
- */
-var int PingBucketSize;
 
-/** The number of probes used to determine ping */
-var int NumPingProbes;
+/** Raw (manually defined) queries */
+/** Unlike 'FilterQuery' filters, these allow more flexibility in defining the query, and can be evaluated clientside if the query limit (512 bytes) is reached */
 
-/** The max amount of data to use when pinging */
-var int MaxPingBytes;
-
-/**
- * Sets the information needed to do a manual specification of the skill to use when searching
- *
- * @param LeaderboardId the skill leaderboard to read from
- * @param Players the set of players to use when determining the skill
- */
-function SetSkillOverride(int LeaderboardId,const out array<UniqueNetId> Players)
+/** Template struct used to define a search parameter with manually defined comparision operator and value fields */
+struct native RawOnlineGameSearchParameterTemplate
 {
-	// Copy and zero the skill data
-	ManualSkillOverride.LeaderboardId = LeaderboardId;
-	ManualSkillOverride.Players = Players;
-	ManualSkillOverride.Mus.Length = 0;
-	ManualSkillOverride.Sigmas.Length = 0;
+	/** The Id of the property or localized string to be compared */
+	var int EntryId;
+	/** The name of the property to search with */
+	var name ObjectPropertyName;
+	/** Whether this parameter to compare against comes from a property or a localized setting */
+	var EOnlineGameSearchEntryType EntryType;
+
+	/** If set, this string overrides the above variables, and will represent the server property that will be compared */
+	var string EntryValue;
+	/** The value to be compared against (N.B. For string comparisons, % is a wildcard, e.g. '%test%') */
+	var string ComparedValue;
+};
+
+/** Struct used to define a 'raw' game search parameter, which is sent to the Gamespy master server (or evaluated clientside, if the query limit is reached) */
+struct native RawOnlineGameSearchParameter extends RawOnlineGameSearchParameterTemplate
+{
+	/** The string used as the (SQL like) comparison operator; operators supported by the clientside evaluation code: */
+	/** !=, >=, <=, =, <, >, LIKE, NOT LIKE */
+	/** NOTE: For the LIKE and NOT LIKE operators, you will need to add a space at the start of this string */
+	var string ComparisonOperator;
+};
+
+/** Matches raw parameters using a series of OR comparisons */
+struct native RawOnlineGameSearchOrClause
+{
+	/** The list of raw parameters to compare and use as an OR clause */
+	var array<RawOnlineGameSearchParameter> OrParams;
+};
+
+
+/** A list of additional manually defined queries which are ANDed together */
+var array<RawOnlineGameSearchOrClause> RawFilterQueries;
+
+/** If 'FilterQuery'+'RawFilterQueries' exceeds Gamespy's query limit (512 bytes), the excess queries from 'RawFilterQueries' are put here for clientside filtering */
+var const array<RawOnlineGameSearchOrClause> RemainingFilterQueries;
+
+
+
+/** Clientside filters */
+
+/** Struct used to define a clientside filter, which is based upon the 'raw' game search parameter */
+struct native ClientOnlineGameSearchParameter extends RawOnlineGameSearchParameterTemplate
+{
+	/** The delegate which is used to compare the parameter values, this must be set when adding to 'ClientsideFilters' */
+	var delegate<OnComparePropertyValue> ComparisonDelegate;
+};
+
+/** Matches parameters using a series of OR comparisions */
+struct native ClientOnlineGameSearchOrClause
+{
+	/** The list of parameters to compare and use as an OR clause */
+	var array<ClientOnlineGameSearchParameter> OrParams;
+};
+
+
+/** A list of clientside filters which are ANDed together */
+var array<ClientOnlineGameSearchOrClause> ClientsideFilters;
+
+
+/** Delegate template for comparing game search parameter values */
+delegate bool OnComparePropertyValue(string PropertyValue, string ComparedValue)
+{
+	return False;
 }
 
-/**
- * Allows a search object to provide a customized sort routine to order the results in
- * a way that best fits the game type
- */
-native event SortSearchResults();
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+// Resets all queries that are modifed at runtime
+function ResetFilters()
+{
+	AdditionalSearchCriteria = "";
+	RawFilterQueries.Length = 0;
+	ClientsideFilters.Length = 0;
+}
 
 defaultproperties
 {
-	// Override this with your game specific class so that metadata can properly
-	// expose the game information to the UI
-	GameSettingsClass=class'Engine.OnlineGameSettings'
-	MaxSearchResults=25
-	// Set this to zero to disable ping bucket sorting for arbitrated matches
-	PingBucketSize=50
+   MaxSearchResults=25
+   bShouldIncludeListenServers=True
+   GameSettingsClass=Class'Engine.OnlineGameSettings'
+   Name="Default__OnlineGameSearch"
+   ObjectArchetype=Settings'Engine.Default__Settings'
 }

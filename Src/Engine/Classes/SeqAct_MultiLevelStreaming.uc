@@ -3,7 +3,7 @@
  *
  * Kismet action exposing loading and unloading of multiple levels at once.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_MultiLevelStreaming extends SeqAct_LevelStreamingBase
 	native(Sequence);
@@ -19,27 +19,15 @@ struct native LevelStreamingNameCombo
 /** Array of levels to load/ unload														*/
 var() array<LevelStreamingNameCombo>	Levels;
 
-/** Should any levels not contained in Levels be unloaded? */
-var() bool bUnloadAllOtherLevels;
-
-/** Should any levels not contained in Levels be hidden? */
-var() bool bHideAllOtherLevels;
-
-var transient bool bStatusIsOk;
-
-cpptext
-{
-	void Activated();
-	UBOOL UpdateOp(FLOAT DeltaTime);
-	virtual void UpdateStatus();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-#if WITH_EDITOR
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& BoxCenter);
-#endif
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Stream Levels"
+   ObjName="Stream Multiple Levels"
+   Name="Default__SeqAct_MultiLevelStreaming"
+   ObjectArchetype=SeqAct_LevelStreamingBase'Engine.Default__SeqAct_LevelStreamingBase'
 }

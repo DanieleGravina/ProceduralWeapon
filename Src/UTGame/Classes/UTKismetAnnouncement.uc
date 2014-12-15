@@ -1,5 +1,5 @@
 /** message class for announcements played through "Play Announcement" Kismet action
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTKismetAnnouncement extends UTObjectiveSpecificMessage;
 
@@ -19,9 +19,10 @@ static function byte AnnouncementLevel(byte MessageIndex)
 
 defaultproperties
 {
-	DrawColor=(R=0,G=160,B=255,A=255)
-	FontSize=2
-	Lifetime=2.5
-	bIsConsoleMessage=true
-	MessageArea=6
+   bIsConsoleMessage=True
+   Lifetime=2.500000
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=2
+   Name="Default__UTKismetAnnouncement"
+   ObjectArchetype=UTObjectiveSpecificMessage'UTGame.Default__UTObjectiveSpecificMessage'
 }

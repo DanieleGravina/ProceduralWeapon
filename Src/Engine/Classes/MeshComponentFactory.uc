@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MeshComponentFactory extends PrimitiveComponentFactory
 	native
@@ -7,12 +7,14 @@ class MeshComponentFactory extends PrimitiveComponentFactory
 
 var(Rendering) array<MaterialInterface>	Materials;
 
-cpptext
-{
-	virtual UPrimitiveComponent* CreatePrimitiveComponent(UObject* InOuter) { return NULL; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	CastShadow=True
+   CastShadow=True
+   Name="Default__MeshComponentFactory"
+   ObjectArchetype=PrimitiveComponentFactory'Engine.Default__PrimitiveComponentFactory'
 }

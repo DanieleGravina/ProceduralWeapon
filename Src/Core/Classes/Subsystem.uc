@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // Subsystem: The base class all subsystems. Subsystems usually
@@ -16,18 +16,20 @@ class Subsystem extends Object
 	transient
 	inherits(FExec);
 
-cpptext
-{
-
-	// USubsystem interface.
-	virtual void Tick( FLOAT DeltaTime )
-	{}
-
-	// FExec interface.
-	virtual UBOOL Exec( const TCHAR* Cmd, FOutputDevice& Ar ) { return 0; }
-
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__Subsystem"
+   ObjectArchetype=Object'Core.Default__Object'
 }

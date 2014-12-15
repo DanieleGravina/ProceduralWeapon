@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DistributionVectorParticleParameter extends DistributionVectorParameterBase
 	native(Particle)
@@ -7,7 +7,13 @@ class DistributionVectorParticleParameter extends DistributionVectorParameterBas
 	hidecategories(Object)
 	editinlinenew;
 	
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual UBOOL GetParamValue(UObject* Data, FName ParamName, FVector& OutVector);
+   Name="Default__DistributionVectorParticleParameter"
+   ObjectArchetype=DistributionVectorParameterBase'Engine.Default__DistributionVectorParameterBase'
 }

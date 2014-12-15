@@ -1,21 +1,22 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionScalarParameter extends MaterialExpressionParameter
 	native(Material)
 	collapsecategories
 	hidecategories(Object);
 
+var() name	ParameterName;
 var() float	DefaultValue;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Parameters"
-	MenuCategories(1)="WorldPosOffset"
+   Name="Default__MaterialExpressionScalarParameter"
+   ObjectArchetype=MaterialExpressionParameter'Engine.Default__MaterialExpressionParameter'
 }

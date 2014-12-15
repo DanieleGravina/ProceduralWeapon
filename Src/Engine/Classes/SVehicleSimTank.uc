@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SVehicleSimTank extends SVehicleSimCar
 	native(Physics);
@@ -53,21 +53,20 @@ var()	float				TurnGripScaleRate;
 /** If true, tank will turn in place when just steering is applied. */
 var()	bool				bTurnInPlaceOnSteer;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	// SVehicleSimBase interface.
-	virtual void ProcessCarInput(ASVehicle* Vehicle);
-	virtual void UpdateVehicle(ASVehicle* Vehicle, FLOAT DeltaTime);
-	virtual void ApplyWheels(FLOAT InLeftTrackVel, FLOAT InRightTrackVel, ASVehicle* Vehicle);
-}
-
-DefaultProperties
-{
-    bWheelSpeedOverride=true
-	bTurnInPlaceOnSteer=true
-
-	TurnMaxGripReduction=0.97
-	TurnGripScaleRate=1.0
-
-	MaxEngineTorque=500
+   TurnMaxGripReduction=0.970000
+   TurnGripScaleRate=1.000000
+   bTurnInPlaceOnSteer=True
+   bWheelSpeedOverride=True
+   Name="Default__SVehicleSimTank"
+   ObjectArchetype=SVehicleSimCar'Engine.Default__SVehicleSimCar'
 }

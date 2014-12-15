@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 //-----------------------------------------------------------
 //  When out in the world, this can be used to decoy an avril.
@@ -45,18 +45,23 @@ simulated function Landed(vector HitNormal, Actor FloorActor)
 
 defaultproperties
 {
-	LifeSpan=5.0
-	DecoyRange=2048
-	Speed=1000
-	MaxSpeed=1500
-	MomentumTransfer=10000
-	Damage=50.0
-	DamageRadius=250.0
-	RemoteRole=ROLE_SimulatedProxy
-	bBounce=true
-	bNetTemporary=True
-	Physics=PHYS_Falling
-
-	ProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
-	ProjExplosionTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_Decoy_Explo'
+   DecoyRange=2048.000000
+   ProjFlightTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_DecoyFlare'
+   ProjExplosionTemplate=ParticleSystem'VH_Cicada.Effects.P_VH_Cicada_Decoy_Explo'
+   Speed=1000.000000
+   MaxSpeed=1500.000000
+   Damage=50.000000
+   DamageRadius=250.000000
+   MomentumTransfer=10000.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Physics=PHYS_Falling
+   bBounce=True
+   LifeSpan=5.000000
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTDecoy"
+   ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
 }

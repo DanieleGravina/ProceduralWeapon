@@ -3,18 +3,18 @@ class SkelControlWheel extends SkelControlSingleBone
 	native(Anim);
 
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  *	Controller used by vehicle system for moving/rotating wheel.
  */
 
 
-cpptext
-{
-	// SkelControlWheel interface
-	void UpdateWheelControl( FLOAT InDisplacement, FLOAT InRoll, FLOAT InSteering );
-	void CalculateNewBoneTransforms(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<FBoneAtom>& OutBoneTransforms);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Units to move the wheel up vertically. */
 var(Wheel)		transient float	WheelDisplacement;
@@ -42,16 +42,16 @@ var(Wheel)		bool	bInvertWheelSteering;
 
 defaultproperties
 {
-	bApplyTranslation=true
-	bAddTranslation=true
-	BoneTranslationSpace=BCS_BoneSpace
-
-	bApplyRotation=true
-	bAddRotation=true
-	BoneRotationSpace=BCS_BoneSpace
-
-	WheelRollAxis=AXIS_X
-	WheelSteeringAxis=AXIS_Z
-	WheelMaxRenderDisplacement=50.0
-	bIgnoreWhenNotRendered=true
+   WheelMaxRenderDisplacement=50.000000
+   WheelRollAxis=AXIS_X
+   WheelSteeringAxis=AXIS_Z
+   bApplyTranslation=True
+   bAddTranslation=True
+   bApplyRotation=True
+   bAddRotation=True
+   BoneTranslationSpace=BCS_BoneSpace
+   BoneRotationSpace=BCS_BoneSpace
+   bIgnoreWhenNotRendered=True
+   Name="Default__SkelControlWheel"
+   ObjectArchetype=SkelControlSingleBone'Engine.Default__SkelControlSingleBone'
 }

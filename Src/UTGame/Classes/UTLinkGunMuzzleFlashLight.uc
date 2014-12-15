@@ -1,10 +1,10 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
-class UTLinkGunMuzzleFlashLight extends UDKExplosionLight;
+class UTLinkGunMuzzleFlashLight extends UTExplosionLight;
 
 var array<LightValues> RedTeamTimeShift, BlueTeamTimeShift;
 
@@ -26,12 +26,17 @@ function SetTeam(byte NewTeam)
 
 defaultproperties
 {
-	HighDetailFrameTime=+0.02
-	Brightness=8
-	Radius=96
-	LightColor=(R=255,G=255,B=255,A=255)
-
-	TimeShift=((StartTime=0.0,Radius=96,Brightness=5,LightColor=(R=184,G=255,B=232,A=255)),(StartTime=0.1,Radius=64,Brightness=5,LightColor=(R=0,G=128,B=0,A=255)),(StartTime=0.15,Radius=64,Brightness=0,LightColor=(R=0,G=64,B=0,A=255)))
-	RedTeamTimeShift=((StartTime=0.0,Radius=96,Brightness=5,LightColor=(R=255,G=192,B=192,A=255)),(StartTime=0.1,Radius=64,Brightness=5,LightColor=(R=128,G=0,B=0,A=255)),(StartTime=0.15,Radius=64,Brightness=0,LightColor=(R=64,G=0,B=0,A=255)))
-	BlueTeamTimeShift=((StartTime=0.0,Radius=96,Brightness=5,LightColor=(R=192,G=192,B=255,A=255)),(StartTime=0.1,Radius=64,Brightness=5,LightColor=(R=0,G=0,B=128,A=255)),(StartTime=0.15,Radius=64,Brightness=0,LightColor=(R=0,G=0,B=64,A=255)))
+   RedTeamTimeShift(0)=(Radius=96.000000,Brightness=5.000000,LightColor=(B=192,G=192,R=255,A=255))
+   RedTeamTimeShift(1)=(StartTime=0.100000,Radius=64.000000,Brightness=5.000000,LightColor=(B=0,G=0,R=128,A=255))
+   RedTeamTimeShift(2)=(StartTime=0.150000,Radius=64.000000,LightColor=(B=0,G=0,R=64,A=255))
+   BlueTeamTimeShift(0)=(Radius=96.000000,Brightness=5.000000,LightColor=(B=255,G=192,R=192,A=255))
+   BlueTeamTimeShift(1)=(StartTime=0.100000,Radius=64.000000,Brightness=5.000000,LightColor=(B=128,G=0,R=0,A=255))
+   BlueTeamTimeShift(2)=(StartTime=0.150000,Radius=64.000000,LightColor=(B=64,G=0,R=0,A=255))
+   HighDetailFrameTime=0.020000
+   TimeShift(0)=(Radius=96.000000,Brightness=5.000000,LightColor=(B=232,G=255,R=184,A=255))
+   TimeShift(1)=(StartTime=0.100000,Radius=64.000000,Brightness=5.000000,LightColor=(B=0,G=128,R=0,A=255))
+   TimeShift(2)=(StartTime=0.150000,Radius=64.000000,LightColor=(B=0,G=64,R=0,A=255))
+   Radius=96.000000
+   Name="Default__UTLinkGunMuzzleFlashLight"
+   ObjectArchetype=UTExplosionLight'UTGame.Default__UTExplosionLight'
 }

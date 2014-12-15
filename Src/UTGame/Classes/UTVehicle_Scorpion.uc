@@ -1,7 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicle_Scorpion extends UTVehicle
+	native(Vehicle)
 	abstract;
 
 /** animation for the Scorpion's extendable blades */
@@ -156,221 +157,17 @@ replication
 		bBoostersActivated;
 }
 
-/** 
-  * Returns true if self destruct conditions (boosting, going fast enough) are met 
-  */
-function bool ReadyToSelfDestruct()
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/** Returns true if self destruct conditions (boosting, going fast enough) are met */
+native final function bool ReadyToSelfDestruct();
+
+function bool EagleEyeTarget()
 {
-	return (bBoostersActivated && (VSizeSq(Velocity) > SelfDestructSpeedSquared));
-}
-
-function Tick( FLOAT DeltaSeconds )
-{
-	local TeamInfo InstigatorTeam;
-	local float BoostRemaining;
-	local vector BoostDir, Start, End, HitLocation, HitNormal;
-	local Actor HitActor;
-	local bool bSetBrakeLightOn, bSetReverseLightOn;
-	
-	// ready sound above everything else so that it can be stopped if dead
-	if ( SelfDestructReadyComponent != None )
-	{
-		// stop self destruct ready sound if no longer ready
-		if( !bDriving || (SelfDestructInstigator != None) || !IsLocallyControlled() || !ReadyToSelfDestruct() ) 
-		{
-			SelfDestructReadyComponent.Stop();
-			SelfDestructReadyComponent = None;
-		}
-	}
-	else if( bDriving && !bDeadVehicle && IsLocallyControlled() && ReadyToSelfDestruct() )
-	{
-		// play sound when ready to self destruct
-		SelfDestructReadyComponent = CreateAudioComponent(SelfDestructReadyCue,TRUE,TRUE,FALSE);
-	}
-
-	if ( bDeadVehicle )
-		return;
-
-	if ( SelfDestructInstigator != None )
-	{
-		if ( (WorldInfo.TimeSeconds - BoostStartTime > MaxBoostDuration) )
-		{
-			// blow up
-			SelfDestruct(None);
-			return;
-		}
-
-		InstigatorTeam = (SelfDestructInstigator.PlayerReplicationInfo != None) ? SelfDestructInstigator.PlayerReplicationInfo.Team : None;
-		if ( CheckAutoDestruct(InstigatorTeam, BoosterCheckRadius) )
-		{
-			return;
-		}
-	}
-	else
-	{
-		if ( bTryToBoost )
-		{
-			// turbo mode
-			if ( !bBoostersActivated )
-			{
-				if ( WorldInfo.TimeSeconds - BoostChargeTime > BoostChargeDuration ) // Starting boost
-				{
-					ActivateRocketBoosters();
-					bBoostersActivated = TRUE;
-					BoostStartTime = WorldInfo.TimeSeconds;
-				}
-			}
-		}
-
-		bTryToBoost = false;
-
-		if ( (Role == ROLE_Authority) || IsLocallyControlled() )
-		{
-			if ( bBoostersActivated )
-			{
-				if ( WorldInfo.TimeSeconds - BoostStartTime > MaxBoostDuration ) // Ran out of Boost
-				{
-					DeactivateRocketBoosters();
-					bBoostersActivated = FALSE;
-					BoostChargeTime = WorldInfo.TimeSeconds;
-				}
-				else if ( (Throttle <= 0) && (WorldInfo.TimeSeconds - BoostReleaseTime > BoostReleaseDelay) ) // Stopped in middle of boost
-				{
-					DeactivateRocketBoosters();
-					bBoostersActivated = FALSE;
-					BoostRemaining = MaxBoostDuration - WorldInfo.TimeSeconds + BoostStartTime;
-					BoostChargeTime = WorldInfo.TimeSeconds - FMin(BoostChargeDuration - 2.0, BoostRemaining * BoostChargeDuration/MaxBoostDuration);
-				}
-				else
-				{
-					BoostReleaseTime = WorldInfo.TimeSeconds;
-				}
-			}
-			else if ( bSteeringLimited && (VSizeSq(Velocity) < Square(AirSpeed)) )
-			{
-				EnableFullSteering();
-			}
-		}
-	}
-
-	if ( bBoostersActivated )
-	{
-		BoostDir = vector(Rotation);
-		if ( VSizeSq(Velocity) < BoostPowerSpeed*BoostPowerSpeed )
-		{
-			if ( BoostDir.Z > 0.7 )
-				AddForce( (1.0 - BoostDir.Z) * BoosterForceMagnitude * BoostDir );
-			else
-				AddForce( BoosterForceMagnitude * BoostDir );
-		}
-		else
-			AddForce( 0.25 * BoosterForceMagnitude * BoostDir );
-	}
-
-	if (bBladesExtended)
-	{
-		if (!bRightBladeBroken)
-		{
-			// trace across right blade
-			Mesh.GetSocketWorldLocationAndRotation(RightBladeStartSocket, Start);
-			Mesh.GetSocketWorldLocationAndRotation(RightBladeEndSocket, End);
-			HitActor = Trace(HitLocation, HitNormal, End, Start, true);
-			if ( (Pawn(HitActor) != None) || (VSize(HitLocation - Start) < BladeBreakPoint*VSize(End - Start)) )
-			{
-				BladeHit(HitActor, HitLocation, false);
-			}
-		}
-		if (!bLeftBladeBroken)
-		{
-			// trace across the left blade
-			Mesh.GetSocketWorldLocationAndRotation(LeftBladeStartSocket, Start);
-			Mesh.GetSocketWorldLocationAndRotation(LeftBladeEndSocket, End);
-			HitActor = Trace(HitLocation, HitNormal, End, Start, true);
-			if ( (Pawn(HitActor) != None) || (VSize(HitLocation - Start) < BladeBreakPoint*VSize(End - Start)) )
-			{
-				BladeHit(HitActor, HitLocation, true);
-			}
-		}
-	}
-
-	// client side effects follow - return if server or not rendered
-	if (LastRenderTime < WorldInfo.TimeSeconds - 0.2)
-		return;
-
-	// Update brake light and reverse light
-	// Both lights default to off.
-
-	// check if scorpion is braking
-	if( ( (OutputBrake > 0.0) || bOutputHandbrake) && (VSizeSq(Velocity) > 4.0) )
-	{
-		bSetBrakeLightOn = true;
-		if ( !bBrakeLightOn )
-		{	
-			// turn on brake light
-			bBrakeLightOn = TRUE;
-			if(DamageMaterialInstance[0] != None)
-			{
-				DamageMaterialInstance[0].SetScalarParameterValue(BrakeLightParameterName, 60.0 );
-			}
-		}
-	}
-
-	// check if scorpion is in reverse
-	if ( Throttle < 0.0 )
-	{
-		bSetReverseLightOn = true;
-		if ( !bReverseLightOn )
-		{
-			// turn on reverse light
-			bReverseLightOn = true;
-			if(DamageMaterialInstance[0] != None)
-			{
-				DamageMaterialInstance[0].SetScalarParameterValue(ReverseLightParameterName, 50.0 );
-			}
-		}
-	}
-
-	if ( bBrakeLightOn && !bSetBrakeLightOn )
-	{
-		// turn off brake light
-		bBrakeLightOn = false;
-		if(DamageMaterialInstance[0] != None)
-		{
-			DamageMaterialInstance[0].SetScalarParameterValue(BrakeLightParameterName, 0.0 );
-		}
-	}
-	if ( bReverseLightOn && !bSetReverseLightOn )
-	{
-		// turn off reverse light
-		bReverseLightOn = false;
-		if(DamageMaterialInstance[0] != None)
-		{
-			DamageMaterialInstance[0].SetScalarParameterValue(ReverseLightParameterName, 0.0 );
-		}
-	}
-
-	// update headlights
-	if ( bHeadlightsOn )
-	{
-		if ( PlayerReplicationInfo == None )
-		{
-			// turn off headlights
-			bHeadlightsOn = false;
-			if(DamageMaterialInstance[0] != None)
-			{
-				DamageMaterialInstance[0].SetScalarParameterValue(HeadLightParameterName, 0.0 );
-			}
-		}
-	}
-	else if ( PlayerReplicationInfo != None )
-	{
-		// turn on headlights
-		bHeadlightsOn = true;
-		if(DamageMaterialInstance[0] != None)
-		{
-			DamageMaterialInstance[0].SetScalarParameterValue(HeadLightParameterName, 100.0 );
-		}
-	}
+	return ReadyToSelfDestruct();
 }
 
 simulated function PostBeginPlay()
@@ -389,10 +186,10 @@ simulated function PostBeginPlay()
 	}
 
 	BladeBlend = UTAnimBlendByWeapon(Mesh.Animations.FindAnimNode('BladeNode'));
-	`Warn("Could not find BladeNode for mesh (" $ Mesh $ ")",BladeBlend == None);
+	if (BladeBlend == None) WarnInternal("Could not find BladeNode for mesh (" $ Mesh $ ")");
 
 	BoosterBlend = UTAnimBlendByWeapon(Mesh.Animations.FindAnimNode('BoosterNode'));
-	`Warn("Could not find BoosterNode for mesh (" $ Mesh $ ")",BoosterBlend == None);
+	if (BoosterBlend == None) WarnInternal("Could not find BoosterNode for mesh (" $ Mesh $ ")");
 }
 
 /**
@@ -589,11 +386,11 @@ simulated event ActivateRocketBoosters()
 	}
 	LockWheels();
 
-	DefaultUprightMaxTorque = UDKVehicleSimCar(SimObj).InAirUprightMaxTorque;
-	DefaultUprightTorqueFactor = UDKVehicleSimCar(SimObj).InAirUprightTorqueFactor;
+	DefaultUprightMaxTorque = UTVehicleSimCar(SimObj).InAirUprightMaxTorque;
+	DefaultUprightTorqueFactor = UTVehicleSimCar(SimObj).InAirUprightTorqueFactor;
 
-	UDKVehicleSimCar(SimObj).InAirUprightMaxTorque = BoostUprightMaxTorque;
-	UDKVehicleSimCar(SimObj).InAirUprightTorqueFactor = BoostUprightTorqueFactor;
+	UTVehicleSimCar(SimObj).InAirUprightMaxTorque = BoostUprightMaxTorque;
+	UTVehicleSimCar(SimObj).InAirUprightTorqueFactor = BoostUprightTorqueFactor;
 }
 
 /** DeactivateHandbrake()
@@ -624,6 +421,9 @@ simulated event DeactivateRocketBoosters()
 	local UTPlayerController PC;
 
 	// Set handbrake to decrease the possibility of a rollover
+//	bOutputHandbrake = TRUE;
+//	bHoldingDownHandbrake = TRUE;
+//	SetTimer(3.0f, FALSE, 'DeactivateHandbrake');
 	AirSpeed = Default.AirSpeed;
 	EnableFullSteering();
 
@@ -648,8 +448,8 @@ simulated event DeactivateRocketBoosters()
 	Mesh.DetachComponent(RightBoosterLight);
 	UnlockWheels();
 
-	UDKVehicleSimCar(SimObj).InAirUprightMaxTorque = DefaultUprightMaxTorque;
-	UDKVehicleSimCar(SimObj).InAirUprightTorqueFactor = DefaultUprightTorqueFactor;
+	UTVehicleSimCar(SimObj).InAirUprightMaxTorque = DefaultUprightMaxTorque;
+	UTVehicleSimCar(SimObj).InAirUprightTorqueFactor = DefaultUprightTorqueFactor;
 }
 
 function OnActivateRocketBoosters(UTSeqAct_ActivateRocketBoosters BoosterAction)
@@ -660,6 +460,18 @@ function OnActivateRocketBoosters(UTSeqAct_ActivateRocketBoosters BoosterAction)
 reliable server function ServerBoost()
 {
     bTryToBoost = true;
+}
+
+simulated function float AdjustFOVAngle(float FOVAngle)
+{
+	if (bBoostersActivated)
+	{
+		return Lerp( FOVAngle, BoosterFOVAngle, FMin(WorldInfo.TimeSeconds - BoostStartTime, 1.0) );
+	}
+	else
+	{
+		return Lerp( BoosterFOVAngle, FOVAngle, FMin(WorldInfo.TimeSeconds - BoostChargeTime, 1.0) );
+	}
 }
 
 /** Self destruct immediately if activated and hit by EMP */
@@ -811,7 +623,7 @@ simulated function PlaySelfDestruct()
 	local SkelControlBase SkelControl;
 
 	DeadVehicleLifeSpan = BurnOutTime + 0.01;
-	UDKVehicleSimCar(SimObj).bDriverlessBraking = false;
+	UTVehicleSimCar(SimObj).bDriverlessBraking = false;
 	// play sound
 	PlaySound(SelfDestructEnabledSound);
 	if(SelfDestructWarningComponent == none)
@@ -871,11 +683,11 @@ simulated function DisplayHud(UTHud Hud, Canvas Canvas, vector2D HudPOS, optiona
 	{
 		if (Throttle > 0.0 && !bBoostersActivated && (WorldInfo.TimeSeconds - BoostChargeTime > BoostChargeDuration))
 		{
-		   	Hud.DrawToolTip(Canvas, PC, "GBA_Jump", Canvas.ClipX * 0.5, Canvas.ClipY * 0.95, BoostToolTipIconCoords.U, BoostToolTipIconCoords.V, BoostToolTipIconCoords.UL, BoostToolTipIconCoords.VL, Canvas.ClipY/720);
+		   	Hud.DrawToolTip(Canvas, PC, "GBA_Jump", Canvas.ClipX * 0.5, Canvas.ClipY * 0.95, BoostToolTipIconCoords.U, BoostToolTipIconCoords.V, BoostToolTipIconCoords.UL, BoostToolTipIconCoords.VL, Canvas.ClipY / 768);
 		}
 		else if (ReadyToSelfDestruct())
 		{
-			Hud.DrawToolTip(Canvas, PC, "GBA_Use", Canvas.ClipX * 0.5, Canvas.ClipY * 0.95, EjectToolTipIconCoords.U, EjectToolTipIconCoords.V, EjectToolTipIconCoords.UL, EjectToolTipIconCoords.VL, Canvas.ClipY/720);
+			Hud.DrawToolTip(Canvas, PC, "GBA_Use", Canvas.ClipX * 0.5, Canvas.ClipY * 0.95, EjectToolTipIconCoords.U, EjectToolTipIconCoords.V, EjectToolTipIconCoords.UL, EjectToolTipIconCoords.VL, Canvas.ClipY / 768);
 		}
 	}
 }
@@ -955,6 +767,11 @@ simulated event BladeHit(Actor HitActor, vector HitLocation, bool bLeftBlade)
 		else
 		{
 			P = Pawn(HitActor);
+			if ( UTPawn(P) != None && UTPawn(P).IsHero() )
+			{
+				// heroes break blades
+				P = None;
+			}
 		}
 
 		// if we hit a vehicle or a non-pawn, break off the blade and do no damage
@@ -1057,11 +874,11 @@ function byte ChooseFireMode()
 		V = UTVehicle(Controller.Focus);
 		if ( V == None )
 		{
-			Dist = VSize(Controller.GetFocalPoint() - Location);
+			Dist = VSize(Controller.FocalPoint - Location);
 			if ( Dist < 1200.0 && Controller.LineOfSightTo(Controller.Focus) )
 		{
 				if ( (WorldInfo.TimeSeconds - LastBladeBoostTime > 5) && (Dist > 200.0) )
-		{
+				{
 					LastBladeBoostTime = WorldInfo.TimeSeconds;
 					FacingDir = vector(Rotation);
 					FacingDir.Z = 0;
@@ -1080,7 +897,16 @@ function byte ChooseFireMode()
 			bAISelfDestruct = true;
 			SetTimer(0.3, true, 'CheckScriptedSelfDestruct');
 		}
-		}
+	}
+	else if ( UTOnslaughtNodeObjective(Controller.Focus) != None && Controller.MoveTarget == Controller.Focus
+		&& Controller.InLatentExecution(Controller.LATENT_MOVETOWARD) )
+	{
+		// self destruct to take out highly armored vehicle
+		bTryToBoost = true;
+		bAISelfDestruct = true;
+		SetTimer(0.3, true, 'CheckScriptedSelfDestruct');
+	}
+
 	return 0;
 }
 
@@ -1091,6 +917,21 @@ function bool TooCloseToAttack(Actor Other)
 		return false;
 	}
 	return Super.TooCloseToAttack(Other);
+}
+
+event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
+{
+	local UTBot B;
+
+	// tell AI to boost through a slow volume
+	if (Other.IsA('UTSlowVolume'))
+	{
+		B = UTBot(Controller);
+		if (B != None && B.Skill >= 2.0)
+		{
+			bTryToBoost = true;
+		}
+	}
 }
 
 function IncomingMissile(Projectile P)
@@ -1157,7 +998,7 @@ simulated function BreakOffBlade(bool bLeftBlade)
 	}
 	else
 	{
-		`warn("Failed to find skeletal controller named" @ (bLeftBlade ? 'LeftBlade' : 'RightBlade') @ "for mesh" @ Mesh);
+		WarnInternal("Failed to find skeletal controller named" @ (bLeftBlade ? 'LeftBlade' : 'RightBlade') @ "for mesh" @ Mesh);
 	}
 
 	if (WorldInfo.NetMode != NM_DedicatedServer && !IsZero(BoneLoc))
@@ -1193,6 +1034,11 @@ simulated function SetBurnOut()
 	VehicleEvent( 'NoDamageSmoke' );
 }
 
+function bool IsGoodTowTruck()
+{
+	return true;
+}
+
 function bool RecommendCharge(UTBot B, Pawn Enemy)
 {
 	local UTVehicle V;
@@ -1211,156 +1057,190 @@ function bool CriticalChargeAttack(UTBot B)
 	return (UTVehicle(B.Enemy) != None) && RecommendCharge(B, B.Enemy);
 }
 
+/** returns true if vehicle should charge attack this node (also responsible for setting up charge) */
+function bool ChargeAttackObjective(UTBot B, UTGameObjective O)
+{
+	local vector FacingDir, EnemyDir;
+	local float Dist;
+
+	Dist = VSize(O.Location - Location);
+	if ( bAISelfDestruct || (Dist < 200.0) )
+	{
+		if ( !bTryToBoost )
+			bAISelfDestruct = false;
+	}
+
+	if ( !bAISelfDestruct )
+	{
+		// only charge if already facing right if close
+		FacingDir = vector(Rotation);
+		FacingDir.Z = 0;
+		EnemyDir = O.Location - Location;
+		EnemyDir.Z = 0;
+		bTryToBoost = (Normal(FacingDir) dot Normal(EnemyDir) > 0.9);
+		if ( bTryToBoost )
+		{
+			bAISelfDestruct = true;
+			SetTimer(0.3, true, 'CheckScriptedSelfDestruct');
+		}
+		if ( !bTryToBoost && (Dist < 600) )
+			return false;
+	}
+
+	B.GoalString = "Charge Objective";
+	return B.Squad.FindPathToObjective(B, O);
+}
+
 defaultproperties
 {
-	Health=300
-	StolenAnnouncementIndex=5
-
-	COMOffset=(x=-40.0,y=0.0,z=-36.0)
-	UprightLiftStrength=280.0
-	UprightTime=1.25
-	UprightTorqueStrength=500.0
-	bCanFlip=true
-	bSeparateTurretFocus=true
-	bHasHandbrake=true
-	bStickDeflectionThrottle=true
-	GroundSpeed=950
-	AirSpeed=1100
-	RocketSpeed=2000
-	ObjectiveGetOutDist=1500.0
-	MaxDesireability=0.4
-	HeavySuspensionShiftPercent=0.75f;
-	bLookSteerOnNormalControls=true
-	bLookSteerOnSimpleControls=true
-	LookSteerSensitivity=2.2
-	LookSteerDamping=0.07
-	ConsoleSteerScale=1.1
-	DeflectionReverseThresh=-0.3
-
-	Begin Object Class=UDKVehicleSimCar Name=SimObject
-		WheelSuspensionStiffness=100.0
-		WheelSuspensionDamping=3.0
-		WheelSuspensionBias=0.1
-		ChassisTorqueScale=0.0
-		MaxBrakeTorque=5.0
-		StopThreshold=100
-
-		MaxSteerAngleCurve=(Points=((InVal=0,OutVal=45),(InVal=600.0,OutVal=15.0),(InVal=1100.0,OutVal=10.0),(InVal=1300.0,OutVal=6.0),(InVal=1600.0,OutVal=1.0)))
-		SteerSpeed=110
-
-		LSDFactor=0.0
-		TorqueVSpeedCurve=(Points=((InVal=-600.0,OutVal=0.0),(InVal=-300.0,OutVal=80.0),(InVal=0.0,OutVal=130.0),(InVal=950.0,OutVal=130.0),(InVal=1050.0,OutVal=10.0),(InVal=1150.0,OutVal=0.0)))
-		EngineRPMCurve=(Points=((InVal=-500.0,OutVal=2500.0),(InVal=0.0,OutVal=500.0),(InVal=549.0,OutVal=3500.0),(InVal=550.0,OutVal=1000.0),(InVal=849.0,OutVal=4500.0),(InVal=850.0,OutVal=1500.0),(InVal=1100.0,OutVal=5000.0)))
-		EngineBrakeFactor=0.025
-		ThrottleSpeed=0.2
-		WheelInertia=0.2
-		NumWheelsForFullSteering=4
-		SteeringReductionFactor=0.0
-		SteeringReductionMinSpeed=1100.0
-		SteeringReductionSpeed=1400.0
-		bAutoHandbrake=true
-		bClampedFrictionModel=true
-		FrontalCollisionGripFactor=0.18
-		ConsoleHardTurnGripFactor=1.0
-		HardTurnMotorTorque=0.7
-
-		SpeedBasedTurnDamping=20.0
-		AirControlTurnTorque=40.0
-		InAirUprightMaxTorque=15.0
-		InAirUprightTorqueFactor=-30.0
-
-		// Longitudinal tire model based on 10% slip ratio peak
-		WheelLongExtremumSlip=0.1
-		WheelLongExtremumValue=1.0
-		WheelLongAsymptoteSlip=2.0
-		WheelLongAsymptoteValue=0.6
-
-		// Lateral tire model based on slip angle (radians)
-   		WheelLatExtremumSlip=0.35     // 20 degrees
-		WheelLatExtremumValue=0.9
-		WheelLatAsymptoteSlip=1.4     // 80 degrees
-		WheelLatAsymptoteValue=0.9
-
-		bAutoDrive=false
-		AutoDriveSteer=0.3
-	End Object
-	SimObj=SimObject
-	Components.Add(SimObject)
-
-	BoostSteerFactors[0] = 10.0
-	BoostSteerFactors[1] = 4.0
-	BoostSteerFactors[2] = 1.2
-
-	Begin Object Class=UTVehicleScorpionWheel Name=RRWheel
-		BoneName="B_R_Tire"
-		BoneOffset=(X=0.0,Y=20.0,Z=0.0)
-		SkelControlName="B_R_Tire_Cont"
-	End Object
-	Wheels(0)=RRWheel
-
-	Begin Object Class=UTVehicleScorpionWheel Name=LRWheel
-		BoneName="B_L_Tire"
-		BoneOffset=(X=0.0,Y=-20.0,Z=0.0)
-		SkelControlName="B_L_Tire_Cont"
-	End Object
-	Wheels(1)=LRWheel
-
-	Begin Object Class=UTVehicleScorpionWheel Name=RFWheel
-		BoneName="F_R_Tire"
-		BoneOffset=(X=0.0,Y=20.0,Z=0.0)
-		SteerFactor=1.0
-		LongSlipFactor=2.0
-		LatSlipFactor=3.0
-		HandbrakeLongSlipFactor=0.8
-		HandbrakeLatSlipFactor=0.8
-		SkelControlName="F_R_Tire_Cont"
-	End Object
-	Wheels(2)=RFWheel
-
-	Begin Object Class=UTVehicleScorpionWheel Name=LFWheel
-		BoneName="F_L_Tire"
-		BoneOffset=(X=0.0,Y=-20.0,Z=0.0)
-		SteerFactor=1.0
-		LongSlipFactor=2.0
-		LatSlipFactor=3.0
-		HandbrakeLongSlipFactor=0.8
-		HandbrakeLatSlipFactor=0.8
-		SkelControlName="F_L_Tire_Cont"
-	End Object
-	Wheels(3)=LFWheel
-
-	lockSuspensionTravel=37;
-	lockSuspensionStiffness=62.5;
-
-	BoosterForceMagnitude=450.0
-	MaxBoostDuration=2.0
-	BoostChargeDuration=5.0
-	BoosterCheckRadius=150.0
-	BoostChargeTime=-10.0
-	BoostPowerSpeed=1800.0
-	BoosterFOVAngle=105.0
-
-	BoostUprightTorqueFactor=-45.0
-	BoostUprightMaxTorque=50.0
-
-	TeamBeaconOffset=(z=60.0)
-	SpawnRadius=125.0
-
-	BaseEyeheight=30
-	Eyeheight=30
-	DefaultFOV=80
-	CameraLag=0.07
-
-	bReducedFallingCollisionDamage=true
-
-	BladeBreakPoint=0.8
-	BoostReleaseDelay=0.15
-
-	SelfDestructSpeedSquared=810000.0
-
-	MomentumMult=0.5
-
-	NonPreferredVehiclePathMultiplier=1.5
-
-	HornIndex=0
+   BladeBreakPoint=0.800000
+   BoosterForceMagnitude=450.000000
+   BoosterCheckRadius=150.000000
+   MaxBoostDuration=2.000000
+   BoostChargeDuration=5.000000
+   BoostChargeTime=-10.000000
+   BoostPowerSpeed=1800.000000
+   BoostReleaseDelay=0.150000
+   BoosterFOVAngle=105.000000
+   BoostUprightTorqueFactor=-45.000000
+   BoostUprightMaxTorque=50.000000
+   RocketSpeed=2000.000000
+   SelfDestructSpeedSquared=810000.000000
+   LockSuspensionTravel=37.000000
+   LockSuspensionStiffness=62.500000
+   BoostSteerFactors(0)=10.000000
+   BoostSteerFactors(1)=4.000000
+   BoostSteerFactors(2)=1.200000
+   bStickDeflectionThrottle=True
+   bLightArmor=True
+   bLookSteerOnNormalControls=True
+   bLookSteerOnSimpleControls=True
+   bReducedFallingCollisionDamage=True
+   DeflectionReverseThresh=-0.300000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTVehicle:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTVehicle:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   MaxDesireability=0.400000
+   ObjectiveGetOutDist=1500.000000
+   VehicleIndex=10
+   LookSteerSensitivity=2.200000
+   LookSteerDamping=0.070000
+   ConsoleSteerScale=1.100000
+   StolenAnnouncementIndex=5
+   VehiclePositionString="In uno Scorpion"
+   VehicleNameString="Scorpion"
+   SpawnRadius=125.000000
+   TeamBeaconOffset=(X=0.000000,Y=0.000000,Z=60.000000)
+   DefaultFOV=80.000000
+   CameraLag=0.070000
+   Begin Object Class=UTVehicleSimCar Name=SimObject ObjName=SimObject Archetype=UTVehicleSimCar'UTGame.Default__UTVehicleSimCar'
+      TorqueVSpeedCurve=(Points=((InVal=-600.000000),(InVal=-300.000000,OutVal=80.000000),(OutVal=130.000000),(InVal=950.000000,OutVal=130.000000),(InVal=1050.000000,OutVal=10.000000),(InVal=1150.000000)))
+      EngineRPMCurve=(Points=((InVal=-500.000000,OutVal=2500.000000),(OutVal=500.000000),(InVal=549.000000,OutVal=3500.000000),(InVal=550.000000,OutVal=1000.000000),(InVal=849.000000,OutVal=4500.000000),(InVal=850.000000,OutVal=1500.000000),(InVal=1100.000000,OutVal=5000.000000)))
+      bAutoHandbrake=True
+      SteeringReductionFactor=0.000000
+      NumWheelsForFullSteering=4
+      SteeringReductionSpeed=1400.000000
+      SteeringReductionMinSpeed=1100.000000
+      HardTurnMotorTorque=0.700000
+      FrontalCollisionGripFactor=0.180000
+      SpeedBasedTurnDamping=20.000000
+      AirControlTurnTorque=40.000000
+      InAirUprightTorqueFactor=-30.000000
+      InAirUprightMaxTorque=15.000000
+      MaxSteerAngleCurve=(Points=((OutVal=45.000000),(InVal=600.000000,OutVal=15.000000),(InVal=1100.000000,OutVal=10.000000),(InVal=1300.000000,OutVal=6.000000),(InVal=1600.000000,OutVal=1.000000)))
+      SteerSpeed=110.000000
+      EngineBrakeFactor=0.025000
+      MaxBrakeTorque=5.000000
+      StopThreshold=100.000000
+      WheelSuspensionStiffness=100.000000
+      WheelSuspensionDamping=3.000000
+      WheelSuspensionBias=0.100000
+      WheelLatExtremumValue=0.900000
+      WheelLatAsymptoteValue=0.900000
+      WheelInertia=0.200000
+      bClampedFrictionModel=True
+      AutoDriveSteer=0.300000
+      Name="SimObject"
+      ObjectArchetype=UTVehicleSimCar'UTGame.Default__UTVehicleSimCar'
+   End Object
+   SimObj=SimObject
+   Begin Object Class=UTVehicleScorpionWheel Name=RRWheel ObjName=RRWheel Archetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+      SkelControlName="B_R_Tire_Cont"
+      BoneName="B_R_Tire"
+      BoneOffset=(X=0.000000,Y=20.000000,Z=0.000000)
+      Name="RRWheel"
+      ObjectArchetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+   End Object
+   Wheels(0)=RRWheel
+   Begin Object Class=UTVehicleScorpionWheel Name=LRWheel ObjName=LRWheel Archetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+      SkelControlName="B_L_Tire_Cont"
+      BoneName="B_L_Tire"
+      BoneOffset=(X=0.000000,Y=-20.000000,Z=0.000000)
+      Name="LRWheel"
+      ObjectArchetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+   End Object
+   Wheels(1)=LRWheel
+   Begin Object Class=UTVehicleScorpionWheel Name=RFWheel ObjName=RFWheel Archetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+      SteerFactor=1.000000
+      SkelControlName="F_R_Tire_Cont"
+      BoneName="F_R_Tire"
+      BoneOffset=(X=0.000000,Y=20.000000,Z=0.000000)
+      LatSlipFactor=3.000000
+      HandbrakeLongSlipFactor=0.800000
+      HandbrakeLatSlipFactor=0.800000
+      Name="RFWheel"
+      ObjectArchetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+   End Object
+   Wheels(2)=RFWheel
+   Begin Object Class=UTVehicleScorpionWheel Name=LFWheel ObjName=LFWheel Archetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+      SteerFactor=1.000000
+      SkelControlName="F_L_Tire_Cont"
+      BoneName="F_L_Tire"
+      BoneOffset=(X=0.000000,Y=-20.000000,Z=0.000000)
+      LatSlipFactor=3.000000
+      HandbrakeLongSlipFactor=0.800000
+      HandbrakeLatSlipFactor=0.800000
+      Name="LFWheel"
+      ObjectArchetype=UTVehicleScorpionWheel'UTGame.Default__UTVehicleScorpionWheel'
+   End Object
+   Wheels(3)=LFWheel
+   COMOffset=(X=-40.000000,Y=0.000000,Z=-36.000000)
+   bCanFlip=True
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup_12 ObjName=MyStayUprightSetup_12 Archetype=RB_StayUprightSetup'UTGame.Default__UTVehicle:MyStayUprightSetup'
+      Name="MyStayUprightSetup_12"
+      ObjectArchetype=RB_StayUprightSetup'UTGame.Default__UTVehicle:MyStayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTVehicle_Scorpion:MyStayUprightSetup_12'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance_12 ObjName=MyStayUprightConstraintInstance_12 Archetype=RB_ConstraintInstance'UTGame.Default__UTVehicle:MyStayUprightConstraintInstance'
+      Name="MyStayUprightConstraintInstance_12"
+      ObjectArchetype=RB_ConstraintInstance'UTGame.Default__UTVehicle:MyStayUprightConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Scorpion:MyStayUprightConstraintInstance_12'
+   HeavySuspensionShiftPercent=0.750000
+   UprightLiftStrength=280.000000
+   UprightTorqueStrength=500.000000
+   UprightTime=1.250000
+   bSeparateTurretFocus=True
+   bHasHandbrake=True
+   MomentumMult=0.500000
+   NonPreferredVehiclePathMultiplier=1.500000
+   GroundSpeed=950.000000
+   AirSpeed=1100.000000
+   Health=300
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTVehicle:SVehicleMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTVehicle:SVehicleMesh'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTVehicle:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTVehicle:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Components(2)=MyLightEnvironment
+   Components(3)=SimObject
+   CollisionComponent=SVehicleMesh
+   Name="Default__UTVehicle_Scorpion"
+   ObjectArchetype=UTVehicle'UTGame.Default__UTVehicle'
 }

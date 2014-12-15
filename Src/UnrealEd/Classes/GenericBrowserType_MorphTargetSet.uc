@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //-----------------------------------------------------------
 // Browser type for morph target sets
@@ -7,21 +7,15 @@
 class GenericBrowserType_MorphTargetSet extends GenericBrowserType
 	native;
 
-cpptext
-{
-	virtual void Init();
-	virtual UBOOL ShowObjectEditor( UObject* InObject );
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-	/**
-	 * Returns a list of commands that this object supports (or the object type supports, if InObject is NULL)
-	 *
-	 * @param	InObjects		The objects to query commands for (if NULL, query commands for all objects of this type.)
-	 * @param	OutCommands		The list of custom commands to support
-	 */
-	virtual void QuerySupportedCommands( class USelection* InObjects, TArray< FObjectSupportedCommandType >& OutCommands ) const;
-}
-
-DefaultProperties
+defaultproperties
 {
-	Description="Morph Target Sets"
+   Description="MorphTargetSet"
+   Name="Default__GenericBrowserType_MorphTargetSet"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

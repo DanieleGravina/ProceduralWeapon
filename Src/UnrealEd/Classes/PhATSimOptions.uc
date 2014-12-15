@@ -1,9 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PhATSimOptions extends Object	
 	hidecategories(Object)
-	config(EditorUserSettings)
+	config(Editor)
 	native;	
 
 /** AnimSet used for playing animations . */
@@ -49,12 +49,23 @@ var(Advanced)		config bool			bPromptOnBoneDelete;
 var(Advanced)		config bool			bShowConstraintsAsPoints;
 var(Advanced)		config bool			bShowNamesInHierarchy;
 
-/** Controls how large constraints are drawn in PhAT */
-var(Drawing)		config float		ConstraintDrawSize;
-
 defaultproperties
 {
-	PhysicsBlend=1.0
-	AngularSpringScale=1.0
-	AngularDampingScale=1.0
+   PhysicsBlend=1.000000
+   PokePauseTime=0.500000
+   PokeBlendTime=0.500000
+   AngularSpringScale=1.000000
+   AngularDampingScale=1.000000
+   SimSpeed=1.000000
+   bPromptOnBoneDelete=True
+   bShowNamesInHierarchy=True
+   FloorGap=25.000000
+   GravScale=1.000000
+   PokeStrength=100.000000
+   SkyBrightness=0.250000
+   Brightness=1.000000
+   AngularSnap=15.000000
+   LinearSnap=2.000000
+   Name="Default__PhATSimOptions"
+   ObjectArchetype=Object'Core.Default__Object'
 }

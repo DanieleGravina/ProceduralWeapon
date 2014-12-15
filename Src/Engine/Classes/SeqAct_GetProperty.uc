@@ -1,25 +1,26 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_GetProperty extends SequenceAction
 	native(Sequence);
 
-cpptext
-{
-	virtual void Activated();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Name of property to search for */
 var() Name PropertyName;
 
 defaultproperties
 {
-	ObjName="Get Property"
-	ObjCategory="Object Property"
-
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Object",bWriteable=TRUE)
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Int',LinkDesc="Int",bWriteable=TRUE)
-	VariableLinks(3)=(ExpectedType=class'SeqVar_Float',LinkDesc="Float",bWriteable=TRUE)
-	VariableLinks(4)=(ExpectedType=class'SeqVar_String',LinkDesc="String",bWriteable=TRUE)
-	VariableLinks(5)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Bool",bWriteable=TRUE)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Object",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="Int",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(3)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="Float",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(4)=(ExpectedType=Class'Engine.SeqVar_String',LinkDesc="String",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(5)=(ExpectedType=Class'Engine.SeqVar_Bool',LinkDesc="Bool",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Get Property"
+   ObjCategory="Object Property"
+   Name="Default__SeqAct_GetProperty"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

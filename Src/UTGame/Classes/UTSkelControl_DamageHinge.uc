@@ -1,87 +1,42 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTSkelControl_DamageHinge extends UDKSkelControl_DamageHinge;
+class UTSkelControl_DamageHinge extends UTSkelControl_Damage
+	hidecategories(Translation, Rotation, Adjustments)
+	native(Animation);
 
-/**
- * This event is triggered when the spring has decided to break.
- *
- * Network - Called everywhere except on a dedicated server.
- */
-simulated event BreakApart(vector PartLocation, bool bIsVisible)
-{
-	local UTGib Gib;
+/** The Maximum size of the angle this hinge can open to in Degrees */
+var(Hinge) float MaxAngle;
 
-	if( !bOnDamageActive
-		|| ( BreakMesh == none )
-		|| ( OwnerVehicle == none )
-		|| bIsBroken
-		)
-	{
-		// if this was called these flags should be set even if there is no visual effects
-		bIsBreaking = FALSE;
-		bIsBroken = TRUE;
-		return;
-	}
+/** Which axis this hinge opens around */
+var(Hinge) EAxis PivotAxis;
 
-	if ( bIsVisible && (OwnerVehicle.WorldInfo.NetMode != NM_DedicatedServer) )
-	{
-		Gib = UTVehicle(OwnerVehicle).SpawnGibVehicle(PartLocation, OwnerVehicle.Rotation, BreakMesh, PartLocation, true, DefaultBreakDir, PS_DamageOnBreak, PS_DamageTrail);
+/** The angular velocity that is used to calculate the angle of the hinge will be multipled by this value.  
+  * NOTE: This should be negative
+  */
+var(Hinge) float AVModifier;
 
-		if( Gib != none )
-		{
-			Gib.SetDrawScale3D( DamageScale );
-		}
-	}
+/** The current angle of the hinge */
+var transient float CurrentAngle;
 
-	BoneScale = DamageBoneScale;
-	bIsBreaking = FALSE;
-	bIsBroken = TRUE;
-}
+/** How stiff is the spring */
+var float SpringStiffness;
 
-simulated event BreakApartOnDeath(vector PartLocation, bool bIsVisible)
-{
-	local UTGib Gib;
 
-	if ( !bOnDeathActive )
-	{
-		return;
-	}
-	if ( DeathStaticMesh == None )
-	{
-		DeathStaticMesh = BreakMesh;
-	}
-	if( ( DeathStaticMesh == none )
-		// if we are not within the percentage to spawn
-		|| ( DeathPercentToActuallySpawn < FRand() )
-		|| ( OwnerVehicle == none )
-		|| bIsBroken )
-	{
-		// if this was called these flags should be set even if there is no visual effects
-		bIsBroken = TRUE;
-		return;
-	}
-
-	if( bIsVisible && (OwnerVehicle.WorldInfo.NetMode != NM_DedicatedServer) )
-	{
-		Gib = UTVehicle(OwnerVehicle).SpawnGibVehicle(PartLocation, OwnerVehicle.Rotation, DeathStaticMesh, PartLocation, true, DeathImpulseDir, None, PS_DeathTrail);
-
-		if( Gib != none )
-		{
-			Gib.SetDrawScale3D( DeathScale );
-		}
-	}
-
-	BoneScale = DeathBoneScale;
-	bIsBroken = TRUE;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	PS_DamageOnBreak=ParticleSystem'Envy_Effects.Particles.P_VH_Gib_Explosion'
-	PS_DamageTrail=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
-
-	PS_DeathOnBreak=ParticleSystem'Envy_Effects.Particles.P_VH_Gib_Explosion'
-	PS_DeathTrail=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
+   MaxAngle=45.000000
+   PivotAxis=AXIS_Y
+   AVModifier=-1.500000
+   SpringStiffness=-0.035000
+   bApplyRotation=True
+   BoneRotationSpace=BCS_ActorSpace
+   Name="Default__UTSkelControl_DamageHinge"
+   ObjectArchetype=UTSkelControl_Damage'UTGame.Default__UTSkelControl_Damage'
 }

@@ -1,25 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Route extends Info
 	placeable
-	native
-	ClassGroup(Navigation)
-	implements(EditorLinkSelectionInterface);
+	native;
 
-cpptext
-{
-	void AutoFillRoute( ERouteFillAction RFA, TArray<AActor*>& Points );
-	virtual void GetActorReferences(TArray<FActorReference*> &ActorRefs, UBOOL bIsRemovingLevel);
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-	virtual UBOOL HasRefToActor( AActor* A, INT* out_Idx = NULL );
-#endif
-
-	////// EditorLinkSelectionInterface
-	virtual void LinkSelection(USelection* SelectedActors);
-
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 enum ERouteFillAction
 {
@@ -45,38 +36,26 @@ enum ERouteType
 var() ERouteType RouteType;
 
 /** List of move targets in order */
-var() array<ActorReference> RouteList;
-/** Fudge factor for adjusting to next route position faster */
-var() float	FudgeFactor;
-/** routeindex offset (if you want the routeindex to be offset from the 'closest' route point you can plug an offset in here) */
-var() int RouteIndexOffset;
-
-final native function int ResolveRouteIndex( int Idx, ERouteDirection RouteDirection, out byte out_bComplete, out byte out_bReverse );
-
-/**
- *	Find the closest navigation point in the route
- *	(that is also within tether distance)
- */
-final native function int MoveOntoRoutePath( Pawn P, optional ERouteDirection RouteDirection = ERD_Forward, optional float DistFudgeFactor = 1.f );
-
+var() array<NavReference> NavList;
 
 defaultproperties
 {
-	Begin Object Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Route'
-		SpriteCategoryName="Navigation"
-	End Object
-	Components.Add(Sprite)
-
-	Begin Object Class=RouteRenderingComponent Name=RouteRenderer
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-	End Object
-	Components.Add(RouteRenderer)
-
-	bStatic=TRUE
-	FudgeFactor=1.f
-
-	RouteIndexOffset=0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      Sprite=Texture2D'EngineResources.S_Route'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=Sprite
+   Begin Object Class=RouteRenderingComponent Name=RouteRenderer ObjName=RouteRenderer Archetype=RouteRenderingComponent'Engine.Default__RouteRenderingComponent'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="RouteRenderer"
+      ObjectArchetype=RouteRenderingComponent'Engine.Default__RouteRenderingComponent'
+   End Object
+   Components(2)=RouteRenderer
+   bStatic=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Route"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

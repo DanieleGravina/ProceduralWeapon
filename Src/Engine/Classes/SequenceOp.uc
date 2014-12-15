@@ -1,176 +1,98 @@
 /**
  * Base class of any sequence object that can be executed, such
  * as SequenceAction, SequenceCondtion, etc.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SequenceOp extends SequenceObject
 	native(Sequence)
 	abstract;
 
-/** Kismet debugging state of the node, used for determining its border color */
-var transient duplicatetransient noimport nontransactional editoronly bool bIsActivated;
-
-/** Used for tracking the node that the Kismet debugger has broken on */
-var transient duplicatetransient noimport nontransactional editoronly bool bIsCurrentDebuggerOp;
-
-/** The last time this node was activated */
-var editoronly transient float PIEActivationTime;
-
-/** Kismet debugger uses this to build a callstack */
-var editoronly transient SequenceOp ActivatorSeqOp;
-var editoronly transient int LastActivatedInputLink;
-var editoronly transient int LastActivatedOutputLink;
-
-cpptext
-{
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-
-	// USequenceOp interface
-	virtual UBOOL UpdateOp(FLOAT deltaTime);
-	virtual void Activated();
-	virtual void DeActivated();
-	/**
-	 * Called after all the op has been deactivated and all linked variable values have been propagated to the next op
-	 * in the sequence.
-	 */
-    virtual void PostDeActivated() {};
-
-	/**
-	 * Notification that an input link on this sequence op has been given impulse by another op.  Propagates the value of
-	 * PlayerIndex from the ActivatorOp to this one.
-	 *
-	 * @param	ActivatorOp		the sequence op that applied impulse to this op's input link
-	 * @param	InputLinkIndex	the index [into this op's InputLinks array] for the input link that was given impulse
-	 */
-	virtual void OnReceivedImpulse( class USequenceOp* ActivatorOp, INT InputLinkIndex );
-
-	/**
-	 * Allows the operation to initialize the values for any VariableLinks that need to be filled prior to executing this
-	 * op's logic.  This is a convenient hook for filling VariableLinks that aren't necessarily associated with an actual
-	 * member variable of this op, or for VariableLinks that are used in the execution of this ops logic.
-	 */
-	virtual void InitializeLinkedVariableValues();
-
-	/** Gathers references to all values of the specified type from the linked variables, optionally specified by InDesc. */
-	template<typename VarType, typename SeqVarType> 
-	void GetOpVars(TArray<VarType*> &outVars, const TCHAR *InDesc) const
-	{
-		for (INT Idx = 0; Idx < VariableLinks.Num(); Idx++)
-		{
-			const FSeqVarLink &VarLink = VariableLinks(Idx);
-			if (VarLink.SupportsVariableType(SeqVarType::StaticClass()) && (InDesc == NULL || VarLink.LinkDesc == InDesc))
-			{
-				for (INT LinkIdx = 0; LinkIdx < VarLink.LinkedVariables.Num(); LinkIdx++)
-				{
-					if (VarLink.LinkedVariables(LinkIdx) != NULL)
-					{
-						SeqVarType *LinkedVar = Cast<SeqVarType>(VarLink.LinkedVariables(LinkIdx));
-						if (LinkedVar != NULL)
-						{
-							VarType *VarRef = LinkedVar->GetRef();
-							if (VarRef != NULL)
-							{
-								outVars.AddItem(VarRef);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	/** Wrapper functions for GetOpVars() */
-	void GetBoolVars(TArray<UBOOL*> &outBools, const TCHAR *inDesc = NULL) const;
-	void GetIntVars(TArray<INT*> &outInts, const TCHAR *inDesc = NULL) const;
-	void GetFloatVars(TArray<FLOAT*> &outFloats, const TCHAR *inDesc = NULL) const;
-	void GetVectorVars(TArray<FVector*> &outVectors, const TCHAR *inDesc = NULL) const;
-	void GetStringVars(TArray<FString*> &outStrings, const TCHAR *inDesc = NULL) const;
-
-	void GetObjectVars(TArray<UObject**> &outObjects, const TCHAR *inDesc = NULL) const;
-	/** Retrieve list of UInterpData objects connected to this sequence op. */
-	void GetInterpDataVars(TArray<class UInterpData*> &outIData, const TCHAR *inDesc = NULL);
-
-	INT FindConnectorIndex(const FString& ConnName, INT ConnType);
-	void CleanupConnections();
-
-	/** Called via PostEditChange(), lets ops create/remove dynamic links based on data. */
-	virtual void UpdateDynamicLinks() {}
-
-	/**
-	 * Handles updating this sequence op when the ObjClassVersion doesn't match the ObjInstanceVersion, indicating that the op's
-	 * default values have been changed.
-	 */
-	virtual void UpdateObject();
-
-	/** Called after the object is loaded */
-	virtual void PostLoad();
-
-#if WITH_EDITOR
-	virtual FColor		GetConnectionColor( INT ConnType, INT ConnIndex, INT MouseOverConnType, INT MouseOverConnIndex );
-	/** 
-	 * Sets a pending connector position recalculation on this sequence object.
-	 */
-	void SetPendingConnectorRecalc();
-	
-	void MakeLinkedObjDrawInfo(struct FLinkedObjDrawInfo& ObjInfo, INT MouseOverConnType = -1, INT MouseOverConnIndex = INDEX_NONE);
-	INT VisibleIndexToActualIndex(INT ConnType, INT VisibleIndex);
-
-	// Gives op a chance to add realtime debugging information (when enabled)
-	virtual void GetRealtimeComments(TArray<FString> &OutComments);
-
-	FIntPoint GetLogicConnectorsSize(FCanvas* Canvas, INT* InputY=0, INT* OutputY=0);
-	FIntPoint GetVariableConnectorsSize(FCanvas* Canvas);
-
-	void DrawLogicConnectors(FCanvas* Canvas, const FIntPoint& Pos, const FIntPoint& Size, INT MouseOverConnType, INT MouseOverConnIndex);
-	FColor GetVarConnectorColor(INT LinkIndex);
-
-	void DrawVariableConnectors(FCanvas* Canvas, const FIntPoint& Pos, const FIntPoint& Size, INT MouseOverConnType, INT MouseOverConnIndex, INT VarWidth);
-
-	virtual void DrawLogicLinks(FCanvas* Canvas, TArray<USequenceObject*> &SelectedSeqObjs, USequenceObject* MouseOverSeqObj, INT MouseOverConnType, INT MouseOverConnIndex);
-	virtual void DrawVariableLinks(FCanvas* Canvas, TArray<USequenceObject*> &SelectedSeqObjs, USequenceObject* MouseOverSeqObj, INT MouseOverConnType, INT MouseOverConnIndex);	
-
-	// USequenceObject interface
-	virtual void DrawSeqObj(FCanvas* Canvas, UBOOL bSelected, UBOOL bMouseOver, INT MouseOverConnType, INT MouseOverConnIndex, FLOAT MouseOverTime);
-	virtual FIntPoint	GetConnectionLocation(INT ConnType, INT ConnIndex);
-
-	/**
-	 * Adjusts the postions of a connector based on the Delta position passed in.
-	 * 
-	 * @param ConnType	The connector type to be moved
-	 * @param ConnIndex	The index in the connector array where the connector is located
-	 * @param DeltaX	The amount to move the connector in X
-	 * @param DeltaY	The amount to move the connector in Y	
-	 */
-	virtual void		MoveConnectionLocation(INT ConnType, INT ConnIndex, INT DeltaX, INT DeltaY );
-
-	/**
-	 * Sets the member variable on the connector struct to bMoving so we can perform different calculations in the draw code
-	 * 
-	 * @param ConnType	The connector type to be moved
-	 * @param ConnIndex	The index in the connector array where the connector is located
-	 * @param bMoving	True if the connector is moving
-	 */
-	virtual void		SetConnectorMoving( INT ConnType, INT ConnIndex, UBOOL bMoving );
-
-	virtual void OnVariableConnect(USequenceVariable *Var, INT LinkIdx) {}
-	virtual void OnVariableDisconnect(USequenceVariable *Var, INT LinkIdx) {}
-
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& BoxCenter){}
-
-	virtual void SetBreakpoint(UBOOL bBreakpointOn);
-	
-#endif
-
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-protected:
-	virtual void ConvertObjectInternal(USequenceObject* NewSeqObj, INT LinkIdx = -1);
-
-private:
-	static INT CurrentSearchTag;
-	void GetLinkedObjectsInternal(TArray<USequenceObject*>& out_Objects, UClass* ObjectType, UBOOL bRecurse);
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Is this operation currently active? */
 var bool bActive;
@@ -193,9 +115,6 @@ struct native SeqOpInputLink
 	 */
 	var bool bHasImpulse;
 
-	/** Number of activations received for this input when bHasImpulse == TRUE */
-	var int QueuedActivations;
-
 	/** Is this link disabled for debugging/testing? */
 	var bool bDisabled;
 
@@ -211,25 +130,13 @@ struct native SeqOpInputLink
 
 	var float ActivateDelay;
 
-	/** True if the connector is moving */
-	var transient editoronly bool bMoving;
-
-	/** True if the connector cant be moved to the right any further */
-	var editoronly bool	bClampedMax;
-
-	/** True if the connector cant be move to the left any further */
-	var editoronly bool	bClampedMin;
-
-	/** The delta position that is applied to the connector in the event that it has moved */
-	var editoronly int OverrideDelta;
-
 structcpptext
 {
      /** Constructors */
     FSeqOpInputLink() {}
     FSeqOpInputLink(EEventParm)
     {
-		appMemzero(this, sizeof(FSeqOpInputLink));
+	appMemzero(this, sizeof(FSeqOpInputLink));
     }
 
 	/**
@@ -239,12 +146,7 @@ structcpptext
 	{
 		if ( !bDisabled && !(bDisabledPIE && GIsEditor))
 		{
-			// if already active then mark in the queue, unless it's a latent op since those are handled uniquely currently
-			if (bHasImpulse)
-			{
-				QueuedActivations++;
-			}
-			bHasImpulse = TRUE;
+			bHasImpulse=TRUE;
 			return TRUE;
 		}
 
@@ -265,26 +167,6 @@ struct native SeqOpOutputInputLink
 
 	/** Index to LinkedOp's InputLinks array that this is linked to */
 	var int InputLinkIdx;
-
-	structcpptext
-	{
-		/** Default ctor */
-		FSeqOpOutputInputLink() {}
-		FSeqOpOutputInputLink(EEventParm) : LinkedOp(NULL), InputLinkIdx(0)
-		{
-		}
-		FSeqOpOutputInputLink( USequenceOp* InOp, INT InLinkIdx=0 ) : LinkedOp(InOp), InputLinkIdx(InLinkIdx)
-		{
-		}
-
-		/** Operators */
-		/** native serialization operator */
-		friend FArchive& operator<<( FArchive& Ar, FSeqOpOutputInputLink& OutputInputLink );
-
-		/** Comparison operator */
-		UBOOL operator==( const FSeqOpOutputInputLink& Other ) const;
-		UBOOL operator!=( const FSeqOpOutputInputLink& Other ) const;
-	}
 };
 
 /**
@@ -321,24 +203,6 @@ struct native SeqOpOutputLink
 	// Temporary for drawing! Will think of a better way to do this! - James
 	var int						DrawY;
 	var bool					bHidden;
-
-	/** True if the connector is moving */
-	var transient editoronly bool		bMoving;
-
-	/** True if the connector cant be moved to the right any further */
-	var editoronly bool			bClampedMax;
-
-	/** True if the connector cant be move to the left any further */
-	var editoronly bool			bClampedMin;
-
-	/** The delta position that is applied to the connector in the event that it has moved */
-	var editoronly int			OverrideDelta;
-
-	/** The last time this link was activated */
-	var editoronly transient float PIEActivationTime;
-
-	/** Kismet debugging state of the link, used for determining its color */
-	var transient noimport nontransactional editoronly bool bIsActivated;
 
 structcpptext
 {
@@ -378,23 +242,12 @@ structcpptext
 		return FALSE;
 	}
 }
-
-structdefaultproperties
-{
-	bMoving=false;
-	bClampedMax=false;
-	bClampedMin=false;
-	OverrideDelta=0;
-
-}
 };
 var array<SeqOpOutputLink>		OutputLinks;
 
 /**
  * Represents a variable linked to the operation for manipulation upon
  * activation.
- *
- * NOTE: if you are adding vars to this you will need recreate var links on existing kismet actions to get non default values propagated
  */
 struct native SeqVarLink
 {
@@ -417,17 +270,6 @@ struct native SeqVarLink
 	/** Is this variable written to by this op? */
 	var bool	bWriteable;
 
-	/** 
-     * Determines if this variable ONLY allowed to be written to by this SeqAct. (e.g. never grab data from it) This is needed to stop 
-	 * USequence::ExecuteActiveOps from immediately reading from a var and overwriting any member var data.  Then the SeqAct 
-	 * will more than likely use PopulateLinkedVariableValues() in UpdateOp to push data to the vars which other kismet actions
-	 * can read from.
-	 */
-	var bool	bSequenceNeverReadsOnlyWritesToThisVar;
-
-	/** do the object(s) pointed to by this variable get modified by this op? (ignored if not an object variable) */
-	var bool bModifiesLinkedObject;
-
 	/** Should draw this connector in Kismet. */
 	var bool	bHidden;
 
@@ -442,21 +284,6 @@ struct native SeqVarLink
 
 	/** Cached property ref */
 	var const	transient	Property	CachedProperty;
-
-	/** Does this link support any type of property? */
-	var bool	bAllowAnyType;
-
-	/** True if the connector is moving */
-	var transient editoronly bool		bMoving;
-
-	/** True if the connector cant be moved to the right any further */
-	var editoronly bool			bClampedMax;
-
-	/** True if the connector cant be move to the left any further */
-	var editoronly bool			bClampedMin;
-	
-	/** The delta position that is applied to the connector in the event that it has moved */
-	var editoronly int			OverrideDelta;
 
 structcpptext
 {
@@ -475,19 +302,14 @@ structcpptext
 	 *
 	 * @return	TRUE if this variable link can be linked to the a SequenceVariable of the specified type.
 	 */
-	UBOOL SupportsVariableType( UClass* SequenceVariableClass, UBOOL bRequireExactClass=TRUE ) const;
+	UBOOL SupportsVariableType( UClass* SequenceVariableClass, UBOOL bRequireExactClass=TRUE );
 }
 
 structdefaultproperties
 {
 	ExpectedType=class'Engine.SequenceVariable'
-	MinVars=1
-	MaxVars=255
-
-	bMoving=false;
-	bClampedMax=false;
-	bClampedMin=false;
-	OverrideDelta=0;
+	MinVars = 1
+	MaxVars = 255
 }
 };
 
@@ -510,38 +332,17 @@ struct native SeqEventLink
 	var int						DrawX;
 	var bool					bHidden;
 
-	/** True if the connector is moving */
-	var transient editoronly bool		bMoving;
-
-	/** True if the connector cant be moved to the right any further */
-	var editoronly bool			bClampedMax;
-	
-	/** True if the connector cant be move to the left any further */
-	var editoronly bool			bClampedMin;
-
-	/** The delta position that is applied to the connector in the event that it has moved */
-	var editoronly int			OverrideDelta;
-
-structdefaultproperties
-{
-	ExpectedType=class'Engine.SequenceEvent'
-	bMoving=false;
-	bClampedMax=false;
-	bClampedMin=false;
-	OverrideDelta=0;
-}
+	structdefaultproperties
+	{
+		ExpectedType=class'Engine.SequenceEvent'
+	}
 };
 var array<SeqEventLink>			EventLinks;
 
 /**
  * The index [into the Engine.GamePlayers array] for the player that this action is associated with.  Currently only used in UI sequences.
  */
-var	transient	noimport	int		PlayerIndex;
-
-/**
- * The ControllerId for the player that generated this action; generally only relevant in UI sequences.
- */
-var	transient	noimport	byte	GamepadID;
+var	transient	noimport int	PlayerIndex;
 
 /** Number of times that this Op has had Activate called on it. Used for finding often-hit ops and optimising levels. */
 var transient int				ActivateCount;
@@ -551,29 +352,6 @@ var				bool			bAutoActivateOutputLinks;
 
 /** used when searching for objects to avoid unnecessary recursion */
 var transient duplicatetransient const protected{protected} int SearchTag;
-
-/** True if there is currently a moving variable connector */
-var transient editoronly bool bHaveMovingVarConnector;
-
-/** True if there is currently moving input connector */
-var transient editoronly bool bHaveMovingInputConnector;
-
-/** True if there is currently moving output connector */
-var transient editoronly bool bHaveMovingOutputConnector;
-
-/** True if there is a pending variable connector position recalculation (I.E when a connector has just moved, or a connector as added or deleted */
-var transient editoronly bool bPendingVarConnectorRecalc;
-
-/** True if there is a pending input connector position recalculation (I.E when a connector has just moved, or a connector as added or deleted */
-var transient editoronly bool bPendingInputConnectorRecalc;
-
-/** True if there is a pending output connector position recalculation (I.E when a connector has just moved, or a connector as added or deleted */
-var transient editoronly bool bPendingOutputConnectorRecalc;
-
-/** Editor breakpoint is set */
-var editoronly bool bIsBreakpointSet;
-/** Used for marking what nodes to break on when using the "run to next" functionality in the Kismet debugger */
-var transient duplicatetransient noimport nontransactional editoronly bool bIsHiddenBreakpointSet;
 
 /**
  * Determines whether this sequence op is linked to any other sequence ops through its variable, output, event or (optionally)
@@ -602,12 +380,9 @@ native final function GetLinkedObjects( out array<SequenceObject> out_Objects, o
  * link to filter by.
  * @fixme - localization
  */
-native noexport final function GetObjectVars(out array<Object> objVars,optional string inDesc) const;
-/** Retrieve list of UInterpData objects connected to this sequence op. */
-native noexport final function GetInterpDataVars(out array<InterpData> outIData,optional string inDesc);
-
+native noexport final function GetObjectVars(out array<Object> objVars,optional string inDesc);
 // @fixme - localization
-native noexport final function GetBoolVars(out array<BYTE> boolVars,optional string inDesc) const;
+native noexport final function GetBoolVars(out array<BYTE> boolVars,optional string inDesc);
 
 /** returns all linked variables that are of the specified class or a subclass
  * @param VarClass the class of variable to return
@@ -618,21 +393,6 @@ native noexport final function GetBoolVars(out array<BYTE> boolVars,optional str
 native noexport final iterator function LinkedVariables(class<SequenceVariable> VarClass, out SequenceVariable OutVariable, optional string InDesc);
 
 /**
- *	Activates an output link by index
- *	@param OutputIdx output index to set impulse on (if it's not disabled)
- */
-native final function bool ActivateOutputLink( int OutputIdx );
-
-/**
- * Activates an output link by searching for the one with a matching LinkDesc.
- *
- * @param	LinkDesc	the string used as the value for LinkDesc of the output link to activate.
- *
- * @return	TRUE if the link was found and activated.
- */
-native final function bool ActivateNamedOutputLink( string LinkDesc );
-
-/**
  * Called when this event is activated.
  */
 event Activated();
@@ -641,11 +401,6 @@ event Activated();
  * Called when this event is deactivated.
  */
 event Deactivated();
-
-/**
- * Called when the version is updated, in case any special handling is desired script-side.
- */
-event VersionUpdated(int OldVersion, int NewVersion);
 
 /**
  * Copies the values from member variables contained by this sequence op into any VariableLinks attached to that member variable.
@@ -696,32 +451,11 @@ function Controller GetController(Actor TheActor)
 	}
 }
 
-native final function ForceActivateInput(int InputIdx);
-native final function ForceActivateOutput(int OutputIdx);
-
 defaultproperties
 {
-    // define the base input link required for this op to be activated
-	InputLinks(0)=(LinkDesc="In")
-	// define the base output link that this action generates (always assumed to generate at least a single output)
-	OutputLinks(0)=(LinkDesc="Out")
-
-	bAutoActivateOutputLinks=true
-
-	PlayerIndex=-1
-	GamepadID=255
-
-	bHaveMovingVarConnector = false;
-	bHaveMovingInputConnector = false;
-	bHaveMovingOutputConnector = false;
-
-	// Force an update right off the bat.
-	bPendingVarConnectorRecalc = true;
-	bPendingInputConnectorRecalc = true;
-	bPendingOutputConnectorRecalc = true;
-
-	bIsBreakpointSet=false
-
-	LastActivatedInputLink = -1
-	LastActivatedOutputLink = -1
+   bAutoActivateOutputLinks=True
+   InputLinks(0)=(LinkDesc="In")
+   OutputLinks(0)=(LinkDesc="Out")
+   Name="Default__SequenceOp"
+   ObjectArchetype=SequenceObject'Engine.Default__SequenceObject'
 }

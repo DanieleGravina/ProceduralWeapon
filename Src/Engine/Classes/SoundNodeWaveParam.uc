@@ -1,16 +1,47 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /** 
  * Sound node that takes a runtime parameter for the wave to play
  */
- 
 class SoundNodeWaveParam extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
 
 /** The name of the wave parameter to use to look up the SoundNodeWave we should play */
-var()	name				WaveParameterName;
+var() name WaveParameterName;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
+{
+   Name="Default__SoundNodeWaveParam"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
+}

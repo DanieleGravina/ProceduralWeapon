@@ -1,4 +1,4 @@
-class ServerGame extends UTGame;
+class ServerGame extends UTDeathmatch;
 
 var TcpLinkServer tcpServer;
 
@@ -85,9 +85,9 @@ function AddDefaultInventory( pawn Pawn ){
 	}
 }
 
-function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> damageType )
+function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 {
-	Super.NotifyKilled(Killer, Killed, KilledPawn, damageType);
+	Super.NotifyKilled(Killer, Killed, KilledPawn);
 	
 	tcpServer.SendPawnDied(killed, killer);
 }
@@ -103,8 +103,9 @@ function PWParameters GetPWParameters(string botName)
 			return mapBotPar[i].weapPars;
 		}
 	}
-	
+
 	return mapBotPar[0].weapPars;
+	
 }
 
 function PPParameters GetPPParameters(string botName)
@@ -141,7 +142,8 @@ function bool TooManyBots(Controller botToRemove)
 
 defaultproperties
 {
-	DefaultInventory(0)=class'ProceduralWeapon'
+	//DefaultInventory(0)=class'ProceduralWeapon'
+	//DefaultInventory(1)=None
 	
     DefaultPawnClass=class'PWPawn'
     

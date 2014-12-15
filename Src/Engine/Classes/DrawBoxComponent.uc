@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawBoxComponent extends PrimitiveComponent
 	native
@@ -13,13 +13,13 @@ var()	material		BoxMaterial;
 var()	vector			BoxExtent;
 var()	bool			bDrawWireBox;
 var()	bool			bDrawLitBox;
-var()	bool			bDrawOnlyIfSelected;
 
 defaultproperties
 {
-	BoxColor=(R=255,G=0,B=0,A=255)
-	BoxExtent=(X=200.0, Y=200.0, Z=200.0)
-	bDrawWireBox=true
-
-	HiddenGame=True
+   BoxColor=(B=0,G=0,R=255,A=255)
+   BoxExtent=(X=200.000000,Y=200.000000,Z=200.000000)
+   bDrawWireBox=True
+   HiddenGame=True
+   Name="Default__DrawBoxComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

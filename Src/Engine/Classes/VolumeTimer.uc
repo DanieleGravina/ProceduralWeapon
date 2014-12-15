@@ -1,15 +1,15 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class VolumeTimer extends Info;
+class VolumeTimer extends info;
 
 var PhysicsVolume V;
 
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
+	SetTimer(1.0, true);
 	V = PhysicsVolume(Owner);
-	SetTimer(V.PainInterval, true);
 }
 
 event Timer()
@@ -19,8 +19,11 @@ event Timer()
 
 defaultproperties
 {
-	TickGroup=TG_PreAsyncWork
-
-	bStatic=false
-	RemoteRole=ROLE_None
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__VolumeTimer"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -9,12 +9,9 @@ class UTGameSearchTDM extends UTGameSearchCommon;
 
 defaultproperties
 {
-	GameClass="UTGame.UTTeamGame"
-	GameSettingsClass=class'UTGame.UTGameSettingsTDM'
-
-	// Which server side query to execute
-	Query=(ValueIndex=QUERY_TDM)
-
-	// Set the specific game mode that we are searching for
-	LocalizedSettings(0)=(Id=CONTEXT_GAME_MODE,ValueIndex=CONTEXT_GAME_MODE_TDM,AdvertisementType=ODAT_OnlineService)
+   Query=(ValueIndex=1)
+   GameSettingsClass=Class'UTGame.UTGameSettingsTDM'
+   LocalizedSettings(0)=(ValueIndex=4)
+   Name="Default__UTGameSearchTDM"
+   ObjectArchetype=UTGameSearchCommon'UTGame.Default__UTGameSearchCommon'
 }

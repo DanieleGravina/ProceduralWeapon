@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTSeqAct_EnterVehicle extends SequenceAction;
 
@@ -21,7 +21,7 @@ event Activated()
 			Factory = UTVehicleFactory(ObjVar.GetObjectValue());
 			if (Factory != None)
 			{
-				TheVehicle = UTVehicle(Factory.ChildVehicle);
+				TheVehicle = Factory.ChildVehicle;
 			}
 		}
 		if (TheVehicle != None)
@@ -65,10 +65,12 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjCategory="Pawn"
-	ObjName="Enter Vehicle"
-	VariableLinks(0)=(MinVars=1,MaxVars=1)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Vehicle/Vehicle Factory",MinVars=1,MaxVars=1)
-	SeatIndex=-1
+   SeatIndex=-1
+   bCallHandler=False
+   VariableLinks(0)=(MaxVars=1)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Vehicle/Vehicle Factory",MinVars=1,MaxVars=1)
+   ObjName="Enter Vehicle"
+   ObjCategory="Pawn"
+   Name="Default__UTSeqAct_EnterVehicle"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

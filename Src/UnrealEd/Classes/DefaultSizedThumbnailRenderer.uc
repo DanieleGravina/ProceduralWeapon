@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * This thumbnail renderer holds some commonly shared properties
  */
@@ -18,17 +18,25 @@ var config int DefaultSizeX;
  */
 var config int DefaultSizeY;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	/**
-	 * Calculates the size the thumbnail would be at the specified zoom level.
-	 *
-	 * @param Object the object the thumbnail is of
-	 * @param PrimType ignored
-	 * @param Zoom the current multiplier of size
-	 * @param OutWidth the var that gets the width of the thumbnail
-	 * @param OutHeight the var that gets the height
-	 */
-	virtual void GetThumbnailSize(UObject* Object,EThumbnailPrimType,
-		FLOAT Zoom,DWORD& OutWidth,DWORD& OutHeight);
+   DefaultSizeX=512
+   DefaultSizeY=512
+   Name="Default__DefaultSizedThumbnailRenderer"
+   ObjectArchetype=ThumbnailRenderer'UnrealEd.Default__ThumbnailRenderer'
 }

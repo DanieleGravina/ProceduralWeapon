@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawQuadComponent extends PrimitiveComponent
 	native
@@ -22,9 +22,9 @@ var() float			Height;
 
 defaultproperties
 {
-	Width=100
-	Height=100
-
-	HiddenGame=true
-	CollideActors=false
+   Width=100.000000
+   Height=100.000000
+   HiddenGame=True
+   Name="Default__DrawQuadComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryRigidBody extends ActorFactoryDynamicSM
 	config(Editor)
@@ -33,48 +33,26 @@ var()	DistributionVector	InitialAngularVelocity;
 /** Allows setting the RBChannel flag on the spawned rigid body's StaticMeshComponent. */
 var()	ERBCollisionChannel		RBChannel;
 
-
-/** Enable 'Stay upright' torque, that tries to keep Z axis of KActor pointing along world Z */
-var()	bool		bEnableStayUprightSpring;
-
-/** Torque applied to try and keep KActor horizontal. */
-var()	float		StayUprightTorqueFactor;
-
-/** Max torque that can be applied to try and keep KActor horizontal */
-var()	float		StayUprightMaxTorque;
-
-cpptext
-{
-	// UObject interface
-	virtual void PostLoad();
-
-	/**
-	 * If the ActorFactory thinks it could create an Actor with the current settings.
-	 * Can Used to determine if we should add to context menu or if the factory can be used for drag and drop.
-	 *
-	 * @param	OutErrorMsg		Receives localized error string name if returning FALSE.
-	 * @param	bFromAssetOnly	If true, the actor factory will check that a valid asset has been assigned from selection.  If the factory always requires an asset to be selected, this param does not matter
-	 * @return	True if the actor can be created with this factory
-	 */
-	virtual UBOOL CanCreateActor( FString& OutErrorMsg, UBOOL bFromAssetOnly = FALSE );
-
-	virtual AActor* CreateActor( const FVector* const Location, const FRotator* const Rotation, const class USeqAct_ActorFactory* const ActorFactoryData );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuName="Add RigidBody"
-
-	NewActorClass=class'Engine.KActor'
-	GameplayActorClass=class'Engine.KActorSpawnable'
-
-	bNoEncroachCheck=true
-	bStartAwake=true
-	bDamageAppliesImpulse=true
-	CollisionType=COLLIDE_BlockAll
-	RBChannel=RBCC_GameplayPhysics
-	bBlockRigidBody=TRUE
-
-	StayUprightTorqueFactor=1000.0
-	StayUprightMaxTorque=1500.0
+   bStartAwake=True
+   bDamageAppliesImpulse=True
+   RBChannel=RBCC_GameplayPhysics
+   bNoEncroachCheck=True
+   CollisionType=COLLIDE_BlockAll
+   GameplayActorClass=Class'Engine.KActorSpawnable'
+   MenuName="Add RigidBody"
+   NewActorClass=Class'Engine.KActor'
+   Name="Default__ActorFactoryRigidBody"
+   ObjectArchetype=ActorFactoryDynamicSM'Engine.Default__ActorFactoryDynamicSM'
 }

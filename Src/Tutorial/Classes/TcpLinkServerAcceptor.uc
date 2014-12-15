@@ -43,26 +43,18 @@ event Accepted()
     `log("[TcpLinkServerAcceptor] New client connected");
 
     // make sure the proper mode is set
-    LinkMode = MODE_Binary;
+    LinkMode = MODE_Text;
 }
 
-event ReceivedBinary(int Count , byte B[255])
+event ReceivedText( string Text )
 {
-	local string line;
-	local int n;
 	local int i;
 	
 	local array<string> parsedString;
+
+	`log("[TcpLinkServerAcceptor] Received line: "$Text);
 	
-	for( i = 0; i < Count; i++ )
-	{
-		n = int(B[i]);
-		line $= Chr(n);
-	}
-	
-	`log("[TcpLinkServerAcceptor] Received line: "$line);
-	
-	ParseStringIntoArray(line, parsedString, ":", false);
+	ParseStringIntoArray(Text, parsedString, ":", false);
     
 	for(i = 0; i < parsedString.Length; ++i){
 		
@@ -150,7 +142,7 @@ function Initialize()
 	
 	foreach WorldInfo.AllControllers(class 'Controller', Aplayer)
 	{
-		if (Aplayer.bIsPlayer && Aplayer.PlayerReplicationInfo != none && Aplayer.PlayerReplicationInfo.playername != "")
+		if (Aplayer.bIsPlayer && Aplayer.PlayerReplicationInfo != none)
 		{
 			botStatics.Add(1);
 			botStatics[botStatics.Length - 1].name =  Aplayer.PlayerReplicationInfo.playername;
@@ -258,7 +250,7 @@ function SendPawnDied(Controller killed, Controller killer)
 	local int i;
 	local string line;
 	
-	if(StateCurrent == SIMULATION && killed.PlayerReplicationInfo.playername != "Player")
+	if(StateCurrent == SIMULATION)
 	{
 	
 		`log("[TcpLinkServerAcceptor] SendPawnDied called");
@@ -391,7 +383,7 @@ defaultproperties
 	
 	bIsGameInitialized = false;
 	
-	GoalScore = 10;
+	GoalScore = 25;
 	
 	StateCurrent = 1;
 	INITIALIZATION = 1;

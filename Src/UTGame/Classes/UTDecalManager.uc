@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTDecalManager extends DecalManager;
 
@@ -11,5 +11,10 @@ function bool CanSpawnDecals()
 
 defaultproperties
 {
-	DecalDepthBias=-0.00012
+   Begin Object Class=DecalComponent Name=BaseDecal ObjName=BaseDecal Archetype=DecalComponent'Engine.Default__DecalManager:BaseDecal'
+      ObjectArchetype=DecalComponent'Engine.Default__DecalManager:BaseDecal'
+   End Object
+   DecalTemplate=BaseDecal
+   Name="Default__UTDecalManager"
+   ObjectArchetype=DecalManager'Engine.Default__DecalManager'
 }

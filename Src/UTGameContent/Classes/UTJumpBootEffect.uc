@@ -1,7 +1,3 @@
-/**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- */
-
 /** this is used to replicate out the jump boot feet effects */
 class UTJumpBootEffect extends Actor;
 
@@ -21,7 +17,7 @@ function PostBeginPlay()
 	OwnerPawn = UTPawn(Owner);
 	if (OwnerPawn == None)
 	{
-		`Warn("Spawned with no Owner");
+		WarnInternal("Spawned with no Owner");
 		Destroy();
 	}
 	else
@@ -75,9 +71,11 @@ simulated event ReplicatedEvent(name VarName)
 
 defaultproperties
 {
-	RemoteRole=ROLE_SimulatedProxy
-	bNetTemporary=true
-	LifeSpan=0.2
-	bSkipActorPropertyReplication=true
-	JumpingEffect=ParticleSystem'Envy_Effects.Particles.P_JumpBoot_Effect'
+   JumpingEffect=ParticleSystem'Envy_Effects.Particles.P_JumpBoot_Effect'
+   RemoteRole=ROLE_SimulatedProxy
+   bNetTemporary=True
+   bSkipActorPropertyReplication=True
+   LifeSpan=0.200000
+   Name="Default__UTJumpBootEffect"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

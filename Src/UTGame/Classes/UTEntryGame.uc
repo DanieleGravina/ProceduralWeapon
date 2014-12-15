@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTEntryGame extends UTTeamGame;
 
@@ -15,16 +15,7 @@ function StartMatch()
 
 // Parse options for this game...
 event InitGame( string Options, out string ErrorMessage )
-{
-	if ( ParseOption( Options, "PerformUnitTests" ) ~= "1" )
-	{
-		if ( MyAutoTestManager == None )
-		{
-			MyAutoTestManager = spawn(AutoTestManagerClass);
-		}
-		MyAutoTestManager.InitializeOptions(Options);
-	}
-}
+{}
 
 auto State PendingMatch
 {
@@ -40,7 +31,7 @@ auto State PendingMatch
     {
 		bWaitingToStartMatch = true;
 		UTGameReplicationInfo(GameReplicationInfo).bWarmupRound = false;
-		StartupStage = 0;
+	StartupStage = 0;
 		bQuickStart = false;
     }
 
@@ -52,10 +43,10 @@ auto State PendingMatch
 
 defaultproperties
 {
-	HUDType=class'UTGame.UTEntryHUD'
-	PlayerControllerClass=class'UTGame.UTEntryPlayerController'
-	ConsolePlayerControllerClass=class'UTGame.UTEntryPlayerController'
-
-	bUseClassicHUD=true
-	bExportMenuData=false
+   bExportMenuData=False
+   ConsolePlayerControllerClass=Class'UTGame.UTEntryPlayerController'
+   HUDType=Class'UTGame.UTEntryHUD'
+   PlayerControllerClass=Class'UTGame.UTEntryPlayerController'
+   Name="Default__UTEntryGame"
+   ObjectArchetype=UTTeamGame'UTGame.Default__UTTeamGame'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * A PostProcessEffect operates on an input render target and writes to an output target
  * These effects can be chained together in a PostProcessChain
@@ -30,56 +30,31 @@ var		int		InDrawY;
 /** controls which scene DPG to render this post-process effect in (mirrors ESceneDepthPriorityGroup) */
 var() ESceneDepthPriorityGroup SceneDPG;
 
-/** If true, the effect should be rendered after lighting and not at the end of the DPG. */
-var bool bAffectsLightingOnly;
-
-cpptext
-{
-	/**
-	 * Creates a proxy to represent the render info for a post process effect
-	 * @param WorldSettings - The world's post process settings for the view.
-	 *			Will be NULL if the view didn't provide them, or the effect has bUseWorldSettings=False.
-	 * @return The proxy object.
-	 */
-	virtual class FPostProcessSceneProxy* CreateSceneProxy(const FPostProcessSettings* WorldSettings) 
-	{ 
-		return NULL; 
-	}
-
-	/**
-	 * @param View - current view
-	 * @return TRUE if the effect should be rendered
-	 */
-	virtual UBOOL IsShown(const FSceneView* View) const;
-
-	/**
-	* @return TRUE if the effect requires the uber post process
-	*/
-	virtual UBOOL RequiresUberpostprocess() const 
-	{ 
-		return FALSE; 
-	}
-
-	/**
-	* Tells the SceneRenderer is this effect includes the uber post process.
-	*/
-	virtual UBOOL IncludesUberpostprocess() const
-	{
-		return FALSE;
-	}
-
-	/**
-	* This allows to print a warning when the effect is used.
-	*/
-	virtual void OnPostProcessWarning(FString& OutWarning) const
-	{
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	SceneDPG=SDPG_PostProcess
-	bShowInEditor=TRUE
-	bShowInGame=TRUE
-	bAffectsLightingOnly=FALSE
+   bShowInEditor=True
+   bShowInGame=True
+   SceneDPG=SDPG_PostProcess
+   Name="Default__PostProcessEffect"
+   ObjectArchetype=Object'Core.Default__Object'
 }

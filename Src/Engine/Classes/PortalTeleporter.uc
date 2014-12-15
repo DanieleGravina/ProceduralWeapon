@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PortalTeleporter extends SceneCapturePortalActor
 	native
@@ -19,19 +19,17 @@ var bool bAlwaysTeleportNonPawns;
 /** whether or not this PortalTeleporter works on vehicles */
 var bool bCanTeleportVehicles;
 
-cpptext
-{
-	virtual APortalTeleporter* GetAPortalTeleporter() { return this; };
-	virtual void Spawned();
-	virtual void PostLoad();
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-	virtual INT AddMyMarker(AActor* S);
-#endif
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void TickSpecial(FLOAT DeltaTime);
-	UBOOL CanTeleport(AActor* A);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** teleport an actor to be relative to SisterPortal, including transforming its velocity, acceleration, and rotation
  * @param A the Actor to teleport
@@ -39,7 +37,7 @@ cpptext
  */
 native final function bool TransformActor(Actor A);
 /** transform the given movement vector to be relative to SisterPortal */
-native final function vector TransformVectorDir(vector V);
+native final function vector TransformVector(vector V);
 /** transform the given location to be relative to SisterPortal */
 native final function vector TransformHitLocation(vector HitLocation);
 /** creates and initializes a TextureRenderTarget2D with size equal to our TextureResolutionX and TextureResolutionY properties */
@@ -57,19 +55,31 @@ simulated function bool StopsProjectile(Projectile P)
 
 defaultproperties
 {
-	Begin Object Name=StaticMeshComponent2
-		HiddenGame=false
-		CollideActors=true
-		BlockActors=true
-	End Object
-	CollisionComponent=StaticMeshComponent2
-
-	bCollideActors=true
-	bBlockActors=true
-	bWorldGeometry=true
-	bMovable=false
-	bAlwaysTeleportNonPawns=true
-
-	TextureResolutionX=256
-	TextureResolutionY=256
+   TextureResolutionX=256
+   TextureResolutionY=256
+   bAlwaysTeleportNonPawns=True
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent1 ObjName=StaticMeshComponent1 Archetype=StaticMeshComponent'Engine.Default__SceneCapturePortalActor:StaticMeshComponent1'
+      ObjectArchetype=StaticMeshComponent'Engine.Default__SceneCapturePortalActor:StaticMeshComponent1'
+   End Object
+   CameraComp=StaticMeshComponent1
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent2 ObjName=StaticMeshComponent2 Archetype=StaticMeshComponent'Engine.Default__SceneCapturePortalActor:StaticMeshComponent2'
+      HiddenGame=False
+      CollideActors=True
+      ObjectArchetype=StaticMeshComponent'Engine.Default__SceneCapturePortalActor:StaticMeshComponent2'
+   End Object
+   StaticMesh=StaticMeshComponent2
+   Begin Object Class=SceneCapturePortalComponent Name=SceneCapturePortalComponent0 ObjName=SceneCapturePortalComponent0 Archetype=SceneCapturePortalComponent'Engine.Default__SceneCapturePortalActor:SceneCapturePortalComponent0'
+      ObjectArchetype=SceneCapturePortalComponent'Engine.Default__SceneCapturePortalActor:SceneCapturePortalComponent0'
+   End Object
+   SceneCapture=SceneCapturePortalComponent0
+   Components(0)=SceneCapturePortalComponent0
+   Components(1)=StaticMeshComponent1
+   Components(2)=StaticMeshComponent2
+   bWorldGeometry=True
+   bMovable=False
+   bCollideActors=True
+   bBlockActors=True
+   CollisionComponent=StaticMeshComponent2
+   Name="Default__PortalTeleporter"
+   ObjectArchetype=SceneCapturePortalActor'Engine.Default__SceneCapturePortalActor'
 }

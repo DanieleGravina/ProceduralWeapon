@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class FogVolumeLinearHalfspaceDensityComponent extends FogVolumeDensityComponent
 	native(FogVolume)
@@ -8,24 +8,26 @@ class FogVolumeLinearHalfspaceDensityComponent extends FogVolumeDensityComponent
 	editinlinenew;
 
 /** The linear distance based density coefficient */
-var()	interp	float	PlaneDistanceFactor;
+var()	const	interp	float	PlaneDistanceFactor;
 
 /** The plane that defines the fogged halfspace.  The normal of this plane faces away from the fogged halfspace. */
-var		interp	plane	HalfspacePlane;
+var		const	interp	plane	HalfspacePlane;
 
-cpptext
-{
-protected:
-	// ActorComponent interface.
-	virtual void SetParentToWorld(const FMatrix& ParentToWorld);
-
-public:
-	// FogVolumeDensityComponent interface.
-	virtual class FFogVolumeDensitySceneInfo* CreateFogVolumeDensityInfo(const UPrimitiveComponent* MeshComponent) const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	PlaneDistanceFactor=0.1
-	HalfspacePlane=(X=0.0,Y=0.0,Z=1.0,W=-300.0)
+   PlaneDistanceFactor=0.100000
+   HalfspacePlane=(W=-300.000000,X=0.000000,Y=0.000000,Z=1.000000)
+   Name="Default__FogVolumeLinearHalfspaceDensityComponent"
+   ObjectArchetype=FogVolumeDensityComponent'Engine.Default__FogVolumeDensityComponent'
 }

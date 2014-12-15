@@ -1,25 +1,29 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTHealthPickupLight extends Light
+class UTHealthPickupLight extends UTPickupLight
+	native
 	placeable;
 
 defaultproperties
 {
-	DrawScale=0.25
-
-		Begin Object Class=PointLightComponent Name=PointLightComponent0
-	    LightAffectsClassification=LAC_STATIC_AFFECTING
-		CastShadows=TRUE
-		CastStaticShadows=TRUE
-		CastDynamicShadows=FALSE
-		bForceDynamicLight=FALSE
-		UseDirectLightMap=TRUE
-		LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=FALSE,bInitialized=TRUE)
-		Brightness=4
-		LightColor=(R=201,G=250,B=225)
-		Radius=128
-	End Object
-	LightComponent=PointLightComponent0
-	Components.Add(PointLightComponent0)
+   Begin Object Class=PointLightComponent Name=PointLightComponent0 ObjName=PointLightComponent0 Archetype=PointLightComponent'Engine.Default__PointLightComponent'
+      Radius=128.000000
+      Brightness=4.000000
+      LightColor=(B=225,G=250,R=201,A=0)
+      CastDynamicShadows=False
+      UseDirectLightMap=True
+      LightingChannels=(Dynamic=False)
+      LightAffectsClassification=LAC_STATIC_AFFECTING
+      Name="PointLightComponent0"
+      ObjectArchetype=PointLightComponent'Engine.Default__PointLightComponent'
+   End Object
+   LightComponent=PointLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTPickupLight:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTPickupLight:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=PointLightComponent0
+   Name="Default__UTHealthPickupLight"
+   ObjectArchetype=UTPickupLight'UTGame.Default__UTPickupLight'
 }

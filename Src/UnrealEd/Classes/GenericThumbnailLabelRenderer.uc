@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * This is a simple thumbnail label renderer that lists the object name
  * and the object type for rendering the labels
@@ -7,18 +7,24 @@
 class GenericThumbnailLabelRenderer extends ThumbnailLabelRenderer
 	native;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-protected:
-	/**
-	 * Adds the name of the object and the friendly class name
-	 *
-	 * @param Object the object to build the labels for
-	 * @param OutLabels the array that is added to
-	 */
-	void BuildLabelList(UObject* Object, const ThumbnailOptions& InOptions, TArray<FString>& OutLabels)
-	{
-		new(OutLabels)FString(Object->GetName());
-		new(OutLabels)FString(Object->GetDesc());
-	}
+   Name="Default__GenericThumbnailLabelRenderer"
+   ObjectArchetype=ThumbnailLabelRenderer'UnrealEd.Default__ThumbnailLabelRenderer'
 }

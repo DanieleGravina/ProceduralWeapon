@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class FontImportOptions extends Object
 	hidecategories( Object )
@@ -25,7 +25,6 @@ struct native FontImportOptionsData
 	var() bool bEnableBold;  // Whether the font should be generated in bold or not
 	var() bool bEnableItalic;  // Whether the font should be generated in italics or not
 	var() bool bEnableUnderline;  // Whether the font should be generated with an underline or not
-	var() bool bAlphaOnly;	// if TRUE then forces PF_G8 and only maintains Alpha value and discards color
 	var() EFontImportCharacterSet CharacterSet;  // Character set for this font
 
 	var() string Chars;  // Explicit list of characters to include in the font
@@ -33,7 +32,6 @@ struct native FontImportOptionsData
 	var() string CharsFilePath;  // Path on disk to a folder where files that contain a list of characters to include in the font
 	var() string CharsFileWildcard;  // File mask wildcard that specifies which files within the CharsFilePath to scan for characters in include in the font
 	var() bool bCreatePrintableOnly;  // Skips generation of glyphs for any characters that are not considered 'printable'
-	var() bool bIncludeASCIIRange;	// When specifying a range of characters and this is enabled, forces ASCII characters (0 thru 255) to be included as well
 
 	var() LinearColor ForegroundColor;  // Color of the foreground font pixels.  Usually you should leave this white and instead use the UI Styles editor to change the color of the font on the fly
 	var() bool bEnableDropShadow;  // Enables a very simple, 1-pixel, black colored drop shadow for the generated font
@@ -52,15 +50,6 @@ struct native FontImportOptionsData
 
 	var() int Kerning;  // The initial horizontal spacing adjustment between rendered characters.  This setting will be copied directly into the generated Font object's properties.
 
-	/** If TRUE then the alpha channel of the font textures will store a distance field instead of a color mask */
-	var() bool bUseDistanceFieldAlpha;
-	/** 
-	* Scale factor determines how big to scale the font bitmap during import when generating distance field values 
-	* Note that higher values give better quality but importing will take much longer.
-	*/
-	var() int DistanceFieldScaleFactor<EditCondition=bUseDistanceFieldAlpha>;
-	/** Shrinks or expands the scan radius used to determine the silhouette of the font edges. */
-	var() float DistanceFieldScanRadiusScale<ClampMin=0.0 | ClampMax=4.0>;
 
 	structdefaultproperties
 	{
@@ -69,20 +58,23 @@ struct native FontImportOptionsData
 		bEnableAntialiasing = true;
 		CharacterSet = FontICS_Default;
 
-		bIncludeASCIIRange = true;
-
 		ForegroundColor = ( R=1.0, G=1.0, B=1.0, A=1.0 );
 
 		TexturePageWidth = 256;
 		TexturePageMaxHeight = 256;
 		XPadding = 1;
 		YPadding = 1;
-
-		DistanceFieldScaleFactor = 16;
-		DistanceFieldScanRadiusScale = 1.0;
 	}
+
 };
 
 
 /** The actual data for this object.  We wrap it in a struct so that we can copy it around between objects. */
-var() FontImportOptionsData Data <FullyExpand=true>;
+var() FontImportOptionsData Data;
+
+defaultproperties
+{
+   Data=(FontName="Arial",Height=16.000000,bEnableAntialiasing=True,ForegroundColor=(R=1.000000,G=1.000000,B=1.000000,A=1.000000),TexturePageWidth=256,TexturePageMaxHeight=256,XPadding=1,YPadding=1)
+   Name="Default__FontImportOptions"
+   ObjectArchetype=Object'Core.Default__Object'
+}

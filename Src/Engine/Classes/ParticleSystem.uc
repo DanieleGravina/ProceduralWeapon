@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleSystem extends Object
 	native(Particle)
@@ -28,11 +28,6 @@ var		float							UpdateTime_Delta;
 /** WarmupTime	- the time to warm-up the particle system when first rendered	*/
 var()	float							WarmupTime;
 
-/**	WarmupTickRate - the time step for each tick during warm up.
-	Increasing this improves performance. Decreasing, improves accuracy.
-	Set to 0 to use the default tick time.										*/
-var()	float							WarmupTickRate;
-
 /** Emitters	- internal - the array of emitters in the system				*/
 var		editinline	export	array<ParticleEmitter>	Emitters;
 
@@ -40,22 +35,19 @@ var		editinline	export	array<ParticleEmitter>	Emitters;
 var	transient ParticleSystemComponent	PreviewComponent;
 
 /** The angle to use when rendering the thumbnail image							*/
-var editoronly rotator ThumbnailAngle;
+var		rotator	ThumbnailAngle;
 
 /** The distance to place the system when rendering the thumbnail image			*/
-var editoronly float ThumbnailDistance;
+var		float	ThumbnailDistance;
 
 /** The time to warm-up the system for the thumbnail image						*/
-var(Thumbnail) editoronly float ThumbnailWarmup;
+var(Thumbnail)	float					ThumbnailWarmup;
 
-/** Deprecated, ParticleSystemLOD::bLit is used instead. */
-var deprecated const bool bLit;
+/** Boolean to indicate whether the particle system can ignore lights or not	*/
+var		bool						bLit;
 
 /** Used for curve editor to remember curve-editing setup.						*/
 var		export InterpCurveEdSetup	CurveEdSetup;
-
-/** If true, the system's Z axis will be oriented toward the camera				*/
-var()	bool	bOrientZAxisTowardCamera;
 
 //
 //	LOD
@@ -67,19 +59,18 @@ var(LOD)					float					LODDistanceCheckTime;
 
 /**
  *	ParticleSystemLODMethod
+ *	Enumeration indicating the method by which the system should perform LOD determination
  */
 enum ParticleSystemLODMethod
 {
+	/** Automatically set the LOD level			*/
 	PARTICLESYSTEMLODMETHOD_Automatic,
-	PARTICLESYSTEMLODMETHOD_DirectSet,
-	PARTICLESYSTEMLODMETHOD_ActivateAutomatic
+	/** LOD level is directly set by the game	*/
+	PARTICLESYSTEMLODMETHOD_DirectSet
 };
 
 /**
  *	The method of LOD level determination to utilize for this particle system
- *	  PARTICLESYSTEMLODMETHOD_Automatic - Automatically set the LOD level, checking every LODDistanceCheckTime seconds.
- *    PARTICLESYSTEMLODMETHOD_DirectSet - LOD level is directly set by the game code.
- *    PARTICLESYSTEMLODMETHOD_ActivateAutomatic - LOD level is determined at Activation time, then left alone unless directly set by game code.
  */
 var(LOD)					ParticleSystemLODMethod		LODMethod;
 
@@ -100,7 +91,7 @@ var(LOD)					ParticleSystemLODMethod		LODMethod;
 var(LOD)	editfixedsize	array<float>			LODDistances;
 
 /** LOD setting for intepolation (set by Cascade) Range [0..100]				*/
-var editoronly int EditorLODSetting;
+var			int													EditorLODSetting;
 
 /**
  *	Internal value that tracks the regenerate LOD levels preference.
@@ -108,27 +99,6 @@ var editoronly int EditorLODSetting;
  *	be a duplicate of the high.
  */
 var			bool									bRegenerateLODDuplicate;
-
-/** Structure containing per-LOD settings that pertain to the entire UParticleSystem. */
-struct native ParticleSystemLOD
-{
-	/** 
-	 * Boolean to indicate whether the particle system accepts lights or not.
-	 * This must not be changed in-game, it can only be changed safely in the editor through Cascade.
-	 */
-	var()	bool	bLit;
-
-structcpptext
-{
-	static FParticleSystemLOD CreateParticleSystemLOD()
-	{
-		FParticleSystemLOD NewLOD;
-		NewLOD.bLit = FALSE;
-		return NewLOD;
-	}
-}
-};
-var(LOD) array<ParticleSystemLOD> LODSettings;
 
 /** Whether to use the fixed relative bounding box or calculate it every frame. */
 var(Bounds)	bool		bUseFixedRelativeBoundingBox;
@@ -143,17 +113,14 @@ var()		float		SecondsBeforeInactive;
 //
 //	Cascade 'floor' mesh information
 //
-var editoronly	string		FloorMesh;
-var editoronly	vector		FloorPosition;
-var editoronly	rotator		FloorRotation;
-var editoronly	float		FloorScale;
-var editoronly	vector		FloorScale3D;
-
-/** The background color to display in Cascade */
-var editoronly	color		BackgroundColor;
+var			string		FloorMesh;
+var			vector		FloorPosition;
+var			rotator		FloorRotation;
+var			float		FloorScale;
+var			vector		FloorScale3D;
 
 /** EDITOR ONLY: Indicates that Cascade would like to have the PeakActiveParticles count reset */
-var			bool			bShouldResetPeakCounts;
+var			bool		bShouldResetPeakCounts;
 
 /** Set during load time to indicate that physics is used... */
 var		transient			bool							bHasPhysics;
@@ -163,60 +130,7 @@ var(Thumbnail)	bool		bUseRealtimeThumbnail;
 /** Internal: Indicates the PSys thumbnail image is out of date			*/
 var				bool		ThumbnailImageOutOfDate;
 /** Internal: The PSys thumbnail image									*/
-var	editoronly	Texture2D	ThumbnailImage;
-
-/** 
- *	When TRUE, do NOT perform the spawning limiter check.
- *	Intended for effects used in pre-rendered cinematics.
- */
-var() bool bSkipSpawnCountCheck;
-
-/** How long this Particle system should delay when ActivateSystem is called on it. */
-var(Delay) float Delay;
-/** The low end of the emitter delay if using a range. */
-var(Delay) float DelayLow;
-/**
- *	If TRUE, select the emitter delay from the range 
- *		[DelayLow..Delay]
- */
-var(Delay) bool bUseDelayRange;
-
-/** Local space position that UVs generated with the ParticleMacroUV material node will be centered on. */
-var(MacroUV) vector MacroUVPosition; 
-
-/** World space radius that UVs generated with the ParticleMacroUV material node will tile based on. */
-var(MacroUV) float MacroUVRadius; 
-
-/** Occlusion method enumeration */
-enum EParticleSystemOcclusionBoundsMethod
-{
-	/** Don't determine occlusion on this particle system */
-	EPSOBM_None,
-	/** Use the bounds of the particle system component when determining occlusion */
-	EPSOBM_ParticleBounds,
-	/** Use the custom occlusion bounds when determining occlusion */
-	EPSOBM_CustomBounds
-};
-
-/** 
- *	Which occlusion bounds method to use for this particle system.
- *	EPSOBM_None - Don't determine occlusion for this system.
- *	EPSOBM_ParticleBounds - Use the bounds of the component when determining occlusion.
- */
-var(Occlusion)	EParticleSystemOcclusionBoundsMethod	OcclusionBoundsMethod;
-
-/** The occlusion bounds to use if OcclusionBoundsMethod is set to EPSOBM_CustomBounds */
-var(Occlusion)	Box										CustomOcclusionBounds;
- 
-/**
- *	Temporary array for tracking 'solo' emitter mode.
- *	Entry will be true if emitter was enabled 
- */
-struct native LODSoloTrack
-{
-	var transient array<byte>	SoloEnableSetting;
-};
-var transient array<LODSoloTrack>	SoloTracking;
+var				Texture2D	ThumbnailImage;
 
 //
 /** Return the currently set LOD method											*/
@@ -230,144 +144,42 @@ native function						SetCurrentLODMethod(ParticleSystemLODMethod InMethod);
 /** Set the distance for the given LOD index									*/
 native function bool				SetLODDistance(int LODLevelIndex, float InDistance);
 
-/** 
- *	Get the longest possible lifespan for this particle system.
- *	
- *	@param	InComponentDelay	The delay from the component using the emitter
- *
- *	@return	FLOAT				The longest lifespan this PSys could have; 0.0f if infinite.
- */
-native function float GetMaxLifespan(float InComponentDelay);
+//
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //
-cpptext
-{
-	// UObject interface.
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void PreSave();
-	virtual void PostLoad();
 
-	/**
-	 * Returns the size of the object/ resource for display to artists/ LDs in the Editor.
-	 *
-	 * @return size of resource as to be displayed to artists/ LDs in the Editor.
-	 */
-	virtual INT GetResourceSize();
-
-	void UpdateColorModuleClampAlpha(class UParticleModuleColorBase* ColorModule);
-
-	/**
-	 *	CalculateMaxActiveParticleCounts
-	 *	Determine the maximum active particles that could occur with each emitter.
-	 *	This is to avoid reallocation during the life of the emitter.
-	 *
-	 *	@return	TRUE	if the numbers were determined for each emitter
-	 *			FALSE	if not be determined
-	 */
-	virtual UBOOL		CalculateMaxActiveParticleCounts();
-	
-	/**
-	 *	Retrieve the parameters associated with this particle system.
-	 *
-	 *	@param	ParticleSysParamList	The list of FParticleSysParams used in the system
-	 *	@param	ParticleParameterList	The list of ParticleParameter distributions used in the system
-	 */
-	void GetParametersUtilized(TArray<TArray<FString> >& ParticleSysParamList,
-							   TArray<TArray<FString> >& ParticleParameterList);
-
-	/**
-	 *	Setup the soloing information... Obliterates all current soloing.
-	 */
-	void SetupSoloing();
-
-	/**
-	 *	Toggle the bIsSoloing flag on the given emitter.
-	 *
-	 *	@param	InEmitter		The emitter to toggle.
-	 *
-	 *	@return	UBOOL			TRUE if ANY emitters are set to soloing, FALSE if none are.
-	 */
-	UBOOL ToggleSoloing(class UParticleEmitter* InEmitter);
-
-	/**
-	 *	Turn soloing off completely - on every emitter
-	 *
-	 *	@return	UBOOL			TRUE if successful, FALSE if not.
-	 */
-	UBOOL TurnOffSoloing();
-
-	/**
-	 *	Editor helper function for setting the LOD validity flags used in Cascade.
-	 */
-	void SetupLODValidity();
-
-#if WITH_EDITOR
-	/**
-	 *	Convert the given module to its randon seed variant.
-	 *
-	 *	@param	InEmitter				The emitter to convert
-	 *	@param	InModuleIdx				The index of the module to convert
-	 *	@param	InSeededClass			The seeded variant class
-	 *	@param	bInUpdateModuleLists	If TRUE, update the module lists after the conversion
-	 *
-	 *	@return	UBOOL					TRUE if successful, FALSE if not
-	 */
-	UBOOL ConvertModuleToSeeded(UParticleEmitter* InEmitter, INT InModuleIdx, UClass* InSeededClass, UBOOL bInUpdateModuleLists);
-
-	/**
-	 *	Convert all the modules in this particle system to their random seed variant if available
-	 *
-	 *	@return	UBOOL			TRUE if successful, FALSE if not
-	 */
-	UBOOL ConvertAllModulesToSeeded();
-
-	/**
-	 *	Remove all duplicate modules.
-	 *
-	 *	@param	bInMarkForCooker	If TRUE, mark removed objects to not cook out.
-	 *	@param	OutRemovedModules	Optional map to fill in w/ removed modules...
-	 *
-	 *	@return	UBOOL				TRUE if successful, FALSE if not
-	 */
-	UBOOL RemoveAllDuplicateModules(UBOOL bInMarkForCooker, TMap<UObject*,UBOOL>* OutRemovedModules);
-
-	/**
-	 *	Update all emitter module lists
-	 */
-	void UpdateAllModuleLists();
-#endif
-}
-
-//
 defaultproperties
 {
-	//bOrientZAxisTowardCamera=TRUE
-
-	ThumbnailDistance=200.0
-	ThumbnailWarmup=1.0
-
-	UpdateTime_FPS=60.0
-	UpdateTime_Delta=1.0/60.0
-	WarmupTime=0.0
-	WarmupTickRate=0.0
-
-	bLit=true
-
-	EditorLODSetting=0
-	FixedRelativeBoundingBox=(Min=(X=-1,Y=-1,Z=-1),Max=(X=1,Y=1,Z=1))
-
-	LODMethod=PARTICLESYSTEMLODMETHOD_Automatic
-	LODDistanceCheckTime=0.25
-
-	bRegenerateLODDuplicate=false
-	ThumbnailImageOutOfDate=true
-
-	FloorMesh="EditorMeshes.AnimTreeEd_PreviewFloor"
-	FloorPosition=(X=0.000000,Y=0.000000,Z=0.000000)
-	FloorRotation=(Pitch=0,Yaw=0,Roll=0)
-	FloorScale=1.000000
-	FloorScale3D=(X=1.000000,Y=1.000000,Z=1.000000)
-
-	MacroUVPosition=(X=0.000000,Y=0.000000,Z=0.000000)
-	MacroUVRadius=200 
+   UpdateTime_FPS=60.000000
+   UpdateTime_Delta=1.000000
+   ThumbnailDistance=200.000000
+   ThumbnailWarmup=1.000000
+   bLit=True
+   ThumbnailImageOutOfDate=True
+   LODDistanceCheckTime=5.000000
+   FixedRelativeBoundingBox=(Min=(X=-1.000000,Y=-1.000000,Z=-1.000000),Max=(X=1.000000,Y=1.000000,Z=1.000000),IsValid=0)
+   FloorMesh="EditorMeshes.AnimTreeEd_PreviewFloor"
+   FloorScale=1.000000
+   FloorScale3D=(X=1.000000,Y=1.000000,Z=1.000000)
+   Name="Default__ParticleSystem"
+   ObjectArchetype=Object'Core.Default__Object'
 }

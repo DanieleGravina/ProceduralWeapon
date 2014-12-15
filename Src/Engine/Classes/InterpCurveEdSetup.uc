@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpCurveEdSetup extends Object
 	native;
@@ -38,30 +38,32 @@ struct native CurveEdTab
 var array<CurveEdTab>			Tabs;
 var int							ActiveTab;
 
-cpptext
-{
-	// UObject interface
-	void PostLoad();
-	void Serialize(FArchive& Ar);
-	
-	// InterpCurveEdSetup interface
-	static FCurveEdInterface* GetCurveEdInterfacePointer(const FCurveEdEntry& Entry);
-	void AddCurveToCurrentTab(UObject* InCurve, const FString& CurveName, const FColor& CurveColor, 
-			UBOOL bInColorCurve=false, UBOOL bInFloatingPointColor=false, UBOOL bInClamp=false,
-			FLOAT InClampLow=0.f, FLOAT InClampHigh=0.f);
-	void RemoveCurve(UObject* InCurve);
-	void ReplaceCurve(UObject* RemoveCurve, UObject* AddCurve);
-	void CreateNewTab(const FString& InTabName);
-	void RemoveTab(const FString& InTabName);
-	UBOOL ShowingCurve(UObject* InCurve);
-
-	void ChangeCurveColor(UObject* InCurve, const FColor& CurveColor);
-	void ChangeCurveName(UObject* InCurve, const FString& NewCurveName);
-
-	void ResetTabs();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Tabs(0)=(TabName="Default",ViewStartInput=0.0,ViewEndInput=1.0,ViewStartOutput=-1.0,ViewEndOutput=1.0)
+   Tabs(0)=(TabName="Default",ViewEndInput=1.000000,ViewStartOutput=-1.000000,ViewEndOutput=1.000000)
+   Name="Default__InterpCurveEdSetup"
+   ObjectArchetype=Object'Core.Default__Object'
 }

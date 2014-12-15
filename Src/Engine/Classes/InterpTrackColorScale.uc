@@ -4,28 +4,30 @@ class InterpTrackColorScale extends InterpTrackVectorBase
 /** 
  * InterpTrackColorScale
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-cpptext
-{
-	// InterpTrack interface
-	virtual INT AddKeyframe(FLOAT Time, UInterpTrackInst* TrInst, EInterpCurveMode InitInterpMode);
-	virtual void UpdateKeyframe(INT KeyIndex, UInterpTrackInst* TrInst);
-	virtual void PreviewUpdateTrack(FLOAT NewPosition, UInterpTrackInst* TrInst);
-	virtual void UpdateTrack(FLOAT NewPosition, UInterpTrackInst* TrInst, UBOOL bJump);
-	virtual void SetTrackToSensibleDefault();
-
-	virtual class UMaterial* GetTrackIcon() const;
-
-	// InterpTrackColorScale interface
-	FVector GetColorScaleAtTime(FLOAT Time);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bOnePerGroup=true
-	bDirGroupOnly=true
-	TrackInstClass=class'Engine.InterpTrackInstColorScale'
-	TrackTitle="Color Scale"
+   TrackInstClass=Class'Engine.InterpTrackInstColorScale'
+   TrackTitle="Color Scale"
+   bOnePerGroup=True
+   bDirGroupOnly=True
+   Name="Default__InterpTrackColorScale"
+   ObjectArchetype=InterpTrackVectorBase'Engine.Default__InterpTrackVectorBase'
 }

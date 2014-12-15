@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // DMSquad.
@@ -87,7 +87,8 @@ function bool SetEnemy( UTBot B, Pawn NewEnemy )
 	local bool bResult;
 
 	if ( (NewEnemy == None) || (NewEnemy.Health <= 0) || (NewEnemy.Controller == None)
-		|| ((UTBot(NewEnemy.Controller) != None) && (UTBot(NewEnemy.Controller).Squad == self)) )
+		|| ((UTBot(NewEnemy.Controller) != None) && (UTBot(NewEnemy.Controller).Squad == self)) 
+		|| !ValidEnemy(NewEnemy) )
 		return false;
 
 	// add new enemy to enemy list - return if already there
@@ -103,12 +104,16 @@ function bool SetEnemy( UTBot B, Pawn NewEnemy )
 
 function bool FriendlyToward(Pawn Other)
 {
-	return false;
+	return WorldInfo.GRI.OnSameTeam(self, Other);
 }
 
 function bool AllowContinueOnFoot(UTBot B, UTVehicle V)
 {
 	// don't give up vehicle to chase enemy
+	if ( V.ImportantVehicle() && (V.Health > 0.2 * V.default.Health) )
+	{
+		return false;
+	}
 	return (B.Enemy == None && Super.AllowContinueOnFoot(B, V));
 }
 
@@ -120,7 +125,7 @@ function float VehicleDesireability(UTVehicle V, UTBot B)
 		return 0;
 	}
 	// if bot has the flag and the vehicle can't carry flags, ignore it
-	if ( UTPlayerReplicationInfo(B.PlayerReplicationInfo).bHasFlag && !V.bCanCarryFlag )
+	if ( B.PlayerReplicationInfo.bHasFlag && !V.bCanCarryFlag )
 	{
 		return 0;
 	}
@@ -161,7 +166,7 @@ function bool AssignSquadResponsibility(UTBot B)
 		// consider vehicles as powerups in DM
 		foreach WorldInfo.AllNavigationPoints(class'UTVehicleFactory', VFactory)
 		{
-			V = UTVehicle(VFactory.ChildVehicle);
+			V = VFactory.ChildVehicle;
 			if ( (V != None && (!V.bHasBeenDriven || V.bStationary) && VehicleDesireability(V, B) > 0.0) ||
 				(V == None && VFactory.RespawnProgress < B.RespawnPredictionTime && VFactory.IsInState('Active')) )
 			{
@@ -265,5 +270,7 @@ function bool AssignSquadResponsibility(UTBot B)
 
 defaultproperties
 {
-	CurrentOrders=Freelance
+   CurrentOrders="Freelance"
+   Name="Default__UTDMSquad"
+   ObjectArchetype=UTSquadAI'UTGame.Default__UTSquadAI'
 }

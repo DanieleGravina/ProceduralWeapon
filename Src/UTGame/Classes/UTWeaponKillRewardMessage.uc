@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTWeaponKillRewardMessage extends UTLocalMessage;
 
@@ -37,17 +37,15 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	RewardSounds(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_HeadShot'
-	RewardSounds(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Bullseye'
-
-	bIsSpecial=True
-	bIsUnique=True
-	Lifetime=3
-	bBeep=False
-	AnnouncementPriority=10
-
-	DrawColor=(R=255,G=255,B=128)
-	FontSize=2
-
-	MessageArea=3
+   RewardString(0)="Colpo alla testa!"
+   RewardString(1)="Centro!"
+   RewardSounds(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_HeadShot'
+   RewardSounds(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_BullsEye'
+   MessageArea=3
+   AnnouncementPriority=10
+   bIsUnique=True
+   DrawColor=(B=128,G=255,R=255,A=255)
+   FontSize=2
+   Name="Default__UTWeaponKillRewardMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

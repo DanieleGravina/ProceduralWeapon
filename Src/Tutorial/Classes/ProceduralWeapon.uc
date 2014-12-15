@@ -4,8 +4,7 @@ class ProceduralWeapon extends MyWeapon;
 function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 {
 	
-	if(ItemClass == class'UTWeap_LinkGun' || ItemClass == class'UTWeap_Physicsgun' || 
-       ItemClass == class'UTWeap_RocketLauncher_Content' || ItemClass == class'UTWeap_ShockRifle' || ItemClass == class'ProceduralWeapon')
+	if(ClassIsChildOf(ItemClass, class 'UTWeapon'))
 	{
 		AddAmmo(MaxAmmoCount);
 		return true;
@@ -65,7 +64,7 @@ defaultproperties
     End Object
     
     // Attachment class
-    AttachmentClass=class'UTGameContent.UTAttachment_ShockRifle'
+    AttachmentClass=Class'UTGame.UTAttachment_ShockRifle'
 
     // Defines the type of fire for each mode
     WeaponFireTypes(0)=EWFT_Projectile

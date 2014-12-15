@@ -1,9 +1,11 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTHoverWheel extends UDKVehicleWheel;
+class UTHoverWheel extends UTVehicleWheel;
 
 defaultproperties
 {
-	bCollidesPawns=FALSE
+   bCollidesPawns=False
+   Name="Default__UTHoverWheel"
+   ObjectArchetype=UTVehicleWheel'UTGame.Default__UTVehicleWheel'
 }

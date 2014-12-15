@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class WindDirectionalSourceComponent extends ActorComponent
 	native
@@ -9,30 +9,31 @@ class WindDirectionalSourceComponent extends ActorComponent
 
 var native private	transient noimport const pointer SceneProxy{FWindSourceSceneProxy};
 
-var() interp float Strength;
-var deprecated float Phase;
-var deprecated float Frequency;
-var() interp float Speed;
+var() float	Strength;
+var() float Phase;
+var() float Frequency;
+var() float Speed;
 
-cpptext
-{
-protected:
-	// UActorComponent interface.
-	virtual void Attach();
-	virtual void Detach( UBOOL bWillReattach = FALSE );
-	virtual void UpdateTransform();
-public:
-	
-	/**
-	 * Creates a proxy to represent the wind source to the scene manager in the rendering thread.
-	 * @return The proxy object.
-	 */
-	 virtual class FWindSourceSceneProxy* CreateSceneProxy() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Strength=1.0
-	Frequency=1.0
-	Speed=1.0
+   Strength=1.000000
+   Frequency=1.000000
+   Speed=1024.000000
+   Name="Default__WindDirectionalSourceComponent"
+   ObjectArchetype=ActorComponent'Engine.Default__ActorComponent'
 }

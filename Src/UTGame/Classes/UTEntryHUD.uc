@@ -1,7 +1,7 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTEntryHUD extends HUD
+class UTEntryHUD extends GameHUD
 	config(Game);
 
 event PostRender()
@@ -9,6 +9,11 @@ event PostRender()
 	return;
 }
 
+/** We override this here so we do not have the copyright screen show up in envyentry or when you skip past a movie **/
+function DrawEngineHUD();
+
 defaultproperties
 {
+   Name="Default__UTEntryHUD"
+   ObjectArchetype=GameHUD'GameFramework.Default__GameHUD'
 }

@@ -9,48 +9,58 @@
  * stores might track stuff like the name that was entered into some UI value widget.  Data stores can provide static
  * information, such as the names of all gametypes, or dynamic information, such as the name of the current gametype.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UIDataStore extends UIDataProvider
 	native(inherit)
 	abstract;
 
-cpptext
-{
-	/**
-	 * Allows each data store the chance to load any dependent classes
-	 */
-	virtual void LoadDependentClasses(void)
-	{
-	}
-
-	/**
-	 * Hook for performing any initialization required for this data store
-	 */
-	virtual void InitializeDataStore();
-
-	/**
-	 * Called when this data store is added to the data store manager's list of active data stores.
-	 *
-	 * @param	PlayerOwner		the player that will be associated with this DataStore.  Only relevant if this data store is
-	 *							associated with a particular player; NULL if this is a global data store.
-	 */
-	virtual void OnRegister( class ULocalPlayer* PlayerOwner );
-
-	/**
-	 * Called when this data store is removed from the data store manager's list of active data stores.
-	 *
-	 * @param	PlayerOwner		the player that will be associated with this DataStore.  Only relevant if this data store is
-	 *							associated with a particular player; NULL if this is a global data store.
-	 */
-	virtual void OnUnregister( class ULocalPlayer* PlayerOwner );
-
-	/**
-	 * Retrieves the tag used for referencing this data store.  Normally corresponds to Tag, but may be different for some special
-	 * data stores.
-	 */
-	virtual FName GetDataStoreID() const { return Tag; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** The name used to access this datastore */
 var		name				Tag;
@@ -144,7 +154,7 @@ function bool NotifyGameSessionEnded();
  * @param	ArrayIndex			for collection fields, indicates which element was changed.  value of INDEX_NONE indicates not an array
  *								or that the entire array was updated.
  */
-final event RefreshSubscribers( optional name PropertyTag, optional bool bInvalidateValues=true, optional UIDataProvider SourceProvider, optional int ArrayIndex=INDEX_NONE )
+event RefreshSubscribers( optional name PropertyTag, optional bool bInvalidateValues=true, optional UIDataProvider SourceProvider, optional int ArrayIndex=INDEX_NONE )
 {
 	local int Idx;
 	local delegate<OnDataStoreValueUpdated> Subscriber;
@@ -166,6 +176,15 @@ final event RefreshSubscribers( optional name PropertyTag, optional bool bInvali
 	}
 }
 
+
+/**
+ * Notifies the data store that all values bound to this data store in the current scene have been saved.  Provides data stores which
+ * perform buffered or batched data transactions with a way to determine when the UI system has finished writing data to the data store.
+ *
+ * @note: for now, this lives in UIDataStore, but it might make sense to move it up to UIDataProvider later on.
+ */
+native function OnCommit();
+
 /**
  * Returns a reference to the global data store client, if it exists.
  *
@@ -176,7 +195,8 @@ final function DataStoreClient GetDataStoreClient()
 	return class'UIInteraction'.static.GetDataStoreClient();
 }
 
-DefaultProperties
+defaultproperties
 {
-
+   Name="Default__UIDataStore"
+   ObjectArchetype=UIDataProvider'Engine.Default__UIDataProvider'
 }

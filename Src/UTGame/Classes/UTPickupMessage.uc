@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //
 // OptionalObject is an Pickup class
@@ -14,36 +14,36 @@ static simulated function ClientReceive(
 	optional Object OptionalObject
 	)
 {
-	local UTHUDBase HUD;
-	local UTHUD MyUTHUD;
+	local UTHUD HUD;
 
 	Super.ClientReceive(P, Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
 
-	HUD = UTHUDBase(P.MyHUD);
+	HUD = UTHUD(P.MyHUD);
 	if ( HUD != None )
 	{
-		HUD.LastPickupTime = HUD.WorldInfo.TimeSeconds;
-		MyUTHUD = UTHUD(HUD);
-		if ( MyUTHUD != None )
+		if ( class<UTPickupFactory>(OptionalObject) != None )
 		{
-			if ( class<UTPickupFactory>(OptionalObject) != None )
-			{
-				class<UTPickupFactory>(OptionalObject).static.UpdateHUD(MyUTHUD);
-			}
-			else if ( class<UTWeapon>(OptionalObject) != None )
-			{
-				MyUTHUD.LastWeaponBarDrawnTime = HUD.WorldInfo.TimeSeconds + 2.0;
-			}
+			class<UTPickupFactory>(OptionalObject).static.UpdateHUD(HUD);
+		}
+		else if ( class<UTWeapon>(OptionalObject) != None )
+		{
+			HUD.LastWeaponBarDrawnTime = HUD.WorldInfo.TimeSeconds + 2.0;
+			HUD.LastPickupTime = HUD.WorldInfo.TimeSeconds;
+		}
+		else
+		{
+			HUD.LastPickupTime = HUD.WorldInfo.TimeSeconds;
 		}
 	}		
 }
 
 defaultproperties
 {
-	bIsUnique=true
-	bCountInstances=true
-	DrawColor=(R=255,G=255,B=128,A=255)
-	FontSize=1
-	bIsConsoleMessage=false
-	MessageArea=5
+   MessageArea=5
+   bIsUnique=True
+   bCountInstances=True
+   DrawColor=(B=128,G=255,R=255,A=255)
+   FontSize=1
+   Name="Default__UTPickupMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

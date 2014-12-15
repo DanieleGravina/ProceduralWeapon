@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 // It would be nice if you could subclass structs in script.. ah well. Don't want overhead of making these UObjects.
 
@@ -100,10 +100,13 @@ struct KAggregateGeom
 	var() editfixedsize array<KSphylElem>			SphylElems;
 	var() editfixedsize array<KConvexElem>			ConvexElems;
 	var native nontransactional noimport pointer	RenderInfo;
-
-	/** Collision against this geom will not specially handle the "close and parallel" case.  Special-case. */
-	var() bool										bSkipCloseAndParallelChecks; 
 };
 
 var() vector			COMNudge; // User-entered offset. UNREAL UNITS
 var() KAggregateGeom	AggGeom;
+
+defaultproperties
+{
+   Name="Default__KMeshProps"
+   ObjectArchetype=Object'Core.Default__Object'
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  *
  * BeamWeapons have at least 1 firing state set to WeaponBeamFiring.  This class contains all of the basics
@@ -40,7 +40,7 @@ simulated function AddBeamEmitter()
 				BeamEmitter[CurrentFireMode].SetDepthPriorityGroup(SDPG_Foreground);
 				BeamEmitter[CurrentFireMode].SetTemplate(BeamTemplate[CurrentFireMode]);
 				BeamEmitter[CurrentFireMode].SetHidden(true);
-				BeamEmitter[CurrentFireMode].SetTickGroup( TG_PostUpdateWork );
+				BeamEmitter[CurrentFireMode].SetTickGroup( TG_PostAsyncWork );
 				BeamEmitter[CurrentFireMode].bUpdateComponentInTick = true;
 				BeamEmitter[CurrentFireMode].SetIgnoreOwnerHidden(TRUE);
 				SkeletalMeshComponent(Mesh).AttachComponentToSocket( BeamEmitter[CurrentFireMode],BeamSockets[CurrentFireMode] );
@@ -138,6 +138,15 @@ simulated state WeaponBeamFiring
 	{
 		local UTPlayerController PC;
 
+/*
+		// if switching to another weapon, abort firing and put down right away
+		if( bWeaponPutDown )
+		{
+			PutDownWeapon();
+			return;
+		}
+*/
+
 		// If weapon should keep on firing, then do not leave state and fire again.
 		if( ShouldRefire() )
 		{
@@ -146,7 +155,7 @@ simulated state WeaponBeamFiring
 			PC = UTPlayerController(Instigator.Controller);
 			if (PC != None && LocalPlayer(PC.Player) != None && CurrentFireMode < FireCameraAnim.length && FireCameraAnim[CurrentFireMode] != None)
 			{
-				PC.PlayCameraAnim(FireCameraAnim[CurrentFireMode], (GetZoomedState() > ZST_ZoomingOut) ? PC.GetFOVAngle() / PC.DefaultFOV : 1.0);
+				PC.PlayCameraAnim(FireCameraAnim[CurrentFireMode], (GetZoomedState() > ZST_ZoomingOut) ? PC.FOVAngle / PC.DefaultFOV : 1.0);
 			}
 			return;
 		}
@@ -304,4 +313,15 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 
 defaultproperties
 {
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTBeamWeapon"
+   ObjectArchetype=UTWeapon'UTGame.Default__UTWeapon'
 }

@@ -1,82 +1,79 @@
 /**
  * Provides a general purpose global storage area for game or configuration data.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
  */
 class UIDataStore_Registry extends UIDataStore
 	native(inherit);
 
-cpptext
-{
-	/* === UIDataStore interface === */
-	/**
-	 * Creates the data provider for this registry data store.
-	 */
-	virtual void InitializeDataStore();
-}
-
-struct native RegistryKeyValuePair
-{
-	var string Key;
-	var string Value;
-};
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
- * The data fields which have been added to this data store.
+ * The data provider that contains the data fields which have been added to this data store.
  */
-var	array<RegistryKeyValuePair> RegistryData;
+var	protected	UIDynamicFieldProvider		RegistryDataProvider;
 
 /**
- * Get data from the RegistryData array
- * @param Key - The key to get data for
- * @param out_Data - the data that was recovered
- *
- * @return True if there was data to recover, false if there was no data for the specified key
+ * @return	the data provider which stores all registry data.
  */
-event bool GetData(string Key, out string out_Data)
+final function UIDynamicFieldProvider GetDataProvider()
 {
-	local int i;
-
-	for (i = 0; i < RegistryData.length; i++)
-	{
-		if (RegistryData[i].Key == Key)
-		{
-			out_Data = RegistryData[i].Value;
-			return true;
-		}
-	}
-	return false;
+	return RegistryDataProvider;
 }
 
-/**
- * Set data to the RegistryData array
- * @param Key - The key to set data for
- * @param Value - the data that is to be stored
- */
-event SetData(string Key, string Value)
+defaultproperties
 {
-	local int i;
-	local RegistryKeyValuePair KVP;
-
-	for (i = 0; i < RegistryData.length; i++)
-	{
-		if (RegistryData[i].Key == Key)
-		{
-			RegistryData[i].Value = Value;
-			return;
-		}
-	}
-	
-	KVP.Key = Key;
-	KVP.Value = Value;
-
-	RegistryData.AddItem(KVP);
+   Tag="Registry"
+   WriteAccessType=ACCESS_WriteAll
+   Name="Default__UIDataStore_Registry"
+   ObjectArchetype=UIDataStore'Engine.Default__UIDataStore'
 }
-
-
-DefaultProperties
-{
-	Tag=Registry
-}
-
-

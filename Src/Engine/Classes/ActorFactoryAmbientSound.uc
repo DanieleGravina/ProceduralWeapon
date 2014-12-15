@@ -1,39 +1,26 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- *
- * The base class of all ambient sound types
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryAmbientSound extends ActorFactory
-	config( Editor )
+	config(Editor)
 	collapsecategories
-	hidecategories( Object )
+	hidecategories(Object)
 	native;
 
-cpptext
-{
-	virtual AActor* CreateActor( const FVector* const Location, const FRotator* const Rotation, const class USeqAct_ActorFactory* const ActorFactoryData );
-	virtual void AutoFillFields( class USelection* Selection );
-
-	/**
-	 * If the ActorFactory thinks it could create an Actor with the current settings.
-	 * Can Used to determine if we should add to context menu or if the factory can be used for drag and drop.
-	 *
-	 * @param	OutErrorMsg		Receives localized error string name if returning FALSE.
-	 * @param	bFromAssetOnly	If true, the actor factory will check that a valid asset has been assigned from selection.  If the factory always requires an asset to be selected, this param does not matter
-	 * @return	True if the actor can be created with this factory
-	 */
-	virtual UBOOL CanCreateActor( FString& OutErrorMsg, UBOOL bFromAssetOnly = FALSE );
-
-	virtual FString GetMenuName( void );
-	
-	void SetSoundCue( class AAmbientSound* NewSound );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var()	SoundCue		AmbientSoundCue;
 
 defaultproperties
 {
-	MenuName="Add AmbientSound"
-	NewActorClass=class'Engine.AmbientSound'
-	bShowInEditorQuickMenu=true;
+   MenuName="Add AmbientSound"
+   NewActorClass=Class'Engine.AmbientSound'
+   Name="Default__ActorFactoryAmbientSound"
+   ObjectArchetype=ActorFactory'Engine.Default__ActorFactory'
 }

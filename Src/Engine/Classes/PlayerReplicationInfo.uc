@@ -1,155 +1,246 @@
 //=============================================================================
 // PlayerReplicationInfo.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
-//
-// A PlayerReplicationInfo is created for every player on a server (or in a standalone game).
-// Players are PlayerControllers, or other Controllers with bIsPlayer=true
-// PlayerReplicationInfos are replicated to all clients, and contain network game relevant information about the player,
-// such as playername, score, etc.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class PlayerReplicationInfo extends ReplicationInfo
-	native(ReplicationInfo)
-	nativereplication
-	dependson(SoundNodeWave,OnlineSubsystem);
+	native
+	nativereplication;
 
-/** Player's current score. */
-var repnotify float			Score;
 
-/** Number of player's deaths. */
-var int				Deaths;
 
-/** Replicated compressed ping for this player (holds ping in msec divided by 4) */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 9
+
+var databinding float				Score;			// Player's current score.
+var databinding float				Deaths;			// Number of player's deaths.
 var byte				Ping;
+var Actor				PlayerLocationHint;
+var databinding int					NumLives;
 
-/** Number of lives used by this player */
-var 			int					NumLives;
+var databinding repnotify string	PlayerName;		// Player name, or blank if none.
+var databinding repnotify string 	PlayerAlias;	// The Player's current alias or blank if we are using the Player Name
+var databinding int					PlayerRanking;  // Player ranking, 1000 is default
 
-/** Player name, or blank if none. */
-var repnotify string	PlayerName;
-
-/** Voice to use for TTS */
-var transient	ETTSSpeaker			TTSSpeaker;
-
-/** Previous playername.  Saved on client-side to detect playername changes. */
 var string				OldName;
+var int					PlayerID;		// Unique id number.
+var RepNotify TeamInfo	Team;			// Player Team
+var int					TeamID;			// Player position in team.
 
-/** Unique id number. */
-var int					PlayerID;
-
-/** Player team */
-var editinline RepNotify TeamInfo	Team;
-
-/** Player logged in as Administrator */
-var bool				bAdmin;
-
-/** Whether this player is currently a spectator */
-var bool				bIsSpectator;
-
-/** Whether this player can only ever be a spectator */
-var bool				bOnlySpectator;
-
-/** Whether this player is waiting to enter match */
-var bool				bWaitingPlayer;
-
-/** Whether this player has confirmed ready to play */
-var bool				bReadyToPlay;
-
-/** Can't respawn once out of lives */
-var bool				bOutOfLives;
-
-/** True if this PRI is associated with an AIController */
-var bool				bBot;
-
-/** client side flag - whether this player has been welcomed or not (player entered message) */
-var	bool				bHasBeenWelcomed;
+var databinding bool				bAdmin;				// Player logged in as Administrator
+var databinding bool				bIsFemale;
+var databinding bool				bIsSpectator;
+var databinding bool				bOnlySpectator;
+var databinding bool				bWaitingPlayer;
+var databinding bool				bReadyToPlay;
+var databinding bool				bOutOfLives;
+var databinding bool				bBot;
+var databinding bool				bHasFlag;
+var	databinding bool				bHasBeenWelcomed;	// client side flag - whether this player has been welcomed or not
 
 /** Means this PRI came from the GameInfo's InactivePRIArray */
 var repnotify bool bIsInactive;
-
 /** indicates this is a PRI from the previous level of a seamless travel,
  * waiting for the player to finish the transition before creating a new one
  * this is used to avoid preserving the PRI in the InactivePRIArray if the player leaves
  */
 var bool bFromPreviousLevel;
+/**@hack: patch compatibility hack - can't add replication to bFromPreviousLevel */
+var repnotify bool bFromPreviousLevel_Replicated;
 
-/** Elapsed time on server when this PRI was first created.  */
+/** This determines whether the user has turned on or off their Controller Vibration **/
+var bool                bControllerVibrationAllowed;
+
+var byte				PacketLoss;
+
+// Time elapsed.
 var int					StartTime;
 
-/** Used for reporting player location */
+var localized String	StringDead;
 var localized String    StringSpectating;
 var localized String	StringUnknown;
 
-/** Kills by this player.  Not replicated. */
-var int		Kills;
+var databinding int					Kills;				// not replicated
 
-/** Message class to use for PRI originated localized messages */
 var class<GameMessage>	GameMessageClass;
 
-/** Exact ping as float (rounded and compressed in Ping) */
 var float				ExactPing;
 
-/** Used to match up InactivePRI with rejoining playercontroller. */
-var string				SavedNetworkAddress;
+var string				SavedNetworkAddress;	/** Used to match up InactivePRI with rejoining playercontroller. */
 
-/** The id used by the network to uniquely identify a player.
+/**
+ * The id used by the network to uniquely identify a player.
  * NOTE: this property should *never* be exposed to the player as it's transient
- * and opaque in meaning (ie it might mean date/time followed by something else) */
+ * and opaque in meaning (ie it might mean date/time followed by something else)
+ */
 var repnotify UniqueNetId UniqueId;
 
-/** The session that the player needs to join/remove from as it is created/leaves */
-var const name SessionName;
+/** ID of the friend you followed into the game, if applicable **/
+var UniqueNetId FriendFollowedId;
 
-struct native AutomatedTestingDatum
-{
-	/** Number of matches played (maybe remove this before shipping)  This is really useful for doing soak testing and such to see how long you lasted! NOTE:  This is not replicated out to clients atm. **/
-	var int NumberOfMatchesPlayed;
 
-	/** Keeps track of the current run so when we have repeats and such we know how far along we are **/
-	var int NumMapListCyclesDone;
-};
+/** Number of matches played (maybe remove this before shipping)  This is really useful for doing soak testing and such to see how long you lasted! NOTE:  This is not replicated out to clients atm. **/
+var int NumberOfMatchesPlayed;
 
-var AutomatedTestingDatum AutomatedTestingData;
 
-var int StatConnectionCounts;	// Used for Averages;
-var int StatPingTotals;
-var int StatPingMin;
-var int StatPingMax;
-
-var int StatPKLTotal;
-var int StatPKLMin;
-var int StatPKLMax;
-
-var int StatMaxInBPS, StatAvgInBPS;
-var int StatMaxOutBPS, StatAvgOutBPS;
-
-/** The online avatar for this player. May be None if we haven't downloaded it yet, or player doesn't have one. */
-var transient Texture2D Avatar;   // not replicated.
-
-cpptext
-{
-	// AActor interface.
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 
 replication
 {
 	// Things the server should send to the client.
-	if (bNetDirty)
-		Score, Deaths,
-		PlayerName, Team, bAdmin,
+	if ( bNetDirty && (Role == Role_Authority) )
+		Score, Deaths, bHasFlag, PlayerLocationHint,
+		PlayerName, PlayerAlias, Team, TeamID, bIsFemale, bAdmin,
 		bIsSpectator, bOnlySpectator, bWaitingPlayer, bReadyToPlay,
-		StartTime, bOutOfLives, bFromPreviousLevel,
-		// NOTE: This needs to be replicated to the owning client so don't move it from here
-		UniqueId;
+		StartTime, bOutOfLives, UniqueId, bControllerVibrationAllowed,
+		bFromPreviousLevel_Replicated;
 
-	// sent to everyone except the player that belongs to this pri
-	if (bNetDirty && !bNetOwner)
-		Ping;
+	if ( bNetDirty && (Role == Role_Authority) && (!bNetOwner || bDemoRecording) )
+		PacketLoss, Ping;
 
-	if (bNetInitial)
+	if ( bNetInitial && (Role == Role_Authority) )
 		PlayerID, bBot, bIsInactive;
 }
+
+
+/**
+* Returns true if the id from the other PRI matches this PRI's id
+*
+* @param OtherPRI the PRI to compare IDs with
+*/
+native final function bool AreUniqueNetIdsEqual(PlayerReplicationInfo OtherPRI);
+
+
+/**
+ * Returns the alias to use for this player.  If PlayerAlias is blank, then the player name
+ * is returned.
+ */
+native function string GetPlayerAlias();
+
 
 simulated event PostBeginPlay()
 {
@@ -166,6 +257,8 @@ simulated event PostBeginPlay()
 	}
 
 	StartTime = WorldInfo.GRI.ElapsedTime;
+	Timer();
+	SetTimer(1.5 + FRand(), true);
 }
 
 /* epic ===============================================
@@ -179,30 +272,21 @@ simulated event PostBeginPlay()
 simulated function ClientInitialize(Controller C)
 {
 	local Actor A;
-	local PlayerController PlayerOwner;
 
 	SetOwner(C);
 
-	PlayerOwner = PlayerController(C);
-	if (PlayerOwner != None)
+	if ( PlayerController(C) != None )
 	{
+		BindPlayerOwnerDataProvider();
+
 		// any replicated playercontroller  must be this client's playercontroller
-		if (Team != default.Team)
+		if ( Team != Default.Team )
 		{
 			// wasnt' able to call this in ReplicatedEvent() when Team was replicated, because PlayerController did not have me as its PRI
-			foreach AllActors(class'Actor', A)
-			{
+			ForEach AllActors(class'Actor', A)
 				A.NotifyLocalPlayerTeamReceived();
-			}
 		}
 	}
-}
-
-function SetPlayerTeam( TeamInfo NewTeam )
-{
-	bForceNetUpdate = Team != NewTeam;
-
-	Team = NewTeam;
 }
 
 /* epic ===============================================
@@ -218,7 +302,7 @@ simulated event ReplicatedEvent(name VarName)
 	local PlayerController PC;
 	local int WelcomeMessageNum;
 	local Actor A;
-	local UniqueNetId ZeroId;
+	local OnlineSubsystem Online;
 
 	if ( VarName == 'Team' )
 	{
@@ -236,12 +320,9 @@ simulated event ReplicatedEvent(name VarName)
 			if ( PC.PlayerReplicationInfo == self )
 			{
 				ForEach AllActors(class'Actor', A)
-				{
 					A.NotifyLocalPlayerTeamReceived();
-				}
-
-				break;
 			}
+			break;
 		}
 	}
 	else if ( VarName == 'PlayerName' )
@@ -263,7 +344,7 @@ simulated event ReplicatedEvent(name VarName)
 		// new player or name change
 		if ( bHasBeenWelcomed )
 		{
-			if( ShouldBroadCastWelcomeMessage() )
+			if( ShouldBroadCastWelcomeMessage() && !WorldInfo.IsConsoleBuild() )
 			{
 				ForEach LocalPlayerControllers(class'PlayerController', PC)
 				{
@@ -292,10 +373,11 @@ simulated event ReplicatedEvent(name VarName)
 	}
 	else if (VarName == 'UniqueId')
 	{
-		if (UniqueId != ZeroId)
+		Online = class'GameEngine'.static.GetOnlineSubsystem();
+		if (Online != None && Online.GameInterface != None && Online.GameInterface.GetGameSettings() != None)
 		{
 			// Register the player as part of the session
-			RegisterPlayerWithSession();
+			Online.GameInterface.RegisterPlayer(UniqueId,false);
 		}
 	}
 	else if (VarName == 'bIsInactive')
@@ -304,17 +386,23 @@ simulated event ReplicatedEvent(name VarName)
 		WorldInfo.GRI.RemovePRI(self);
 		WorldInfo.GRI.AddPRI(self);
 	}
+	//@hack: patch compatibility hack - can't add replication to bFromPreviousLevel
+	else if (VarName == 'bFromPreviousLevel_Replicated')
+	{
+		bFromPreviousLevel = bFromPreviousLevel_Replicated;
+	}
 }
 
-/**
- * update average ping based on newly received round trip timestamp.
- */
+/* epic ===============================================
+* ::UpdatePing
+update average ping based on newly received round trip timestamp.
+*/
 final native function UpdatePing(float TimeStamp);
 
 /**
  * Returns true if should broadcast player welcome/left messages.
  * Current conditions: must be a human player a network game */
-simulated function bool ShouldBroadCastWelcomeMessage(optional bool bExiting)
+simulated function bool ShouldBroadCastWelcomeMessage()
 {
 	return (!bIsInactive && WorldInfo.NetMode != NM_StandAlone);
 }
@@ -322,6 +410,7 @@ simulated function bool ShouldBroadCastWelcomeMessage(optional bool bExiting)
 simulated event Destroyed()
 {
 	local PlayerController PC;
+	local OnlineSubsystem OnlineSub;
 	local UniqueNetId ZeroId;
 
 	if ( WorldInfo.GRI != None )
@@ -329,7 +418,7 @@ simulated event Destroyed()
 		WorldInfo.GRI.RemovePRI(self);
 	}
 
-	if( ShouldBroadCastWelcomeMessage(TRUE) )
+	if( ShouldBroadCastWelcomeMessage() )
 	{
 		ForEach LocalPlayerControllers(class'PlayerController', PC)
 		{
@@ -337,10 +426,16 @@ simulated event Destroyed()
 		}
 	}
 
-	if (UniqueId != ZeroId)
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	// If there is a game and we are a client, unregister this remote player
+	if (WorldInfo.NetMode == NM_Client &&
+		OnlineSub != None &&
+		OnlineSub.GameInterface != None &&
+		OnlineSub.GameInterface.GetGameSettings() != None &&
+		UniqueId != ZeroId)
 	{
-		// Remove the player from the online session
-		UnregisterPlayerFromSession();
+		// Register the player as part of the session
+		OnlineSub.GameInterface.UnregisterPlayer(UniqueId);
 	}
 
     Super.Destroyed();
@@ -366,6 +461,47 @@ simulated function string GetHumanReadableName()
 	return PlayerName;
 }
 
+simulated function string GetLocationName()
+{
+	local String LocationString;
+
+    if( PlayerLocationHint == None )
+		return StringSpectating;
+
+	LocationString = PlayerLocationHint.GetLocationStringFor(self);
+	return (LocationString == "") ? StringUnknown : LocationString;
+}
+
+function UpdatePlayerLocation()
+{
+    local Volume V, Best;
+    local Pawn P;
+
+    if( Controller(Owner) != None )
+	{
+		P = Controller(Owner).Pawn;
+	}
+
+    if( P == None )
+	{
+		PlayerLocationHint = None;
+		return;
+    }
+
+    foreach P.TouchingActors( class'Volume', V )
+    {
+		if( V.LocationName == "" )
+			continue;
+
+		if( (Best != None) && (V.LocationPriority <= Best.LocationPriority) )
+			continue;
+
+		if( V.Encompasses(P) )
+			Best = V;
+	}
+	PlayerLocationHint = (Best != None) ? Best : P.WorldInfo;
+}
+
 /* DisplayDebug()
 list important controller attributes on canvas
 */
@@ -381,22 +517,30 @@ simulated function DisplayDebug(HUD HUD, out float YL, out float YPos)
 		HUD.Canvas.SetDrawColor(64,64,255);
 	HUD.Canvas.SetPos(4, YPos);
     HUD.Canvas.Font	= class'Engine'.Static.GetSmallFont();
-	HUD.Canvas.StrLen(PlayerName, XS, YS);
-	HUD.Canvas.DrawText(PlayerName);
+	HUD.Canvas.StrLen(PlayerName@"["$GetPlayerAlias()$"]", XS, YS);
+	HUD.Canvas.DrawText(PlayerName@"["$GetPlayerAlias()$"]");
 	HUD.Canvas.SetPos(4 + XS, YPos);
 	HUD.Canvas.Font	= class'Engine'.Static.GetTinyFont();
 	HUD.Canvas.SetDrawColor(255,255,0);
+	if ( bHasFlag )
+		HUD.Canvas.DrawText("   has flag ");
 
 	YPos += YS;
 	HUD.Canvas.SetPos(4, YPos);
 
-	if ( (PlayerController(Owner) != None) && (PlayerController(HUD.Owner).ViewTarget != PlayerController(HUD.Owner).Pawn) )
+	if ( !bBot && (PlayerController(HUD.Owner).ViewTarget != PlayerController(HUD.Owner).Pawn) )
 	{
 		HUD.Canvas.SetDrawColor(128,128,255);
 		HUD.Canvas.DrawText("      bIsSpec:"@bIsSpectator@"OnlySpec:"$bOnlySpectator@"Waiting:"$bWaitingPlayer@"Ready:"$bReadyToPlay@"OutOfLives:"$bOutOfLives);
 		YPos += YL;
 		HUD.Canvas.SetPos(4, YPos);
 	}
+}
+
+event Timer()
+{
+	UpdatePlayerLocation();
+	SetTimer(1.5 + FRand(), true);
 }
 
 event SetPlayerName(string S)
@@ -443,8 +587,10 @@ function OverrideWith(PlayerReplicationInfo PRI)
 	bWaitingPlayer = PRI.bWaitingPlayer;
 	bReadyToPlay = PRI.bReadyToPlay;
 	bOutOfLives = PRI.bOutOfLives || bOutOfLives;
+	FriendFollowedId = PRI.FriendFollowedID;
 
 	Team = PRI.Team;
+	TeamID = PRI.TeamID;
 }
 
 /* epic ===============================================
@@ -465,12 +611,8 @@ function CopyProperties(PlayerReplicationInfo PRI)
 	PRI.SavedNetworkAddress = SavedNetworkAddress;
 	PRI.Team = Team;
 	PRI.UniqueId = UniqueId;
-	PRI.AutomatedTestingData = AutomatedTestingData;
-}
-
-function IncrementDeaths(optional int Amt = 1)
-{
-	Deaths += Amt;
+	PRI.NumberOfMatchesPlayed = NumberOfMatchesPlayed;
+	PRI.FriendFollowedId = PRI.FriendFollowedID;
 }
 
 /** called by seamless travel when initializing a player on the other side - copy properties to the new PRI that should persist */
@@ -480,14 +622,85 @@ function SeamlessTravelTo(PlayerReplicationInfo NewPRI)
 	NewPRI.bOnlySpectator = bOnlySpectator;
 }
 
-
 /**
- * Sets the player's unique net id on the server.
+ * Finds the PlayerDataProvider that was registered with the CurrentGame data store for this PRI and links it to the
+ * owning player's PlayerOwner data store.
  */
-simulated function SetUniqueId( UniqueNetId PlayerUniqueId )
+simulated function BindPlayerOwnerDataProvider()
 {
-	// Store the unique id, so it will be replicated to all clients
-	UniqueId = PlayerUniqueId;
+	local PlayerController PlayerOwner;
+	local LocalPlayer LP;
+	local DataStoreClient DataStoreManager;
+	local CurrentGameDataStore CurrentGameData;
+	local PlayerDataProvider DataProvider;
+
+	LogInternal(">>" @ Self $ "::BindPlayerOwnerDataProvider" @ "(" $ PlayerName $ ")",'DevDataStore');
+
+	PlayerOwner = PlayerController(Owner);
+	if ( PlayerOwner != None )
+	{
+		// only works if this is a local player
+		LP = LocalPlayer(PlayerOwner.Player);
+		if ( LP != None )
+		{
+			// get the global data store client
+			DataStoreManager = class'UIInteraction'.static.GetDataStoreClient();
+			if ( DataStoreManager != None )
+			{
+				// find the "CurrentGame" data store
+				CurrentGameData = CurrentGameDataStore(DataStoreManager.FindDataStore('CurrentGame'));
+				if ( CurrentGameData != None )
+				{
+					// find the PlayerDataProvider that was created when this PRI was added to the GRI's PRI array.
+					DataProvider = CurrentGameData.GetPlayerDataProvider(Self);
+					if ( DataProvider != None )
+					{
+						// link it to the CurrentPlayer data provider
+						PlayerOwner.SetPlayerDataProvider(DataProvider);
+					}
+					else
+					{
+						// @todo - is this an error or should we create one here?
+						LogInternal("No player data provider registered for player " $ Self @ "(" $ PlayerName $ ")",'DevDataStore');
+					}
+				}
+				else
+				{
+					LogInternal("'CurrentGame' data store not found!",'DevDataStore');
+				}
+			}
+			else
+			{
+				LogInternal("Data store manager not found!",'DevDataStore');
+			}
+		}
+		else
+		{
+			LogInternal("Non local player:" @ PlayerOwner.Player,'DevDataStore');
+		}
+	}
+	else
+	{
+		LogInternal("Invalid owner:" @ Owner,'DevDataStore');
+	}
+
+	LogInternal("<<" @ Self $ "::BindPlayerOwnerDataProvider" @ "(" $ PlayerName $ ")",'DevDataStore');
+}
+
+/** Utility for seeing if this PRI is for a locally controller player. */
+simulated function bool IsLocalPlayerPRI()
+{
+	local PlayerController PC;
+	local LocalPlayer LP;
+
+	PC = PlayerController(Owner);
+	if(PC != None)
+	{
+		LP = LocalPlayer(PC.Player);
+		return (LP != None);
+	}
+
+	return FALSE;
 }
 
 simulated native function byte GetTeamNum();
@@ -533,79 +746,20 @@ simulated function bool IsInvalidName()
 	return false;
 }
 
-/**
- * The base implementation registers the player with the online session so that
- * recent players list and session counts are updated.
- */
-simulated function RegisterPlayerWithSession()
+function SetPlayerAlias(string NewAlias)
 {
-	local OnlineSubsystem Online;
-	local OnlineRecentPlayersList PlayersList;
-	local UniqueNetId ZeroId;
-
-	Online = class'GameEngine'.static.GetOnlineSubsystem();
-	if (UniqueId != ZeroId &&
-		Online != None &&
-		Online.GameInterface != None &&
-		SessionName != 'None' &&
-		Online.GameInterface.GetGameSettings(SessionName) != None)
-	{
-		// Register the player as part of the session
-		Online.GameInterface.RegisterPlayer(SessionName,UniqueId,false);
-		// If this is not us, then add the player to the recent players list
-		if (!bNetOwner)
-		{
-			PlayersList = OnlineRecentPlayersList(Online.GetNamedInterface('RecentPlayersList'));
-			if (PlayersList != None)
-			{
-				PlayersList.AddPlayerToRecentPlayers(UniqueId);
-			}
-		}
-	}
-}
-
-/**
- * The base implementation unregisters the player with the online session so that
- * session counts are updated.
- */
-simulated function UnregisterPlayerFromSession()
-{
-	local OnlineSubsystem OnlineSub;
-	local UniqueNetId ZeroId;
-
-	// If there is a game and we are a client, unregister this remote player
-	if (UniqueId != ZeroId &&
-		WorldInfo.NetMode == NM_Client &&
-		SessionName != 'None')
-	{
-		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
-		if (OnlineSub != None &&
-			OnlineSub.GameInterface != None &&
-			OnlineSub.GameInterface.GetGameSettings(SessionName) != None &&
-			// if host migration is currently in-progress then don't unregister players as this is handled manually (see RemoveMissingPeersFromSession)
-			!(WorldInfo.PeerHostMigration.bHostMigrationEnabled && WorldInfo.PeerHostMigration.HostMigrationProgress != HostMigration_None))
-		{
-			// Remove the player from the session
-			OnlineSub.GameInterface.UnregisterPlayer(SessionName,UniqueId);
-		}
-	}
-}
-
-/** return TRUE if PRI is primary (ie. non-splitscreen) player */
-simulated function bool IsPrimaryPlayer()
-{
-	return true;
+	PlayerAlias = NewAlias;
 }
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	RemoteRole=ROLE_SimulatedProxy
-	bAlwaysRelevant=True
-	NetUpdateFrequency=1
-	GameMessageClass=class'GameMessage'
-
-	// The default online session is the game one
-	SessionName="Game"
+   bControllerVibrationAllowed=True
+   StringDead="Morto"
+   StringSpectating="Spettatore"
+   StringUnknown="Sconosciuto"
+   GameMessageClass=Class'Engine.GameMessage'
+   TickGroup=TG_DuringAsyncWork
+   NetUpdateFrequency=1.000000
+   Name="Default__PlayerReplicationInfo"
+   ObjectArchetype=ReplicationInfo'Engine.Default__ReplicationInfo'
 }

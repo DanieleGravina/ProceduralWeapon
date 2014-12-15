@@ -4,7 +4,7 @@
  * Captures the scene as if viewed through a portal to a
  * 2D texture render target.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SceneCapturePortalComponent extends SceneCaptureComponent
 	native;
@@ -17,24 +17,24 @@ var(Capture) const float ScaleFOV;
  * (this will be the point where the scene is captured from) */
 var(Capture) const Actor ViewDestination;
 
-cpptext
-{
-public:
-
-	// UActorComponent interface
-
-	/**
-	* Attach a new portal capture component
-	*/
-	virtual void Attach();
-
-	// SceneCaptureComponent interface
-
-	/**
-	* Create a new probe with info needed to render the scene
-	*/
-	virtual class FSceneCaptureProbe* CreateSceneCaptureProbe();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** interface for changing TextureTarget, ScaleFOV, and ViewDestination */
 native noexport final function SetCaptureParameters( optional TextureRenderTarget2D NewTextureTarget = TextureTarget,
@@ -42,7 +42,9 @@ native noexport final function SetCaptureParameters( optional TextureRenderTarge
 
 defaultproperties
 {
-	ScaleFOV=1.f
-	FrameRate=1000
-	bSkipUpdateIfOwnerOccluded=true
+   ScaleFOV=1.000000
+   bSkipUpdateIfOwnerOccluded=True
+   FrameRate=1000.000000
+   Name="Default__SceneCapturePortalComponent"
+   ObjectArchetype=SceneCaptureComponent'Engine.Default__SceneCaptureComponent'
 }

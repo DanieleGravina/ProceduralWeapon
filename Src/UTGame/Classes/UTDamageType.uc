@@ -4,7 +4,7 @@
  * NOTE:  we can not do:  HideDropDown on this class as we need to be able to use it in SeqEvent_TakeDamage for objects taking
  * damage from any UTDamageType!
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTDamageType extends DamageType
@@ -13,12 +13,6 @@ class UTDamageType extends DamageType
 var	LinearColor		DamageBodyMatColor;
 var float           DamageOverlayTime;
 var float           DeathOverlayTime;
-var float			XRayEffectTime;
-
-var bool					bCausesBlood;				// Whether damage produces blood from victim
-var bool					bLocationalHit;				// Whether damage is to a specific location on victim, or generalized.
-var bool					bAlwaysGibs;				// Kills with this damage type always blow victim up into small chunks
-var bool					bNeverGibs;					// Kills with this damage type *never* blow victim up into small chunks
 
 var		bool			bDirectDamage;
 var		bool            bSeversHead;
@@ -29,6 +23,9 @@ var		bool			bLeaveBodyEffect;
 var		bool            bBulletHit;
 var		bool			bVehicleHit;		// caused by vehicle running over you
 var		bool			bSelfDestructDamage;
+
+/** If true, this type of damage blows up barricades */
+var		bool			bDestroysBarricades;
 
 var		float           GibPerterbation;				// When gibbing, the chunks will fly off in random directions.
 var		int				GibThreshold;					// Health threshold at which this damagetype gibs
@@ -50,14 +47,13 @@ var() bool                  bUseDamageBasedDeathEffects;
 /** if set, UTPawn::Dying::CalcCamera() calls this DamageType's CalcDeathCamera() function to handle the camera */
 var bool bSpecialDeathCamera;
 
-/** Particle system trail to attach to gibs caused by this damage type 
-    GibTrail would normally be blood, but we only have robots now. */
+/** Particle system trail to attach to gibs caused by this damage type */
 var ParticleSystem GibTrail;
 
 /** This is the Camera Effect you get when you die from this Damage Type **/
-var protected class<UDKEmitCameraEffect> DeathCameraEffectVictim;
+var protected class<UTEmitCameraEffect> DeathCameraEffectVictim;
 /** This is the Camera Effect you get when you cause from this Damage Type **/
-var protected class<UDKEmitCameraEffect> DeathCameraEffectInstigator;
+var protected class<UTEmitCameraEffect> DeathCameraEffectInstigator;
 
 /************** DEATH ANIM *********/
 
@@ -114,32 +110,8 @@ var LinearColor HitEffectColor;
 /** whether getting gibbed with this damage type attaches the camera to the head gib */
 var bool bHeadGibCamera;
 
-/** Whether or not this damage type can cause a blood splatter **/
-var bool bCausesBloodSplatterDecals;
-/** if true, this damage type should never harm its instigator */
-var bool bDontHurtInstigator;
-
-var() localized string     	DeathString;	 			// string to describe death by this type of damage
-var() localized string		FemaleSuicide, MaleSuicide;	// Strings to display when someone dies
-
-/** 
-  * @RETURN string for death caused by this damagetype.
-  */
-static function string DeathMessage(PlayerReplicationInfo Killer, PlayerReplicationInfo Victim)
-{
-	return Default.DeathString;
-}
-
-/** 
-  * @RETURN string for suicide caused by this damagetype.
-  */
-static function string SuicideMessage(PlayerReplicationInfo Victim)
-{
-	if ( (UTPlayerReplicationInfo(Victim) != None) && UTPlayerReplicationInfo(Victim).bIsFemale )
-		return Default.FemaleSuicide;
-	else
-		return Default.MaleSuicide;
-}
+/** Scaling applied to kills obtained with this damage type */
+var float HeroPointsMultiplier;
 
 /**
  * Possibly spawn a custom hit effect
@@ -162,7 +134,7 @@ static function int IncrementKills(UTPlayerReplicationInfo KillerPRI)
 		UTPlayerController(KillerPRI.Owner).ReceiveLocalizedMessage( Default.RewardAnnouncementClass, Default.RewardAnnouncementSwitch );
 		if ( default.RewardEvent == '' )
 		{
-			`warn("No reward event for "$default.class);
+			WarnInternal("No reward event for "$default.class);
 		}
 		else
 		{
@@ -193,7 +165,7 @@ static function name GetStatsName(name StatType)
 		}
 		else
 		{
-			`log(Default.Name$" does not have a Killstat value");
+			LogInternal(Default.Name$" does not have a Killstat value");
 			return 'KILLS_ENVIRONMENT';
 		}
 	case 'DEATHS':
@@ -203,7 +175,7 @@ static function name GetStatsName(name StatType)
 		}
 		else
 		{
-			`log(Default.Name$" does not have a Death stat value");
+			LogInternal(Default.Name$" does not have a Death stat value");
 			return 'DEATHS_ENVIRONMENT';
 		}
 	case 'SUICIDES':
@@ -213,12 +185,12 @@ static function name GetStatsName(name StatType)
 		}
 		else
 		{
-			`log(Default.Name$" does not have a suicide stat value");
+			LogInternal(Default.Name$" does not have a suicide stat value");
 			return 'SUICIDES_ENVIRONMENT';
 		}
 	}
 
-	`log(StatType$" was invalid");
+	LogInternal(StatType$" was invalid");
 	return 'BAD_STAT';
 }
 
@@ -262,17 +234,13 @@ static function SpawnGibEffects(UTGib Gib)
 */
 static function bool ShouldGib(UTPawn DeadPawn)
 {
-	if (DeadPawn.WorldInfo.IsConsoleBuild(CONSOLE_Mobile))
-	{
-		return true;
-	}
 	return ( !Default.bNeverGibs && (Default.bAlwaysGibs || (DeadPawn.AccumulateDamage > Default.AlwaysGibDamageThreshold) || ((DeadPawn.Health < Default.GibThreshold) && (DeadPawn.AccumulateDamage > Default.MinAccumulateDamageThreshold))) );
 }
 
 
 static function DoCustomDamageEffects(UTPawn ThePawn, class<UTDamageType> TheDamageType, const out TraceHitInfo HitInfo, vector HitLocation)
 {
-	`log("UTDamageType base DoCustomDamageEffects should never be called");
+	LogInternal("UTDamageType base DoCustomDamageEffects should never be called");
 	// ScriptTrace();
 }
 
@@ -285,7 +253,8 @@ static function DoCustomDamageEffects(UTPawn ThePawn, class<UTDamageType> TheDam
 static function CreateDeathSkeleton(UTPawn ThePawn, class<UTDamageType> TheDamageType, const out TraceHitInfo HitInfo, vector HitLocation)
 {
 	local Array<Attachment> PreviousAttachments;
-	local int				Idx;
+	local int				i, Idx;
+	local array<texture>	Textures;
 	local SkeletalMeshComponent PawnMesh;
 	local vector Impulse;
 	local vector ShotDir;
@@ -322,8 +291,11 @@ static function CreateDeathSkeleton(UTPawn ThePawn, class<UTDamageType> TheDamag
 		MITV_BurnOut.SetParent( FamilyInfo.default.SkeletonBurnOutMaterials[Idx] );
 		// this can have a max of 6 before it wraps and become visible again
 		PawnMesh.SetMaterial( Idx, MITV_BurnOut );
-		MITV_BurnOut.SetScalarStartTime( 'BurnAmount', 1.0f );
+		MITV_BurnOut.SetScalarStartTime( 'BurnAmount', 1.0f );	
 	}
+
+
+	PawnMesh.MotionBlurScale = 0.0f;
 
 	// Make sure all bodies are unfixed
 	if( PawnMesh.PhysicsAssetInstance != none )
@@ -335,7 +307,7 @@ static function CreateDeathSkeleton(UTPawn ThePawn, class<UTDamageType> TheDamag
 	}
 	else
 	{
-		`log( "PawnMesh.PhysicsAssetInstance is NONE!!" );
+		LogInternal("PawnMesh.PhysicsAssetInstance is NONE!!");
 	}
 
 	for( Idx = 0; Idx < PreviousAttachments.length; ++Idx )
@@ -348,7 +320,13 @@ static function CreateDeathSkeleton(UTPawn ThePawn, class<UTDamageType> TheDamag
 	// set all of the materials on the death mesh to be resident
 	for( Idx = 0; Idx < FamilyInfo.default.DeathMeshNumMaterialsToSetResident; ++Idx )
 	{
-		FamilyInfo.default.DeathMeshSkelMesh.Materials[Idx].SetForceMipLevelsToBeResident( false, false, 10.0f );
+		Textures = FamilyInfo.default.DeathMeshSkelMesh.Materials[Idx].GetMaterial().GetTextures();
+
+		for( i = 0; i < Textures.Length; ++i )
+		{
+			//`log( "Texture setting bForceMiplevelsToBeResident TRUE: " $ Textures[i] );
+			Texture2D(Textures[i]).TimeToForceMipLevelsToBeResident = 10.0f;
+		}
 	}
 
 
@@ -384,7 +362,7 @@ static function BoneBreaker(UTPawn ThePawn, SkeletalMeshComponent TheMesh, vecto
 		}
 		else
 		{
-			`log( "was unable to find the Constraint!!!" );
+			LogInternal("was unable to find the Constraint!!!");
 		}
 	}
 }
@@ -410,9 +388,9 @@ static function CreateDeathGoreChunks(UTPawn ThePawn, class<UTDamageType> TheDam
 
 	// spawn all other gibs
 	bSpawnHighDetail = !ThePawn.WorldInfo.bDropDetail && (ThePawn.Worldinfo.TimeSeconds - ThePawn.LastRenderTime < 1);
-	for( i = 0; i < ThePawn.CurrCharClassInfo.default.Gibs.length; ++i )
+	for( i = 0; i < ThePawn.CurrFamilyInfo.default.Gibs.length; ++i )
 	{
-		GibInfo = ThePawn.CurrCharClassInfo.default.Gibs[i];
+		GibInfo = ThePawn.CurrFamilyInfo.default.Gibs[i];
 
 		if( bSpawnHighDetail || !GibInfo.bHighDetailOnly )
 		{
@@ -444,58 +422,44 @@ simulated static function CalcDeathCamera(UTPawn P, float DeltaTime, out vector 
 
 
 /** Return the DeathCameraEffect that will be played on the instigator that was caused by this damagetype and the Pawn type (e.g. robot) */
-simulated static function class<UDKEmitCameraEffect> GetDeathCameraEffectInstigator( UTPawn UTP )
+simulated static function class<UTEmitCameraEffect> GetDeathCameraEffectInstigator( UTPawn UTP )
 {
 	return default.DeathCameraEffectInstigator;
 }
 
 /** Return the DeathCameraEffect that will be played on the victim that was caused by this damagetype and the Pawn type (e.g. robot) */
-simulated static function class<UDKEmitCameraEffect> GetDeathCameraEffectVictim( UTPawn UTP )
+simulated static function class<UTEmitCameraEffect> GetDeathCameraEffectVictim( UTPawn UTP )
 {
 	return default.DeathCameraEffectVictim;
 }
 
-
 defaultproperties
 {
-	KillStatsName=KILLS_ENVIRONMENT //catchall for stats
-	DeathStatsName=DEATHS_ENVIRONMENT //catchall for stats
-	SuicideStatsName=SUICIDES_ENVIRONMENT //catchall for stats
-
-	RewardAnnouncementClass=class'UTWeaponRewardMessage'
-
-	DamageBodyMatColor=(R=10)
-	DamageOverlayTime=0.1
-	DeathOverlayTime=0.1
-	bDirectDamage=true
-	GibPerterbation=0.06
-	GibThreshold=-50
-	GibTrail=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
-	MinAccumulateDamageThreshold=50
-	AlwaysGibDamageThreshold=150
-	PhysicsTakeHitMomentumThreshold=250.0
-	RadialDamageImpulse=750
-
-	bAnimateHipsForDeathAnim=true
-	DeathAnimRate=1.0
-
-	NodeDamageScaling=1.0
-	CustomTauntIndex=-1
-	bComplainFriendlyFire=true
-	bHeadGibCamera=true
-
-	bCausesFracture=true
-
-	// Short "pop" of damage
-	Begin Object Class=ForceFeedbackWaveform Name=ForceFeedbackWaveform0
-		Samples(0)=(LeftAmplitude=64,RightAmplitude=96,LeftFunction=WF_LinearDecreasing,RightFunction=WF_LinearDecreasing,Duration=0.25)
-	End Object
-	DamagedFFWaveform=ForceFeedbackWaveform0
-	// Pretty violent rumble
-	Begin Object Class=ForceFeedbackWaveform Name=ForceFeedbackWaveform1
-		Samples(0)=(LeftAmplitude=100,RightAmplitude=100,LeftFunction=WF_Constant,RightFunction=WF_Constant,Duration=0.75)
-	End Object
-	KilledFFWaveform=ForceFeedbackWaveform1
+   DamageBodyMatColor=(R=10.000000,G=0.000000,B=0.000000,A=1.000000)
+   DamageOverlayTime=0.100000
+   DeathOverlayTime=0.100000
+   bDirectDamage=True
+   bAnimateHipsForDeathAnim=True
+   bComplainFriendlyFire=True
+   bHeadGibCamera=True
+   GibPerterbation=0.060000
+   GibThreshold=-50
+   MinAccumulateDamageThreshold=50
+   AlwaysGibDamageThreshold=150
+   PhysicsTakeHitMomentumThreshold=250.000000
+   GibTrail=ParticleSystem'T_FX.Effects.P_FX_Bloodsmoke_Trail'
+   DeathAnimRate=1.000000
+   NodeDamageScaling=1.000000
+   KillStatsName="KILLS_ENVIRONMENT"
+   DeathStatsName="DEATHS_ENVIRONMENT"
+   SuicideStatsName="SUICIDES_ENVIRONMENT"
+   RewardAnnouncementClass=Class'UTGame.UTWeaponRewardMessage'
+   CustomTauntIndex=-1
+   HitEffectColor=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   HeroPointsMultiplier=1.000000
+   RadialDamageImpulse=750.000000
+   DamagedFFWaveform=ForceFeedbackWaveform'UTGame.Default__UTDamageType:ForceFeedbackWaveform0'
+   KilledFFWaveform=ForceFeedbackWaveform'UTGame.Default__UTDamageType:ForceFeedbackWaveform1'
+   Name="Default__UTDamageType"
+   ObjectArchetype=DamageType'Engine.Default__DamageType'
 }
-
-

@@ -1,7 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTProj_Grenade extends UTProjectile;
+class UTProj_Grenade extends UTProjectile
+	native;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Set the initial velocity and cook time
@@ -81,35 +87,35 @@ simulated function PhysicsVolumeChange( PhysicsVolume NewVolume )
 	Super.PhysicsVolumeChange(NewVolume);
 }
 
-
 defaultproperties
 {
-	ProjFlightTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_Smoke_Trail'
-
-	ProjExplosionTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_RocketExplosion'
-	ExplosionLightClass=class'UTGame.UTRocketExplosionLight'
-
-	speed=700
-	MaxSpeed=1000.0
-	Damage=100.0
-	DamageRadius=200
-	MomentumTransfer=50000
-	MyDamageType=class'UTDmgType_Grenade'
-	LifeSpan=0.0
-	ExplosionSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Impact_Cue'
-	ExplosionDecal=MaterialInstanceTimeVarying'WP_RocketLauncher.Decals.MITV_WP_RocketLauncher_Impact_Decal01'
-	DecalWidth=128.0
-	DecalHeight=128.0
-	bCollideWorld=true
-	bBounce=true
-	TossZ=+245.0
-	Physics=PHYS_Falling
-	CheckRadius=36.0
-
-	ImpactSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_GrenadeFloor_Cue'
-
-	bNetTemporary=False
-	bWaitForEffects=false
-
-	CustomGravityScaling=0.5
+   ExplosionSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Impact_Cue'
+   ProjFlightTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_Smoke_Trail'
+   ProjExplosionTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RocketLauncher_RocketExplosion'
+   ExplosionDecal=MaterialInstanceTimeVarying'WP_RocketLauncher.Decals.MITV_WP_RocketLauncher_Impact_Decal01'
+   DecalWidth=128.000000
+   DecalHeight=128.000000
+   TossZ=245.000000
+   CheckRadius=36.000000
+   ExplosionLightClass=Class'UTGame.UTRocketExplosionLight'
+   CustomGravityScaling=0.500000
+   Speed=700.000000
+   MaxSpeed=1000.000000
+   Damage=100.000000
+   DamageRadius=200.000000
+   MomentumTransfer=50000.000000
+   MyDamageType=Class'UTGame.UTDmgType_Grenade'
+   ImpactSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_GrenadeFloor_Cue'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Physics=PHYS_Falling
+   bNetTemporary=False
+   bBounce=True
+   LifeSpan=0.000000
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTProj_Grenade"
+   ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
 }

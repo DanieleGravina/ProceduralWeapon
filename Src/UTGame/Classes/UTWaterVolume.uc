@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTWaterVolume extends WaterVolume
@@ -104,26 +104,18 @@ simulated function PlayEntrySplash(Actor Other)
 
 defaultproperties
 {
-	TerminalVelocity=+01500.000000
-	EntrySound=SoundCue'A_Character_Footsteps.FootSteps.A_Character_Footstep_WaterDeepLandCue'
-	ExitSound=SoundCue'A_Character_Footsteps.FootSteps.A_Character_Footstep_WaterDeepCue'
-
-	ProjectileEntryEffect=ParticleSystem'Envy_Effects.Particles.P_WP_Water_Splash_Small'
-
-// 	2.Keep the X axis always facing forward
-//
-// 	3.Set Particle Params:   Name:  Direction
-// MinInput:     X:-5
-// Y:-5
-// Z: 0
-//
-// MaxInput:   X:5
-// Y:5
-// Z:0
-//
-//
-//   X will be how much the VH is moving forward or backward.  If the VH is moving full speed forward set X to 5 if it is moving full speed backwards set X to -5.   Y axis is Left and right, Positive will be right negative is left.  Dont have to worry about Z axis.
-
-	PS_EnterWaterEffect_Pawn=ParticleSystem'Envy_Level_Effects_2.Vehicle_Water_Effects.P_Player_Water_Impact'
-	PS_EnterWaterEffect_Vehicle=ParticleSystem'Envy_Level_Effects_2.Vehicle_Water_Effects.P_General_VH_Water_Impact'
+   PS_EnterWaterEffect_Pawn=ParticleSystem'Envy_Level_Effects_2.Vehicle_Water_Effects.P_Player_Water_Impact'
+   PS_EnterWaterEffect_Vehicle=ParticleSystem'Envy_Level_Effects_2.Vehicle_Water_Effects.P_General_VH_Water_Impact'
+   ProjectileEntryEffect=ParticleSystem'Envy_Effects.Particles.P_WP_Water_Splash_Small'
+   EntrySound=SoundCue'A_Character_Footsteps.FootSteps.A_Character_Footstep_WaterDeepLandCue'
+   ExitSound=SoundCue'A_Character_Footsteps.FootSteps.A_Character_Footstep_WaterDeepCue'
+   TerminalVelocity=1500.000000
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__WaterVolume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__WaterVolume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   CollisionComponent=BrushComponent0
+   Name="Default__UTWaterVolume"
+   ObjectArchetype=WaterVolume'Engine.Default__WaterVolume'
 }

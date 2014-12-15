@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // CheatManager
@@ -7,46 +7,11 @@
 // only spawned in single player mode
 //=============================================================================
 
-class UTCheatManager extends GameCheatManager within GamePlayerController;
-
-`include(UTGame\UTStats.uci);
+class UTCheatManager extends CheatManager within PlayerController
+	native;
 
 var class<LocalMessage> LMC;
 var SpeechRecognition RecogObject;
-
-exec function ViewFlag()
-{
-	local AIController C;
-
-	foreach WorldInfo.AllControllers(class'AIController', C)
-	{
-		if (UTPlayerReplicationInfo(C.PlayerReplicationInfo) != None && UTPlayerReplicationInfo(C.PlayerReplicationInfo).bHasFlag)
-		{
-			SetViewTarget(C.Pawn);
-			return;
-		}
-	}
-}
-
-exec function Glow(float F)
-{
-	local UTVehicle V;
-
-	ForEach DynamicActors(class'UTVehicle' , V)
-	{
-		V.LightEnvironment.AmbientGlow = MakeLinearColor(F,F,F,1.0);
-	}
-}
-
-exec function LM( string MessageClassName )
-{
-	LMC = class<LocalMessage>(DynamicLoadObject(MessageClassName, class'Class'));
-}
-
-exec function LMS( int switch )
-{
-	ReceiveLocalizedMessage(LMC, switch, PlayerReplicationInfo, PlayerReplicationInfo);
-}
 
 /** Summon a vehicle */
 exec function SummonV( string ClassName )
@@ -54,7 +19,8 @@ exec function SummonV( string ClassName )
 	local class<actor> NewClass;
 	local vector SpawnLoc;
 
-	`log( "Fabricate " $ ClassName );
+	class'Engine'.static.CheatWasEnabled();
+	LogInternal("Fabricate " $ ClassName);
 	NewClass = class<actor>( DynamicLoadObject( "UTGameContent.UTVehicle_"$ClassName, class'Class' ) );
 	if ( NewClass == None )
 	{
@@ -75,25 +41,48 @@ exec function SummonV( string ClassName )
 */
 exec function AllWeapons()
 {
+	local bool bTranslocatorBanned;
+	local UTVehicleFactory VF;
+
 	if( (WorldInfo.NetMode!=NM_Standalone) || (Pawn == None) )
 		return;
 
+	class'Engine'.static.CheatWasEnabled();
+	GiveWeapon("UTGameContent.UTWeap_Avril_Content");
+	GiveWeapon("UTGameContent.UTWeap_BioRifle_Content");
+	GiveWeapon("UTGame.UTWeap_FlakCannon");
 	GiveWeapon("UTGame.UTWeap_LinkGun");
-	GiveWeapon("UTGameContent.UTWeap_RocketLauncher_Content");
-	GiveWeapon("UTGameContent.UTWeap_ShockRifle");
-	GiveWeapon("UTGame.UTWeap_Physicsgun");
+	GiveWeapon("UTGameContent.UTWeap_Redeemer_Content");
+	GiveWeapon("UTGame.UTWeap_RocketLauncher");
+	GiveWeapon("UTGame.UTWeap_ShockRifle");
+	GiveWeapon("UTGame.UTWeap_SniperRifle");
+	GiveWeapon("UTGame.UTWeap_Stinger");
+	bTranslocatorBanned = false;
+	ForEach WorldInfo.AllNavigationPoints(class'UTVehicleFactory', VF)
+	{
+		bTranslocatorBanned = true;
+	}
+	if(!bTranslocatorBanned)
+	{
+		GiveWeapon("UTGameContent.UTWeap_Translocator_Content");
+	}
 }
 
 exec function DoubleUp()
 {
-	
+	local UTWeap_Enforcer MyEnforcer;
+
+	class'Engine'.static.CheatWasEnabled();
+	MyEnforcer = UTWeap_Enforcer(Pawn.FindInventoryType(class'UTWeap_Enforcer'));
+	MyEnforcer.DenyPickupQuery(class'UTWeap_Enforcer', None);
 }
 
 exec function PhysicsGun()
 {
+	class'Engine'.static.CheatWasEnabled();
 	if (Pawn != None)
 	{
-		GiveWeapon("UTGame.UTWeap_PhysicsGun");
+		GiveWeapon("UTGameContent.UTWeap_PhysicsGun");
 	}
 }
 
@@ -102,6 +91,7 @@ exec function PhysicsGun()
 */
 exec function AllAmmo()
 {
+	class'Engine'.static.CheatWasEnabled();
 	if ( (Pawn != None) && (UTInventoryManager(Pawn.InvManager) != None) )
 	{
 		UTInventoryManager(Pawn.InvManager).AllAmmo(true);
@@ -111,6 +101,7 @@ exec function AllAmmo()
 
 exec function Invisible(bool B)
 {
+	class'Engine'.static.CheatWasEnabled();
 	if ( UTPawn(Pawn) != None )
 	{
 		UTPawn(Pawn).SetInvisible(B);
@@ -119,8 +110,9 @@ exec function Invisible(bool B)
 
 exec function FreeCamera()
 {
-	UTPlayerController(Outer).bFreeCamera = !UTPlayerController(Outer).bFreeCamera;
-	UTPlayerController(Outer).SetBehindView(UTPlayerController(Outer).bFreeCamera);
+	class'Engine'.static.CheatWasEnabled();
+		UTPlayerController(Outer).bFreeCamera = !UTPlayerController(Outer).bFreeCamera;
+		UTPlayerController(Outer).SetBehindView(UTPlayerController(Outer).bFreeCamera);
 }
 
 exec function ViewBot()
@@ -129,6 +121,7 @@ exec function ViewBot()
 	local bool bFound;
 	local AIController C;
 
+	class'Engine'.static.CheatWasEnabled();
 	foreach WorldInfo.AllControllers(class'AIController', C)
 	{
 		if (C.Pawn != None && C.PlayerReplicationInfo != None)
@@ -164,6 +157,7 @@ exec function KillBadGuys()
 	local playercontroller PC;
 	local UTPawn p;
 
+	class'Engine'.static.CheatWasEnabled();
 	PC = UTPlayerController(Outer);
 
 	if (PC!=none)
@@ -180,6 +174,7 @@ exec function KillBadGuys()
 
 exec function RBGrav(float NewGravityScaling)
 {
+	class'Engine'.static.CheatWasEnabled();
 	WorldInfo.RBPhysicsGravityScaling = NewGravityScaling;
 }
 
@@ -214,6 +209,8 @@ exec function EditWeapon(string WhichWeapon)
 	local array<string> weaps;
 	local string s;
 	local int i;
+
+	class'Engine'.static.CheatWasEnabled();
 	if (WhichWeapon != "")
 	{
 		ConsoleCommand("Editactor class="$WhichWeapon);
@@ -232,8 +229,21 @@ exec function EditWeapon(string WhichWeapon)
 
 		for (i=0;i<Weaps.Length;i++)
 		{
-			`log("Weapon"@i@"="@Weaps[i]);
+			LogInternal("Weapon"@i@"="@Weaps[i]);
 		}
+	}
+}
+
+exec function DestroyPowerCore(optional byte Team)
+{
+	local UTOnslaughtGame Game;
+
+	class'Engine'.static.CheatWasEnabled();
+	Game = UTOnslaughtGame(WorldInfo.Game);
+	if (Game != None)
+	{
+		Game.PowerCore[Team].Health = 0;
+		Game.PowerCore[Team].DisableObjective(None);
 	}
 }
 
@@ -242,6 +252,7 @@ exec function KillOtherBots()
 {
 	local UTBot B;
 
+	class'Engine'.static.CheatWasEnabled();
 	UTGame(WorldInfo.Game).DesiredPlayerCount = WorldInfo.Game.NumPlayers + 1;
 	foreach WorldInfo.AllControllers(class'UTBot', B)
 	{
@@ -256,44 +267,8 @@ exec function KillOtherBots()
 	}
 }
 
-
-
-//// START:  Decal testing code
-exec function SpawnABloodDecal()
-{
-	LeaveADecal( Pawn.Location, vect(0,0,0) );
-}
-
-simulated function LeaveADecal( vector HitLoc, vector HitNorm )
-{
-	local MaterialInstance MIC_Decal;
-	local Actor TraceActor;
-	local vector out_HitLocation;
-	local vector out_HitNormal;
-	local vector TraceDest;
-	local vector TraceStart;
-	local vector TraceExtent;
-	local TraceHitInfo HitInfo;
-
-	// these should be randomized
-	TraceStart = HitLoc + ( Vect(0,0,15));
-	TraceDest =  HitLoc - ( Vect(0,0,100));
-
-	TraceActor = Trace( out_HitLocation, out_HitNormal, TraceDest, TraceStart, false, TraceExtent, HitInfo, TRACEFLAG_PhysicsVolumes );
-
-	if( TraceActor != None )
-	{
-		MIC_Decal = new(Outer) class'MaterialInstanceTimeVarying';
-		MIC_Decal.SetParent( MaterialInstanceTimeVarying'CH_Gibs.Decals.BloodSplatter' );
-
-		WorldInfo.MyDecalManager.SpawnDecal(MIC_Decal, out_HitLocation, rotator(-out_HitNormal), 200, 200, 10, false,, HitInfo.HitComponent, true, false, HitInfo.BoneName, HitInfo.Item, HitInfo.LevelIndex);
-
-		MaterialInstanceTimeVarying(MIC_Decal).SetScalarStartTime( 'DissolveAmount',  3.0f );
-		MaterialInstanceTimeVarying(MIC_Decal).SetScalarStartTime( 'BloodAlpha',  3.0f );
-		MIC_Decal.SetScalarParameterValue( 'DissolveAmount',  3.0f );
-		MIC_Decal.SetScalarParameterValue( 'BloodAlpha',  3.0f );
-	}
-}
+/** Cheat that unocks all possible characters. */
+exec native function UnlockAllChars();
 
 
 exec function TiltIt( bool bActive )
@@ -301,11 +276,10 @@ exec function TiltIt( bool bActive )
 	SetControllerTiltActive( bActive );
 }
 
-
 exec function ShowStickBindings()
 {
 	local int BindIndex;
-	`log( PlayerInput.Bindings.Length );
+	LogInternal(PlayerInput.Bindings.Length);
 
 	for( BindIndex = 0; BindIndex < PlayerInput.Bindings.Length; ++BindIndex )
 	{
@@ -317,7 +291,7 @@ exec function ShowStickBindings()
 
 			)
 		{
-			`log( " name: " $ PlayerInput.Bindings[BindIndex].Name $ " command: " $ PlayerInput.Bindings[BindIndex].Command );
+			LogInternal(" name: " $ PlayerInput.Bindings[BindIndex].Name $ " command: " $ PlayerInput.Bindings[BindIndex].Command);
 			//PlayerInput.Bindings[BindIndex].Command = TheCommand;
 		}
 		//`log( " " $ PlayerInput.Bindings[BindIndex].Command );
@@ -329,7 +303,7 @@ exec function SetStickBind( float val )
 	local int BindIndex;
 	local string cmd;
 
-	`log( "SetStickBind" );
+	LogInternal("SetStickBind");
 
 	for( BindIndex = 0; BindIndex < PlayerInput.Bindings.Length; ++BindIndex )
 	{
@@ -340,98 +314,13 @@ exec function SetStickBind( float val )
 		{
 			cmd = "Axis aLookup Speed=" $ val $ " DeadZone=0.3";
 			PlayerInput.Bindings[BindIndex].Command = cmd;
-			`log( " command: " $ cmd @ PlayerInput.Bindings[BindIndex].Command );
+			LogInternal(" command: " $ cmd @ PlayerInput.Bindings[BindIndex].Command);
 		}
 	}
 }
 
-exec function KillAll(class<actor> aClass)
+defaultproperties
 {
-	local Actor A;
-	local PlayerController PC;
-
-	foreach WorldInfo.AllControllers(class'PlayerController', PC)
-	{
-		PC.ClientMessage("Killed all "$string(aClass));
-	}
-
-	if ( ClassIsChildOf(aClass, class'AIController') )
-	{
-		UTGame(WorldInfo.Game).KillBots();
-		return;
-	}
-	if ( ClassIsChildOf(aClass, class'Pawn') )
-	{
-		KillAllPawns(class<Pawn>(aClass));
-		return;
-	}
-	ForEach DynamicActors(class 'Actor', A)
-		if ( ClassIsChildOf(A.class, aClass) )
-			A.Destroy();
+   Name="Default__UTCheatManager"
+   ObjectArchetype=CheatManager'Engine.Default__CheatManager'
 }
-
-exec function TestUploadGameStats()
-{
-	local GameplayEventsWriterBase GameStats;
-	local PlayerController PC;
-	local TeamInfo Team;
-
-	PC = Outer;
-	Team = PC.WorldInfo.GRI.Teams[0];
-
-	GameStats =  new class'GameplayEventsUploadAnalytics';
-	UTGame(PC.WorldInfo.Game).GameplayEventsWriter = GameStats;
-	GameStats.StartLogging();
-
-	// Game stats
-	`RecordGameIntStat(MATCH_STARTED,1);
-	`RecordGameStringStat(GAME_CLASS,"TDM");
-	`RecordGameFloatStat(ROUND_STARTED,1.0);
-	`RecordGamePositionStat(MATCH_ENDED,PC.Location,1);
-
-	// Team stats
-	`RecordTeamStringStat(CREATED, Team, "Ready");
-	`RecordTeamIntStat(MATCH_WON, Team, 1);
-	`RecordTeamFloatStat(ROUND_WON, Team, 1.0);
-
-	// Player stats
-	`RecordLoginChange(LOGIN,PC,PC.PlayerReplicationInfo.PlayerName,PC.PlayerReplicationInfo.UniqueId,false);
-	`RecordLoginChange(LOGOUT,PC,PC.PlayerReplicationInfo.PlayerName,PC.PlayerReplicationInfo.UniqueId,false);
-	`RecordPlayerIntStat(ROUND_WON,PC,1);
-	`RecordPlayerFloatStat(ROUND_STALEMATE,PC,1.0);
-	`RecordPlayerSpawn(PC,class'UTPawn',255);
-	`RecordPlayerPlayerEvent(KILL,PC,PC);
-
-	// Weapon stats
-	`RecordKillEvent(NORMAL,PC,class'UTDamageType',PC);
-	`RecordDeathEvent(NORMAL,PC,class'UTDamageType',PC);
-	`RecordWeaponIntStat(WEAPON_FIRED,PC,class'UTWeap_LinkGun',1);
-	`RecordProjectileIntStat(WEAPON_FIRED,PC,class'UTProjectile',1);
-	`RecordDamage(WEAPON_DAMAGE,PC,class'UTDamageType',PC,1);
-
-	UTGame(PC.WorldInfo.Game).GameplayEventsWriter = None;
-	GameStats.EndLogging();
-}
-
-// Kill non-player pawns and their controllers
-function KillAllPawns(class<Pawn> aClass)
-{
-	local Pawn P;
-
-	UTGame(WorldInfo.Game).KillBots();
-	ForEach DynamicActors(class'Pawn', P)
-		if ( ClassIsChildOf(P.Class, aClass)
-			&& !P.IsPlayerPawn() )
-		{
-			if ( P.Controller != None )
-				P.Controller.Destroy();
-			P.Destroy();
-		}
-}
-
-DefaultProperties
-{
-
-}
-
-

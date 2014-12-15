@@ -1,8 +1,15 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleAttractorBase extends ParticleModule
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object)
 	abstract;
+
+defaultproperties
+{
+   Name="Default__ParticleModuleAttractorBase"
+   ObjectArchetype=ParticleModule'Engine.Default__ParticleModule'
+}

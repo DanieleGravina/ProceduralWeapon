@@ -1,19 +1,22 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class FloorToCeilingReachSpec extends ForcedReachSpec
 	native;
 
-cpptext
-{
-	virtual INT CostFor(APawn* P);
-	virtual INT AdjustedCostFor( APawn* P, const FVector& StartToGoalDir, ANavigationPoint* Goal, INT Cost );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSkipPrune=TRUE
+   bSkipPrune=True
+   ForcedPathSizeName="Common"
+   Name="Default__FloorToCeilingReachSpec"
+   ObjectArchetype=ForcedReachSpec'Engine.Default__ForcedReachSpec'
 }

@@ -1,0 +1,18 @@
+/**
+ * This event is activated when an object that responds to mouse clicks is clicked on.
+ *
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ *
+ * @note: native because C++ code activates this event
+ */
+class UIEvent_OnClick extends UIEvent
+	native(inherit);
+
+defaultproperties
+{
+   ObjPosX=32
+   ObjPosY=104
+   ObjName="On Click"
+   Name="Default__UIEvent_OnClick"
+   ObjectArchetype=UIEvent'Engine.Default__UIEvent'
+}

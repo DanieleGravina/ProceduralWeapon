@@ -1,23 +1,15 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
-/** 
- * Selects sounds from a random set
- */
-  
 class SoundNodeRandom extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
+
 
 var()		editfixedsize	array<float>		Weights;
 
-/** If greater than 0, then upon each level load such a number of inputs will be randomly selected
- *  and the rest will be removed. This can be used to cut down the memory usage of large randomizing
- *  cues.
- */
-var()						int					PreselectAtLevelLoad;
 
 /** 
  * Determines whether or not this SoundNodeRandom should randomize with or without
@@ -29,20 +21,50 @@ var()						int					PreselectAtLevelLoad;
  *
  * WithReplacement means that a node will be chosen and then placed back into the set.
  * So one could play the same sound over and over if the probabilities don't go your way :-)
- */
+ *
+ **/
 var() 						bool				bRandomizeWithoutReplacement;
 
 /**
  * Internal state of which sounds have been played.  This is only used at runtime
  * to keep track of which sounds have been played
- */
-var 		transient		array<bool>			HasBeenUsed;
+ **/
+var 		transient		array<bool>			HasBeenUsed; // we are logically treating this as an array of bools
 
 /** Counter var so we don't have to count all of the used sounds each time we choose a sound **/
 var 		transient		int					NumRandomUsed;
 
+
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 defaultproperties
 {
-	bRandomizeWithoutReplacement=TRUE
-	NumRandomUsed=0
+   bRandomizeWithoutReplacement=True
+   Name="Default__SoundNodeRandom"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

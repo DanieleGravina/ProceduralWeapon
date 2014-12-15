@@ -2,21 +2,28 @@
  * InterpFilter.uc: Filter class for filtering matinee groups.  
  * By default no groups are filtered.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class InterpFilter extends Object
 	native(Interpolation);
 
-cpptext
-{
-	/** 
-	 * Given a interpdata object, updates visibility of groups and tracks based on the filter settings
-	 *
-	 * @param InData			Data to filter.
-	 */
-	virtual void FilterData(class USeqAct_Interp* InData);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Caption for this filter. */
 var string Caption;
+
+defaultproperties
+{
+   Name="Default__InterpFilter"
+   ObjectArchetype=Object'Core.Default__Object'
+}

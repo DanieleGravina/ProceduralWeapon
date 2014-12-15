@@ -3,11 +3,137 @@
 //	Base class to manage Pawn's inventory
 //	This provides a simple interface to control and interact with the Pawn's inventory,
 //	such as weapons, items and ammunition.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class InventoryManager extends Actor
 	native;
+
+/** Logging pre-processor macros */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 13
 
 
 /** First inventory item in inventory linked list */
@@ -26,7 +152,7 @@ var			Weapon		LastAttemptedSwitchToWeapon;
 var			bool		bMustHoldWeapon;
 
 /** Holds the current "Fire" status for both firing modes */
-var	private Array<INT>  PendingFire;
+var				Array<int>					PendingFire;
 
 //
 // Network replication.
@@ -44,40 +170,6 @@ event PostBeginPlay()
 	Instigator = Pawn(Owner);
 }
 
-simulated function INT GetPendingFireLength(Weapon InWeapon)
-{
-	return PendingFire.Length;
-}
-
-simulated function SetPendingFire(Weapon InWeapon, int InFiringMode)
-{
-	if( InFiringMode < PendingFire.Length )
-	{
-		PendingFire[InFiringMode] = 1;
-	}
-}
-
-simulated function ClearPendingFire(Weapon InWeapon, int InFiringMode)
-{
-	if( InFiringMode < PendingFire.Length )
-	{
-		PendingFire[InFiringMode] = 0;
-	}
-}
-
-simulated final function bool IsPendingFire(Weapon InWeapon, INT InFiringMode)
-{
-	return bool(PendingFire[InFiringMode]);
-}
-
-simulated function ClearAllPendingFire(Weapon InWeapon)
-{
-	local int i;
-	for(i=0; i<PendingFire.length; i++)
-	{
-		PendingFire[i] = 0;
-	}
-}
 
 /**
  * returns all Inventory Actors of class BaseClass
@@ -89,6 +181,24 @@ simulated function ClearAllPendingFire(Weapon InWeapon)
  */
 
 native final iterator function InventoryActors( class<Inventory> BaseClass, out Inventory Inv );
+
+
+/**
+ * Dump debug stats in log of all weapons in inventory.
+ */
+
+exec simulated function DumpWeaponStats()
+{
+	local Weapon	Weap;
+
+	LogInternal("+++" @ GetFuncName() @ "+++");
+	LogInternal("Pawn.Weapon:" $ Instigator.Weapon @ "PendingWeapon:" $ PendingWeapon);
+	ForEach InventoryActors( class'Weapon', Weap )
+	{
+		Weap.DumpWeaponDebugToLog();
+	}
+}
+
 
 /**
  * Setup Inventory for Pawn P.
@@ -170,19 +280,19 @@ simulated function Inventory CreateInventory(class<Inventory> NewInventoryItemCl
 
 	if( NewInventoryItemClass != None )
 	{
-		inv = Spawn(NewInventoryItemClass, Owner);
+		inv = Spawn(NewInventoryItemClass);
 		if( inv != None )
 		{
 			if( !AddInventory(Inv, bDoNotActivate) )
 			{
-				`warn("InventoryManager::CreateInventory - Couldn't Add newly created inventory" @ Inv);
+				WarnInternal("InventoryManager::CreateInventory - Couldn't Add newly created inventory" @ Inv);
 				Inv.Destroy();
 				Inv = None;
 			}
 		}
 		else
 		{
-			`warn("InventoryManager::CreateInventory - Couldn't spawn inventory" @ NewInventoryItemClass);
+			WarnInternal("InventoryManager::CreateInventory - Couldn't spawn inventory" @ NewInventoryItemClass);
 		}
 	}
 
@@ -222,8 +332,6 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 			LastItem.Inventory = NewItem;
 		}
 
-		`LogInv("adding" @ NewItem @ "bDoNotActivate:" @ bDoNotActivate);
-
 		NewItem.SetOwner( Instigator );
 		NewItem.Instigator = Instigator;
 		NewItem.InvManager = Self;
@@ -250,6 +358,12 @@ simulated function RemoveFromInventory(Inventory ItemToRemove)
 
 	if( ItemToRemove != None )
 	{
+		// make sure we don't have other references to the item
+		if( ItemToRemove == Instigator.Weapon )
+		{
+			Instigator.Weapon = None;
+		}
+
 		if( InventoryChain == ItemToRemove )
 		{
 			bFound = TRUE;
@@ -271,33 +385,19 @@ simulated function RemoveFromInventory(Inventory ItemToRemove)
 
 		if( bFound )
 		{
-			`LogInv("removed" @ ItemToRemove);
+			LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "removed" @ ItemToRemove,'Inventory');
 			ItemToRemove.ItemRemovedFromInvManager();
 			ItemToRemove.SetOwner(None);
 			ItemToRemove.Inventory = None;
 		}
 
-		// make sure we don't have other references to the item
-		if( ItemToRemove == Instigator.Weapon )
+		if (Instigator.Health > 0 && Instigator.Weapon == None && Instigator.Controller != None)
 		{
-			Instigator.Weapon = None;
-		}
-
-		if (Instigator.Health > 0 && Instigator.Weapon == None)
-		{
-			if (PendingWeapon != None && PendingWeapon != ItemToRemove)
-			{
-				`LogInv("Removed current weapon while changing weapons, call ChangedWeapon");
-				ChangedWeapon();
-			}
-			else if(Instigator.Controller != None)
-			{
-				`LogInv("Calling ClientSwitchToBestWeapon to make sure a weapon is brought up");
-				Instigator.Controller.ClientSwitchToBestWeapon(TRUE);
-			}
+			Instigator.Controller.ClientSwitchToBestWeapon(true);
 		}
 	}
 }
+
 
 /**
  * Discard full inventory, generally because the owner died
@@ -307,8 +407,6 @@ simulated event DiscardInventory()
 	local Inventory	Inv;
 	local vector	TossVelocity;
 	local bool		bBelowKillZ;
-
-	`LogInv("");
 
 	// don't drop any inventory if below KillZ or out of world
 	bBelowKillZ = (Instigator == None) || (Instigator.Location.Z < WorldInfo.KillZ);
@@ -334,22 +432,109 @@ simulated event DiscardInventory()
 	PendingWeapon = None;
 }
 
-/** called when our owner is killed */
-function OwnerDied()
+
+/**
+ * Damage modifier. Is Pawn carrying items that can modify taken damage?
+ * Called from GameInfo.ReduceDamage()
+ */
+function int ModifyDamage( int Damage, Controller instigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType )
 {
-	Destroy();
-	if (Instigator.InvManager == self)
+	return Damage;
+}
+
+
+/**
+ * Used to inform inventory when owner event occurs (for example jumping or weapon change)
+ *
+ * @param	EventName	Name of event to forward to inventory items.
+ */
+simulated function OwnerEvent(name EventName)
+{
+	local Inventory	Inv;
+
+	ForEach InventoryActors(class'Inventory', Inv)
 	{
-		Instigator.InvManager = None;
+		if( Inv.bReceiveOwnerEvents )
+		{
+			Inv.OwnerEvent(EventName);
+		}
 	}
 }
+
 
 /**
  * Hook called from HUD actor. Gives access to HUD and Canvas
  *
  * @param	H	HUD
  */
-simulated function DrawHud( HUD H );
+simulated function DrawHud( HUD H )
+{
+	local Inventory Inv;
+
+	// Send RenderOverlays event to Inv Items requesting it
+	ForEach InventoryActors(class'Inventory', Inv)
+	{
+    	if( Inv.bRenderOverlays )
+		{
+	    	Inv.RenderOverlays(H);
+		}
+	}
+
+	// Send ActiveRenderOverlays event to active weapon
+	if( Instigator.Weapon != None )
+	{
+		Instigator.Weapon.ActiveRenderOverlays(H);
+	}
+}
+
+//
+// Weapon Interface
+//
+
+/**
+ * Pawn desires to fire. By default it fires the Active Weapon if it exists.
+ * Called from PlayerController::StartFire() -> Pawn::StartFire()
+ * Network: Local Player
+ *
+ * @param	FireModeNum		Fire mode number.
+ */
+simulated function StartFire(byte FireModeNum)
+{
+    if( Instigator.Weapon != None )
+	{
+		Instigator.Weapon.StartFire(FireModeNum);
+	}
+}
+
+
+/**
+ * Pawn stops firing.
+ * i.e. player releases fire button, this may not stop weapon firing right away. (for example press button once for a burst fire)
+ * Network: Local Player
+ *
+ * @param	FireModeNum		Fire mode number.
+ */
+simulated function StopFire( byte FireModeNum )
+{
+    if( Instigator.Weapon != None )
+	{
+		Instigator.Weapon.StopFire( FireModeNum );
+	}
+}
+
+
+/**
+ * returns true if ThisWeapon is the Pawn's active weapon.
+ *
+ * @param	ThisWeapon	weapon to test if it's the Pawn's active weapon.
+ *
+ * @return	true if ThisWeapon is the Pawn's current weapon
+ */
+simulated function bool IsActiveWeapon( Weapon ThisWeapon )
+{
+	return (ThisWeapon == Instigator.Weapon);
+}
+
 
 /**
  * Returns a weight reflecting the desire to use the
@@ -368,11 +553,11 @@ simulated function float GetWeaponRatingFor( Weapon W )
 
 	if (!Instigator.IsHumanControlled())
 	{
-		Rating = W.GetAIRating();
-		// tend to stick with same weapon
-		if (W == Instigator.Weapon && Instigator.Controller != None && Instigator.Controller.Enemy != None)
+		Rating = W.AIRating;
+	// tend to stick with same weapon
+		if (IsActiveWeapon(W) && Instigator.Controller != None && Instigator.Controller.Enemy != None)
 		{
-			Rating += 0.21;
+		Rating += 0.21;
 		}
 	}
 	else
@@ -397,7 +582,7 @@ simulated function Weapon GetBestWeapon( optional bool bForceADifferentWeapon  )
 		if( w.HasAnyAmmo() )
 		{
 			if( bForceADifferentWeapon &&
-				W == Instigator.Weapon )
+				IsActiveWeapon( W ) )
 			{
 				continue;
 			}
@@ -423,8 +608,6 @@ simulated function Weapon GetBestWeapon( optional bool bForceADifferentWeapon  )
 simulated function SwitchToBestWeapon( optional bool bForceADifferentWeapon )
 {
 	local Weapon BestWeapon;
-
-	`LogInv("bForceADifferentWeapon:" @ bForceADifferentWeapon);
 
 	// if we don't already have a pending weapon,
 	if( bForceADifferentWeapon ||
@@ -553,61 +736,40 @@ simulated function NextWeapon()
  */
 reliable client function SetCurrentWeapon(Weapon DesiredWeapon)
 {
-	// Switch to this weapon
-	InternalSetCurrentWeapon(DesiredWeapon);
-
-	// Tell the server we have changed the pending weapon
-	if( Role < Role_Authority )
-	{
-		ServerSetCurrentWeapon(DesiredWeapon);
-	}
-}
-
-/**
- * ServerSetCurrentWeapon begins the Putdown sequence on the server.  This function makes
- * the assumption that if TryPutDown succeeded on the client, it will succeed on the server.
- * This function shouldn't be called from anywhere except SetCurrentWeapon
- *
- * Network: Dedicated Server
- */
-reliable server function ServerSetCurrentWeapon(Weapon DesiredWeapon)
-{
-	InternalSetCurrentWeapon(DesiredWeapon);
-}
-
-simulated private function InternalSetCurrentWeapon(Weapon DesiredWeapon)
-{
 	local Weapon PrevWeapon;
 
 	PrevWeapon = Instigator.Weapon;
 
-	`LogInv("PrevWeapon:" @ PrevWeapon @ "DesiredWeapon:" @ DesiredWeapon);
+	LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "PrevWeapon:" @ PrevWeapon @ "DesiredWeapon:" @ DesiredWeapon,'Inventory');
 
 	// Make sure we are switching to a new weapon
 	// Handle the case where we're selecting again a weapon we've just deselected
 	if( PrevWeapon != None && DesiredWeapon == PrevWeapon && !PrevWeapon.IsInState('WeaponPuttingDown') )
 	{
-		if(!DesiredWeapon.IsInState('Inactive') && !DesiredWeapon.IsInState('PendingClientWeaponSet'))
-		{
-			`LogInv("DesiredWeapon == PrevWeapon - abort"@DesiredWeapon.GetStateName());
-			return;
-		}
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "DesiredWeapon == PrevWeapon - abort",'Inventory');
+		return;
 	}
 
 	// Set the new weapon as pending
 	SetPendingWeapon(DesiredWeapon);
 
 	// if there is an old weapon handle it first.
-	if( PrevWeapon != None && PrevWeapon != DesiredWeapon && !PrevWeapon.bDeleteMe && !PrevWeapon.IsInState('Inactive') )
+	if( PrevWeapon != None && !PrevWeapon.bDeleteMe && !PrevWeapon.IsInState('Inactive') )
 	{
 		// Try to put the weapon down.
-		`LogInv("Try to put down previous weapon first.");
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "OldWeapon != None - try to put down",'Inventory');
 		PrevWeapon.TryPutdown();
 	}
 	else
 	{
 		// We don't have a weapon, force the call to ChangedWeapon
 		ChangedWeapon();
+	}
+
+	// Tell the server we have changed the pending weapon
+	if( Role < Role_Authority )
+	{
+		ServerSetCurrentWeapon(DesiredWeapon);
 	}
 }
 
@@ -618,36 +780,61 @@ simulated private function InternalSetCurrentWeapon(Weapon DesiredWeapon)
  */
 simulated function SetPendingWeapon(Weapon DesiredWeapon)
 {
-	`LogInv("SetPendingWeapon to" @ DesiredWeapon);
 	// set the new weapon as pending
 	PendingWeapon = DesiredWeapon;
+}
+
+
+/**
+ * ServerSetCurrentWeapon begins the Putdown sequence on the server.  This function makes
+ * the assumption that if TryPutDown succeeded on the client, it will succeed on the server.
+ * This function shouldn't be called from anywhere except SetCurrentWeapon
+ *
+ * Network: Dedicated Server
+ */
+reliable server function ServerSetCurrentWeapon(Weapon DesiredWeapon)
+{
+	local Weapon PrevWeapon;
+
+	PrevWeapon = Instigator.Weapon;
+
+	LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "PrevWeapon:" @ PrevWeapon @ "DesiredWeapon:" @ DesiredWeapon,'Inventory');
+
+	// Set the new weapon as pending
+	SetPendingWeapon(DesiredWeapon);
+
+	// Make sure we are switching to a new weapon
+	// Handle the case where we're selecting again a weapon we've just deselected
+	if( PrevWeapon != None && DesiredWeapon == PrevWeapon && !PrevWeapon.IsInState('WeaponPuttingDown') )
+	{
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "DesiredWeapon == PrevWeapon - abort",'Inventory');
+		return;
+	}
+
+	// Make sure we are switching to a new weapon
+	if( PrevWeapon != None && !PrevWeapon.bDeleteMe && !PrevWeapon.IsInState('Inactive') )
+	{
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "OldWeapon != None - try to put down",'Inventory');
+		PrevWeapon.TryPutDown();
+	}
+	else
+	{
+		ChangedWeapon();
+	}
 }
 
 
 /** Prevents player from being without a weapon. */
 simulated function bool CancelWeaponChange()
 {
-	`LogInv(`showvar(PendingWeapon));
 	// if PendingWeapon is None, prevent instigator from having no weapon,
 	// so re-activate current weapon.
-	if( PendingWeapon == None && bMustHoldWeapon )
+	if( PendingWeapon == None )
 	{
 		PendingWeapon = Instigator.Weapon;
 	}
 
 	return FALSE;
-}
-
-/** Clear pending weapon, put it in a good state. */
-simulated function ClearPendingWeapon()
-{
-	`LogInv(`showvar(PendingWeapon));
-
-	if (PendingWeapon != None)
-	{
-		PendingWeapon.GotoState('Inactive');
-		PendingWeapon = None;
-	}
 }
 
 
@@ -662,7 +849,6 @@ simulated function ChangedWeapon()
 	OldWeapon = Instigator.Weapon;
 
 	// Make sure we can switch to a null weapon, otherwise, reactivate the current weapon
-	`LogInv(`showvar(PendingWeapon)@`showvar(bMustHoldWeapon));
 	if( PendingWeapon == None && bMustHoldWeapon )
 	{
 		if( OldWeapon != None )
@@ -672,10 +858,13 @@ simulated function ChangedWeapon()
 		}
 	}
 
-	`LogInv("switch from" @ OldWeapon @ "to" @ PendingWeapon);
+	//`LogInv("switch from" @ OldWeapon @ "to" @ PendingWeapon);
 
 	// switch to Pending Weapon
 	Instigator.Weapon = PendingWeapon;
+
+	// tell inventory that weapon changed (in case any effect was being applied)
+	OwnerEvent('ChangedWeapon');
 
 	// Play any Weapon Switch Animations
 	Instigator.PlayWeaponSwitch(OldWeapon, PendingWeapon);
@@ -710,92 +899,117 @@ simulated function ChangedWeapon()
  * Network: LocalPlayer
  * Called from Weapon.ClientWeaponSet()
  */
-simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet, optional bool bDoNotActivate)
+simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet)
 {
 	local Weapon OldWeapon;
 
-	`LogInv("NewWeapon:" @ NewWeapon @ "bOptionalSet:" @ bOptionalSet @ "bDoNotActivate:" @ bDoNotActivate);
-	if( !bDoNotActivate )
+	OldWeapon = Instigator.Weapon;
+
+	// If no current weapon, then set this one
+	if( OldWeapon == None || OldWeapon.bDeleteMe || OldWeapon.IsInState('Inactive') )
 	{
-		OldWeapon = Instigator.Weapon;
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "OldWeapon == None or Inactive - Set new weapon right away" @ NewWeapon,'Inventory');
+		SetCurrentWeapon(NewWeapon);
+		return;
+	}
 
-		// If no current weapon, then set this one
-		if( OldWeapon == None || OldWeapon.bDeleteMe || OldWeapon.IsInState('Inactive') )
+	if( OldWeapon == NewWeapon )
+	{
+		LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "OldWeapon == NewWeapon - abort" @ NewWeapon,'Inventory');
+		return;
+	}
+
+	if( bOptionalSet )
+	{
+		if( OldWeapon.DenyClientWeaponSet() ||
+			(Instigator.IsHumanControlled() && PlayerController(Instigator.Controller).bNeverSwitchOnPickup) )
 		{
-			`LogInv("OldWeapon == None or Inactive - Set new weapon right away" @ NewWeapon);
-			SetCurrentWeapon(NewWeapon);
+			LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "bOptionalSet && (DenyClientWeaponSet() || bNeverSwitchOnPickup) - abort" @ NewWeapon,'Inventory');
+
+			LastAttemptedSwitchToWeapon = NewWeapon;
 			return;
-		}
-
-		if( OldWeapon == NewWeapon )
-		{
-			if( NewWeapon.IsInState('PendingClientWeaponSet') )
-			{
-				`LogInv("OldWeapon == NewWeapon - but in PendingClientWeaponSet, so reset." @ NewWeapon);
-				SetCurrentWeapon(NewWeapon);
-			}
-			else
-			{
-				`LogInv("OldWeapon == NewWeapon - abort" @ NewWeapon);
-			}
-			return;
-		}
-
-		if( bOptionalSet )
-		{
-			if( OldWeapon.DenyClientWeaponSet() ||
-				(Instigator.IsHumanControlled() && PlayerController(Instigator.Controller).bNeverSwitchOnPickup) )
-			{
-				`LogInv("bOptionalSet && (DenyClientWeaponSet() || bNeverSwitchOnPickup) - abort" @ NewWeapon);
-
-				LastAttemptedSwitchToWeapon = NewWeapon;
-				return;
-			}
-		}
-
-		if( PendingWeapon == None || !PendingWeapon.HasAnyAmmo() || PendingWeapon.GetWeaponRating() < NewWeapon.GetWeaponRating() )
-		{
-			// Compare switch priority and decide if we should switch to new weapon
-			if( !Instigator.Weapon.HasAnyAmmo() || Instigator.Weapon.GetWeaponRating() < NewWeapon.GetWeaponRating() )
-			{
-				`LogInv("Switch to new weapon:" @ NewWeapon);
-				SetCurrentWeapon(NewWeapon);
-				return;
-			}
 		}
 	}
 
-	`LogInv("Send to inactive state" @ NewWeapon);
+	if( PendingWeapon == None || !PendingWeapon.HasAnyAmmo() || PendingWeapon.GetWeaponRating() < NewWeapon.GetWeaponRating() )
+	{
+		// Compare switch priority and decide if we should switch to new weapon
+		if( !Instigator.Weapon.HasAnyAmmo() || Instigator.Weapon.GetWeaponRating() < NewWeapon.GetWeaponRating() )
+		{
+			LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "Switch to new weapon:" @ NewWeapon,'Inventory');
+			SetCurrentWeapon(NewWeapon);
+			return;
+		}
+	}
+
+	LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ "Send to inactive state" @ NewWeapon,'Inventory');
 	NewWeapon.GotoState('Inactive');
 }
 
-simulated function UpdateController()
-{
-	local Inventory Item;
-	local Weapon Weap;
+/**
+ * If the server detects that the client's weapon is out of sync, it will use this function to realign them.
+ * Network: LocalPlayer
+ *
+ * @Param	NewWeapon	The weapon the server wishes to force the client to
+ */
 
-	for (Item = InventoryChain; Item != None; Item = Item.Inventory)
+reliable client function ClientSyncWeapon(Weapon NewWeapon)
+{
+	local Weapon OldWeapon;
+
+	if ( NewWeapon == Instigator.Weapon )
 	{
-		Weap = Weapon(Item);
-		if ( Weap != None )
+		// FIXME: Remove this log.  It's here only to see how often this occurs.
+
+		LogInternal(Self@"(Owned by"@Owner@") is trying to Sync to the currently active weapon ("$NewWeapon$")");
+		return;
+	}
+
+	OldWeapon = Instigator.Weapon;
+
+	// switch to the new Weapon
+	Instigator.Weapon = NewWeapon;
+
+	// tell inventory that weapon changed (in case any effect was being applied)
+	OwnerEvent('ChangedWeapon');
+
+	// Play any Weapon Switch Animations
+	Instigator.PlayWeaponSwitch(OldWeapon, NewWeapon);
+
+	// If we are going to an actual weapon, activate it.
+	if( NewWeapon != None )
+	{
+		// Setup the Weapon
+		Instigator.Weapon.Instigator = Instigator;
+
+		// Make some noise
+		if( WorldInfo.Game != None )
 		{
-			Weap.CacheAIController();
+			Instigator.MakeNoise(0.1, 'ChangedWeapon' );
 		}
+
+		// Activate the Weapon
+		Instigator.Weapon.Activate();
+	}
+
+	// Notify of a weapon change
+	if( Instigator.Controller != None )
+	{
+		Instigator.Controller.NotifyChangedWeapon(OldWeapon, Instigator.Weapon);
 	}
 }
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	bReplicateInstigator=TRUE
-	RemoteRole=ROLE_SimulatedProxy
-	bOnlyDirtyReplication=TRUE
-	bOnlyRelevantToOwner=TRUE
-	NetPriority=1.4
-	bHidden=TRUE
-	Physics=PHYS_None
-	bReplicateMovement=FALSE
-	bStatic=FALSE
-	bNoDelete=FALSE
+   RemoteRole=ROLE_SimulatedProxy
+   TickGroup=TG_DuringAsyncWork
+   bHidden=True
+   bOnlyRelevantToOwner=True
+   bReplicateInstigator=True
+   bReplicateMovement=False
+   bOnlyDirtyReplication=True
+   NetPriority=1.400000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__InventoryManager"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

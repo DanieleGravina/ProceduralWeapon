@@ -1,12 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpTrackInstFade extends InterpTrackInst
 	native(Interpolation);
 
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	// InterpTrackInst interface
-	virtual void TermTrackInst(UInterpTrack* Track);
+   Name="Default__InterpTrackInstFade"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
 }

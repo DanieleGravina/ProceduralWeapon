@@ -1,11 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTInventory extends Inventory
+	native
 	abstract;
 
-var bool				bReceiveOwnerEvents;	// If true, receive Owner events. OwnerEvent() is called.
+var bool bDropOnDisrupt;
 
 /** adds weapon overlay material this item uses (if any) to the GRI in the correct spot
  *  @see UTPawn.WeaponOverlayFlags, UTWeapon::SetWeaponOverlayFlags
@@ -42,16 +43,15 @@ function DropFrom(vector StartLocation, vector StartVelocity)
 	Super.DropFrom(StartLocation, StartVelocity);
 }
 
-
-/* OwnerEvent:
-	Used to inform inventory when owner event occurs (for example jumping or weapon change)
-	set bReceiveOwnerEvents=true to receive events.
-*/
-function OwnerEvent(name EventName);
-
 defaultproperties
 {
-	MessageClass=class'UTPickupMessage'
-
-	DroppedPickupClass=class'UTRotatingDroppedPickup'
+   bDropOnDisrupt=True
+   DroppedPickupClass=Class'UTGame.UTRotatingDroppedPickup'
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Inventory:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Inventory:Sprite'
+   End Object
+   Components(0)=Sprite
+   MessageClass=Class'UTGame.UTPickupMessage'
+   Name="Default__UTInventory"
+   ObjectArchetype=Inventory'Engine.Default__Inventory'
 }

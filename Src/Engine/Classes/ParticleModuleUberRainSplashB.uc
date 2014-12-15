@@ -10,7 +10,7 @@
  *
  *	Intended for use in the Rain particle system.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
 class ParticleModuleUberRainSplashB extends ParticleModuleUberBase
@@ -50,72 +50,37 @@ var(Rotation)	rawdistributionfloat		StartRotationRate;
 
 //*-----------------------------------------------------------------------------*/
 //*-----------------------------------------------------------------------------*/
-cpptext
-{
-	virtual void	Spawn(FParticleEmitterInstance* Owner, INT Offset, FLOAT SpawnTime);
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-
-	/** Used by derived classes to indicate they could be used on the given emitter.	*/
-	virtual	UBOOL	IsCompatible(UParticleEmitter* InputEmitter);
-	
-	/** Copy the contents of the modules to the UberModule								*/
-	virtual	UBOOL	ConvertToUberModule(UParticleEmitter* InputEmitter);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //*-----------------------------------------------------------------------------*/
 //*-----------------------------------------------------------------------------*/
+
 defaultproperties
 {
-	bSpawnModule=true
-	bUpdateModule=true
-	bSupported3DDrawMode=true
-
-	//*-----------------------------------------------------------------------------*/
-	/** Lifetime Module Defaults													*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionFloatUniform Name=DistributionLifetime
-	End Object
-	Lifetime=(Distribution=DistributionLifetime)
-
-	//*-----------------------------------------------------------------------------*/
-	/** Size Module Defaults														*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionVectorUniform Name=DistributionStartSize
-		Min=(X=1,Y=1,Z=1)
-		Max=(X=1,Y=1,Z=1)
-	End Object
-	StartSize=(Distribution=DistributionStartSize)
-
-	//*-----------------------------------------------------------------------------*/
-	/** ColorOverLife Module Defaults												*/
-	//*-----------------------------------------------------------------------------*/
-	// This will screw up all the other curves...
-	//bCurvesAsColor=true
-
-	Begin Object Class=DistributionVectorConstantCurve Name=DistributionColorOverLife
-	End Object
-	ColorOverLife=(Distribution=DistributionColorOverLife)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionAlphaOverLife
-		Constant=255.9f;
-	End Object
-	AlphaOverLife=(Distribution=DistributionAlphaOverLife)
-
-	//*-----------------------------------------------------------------------------*/
-	/** SizeByLife Module Defaults													*/
-	//*-----------------------------------------------------------------------------*/
-	MultiplyX=true
-	MultiplyY=true
-	MultiplyZ=true
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionLifeMultiplier
-	End Object
-	LifeMultiplier=(Distribution=DistributionLifeMultiplier)
-
-	//*-----------------------------------------------------------------------------*/
-	/** Initial RotationRate Module Defaults										*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionFloatConstant Name=DistributionStartRotationRate
-	End Object
-	StartRotationRate=(Distribution=DistributionStartRotationRate)
+   Lifetime=(Distribution=DistributionLifetime,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   StartSize=(Distribution=DistributionStartSize,Op=2,LookupTableNumElements=2,LookupTableChunkSize=6,LookupTable=(1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000))
+   ColorOverLife=(Distribution=DistributionColorOverLife,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   AlphaOverLife=(Distribution=DistributionAlphaOverLife,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(255.899994,255.899994,255.899994,255.899994))
+   LifeMultiplier=(Distribution=DistributionLifeMultiplier,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   MultiplyX=True
+   MultiplyY=True
+   MultiplyZ=True
+   StartRotationRate=(Distribution=DistributionStartRotationRate,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   bSpawnModule=True
+   bUpdateModule=True
+   bSupported3DDrawMode=True
+   Name="Default__ParticleModuleUberRainSplashB"
+   ObjectArchetype=ParticleModuleUberBase'Engine.Default__ParticleModuleUberBase'
 }

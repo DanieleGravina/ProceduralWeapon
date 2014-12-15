@@ -3,7 +3,7 @@
  * Kills pawns using KillZ interface
  *
  *
-* Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+* Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTKillZVolume extends PhysicsVolume
@@ -37,7 +37,7 @@ simulated event KillActor(Actor Other)
 	if ( !Other.bScriptInitialized )
 	{
 		// warn if actor was spawned in killz volume (bad)
-		`Log(Other @ "destroyed in" @ self @ "while being spawned!",, 'DevSpawn');
+		LogInternal(Other @ "destroyed in" @ self @ "while being spawned!",'DevSpawn');
 	}
 	Other.FellOutOfWorld(KillZDamageType);
 	if ( UTPawn(Other) != None )
@@ -52,5 +52,14 @@ simulated event KillActor(Actor Other)
 
 defaultproperties
 {
-	KillZDamageType=class'KillZDamageType'
+   KillZDamageType=Class'Engine.KillZDamageType'
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__PhysicsVolume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTKillZVolume"
+   ObjectArchetype=PhysicsVolume'Engine.Default__PhysicsVolume'
 }

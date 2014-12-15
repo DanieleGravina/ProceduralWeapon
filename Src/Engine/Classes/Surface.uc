@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Surface extends Object
 	native
@@ -8,14 +8,14 @@ class Surface extends Object
 native noexport final function float GetSurfaceWidth();
 native noexport final function float GetSurfaceHeight();
 
-cpptext
-{
-	virtual FLOAT GetSurfaceWidth() const PURE_VIRTUAL(USurface::GetSurfaceWidth,return 0;);
-	virtual FLOAT GetSurfaceHeight() const PURE_VIRTUAL(USurface::GetSurfaceHeight,return 0;);
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-	/**
-	 * @return Width/height this surface was before cooking or other modifications
-	 */
-	virtual FLOAT GetOriginalSurfaceWidth() const { return GetSurfaceWidth(); }
-	virtual FLOAT GetOriginalSurfaceHeight() const { return GetSurfaceHeight(); }
+defaultproperties
+{
+   Name="Default__Surface"
+   ObjectArchetype=Object'Core.Default__Object'
 }

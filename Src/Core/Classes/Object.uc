@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // Object: The base class all objects.
@@ -22,26 +22,26 @@ struct pointer
 
 struct {QWORD} qword
 {
-	var() native int A, B;
+	var native const int A, B;
 };
 
 //=============================================================================
 // UObject variables.
 
 // Internal variables.
-var native private const editconst noexport		pointer VfTableObject;
-var native private const editconst				pointer HashNext;
-var native private const editconst				qword ObjectFlags;			// This needs to be 8-byte aligned in 32-bit!
-var native private const editconst				pointer HashOuterNext;
-var native private const editconst				pointer StateFrame;
-var native private const editconst noexport		Object Linker;
-var native private const editconst noexport		pointer LinkerIndex;
-var native private const editconst noexport		int ObjectInternalInteger;
-var native private const editconst noexport		int NetIndex;
-var native const editconst						Object Outer;
-var() native const editconst					name Name;
-var native const editconst						class Class;
-var() native const editconst					Object ObjectArchetype;
+var		native private const noexport	pointer	VfTableObject;
+var		native private const noexport	int		ObjectInternalInteger;
+var		native private const			qword	ObjectFlags;			// This needs to be 8-byte aligned!
+var		native private const			pointer	HashNext;
+var		native private const			pointer	HashOuterNext;
+var		native private const			pointer	StateFrame;
+var		native private const noexport	Object	Linker;
+var		native private const noexport	pointer	LinkerIndex;
+var		native private const noexport 	int		NetIndex;
+var		native const					object	Outer;
+var()	native const editconst			name	Name;
+var		native const					class	Class;
+var()	native const editconst			Object	ObjectArchetype;
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // IMPORTANT: DO NOT ADD _ANY_ MEMBERS AFTER ObjectArchetype! Add ALL members before it, as the
 // C++ code expects it to be the final member of UObject! (see UObject::InitProperties)
@@ -62,38 +62,31 @@ struct ThreadSafeCounter
 	var native const int		Value;
 };
 
-struct BitArray_Mirror
+struct DynamicMap_Mirror
 {
-	var native const pointer IndirectData;
-	var native const int InlineData[4];
-	var native const int NumBits;
-	var native const int MaxBits;
-};
-
-struct SparseArray_Mirror
-{
-	var native const array<int> Elements;
-	var native const BitArray_Mirror AllocationFlags;
-	var native const int FirstFreeIndex;
-	var native const int NumFreeIndices;
-};
-
-struct Set_Mirror
-{
-	var native const SparseArray_Mirror Elements;
-	var native const int InlineHash;
-	var native const pointer Hash;
-	var native const int HashSize;
+	var native const pointer	Hash;
+	var native const int		HashSize;
+	var native const int		Count;
+	var native const array<int>	Pairs;
+	var native const pointer	FreePairs;
 };
 
 struct Map_Mirror
 {
-	var native const Set_Mirror Pairs;
+	var native const pointer	Pairs;
+	var native const int		PairNum;
+	var native const int		PairMax;
+	var native const pointer	Hash;
+	var native const int		HashNum;
 };
 
 struct MultiMap_Mirror
 {
-	var native const Set_Mirror Pairs;
+	var native const pointer	Pairs;
+	var native const int		PairNum;
+	var native const int		PairMax;
+	var native const pointer	Hash;
+	var native const int		HashNum;
 };
 
 struct UntypedBulkData_Mirror
@@ -110,47 +103,19 @@ struct UntypedBulkData_Mirror
 	var native const pointer	BulkData;
 	var native const int		LockStatus;
 	var native const pointer	AttachedAr;
-	var native const int		bShouldFreeOnEmpty;
 };
 
-struct RenderCommandFence_Mirror
+struct TextureMipBulkData_Mirror extends UntypedBulkData_Mirror
 {
-	var native const transient int NumPendingFences;
-};
-
-// needs to match FColorVertexBuffer in C++
-struct FColorVertexBuffer_Mirror
-{
-	var native const pointer	VfTable;
-	var native const pointer	VertexData;
-	var private const int 		Data;
-	var private const int		Stride;
-	var private const int 		NumVertices;
+	var native const int		bShouldFreeOnEmtpy;
 };
 
 struct IndirectArray_Mirror
 {
-	// FScriptArray
+	// FArray
 	var native const pointer	Data;
 	var native const int		ArrayNum;
 	var native const int		ArrayMax;
-};
-
-struct Array_Mirror
-{
-	// FScriptArray
-	var native const pointer	Data;
-	var native const int		ArrayNum;
-	var native const int		ArrayMax;
-};
-
-/**
- * Structure mirroring an array of pointers using an inline allocator.
- */
-struct InlinePointerArray_Mirror
-{
-	var private const pointer InlineData;
-	var private const Array_Mirror SecondaryData;
 };
 
 // A globally unique identifier.
@@ -198,12 +163,6 @@ struct immutable Quat
 	var() float X, Y, Z, W;
 };
 
-// A packed normal.
-struct immutable PackedNormal
-{
-	var() byte X, Y, Z, W;
-};
-
 /**
  * Screen coordinates
  */
@@ -212,26 +171,6 @@ struct immutable IntPoint
 	var() int X, Y;
 };
 
-/**
- * A vector of spherical harmonic coefficients.
- */
-struct SHVector
-{
-	// Note: The number of SH coefficients must match NUM_SH_BASIS in SHMath.h!
-	// The struct must also be padded to be 16-byte aligned.
-	var() float V[9];
-	var float Padding[3];
-};
-
-/**
- * A vector of spherical harmonic coefficients for each color component.
- */
-struct SHVectorRGB
-{
-	var() SHVector R;
-	var() SHVector G;
-	var() SHVector B;
-};
 
 /**
  * Point Of View type.
@@ -251,40 +190,6 @@ struct TPOV
 	}
 };
 
-/** Various ways to interpolate TAlphaBlend. */
-enum AlphaBlendType
-{
-	ABT_Linear,
-	ABT_Cubic,
-	ABT_Sinusoidal,
-	ABT_EaseInOutExponent2,
-	ABT_EaseInOutExponent3,
-	ABT_EaseInOutExponent4,
-	ABT_EaseInOutExponent5,
-};
-
-/** Structure to encompass Alpha Interpolation. */
-struct TAlphaBlend
-{
-	/** Internal Lerped value for Alpha */
-	var const	FLOAT			AlphaIn;
-	/** Resulting Alpha value, between 0.f and 1.f */
-	var const	FLOAT			AlphaOut;
-	/** Target to reach */
-	var()		FLOAT			AlphaTarget;
-	/** Default blend time */
-	var()		FLOAT			BlendTime;
-	/** Time left to reach target */
-	var	const	FLOAT			BlendTimeToGo;
-	/** Type of blending used (Linear, Cubic, etc.) */
-	var()		AlphaBlendType	BlendType;
-
-	structdefaultproperties
-	{
-		BlendTime=0.67f
-		BlendType=ABT_Linear
-	}
-};
 
 // Generic axis enum.
 enum EAxis
@@ -303,13 +208,6 @@ enum EInputEvent
 	IE_Repeat,
 	IE_DoubleClick,
 	IE_Axis
-};
-
-enum EAspectRatioAxisConstraint
-{
-	AspectRatio_MaintainYFOV,
-	AspectRatio_MaintainXFOV,
-	AspectRatio_MajorAxisFOV
 };
 
 // A color.
@@ -339,9 +237,9 @@ struct immutable Box
 // A bounding box and bounding sphere with the same origin.
 struct BoxSphereBounds
 {
-	var() vector	Origin;
-	var() vector	BoxExtent;
-	var() float		SphereRadius;
+	var vector	Origin;
+	var vector	BoxExtent;
+	var float	SphereRadius;
 };
 
 // a 4x4 matrix
@@ -365,14 +263,12 @@ enum EInterpCurveMode
 	CIM_CurveAuto,
 	CIM_Constant,
 	CIM_CurveUser,
-	CIM_CurveBreak,
-	CIM_CurveAutoClamped
+	CIM_CurveBreak
 };
 
 // Interpolation data types.
 enum EInterpMethodType
 {
-	IMT_UseFixedTangentEvalAndNewAutoTangents,
 	IMT_UseFixedTangentEval,
 	IMT_UseBrokenTangentEval
 };
@@ -447,20 +343,6 @@ struct InterpCurveQuat
 	var   EInterpMethodType				InterpMethod;
 };
 
-struct InterpCurvePointLinearColor
-{
-	var() float InVal;
-	var() linearcolor OutVal;
-	var() linearcolor ArriveTangent;
-	var() linearcolor LeaveTangent;
-	var() EInterpCurveMode InterpMode;
-};
-struct InterpCurveLinearColor
-{
-	var() array<InterpCurvePointLinearColor>	Points;
-	var   EInterpMethodType				InterpMethod;
-};
-
 // Base class for raw (baked out) Distribution type
 struct RawDistribution
 {
@@ -479,41 +361,15 @@ struct RenderCommandFence
 	var private native const int NumPendingFences;
 };
 
-/** Mirror for FElementId used in generic Octree */
-struct OctreeElementId
-{
-	var private native const pointer Node;
-	var private native const int ElementIndex;
-};
-
-/** Bone Atom definition */
-struct BoneAtom
-{
-	var	quat	Rotation;
-	var	vector	Translation;
-	var float	Scale;
-};
-
 //=============================================================================
 // Constants.
 
-const MaxInt = 0x7fffffff;
-const Pi = 3.1415926535897932;
-const RadToDeg = 57.295779513082321600;	// 180 / Pi
-const DegToRad = 0.017453292519943296;		// Pi / 180
-const UnrRotToRad = 0.00009587379924285;		// Pi / 32768
-const RadToUnrRot = 10430.3783504704527;		// 32768 / Pi
-const DegToUnrRot = 182.0444;
-const UnrRotToDeg = 0.00549316540360483;
-const INDEX_NONE = -1;
+const MaxInt		= 0x7fffffff;
+const Pi			= 3.1415926535897932;
+const RadToDeg		= 57.295779513082321600;	// 180 / Pi
+const DegToRad		= 0.017453292519943296;		// Pi / 180
+const INDEX_NONE	= -1;
 
-// Aspect ratio constants
-const AspectRatio4x3 = 1.33333;
-const AspectRatio5x4 = 1.25;
-const AspectRatio16x9 = 1.77778;
-const InvAspectRatio4x3 = 0.75;
-const InvAspectRatio5x4 = 0.8;
-const InvAspectRatio16x9 = 0.56249;
 
 //=============================================================================
 // Logging Severity Levels.
@@ -534,40 +390,7 @@ enum ETickingGroup
 	/**
 	 * Any item that needs the async work to be done before being updated
 	 */
-	TG_PostAsyncWork,
-	/**
-	 * Any item that needs the update work to be done before being ticked
-	 */
-	 TG_PostUpdateWork,
-	 /** Special effects that need to be updated last */
-	TG_EffectsUpdateWork
-};
-
-
-/**
- * These are the types of PerfMem RunResults you the system understands and can achieve.  They are stored in the table as we
- * will get "valid" numbers but we ran OOM.  We want to list the numbers in the OOM case because there is probably something that
- * jumped up to cause the OOM (e.g. vertex lighting).
- **/
-enum EAutomatedRunResult
-{
-	ARR_Unknown,
-	ARR_OOM,
-	ARR_Passed,
-};
-
-
-/**
- * Different modes for the DebugBreak() method.
- */
-enum EDebugBreakType
-{
-	DEBUGGER_NativeOnly,
-
-	/** not yet implemented */
-	DEBUGGER_ScriptOnly,
-	/** not yet implemented */
-	DEBUGGER_Both,
+	TG_PostAsyncWork
 };
 
 //=============================================================================
@@ -609,7 +432,6 @@ native(141) static final preoperator  int  ~  ( int A );
 native(143) static final preoperator  int  -  ( int A );
 native(144) static final operator(16) int  *  ( int A, int B );
 native(145) static final operator(16) int  /  ( int A, int B );
-native(253) static final operator(18) int  %  ( int A, int B );
 native(146) static final operator(20) int  +  ( int A, int B );
 native(147) static final operator(20) int  -  ( int A, int B );
 native(148) static final operator(22) int  << ( int A, int B );
@@ -679,8 +501,7 @@ native      static final function	float Asin  ( float A );
 native(188) static final function	float Cos   ( float A );
 native      static final function	float Acos  ( float A );
 native(189) static final function	float Tan   ( float A );
-native(190) static final function	float Atan  ( float A );
-native		static final function	float Atan2 ( float A, float B );
+native(190) static final function	float Atan  ( float A, float B );
 native(191) static final function	float Exp   ( float A );
 native(192) static final function	float Loge  ( float A );
 native(193) static final function	float Sqrt  ( float A );
@@ -691,8 +512,6 @@ native(245) static final function	float FMax  ( float A, float B );
 native(246) static final function	float FClamp( float V, float A, float B );
 native(247) static final function	float Lerp  ( float A, float B, float Alpha );
 native(199)	static final function	int   Round	( float A );
-native		static final function	int   FFloor	( float A );
-native static final function int FCeil(float A);
 
 /**
  * Cubic Spline interpolation.
@@ -741,7 +560,7 @@ native static final function float FInterpEaseInOut(float A, float B, float Alph
 
 
 /** Return a random number within the given range. */
-static final simulated function float RandRange( float InMin, float InMax )
+static final simulated function  float RandRange( float InMin, float InMax )
 {
     return InMin + (InMax - InMin) * FRand();
 }
@@ -779,8 +598,6 @@ static final simulated function float FPctByRange( float Value, float InMin, flo
  * @return		new interpolated position
  */
 native static final function float FInterpTo( float Current, float Target, float DeltaTime, float InterpSpeed );
-/** Same as above, but using a constant step */
-native static final function float FInterpConstantTo( float Current, float Target, float DeltaTime, float InterpSpeed );
 
 
 //
@@ -812,17 +629,16 @@ native(224) static final operator(34) vector -=    ( out vector A, vector B );
 
 native(225)		static final function	float	VSize		( vector A );
 native			static final function	float	VSize2D		( vector A );
-native(228)		static final function	float	VSizeSq		( vector A );
+native			static final function	float	VSizeSq		( vector A );
 native			static final function	float	VSizeSq2D	( vector A );
 native(226)		static final function	vector	Normal		( vector A );
-native(227) static final function vector Normal2D(vector A);
 native			static final function	vector	VLerp		( vector A, vector B, float Alpha );
+native			static final function	vector	VSmerp		( vector A, vector B, float Alpha );
 native(252)		static final function	vector	VRand		( );
-native			static final function	vector	VRandCone	( vector Dir, float ConeHalfAngleRadians );
-native			static final function	vector	VRandCone2	( vector Dir, float HorizontalConeHalfAngleRadians, float VerticalConeHalfAngleRadians );
 native(300)		static final function	vector	MirrorVectorByNormal( vector InVect, vector InNormal );
 native(1500)	static final function	Vector	ProjectOnTo( Vector x, Vector y );
 native(1501)	static final function	bool	IsZero( Vector A );
+
 
 /**
  * Tries to reach Target based on distance from Current position,
@@ -841,32 +657,6 @@ native static final function vector VInterpTo( vector Current, vector Target, fl
 /** Clamps a vector to not be longer than MaxLength. */
 native static final function vector ClampLength( vector V, float MaxLength );
 
-/** Returns dot product of two vectors while ignoring the Z component. */
-native static final function float NoZDot( vector A, vector B );
-
-simulated final function bool InCylinder( Vector Origin, Rotator Dir, float Width, Vector A, optional bool bIgnoreZ )
-{
-	local Vector B;
-	local Vector VDir;
-
-	if( bIgnoreZ )
-	{
-		Origin.Z  = 0;
-		Dir.Pitch = 0;
-		A.Z		  = 0;
-	}
-
-	VDir = Vector(Dir);
-	B	 = (((A - Origin) DOT VDir) * VDir) + Origin;
-
-	if( VSizeSq(B-A) <= Width * Width )
-	{
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 //
 // Rotator operators and functions.
 //
@@ -884,16 +674,13 @@ native(318) static final operator(34) rotator	+=  ( out rotator A, rotator B );
 native(319) static final operator(34) rotator	-=  ( out rotator A, rotator B );
 native		static final operator(24) bool		ClockwiseFrom( int A, int B );
 
-native(229) static final function			GetAxes( rotator A, out vector X, out vector Y, out vector Z );
-native(230) static final function					GetUnAxes( rotator A, out vector X, out vector Y, out vector Z );
-native      static final function			vector  GetRotatorAxis( rotator A, int Axis );
-native(320) static final function	Rotator	RotRand( optional bool bRoll );
-native      static final function			Rotator	OrthoRotation( vector X, vector Y, vector Z );
-native      static final function			Rotator	Normalize( rotator Rot );
-native		static final function			Rotator	RLerp( Rotator A, Rotator B, float Alpha, optional bool bShortestPath );
-/** Given rotation R in the space defined by RBasis, return R in "world" space */
-native		static final function			Rotator RTransform(rotator R, rotator RBasis);
-
+native(229) static final function			GetAxes         ( rotator A, out vector X, out vector Y, out vector Z );
+native(230) static final function			GetUnAxes       ( rotator A, out vector X, out vector Y, out vector Z );
+native(320) static final function	Rotator	RotRand ( optional bool bRoll );
+native      static final function	Rotator	OrthoRotation( vector X, vector Y, vector Z );
+native      static final function	Rotator	Normalize( rotator Rot );
+native		static final function	Rotator	RLerp( Rotator A, Rotator B, float Alpha, optional bool bShortestPath );
+native		static final function	Rotator	RSmerp( Rotator A, Rotator B, float Alpha, optional bool bShortestPath );
 
 /**
  * Tries to reach Target based on distance from Current position,
@@ -903,11 +690,11 @@ native		static final function			Rotator RTransform(rotator R, rotator RBasis);
  * @param		Current			Actual position
  * @param		Target			Target position
  * @param		DeltaTime		time since last tick
- * @param		InterpSpeed		Interpolation speed, if !bConstantInterpSpeed will perform a continuous lerp, otherwise will interp at constant speed
+ * @param		InterpSpeed		Interpolation speed
  * @return		new interpolated position
  */
 
-native static final function Rotator RInterpTo( rotator Current, rotator Target, float DeltaTime, float InterpSpeed, optional bool bConstantInterpSpeed );
+native static final function Rotator RInterpTo( rotator Current, rotator Target, float DeltaTime, float InterpSpeed );
 
 
 /**
@@ -928,8 +715,18 @@ native static final function float RDiff( Rotator A, Rotator B );
  * @returns mathematical vector length: Sqrt(Pitch^2 + Yaw^2 + Roll^2)
  */
 
-native static final function float RSize(rotator R);
+static final function float RSize( Rotator R )
+{
+	local int PitchNorm, YawNorm, RollNorm;
 
+	PitchNorm	= NormalizeRotAxis(R.Pitch);
+	YawNorm		= NormalizeRotAxis(R.Yaw);
+	RollNorm	= NormalizeRotAxis(R.Roll);
+
+	return Sqrt( float(	PitchNorm	* PitchNorm	+
+						YawNorm		* YawNorm	+
+						RollNorm	* RollNorm	) );
+}
 
 
 /**
@@ -969,51 +766,6 @@ static final simulated function ClampRotAxis
 
 	out_DeltaViewAxis = DesiredViewAxis - ViewAxis;
 }
-
-/**
- * Clamp Rotator Axis.
- *
- * @param Current	Input axis angle.
- * @param Center	Center of allowed angle.
- * @param MaxDelta	Maximum delta allowed.
- * @return axis angle clamped between [Center-MaxDelta, Center+MaxDelta]
- */
-static final simulated function int ClampRotAxisFromBase(int Current, int Center, int MaxDelta)
-{
-	local int DeltaFromCenter;
-
-	DeltaFromCenter = NormalizeRotAxis(Current - Center);
-
-	if( DeltaFromCenter > MaxDelta )
-	{
-		Current	= Center + MaxDelta;
-	}
-	else if( DeltaFromCenter < -MaxDelta )
-	{
-		Current	= Center - MaxDelta;
-	}
-
-	return Current;
-};
-
-
-/**
- * Clamp Rotator Axis.
- *
- * @param Current	Input axis angle.
- * @param Min		Min allowed angle.
- * @param Max		Max allowed angle.
- * @return axis angle clamped between [Min, Max]
- */
-static final simulated function int ClampRotAxisFromRange(int Current, int Min, int Max)
-{
-	local int Delta, Center;
-
-	Delta = NormalizeRotAxis(Max - Min) / 2;
-	Center = NormalizeRotAxis(Max + Min) / 2;
-
-	return ClampRotAxisFromBase(Current, Center, Delta);
-};
 
 
 /**
@@ -1087,16 +839,6 @@ static final simulated function bool SClampRotAxis
 	return bClamped;
 }
 
-/** Create a Rotation from independant Pitch, Yaw, Roll */
-static final function Rotator MakeRotator(int Pitch, int Yaw, int Roll)
-{
-	local rotator R;
-
-	R.Pitch = Pitch;
-	R.Yaw = Yaw;
-	R.Roll = Roll;
-	return R;
-}
 
 //
 // String operators.
@@ -1121,7 +863,7 @@ native(324) static final operator(45) string -= ( out    string A, coerce string
 //
 
 native(125) static final function int    Len    ( coerce string S );
-native(126) static final function int    InStr  ( coerce string S, coerce string t, optional bool bSearchFromRight, optional bool bIgnoreCase, optional int StartPos );
+native(126) static final function int    InStr  ( coerce string S, coerce string t, optional bool bSearchFromRight );
 native(127) static final function string Mid    ( coerce string S, int i, optional int j );
 native(128) static final function string Left   ( coerce string S, int i );
 native(234) static final function string Right  ( coerce string S, int i );
@@ -1132,7 +874,7 @@ native(237) static final function int    Asc    ( string S );
 native(201) static final function string Repl	( coerce string Src, coerce string Match, coerce string With, optional bool bCaseSensitive );
 
 /**
- * Splits Text on the first Occurrence of Split and returns the remaining
+ * Splits Text on the first occurence of Split and returns the remaining
  * part of Text.
  */
 static final function string Split(coerce string Text, coerce string SplitStr, optional bool bOmitSplitStr)
@@ -1153,18 +895,6 @@ static final function string Split(coerce string Text, coerce string SplitStr, o
 	}
 }
 
-/** Get right most number from an actor name (ie Text == "CoverLink_45" returns "45") */
-static final function string GetRightMost( coerce string Text )
-{
-	local int Idx;
-	Idx = InStr(Text,"_");
-	while (Idx != -1)
-	{
-		Text = Mid(Text,Idx+1,Len(Text));
-		Idx = InStr(Text,"_");
-	}
-	return Text;
-}
 
 /**
  * Create a single string from an array of strings, using the delimiter specified, optionally ignoring blank members
@@ -1202,19 +932,14 @@ static final function JoinArray(array<string> StringArray, out string out_Result
 native static final function ParseStringIntoArray(string BaseString, out array<string> Pieces, string Delim, bool bCullEmpty);
 
 /**
- * Wrapper for splitting a string into an array of strings using a single expression.
- */
-static final function array<string> SplitString( string Source, optional string Delimiter=",", optional bool bCullEmpty )
-{
-	local array<string> Result;
-	ParseStringIntoArray(Source, Result, Delimiter, bCullEmpty);
-	return Result;
-}
-
-/**
  * Returns the full path name of the specified object (including package and groups), ie CheckObject::GetPathName().
  */
 native static final function string PathName(Object CheckObject);
+
+/**
+ *   Returns a string containing a system timestamp
+ */
+native static final function string TimeStamp();
 
 
 //
@@ -1244,20 +969,6 @@ native(197) final function bool IsA( name ClassName );
 native(254) static final operator(24) bool == ( name A, name B );
 native(255) static final operator(26) bool != ( name A, name B );
 
-//
-//	Matrix operators and functions
-//
-native		static final operator(34) matrix	*	(Matrix A, Matrix B);
-
-native		static final function	vector	TransformVector(Matrix TM, vector A);
-native		static final function	vector	InverseTransformVector(Matrix TM, vector A);
-native		static final function	vector	TransformNormal(Matrix TM, vector A);
-native		static final function	vector	InverseTransformNormal(Matrix TM, vector A);
-native		static final function	matrix	MakeRotationTranslationMatrix(vector Translation, Rotator Rotation);
-native		static final function	matrix	MakeRotationMatrix(Rotator Rotation);
-native		static final function	rotator	MatrixGetRotator(Matrix TM);
-native		static final function	vector	MatrixGetOrigin(Matrix TM);
-native		static final function	vector	MatrixGetAxis(Matrix TM, EAxis Axis);
 
 //
 // Quaternion functions
@@ -1280,16 +991,6 @@ native(271)	static final operator(16)	Quat -	(Quat A, Quat B);
 // Vector2D functions
 //
 
-native		static final operator(16)	vector2d +	(vector2d A, vector2d B);
-native		static final operator(16)	vector2d -	(vector2d A, vector2d B);
-native      static final operator(16)   vector2d *  (vector2d A, float B);
-native      static final operator(16)   vector2d /  (vector2d A, float B );
-native      static final operator(34)   vector2d *= (out vector2d A, float B);
-native      static final operator(34)   vector2d /= (out vector2d A, float B);
-native      static final operator(34)   vector2d += (out vector2d A, vector2d B);
-native	    static final operator(34)   vector2d -= (out vector2d A, vector2d B);
-
-
 /**
  * Returns the value in the Range, relative to Pct.
  * Examples:
@@ -1302,6 +1003,7 @@ native	    static final operator(34)   vector2d -= (out vector2d A, vector2d B);
  *
  * @return	the value in the Range, relative to Pct.
  */
+
 static final simulated function float GetRangeValueByPct( Vector2D Range, float Pct )
 {
 	return ( Range.X + (Range.Y-Range.X) * Pct );
@@ -1320,18 +1022,11 @@ static final simulated function float GetRangeValueByPct( Vector2D Range, float 
  *
  * @return	relative percentage position Value is in the Range.
  */
+
 static final simulated function float GetRangePctByValue( Vector2D Range, float Value )
 {
-	return (Range.Y == Range.X) ? Range.X : (Value - Range.X) / (Range.Y - Range.X);
+	return (Value - Range.X) / (Range.Y - Range.X);
 }
-
-/**
- * Useful for mapping a value in one value range to a different value range.  Output is clamped to the OutputRange.
- * e.g. given that velocities [50..100] correspond to a sound volume of [0.2..1.4], find the
- *      volume for a velocity of 77.
- */
-static final simulated native function float GetMappedRangeValue(vector2d InputRange, vector2d OutputRange, float Value);
-
 
 /** Construct a vector2d variable */
 static final function vector2d	vect2d( float InX, float InY )
@@ -1342,13 +1037,6 @@ static final function vector2d	vect2d( float InX, float InY )
 	NewVect2d.Y = InY;
 	return NewVect2d;
 }
-
-/** Evaluate a float curve for an input of InVal */
-native static final function float EvalInterpCurveFloat(const out InterpCurveFloat FloatCurve, float InVal);
-/** Evaluate a vector curve for an input of InVal */
-native static final function vector EvalInterpCurveVector(const out InterpCurveVector VectorCurve, float InVal);
-/** Evaluate a vector2D curve for an input of InVal */
-native static final function vector2D EvalInterpCurveVector2D(const out InterpCurveVector2D Vector2DCurve, float InVal);
 
 //
 // Color functions
@@ -1396,34 +1084,6 @@ static final function Color MakeColor(byte R, byte G, byte B, optional byte A)
 	C.B = B;
 	C.A = A;
 	return C;
-}
-
-/** Util to interpolate between two colors */
-static final function Color LerpColor(Color A, Color B, float Alpha)
-{
-	local vector FloatA, FloatB, FloatResult;
-	local float AlphaA, AlphaB, FloatResultAlpha;
-	local color Result;
-
-	FloatA.X = A.R;
-	FloatA.Y = A.G;
-	FloatA.Z = A.B;
-	AlphaA = A.A;
-
-	FloatB.X = B.R;
-	FloatB.Y = B.G;
-	FloatB.Z = B.B;
-	AlphaB = B.A;
-
-	FloatResult = FloatA + ((FloatB - FloatA) * FClamp(Alpha, 0.0, 1.0));
-	FloatResultAlpha = AlphaA + ((AlphaB - AlphaA) * FClamp(Alpha, 0.0, 1.0));
-
-	Result.R = FloatResult.X;
-	Result.G = FloatResult.Y;
-	Result.B = FloatResult.Z;
-	Result.A = FloatResultAlpha;
-
-	return Result;
 }
 
 //
@@ -1475,15 +1135,11 @@ static final operator(20) LinearColor - (LinearColor A, LinearColor B)
 
 // this define allows us to detect code that is directly calling functions that should only be called through a macro, such as
 // LogInternal & WarnInternal
-`if(`isdefined(FINAL_RELEASE))
-	`if(`isdefined(FINAL_RELEASE_DEBUGCONSOLE))
-	`define	prevent_direct_calls
-	`else
-	`define	prevent_direct_calls	private
-	`endif
-`else
-	`define	prevent_direct_calls
-`endif
+
+
+
+	
+
 
 //
 // Logging.
@@ -1498,55 +1154,23 @@ static final operator(20) LinearColor - (LinearColor A, LinearColor B)
  * @param	LogTag			if specified, the message will be prepended with this tag in the log file
  *
  */
-native(231) final static `{prevent_direct_calls} function LogInternal( coerce string S, optional name Tag );
+native(231) final static  function LogInternal( coerce string S, optional name Tag );
 
 /**
  * Same as calling LogInternal(SomeMsg, 'Warning');  This function should never be called directly - use the `warn macro instead, which has the following signature:
  *
  * warn( coerce string Msg, optional bool bCondition=true );
  */
-native(232) final static `{prevent_direct_calls} function WarnInternal( coerce string S );
+native(232) final static  function WarnInternal( coerce string S );
 
 native static function string Localize( string SectionName, string KeyName, string PackageName );
-
-/** given a path to a localized key of the form "Package.Section.Name",
- * return the appropriate value from the localization file for the current language
- */
-static final function string ParseLocalizedPropertyPath(string PathName)
-{
-	local array<string> Pieces;
-
-	ParseStringIntoArray(PathName, Pieces, ".", false);
-	if (Pieces.length >= 3)
-	{
-		return Localize(Pieces[1], Pieces[2], Pieces[0]);
-	}
-	else
-	{
-		return "";
-	}
-}
 
 /**
  * Dumps the current script function stack to the log file, useful
  * for debugging.
  */
+
 native static final function ScriptTrace();
-
-
-/**
- * Gets the current script function stack back so you can log it to a specific log location (e.g. AILog).
- */
-native static final function String GetScriptTrace();
-
-
-/**
- * Script-induced breakpoint.  Useful for examining state with the debugger at a particular point in script.
- *
- * @param	UserFlags		user-defined flags to be used for e.g. indentifying different calls to DebugBreak in the same session
- * @param	DebuggerType	C++ debugger, UScript debugger, or both
- */
-native static final function DebugBreak( optional int UserFlags, optional EDebugBreakType DebuggerType=DEBUGGER_NativeOnly );
 
 /**
  * Returns the current calling function's name, useful for
@@ -1564,6 +1188,18 @@ native static final function SetUTracing( bool bShouldUTrace );
  * Returns whether script function call trace logging is currently enabled.
  */
 native static final function bool IsUTracing();
+
+/**
+ * Returns whether the current script was remotely executed (i.e. through a replicated function)
+ * NOTE: Mainly for debugging, not for general usage
+ */
+native static final function bool IsNetScript();
+
+/**
+ * Returns the name of the replicated function where script execution began,
+ * if the current script was remotely executed
+ */
+native static final function name GetNetFuncName();
 
 
 //
@@ -1721,7 +1357,6 @@ native(118) final function Disable( name ProbeFunc );
 //
 
 native static final function name GetEnum( object E, coerce int i );
-native static final function int EnumFromString( object E, coerce name ValueName );
 native static final function object DynamicLoadObject( string ObjectName, class ObjectClass, optional bool MayFail );
 native static final function object FindObject( string ObjectName, class ObjectClass );
 
@@ -1733,15 +1368,8 @@ native static final function object FindObject( string ObjectName, class ObjectC
 native(536) final function SaveConfig();
 native static final function StaticSaveConfig();
 
-/**
- * Import property values from JSON formatted string
- *
- * @param PropertyName name of the property owned by this object
- * @param JSON string that contains JSON format property values
- */
-native static final function ImportJSON(string PropertyName, const out string JSON);
-
 /*
+@todo ronp - enhance config functionality.
 /**
  * Saves the current value for all configurable properties in this object to the .ini file.  The values for any global config
  * properties will be propagated to all child classes.
@@ -1762,6 +1390,7 @@ native(536) final function SaveConfig( optional bool bRefreshInstances, optional
  */
 native static final function StaticSaveConfig( optional bool bRefreshInstances, optional string PropertyName );
 
+
 /**
  * Resets the values for configurable properties in this object's class back to the values in the corresponding Default*.ini file.
  *
@@ -1770,13 +1399,14 @@ native static final function StaticSaveConfig( optional bool bRefreshInstances, 
  * @param	PropertyName		if specified, only this property's value will be reset.
  */
 native static final function ResetConfig( optional bool bRefreshInstances, optional string PropertyName );
+*/
 
 /**
  * Removes the values for all configurable properties in this object's class from the .ini file.
  *
  * @param	PropertyName		if specified, only this property's value will be removed.
  */
-native(537) final function ClearConfig( optional string PropertyName );
+native(538) final function ClearConfig( optional string PropertyName );
 
 /**
  * Removes the values for all configurable properties in this object's class from the .ini file.
@@ -1784,7 +1414,7 @@ native(537) final function ClearConfig( optional string PropertyName );
  * @param	PropertyName		if specified, only this property's value will be removed.
  */
 native static final function StaticClearConfig( optional string PropertyName );
-*/
+
 
 /**
  * Retrieve the names of sections which contain data for the specified PerObjectConfig class.
@@ -1819,17 +1449,6 @@ native static final function bool GetPerObjectConfigSections( class SearchClass,
  */
 native final function float PointDistToLine(vector Point, vector Line, vector Origin, optional out vector OutClosestPoint);
 
-/**
- * Returns closest distance from a point to a segment.
- *
- * @param	Point			point to check distance for
- * @param	StartPoint		StartPoint of segment
- * @param	EndPoint		EndPoint of segment
- * @param	OutClosestPoint	Closest point on segment.
- *
- * @return	closest distance from Point to segment defined by (StartPoint, EndPoint).
- */
-native final function float PointDistToSegment(Vector Point, Vector StartPoint, Vector EndPoint, optional out Vector OutClosestPoint);
 
 /**
  * Calculates the distance of a given point to the given plane. (defined by a combination of vector and rotator)
@@ -1868,14 +1487,41 @@ simulated final function float PointDistToPlane( Vector Point, Rotator Orientati
 
 
 /**
-* Calculates a point's projection onto a plane
-* @param	Point	point to project onto the plane
-* @param	A		point on plane
-* @param	B		point on plane
-* @param	C		point on plane
-* @return	projection of point onto the plane defined by ABC
-*/
-native static final function Vector PointProjectToPlane(Vector Point, Vector A, Vector B, Vector C);
+ * Determines if point is inside given box
+ *
+ * @param	Point		- Point to check
+ *
+ * @param	Location	- Center of box
+ *
+ * @param	Extent		- Size of box
+ *
+ * @return	bool - TRUE if point is inside box, FALSE otherwise
+ */
+
+static final function bool PointInBox( Vector Point, Vector Location, Vector Extent )
+{
+	local Vector MinBox, MaxBox;
+
+	MinBox = Location - Extent;
+	MaxBox = Location + Extent;
+
+	if( Point.X >= MinBox.X &&
+		Point.X <= MaxBox.X )
+	{
+		if( Point.Y >= MinBox.Y &&
+			Point.Y <= MaxBox.Y )
+		{
+			if( Point.Z >= MinBox.Z &&
+				Point.Z <= MaxBox.Z )
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 
 /**
  * Calculates the dotted distance of vector 'Direction' to coordinate system O(AxisX,AxisY,AxisZ).
@@ -2030,7 +1676,8 @@ simulated final function byte FloatToByte(float inputFloat, optional bool bSigne
 		{
 			return 255;
 		}
-		else if (inputFloat < -0.98f)
+		else
+		if (inputFloat < -0.98f)
 		{
 			return 0;
 		}
@@ -2041,11 +1688,12 @@ simulated final function byte FloatToByte(float inputFloat, optional bool bSigne
 	}
 	else
 	{
-		if (inputFloat > 0.9961f)
+		if (inputFloat > 0.98f)
 		{
 			return 255;
 		}
-		else if (inputFloat < 0.004f)
+		else
+		if (inputFloat < 0.02f)
 		{
 			return 0;
 		}
@@ -2106,95 +1754,13 @@ final function name GetPackageName()
  */
 native final function vector TransformVectorByRotation(rotator SourceRotation, vector SourceVector, optional bool bInverse);
 
-
-/**
- *   Returns a string containing a system timestamp
+/** these accessors allow classes to implement an interface to setting certain property values without creating a dependancy
+ * on that class, similarly to how IsA() allows checking for a class without creating a dependancy on it
  */
-native final function string TimeStamp();
-
-/**
- * Return the system time components.
- */
-native final function GetSystemTime( out int Year, out int Month, out int DayOfWeek, out int Day, out int Hour, out int Min, out int Sec, out int MSec );
-
-/** @return the current engine version number for this build */
-native final function int GetEngineVersion();
-
-/** @return the changelist number that was used when generating this build */
-native final function int GetBuildChangelistNumber();
-
-final function int GetRandomOptionSumFrequency( const out array<float> FreqList )
-{
-	local float FreqSum, RandVal;
-	local int Idx;
-
-	for( Idx = 0; Idx < FreqList.Length; Idx++ )
-	{
-		FreqSum += FreqList[Idx];
-	}
-
-	RandVal = FRand() * FreqSum;
-	FreqSum = 0;
-	for( Idx = 0; Idx < FreqList.Length; Idx++ )
-	{
-		FreqSum += FreqList[Idx];
-		if( RandVal < FreqSum )
-		{
-			return Idx;
-		}
-	}
-
-	return -1;
-}
-
-/** @return the three character language identifier currently in use */
-native static final function string GetLanguage();
-
-
-/**
- * Invalidate the specified Guid (sets all values to zero)
- *
- * @param InGuid	Guid to invalidate
- */
-native static final function InvalidateGuid( out Guid InGuid );
-
-/**
- * Determine if the specified Guid is valid or not
- *
- * @param InGuid	Guid to check the validity of
- *
- * @return True if the specified Guid is valid, false if it is not
- */
-native static final function bool IsGuidValid( const out Guid InGuid );
-
-/** Create a new Guid */
-native static final function Guid CreateGuid();
-
-/**
- * Construct a Guid from the specified string, if possible
- *
- * @param InGuidString	String to construct the Guid from (should be in a format matching the output of GetStringFromGuid)
- *
- * @return A Guid constructed from the specified string, if possible; Otherwise, an invalid Guid (all zeroes)
- */
-native static final function Guid GetGuidFromString( const out string InGuidString );
-
-/**
- * Get the string representation of the specified Guid
- *
- * @param InGuid	Guid to get the string representation of
- *
- * @return The string representation of the specified Guid
- */
-native static final function string GetStringFromGuid( const out guid InGuid );
-
-
-native static final function int ProfNodeStart(string TimerName);
-native static final function ProfNodeStop(optional int AssumedTimerIndex = -1);
-native static final function ProfNodeSetTimeThresholdSeconds(float Threshold);
-native static final function ProfNodeSetDepthThreshold(int Depth);
-native static final function ProfNodeEvent(string EventName);
+function string GetSpecialValue(name PropertyName);
+function SetSpecialValue(name PropertyName, string NewValue);
 
 defaultproperties
 {
+   Name="Default__Object"
 }

@@ -1,12 +1,14 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFGame_Content extends UTCTFGame;
 
 defaultproperties
 {
-	HUDType=class'UTGame.UTCTFHUD'
-
-	AnnouncerMessageClass=class'UTCTFMessage'
- 	TeamScoreMessageClass=class'UTGameContent.UTTeamScoreMessage'
+   AnnouncerMessageClass=Class'UTGameContent.UTCTFMessage'
+   TeamScoreMessageClass=Class'UTGameContent.UTTeamScoreMessage'
+   TranslocatorClass=Class'UTGameContent.UTWeap_Translocator_Content'
+   HUDType=Class'UTGame.UTCTFHUD'
+   Name="Default__UTCTFGame_Content"
+   ObjectArchetype=UTCTFGame'UTGame.Default__UTCTFGame'
 }

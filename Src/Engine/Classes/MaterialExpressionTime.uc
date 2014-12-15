@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionTime extends MaterialExpression
 	native(Material)
@@ -9,19 +9,14 @@ class MaterialExpressionTime extends MaterialExpression
 /** This time continues advancing regardless of whether the game is paused. */
 var() bool bIgnorePause;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-
-	/**
-	 * @return TRUE if the expression preview needs realtime update
-     */
-	virtual UBOOL NeedsRealtimePreview() { return TRUE; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Utility"
-	MenuCategories(1)="WorldPosOffset"
+   Name="Default__MaterialExpressionTime"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

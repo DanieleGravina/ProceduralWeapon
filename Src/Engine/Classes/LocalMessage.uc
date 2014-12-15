@@ -9,7 +9,7 @@
 // classes to send messages.  The BroadcastHandler function BroadcastLocalizedMessage()
 // is used to broadcast localized messages to all the players.
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class LocalMessage extends Object
 	abstract;
@@ -43,7 +43,6 @@ static function ClientReceive(
 			P.myHUD.LocalizedMessage(
 				Default.Class,
 				RelatedPRI_1,
-				RelatedPRI_2,
 				MessageString,
 				Switch,
 				static.GetPos(Switch, P.myHUD),
@@ -105,6 +104,11 @@ static function bool IsConsoleMessage(int Switch)
     return default.bIsConsoleMessage;
 }
 
+static function bool IsKeyObjectiveMessage( int Switch )
+{
+	return false;
+}
+
 /**
   * RETURNS true if messages are similar enough to trigger "partially unique" check for HUD display
   */
@@ -115,12 +119,11 @@ static function bool PartiallyDuplicates(INT Switch1, INT Switch2, object Option
 
 defaultproperties
 {
-    bIsSpecial=true
-    bIsUnique=false
-    bIsPartiallyUnique=false
-	Lifetime=3
-	bIsConsoleMessage=True
-
-	DrawColor=(R=255,G=255,B=255,A=255)
-    PosY=0.83
+   bIsSpecial=True
+   bIsConsoleMessage=True
+   Lifetime=3.000000
+   DrawColor=(B=255,G=255,R=255,A=255)
+   PosY=0.830000
+   Name="Default__LocalMessage"
+   ObjectArchetype=Object'Core.Default__Object'
 }

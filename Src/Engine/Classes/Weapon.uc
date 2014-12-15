@@ -1,13 +1,138 @@
 /**
  * Base Weapon implementation.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class Weapon extends Inventory
 	native
 	abstract
-	config(game)
-	notplaceable;
+	config(game);
+
+/** Logging pre-processor macros */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+#linenumber 12
 
 /************************************************************************************
  * Firing Mode Definition
@@ -91,29 +216,26 @@ var() float	DefaultAnimSpeed;
  ********************************************************************************************* */
 
 /** Configurable weapon priority.  Ties (mod weapons) are broken by GroupWeight */
-var config	float	Priority;
+var databinding	config	float	Priority;
 
 /** Can player toss his weapon out? Typically false for default inventory. */
 var			bool	bCanThrow;
 
-/** Set from ClientWeaponSet() when it has to go through PendingClientWeaponSet, to preserve those variables. */
-var bool bWasOptionalSet;
-/** Set from ClientWeaponSet() when it has to go through PendingClientWeaponSet, to preserve those variables. */
-var bool bWasDoNotActivate;
 
 /*********************************************************************************************
  * AI Hints
  ********************************************************************************************* */
-/** Current AI controlling this weapon */
-var protectedwrite AIController AIController;
+var		array<byte>	ShouldFireOnRelease;
 
-var array<byte> ShouldFireOnRelease;
-var bool bInstantHit;
-var bool bMeleeWeapon;
-var float AIRating;
+var		bool	bInstantHit;
+
+var		bool	bMeleeWeapon;
+
+var		float	AIRating;
 
 /** Cache MaxRange of weapon */
 var float CachedMaxRange;
+
 
 /*********************************************************************************************
  * Initialization / System Messages / Utility
@@ -132,31 +254,42 @@ simulated event Destroyed()
  * A notification call when this weapon is removed from the Inventory of a pawn
  * @see Inventory::ItemRemovedFromInvManager
  */
+
 function ItemRemovedFromInvManager()
 {
-	`LogInv("");
-
-	GotoState('Inactive');
-
-	// Stop Firing
-	ForceEndFire();
 	// detach weapon from instigator
 	DetachWeapon();
-	// Tell the client the weapon has been thrown
-	ClientWeaponThrown();
 
-	Super.ItemRemovedFromInvManager();
-
-	if( Instigator != None && Instigator.Weapon == self )
+	if( IsActiveWeapon() )
 	{
 		Instigator.Weapon = None;
 	}
+
+	super.ItemRemovedFromInvManager();
+}
+
+
+/**
+ * Informs if this weapon is active for the player
+ *
+ * @return	true if this an active weapon for the player
+ */
+
+simulated function bool IsActiveWeapon()
+{
+	if( InvManager != None )
+	{
+		return InvManager.IsActiveWeapon( Self );
+	}
+
+	return false;
 }
 
 
 /**
  * Pawn holding this weapon as active weapon just died.
  */
+
 function HolderDied()
 {
 	ServerStopFire( CurrentFireMode );
@@ -168,6 +301,7 @@ function HolderDied()
  * For example the physics gun uses it to have mouse wheel change the distance of the held object.
  * Warning: only use in firing state, otherwise it breaks weapon switching
  */
+
 simulated function bool DoOverrideNextWeapon()
 {
 	return false;
@@ -177,6 +311,7 @@ simulated function bool DoOverrideNextWeapon()
 /**
  * hook to override Previous weapon call.
  */
+
 simulated function bool DoOverridePrevWeapon()
 {
 	return false;
@@ -191,25 +326,29 @@ simulated function bool DoOverridePrevWeapon()
  */
 function DropFrom(vector StartLocation, vector StartVelocity)
 {
-	if( !CanThrow() )
+    if( !CanThrow() )
 	{
 		return;
 	}
 
-	// Become inactive
-	GotoState('Inactive');
-
 	// Stop Firing
+
 	ForceEndFire();
+
 	// Detach weapon components from instigator
 	DetachWeapon();
 
+	// Tell the client the weapon has been thrown
+	ClientWeaponThrown();
+
 	// tell the super to DropFrom() which will
 	// should remove the item from our inventory
-	Super.DropFrom(StartLocation, StartVelocity);
+	super.DropFrom(StartLocation, StartVelocity);
 
-	AIController = None;
+	// Become inactive
+	GotoState('Inactive');
 }
+
 
 /**
  * Returns true if this item can be thrown out.
@@ -219,29 +358,26 @@ simulated function bool CanThrow()
 	return bCanThrow;
 }
 
+
 /**
  * This function is called when the client needs to discard the weapon
  */
 reliable client function ClientWeaponThrown()
 {
-	`LogInv("");
+	LogInternal(WorldInfo.TimeSeconds @ Instigator @ GetStateName() $ "::" $ GetFuncName() @ Self,'Inventory');
 
-	if (WorldInfo.NetMode == NM_Client)
-	{
-		// Become inactive
-		GotoState('Inactive');
+	// Stop Firing
 
-		// if this is the weapon we were carrying, set reference to None.
-		if( Instigator != None && Instigator.Weapon == Self )
-		{
-			Instigator.Weapon = None;
-		}
+	ForceEndFire();
 
-		// Stop Firing
-		ForceEndFire();
-		// Detach weapon components from instigator
-		DetachWeapon();
-	}
+
+	// Detach weapon components from instigator
+	DetachWeapon();
+
+	// Force it to turn off
+
+	// Become inactive
+	GotoState('Inactive');
 }
 
 
@@ -299,8 +435,8 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 
 simulated function GetWeaponDebug( out Array<String> DebugInfo )
 {
-	local String	    T;
-	local int		    i;
+	local String	T;
+	local int		i;
 
 	DebugInfo[DebugInfo.Length] = "Weapon:" $ GetItemName(string(Self)) @ "State:" $ GetStateName() @ "Instigator:" $ Instigator @ "Owner:" $ Owner;
 	DebugInfo[DebugInfo.Length] = "IsFiring():" $ IsFiring() @ "CurrentFireMode:" $ CurrentFireMode @ "bWeaponPutDown:" $ bWeaponPutDown;
@@ -310,7 +446,7 @@ simulated function GetWeaponDebug( out Array<String> DebugInfo )
 	}
 
 	T = "PendingFires:";
-	for(i=0; i<GetPendingFireLength(); i++)
+	for(i=0; i<InvManager.PendingFire.Length; i++)
 	{
 		T = T $ PendingFire(i) $ " ";
 	}
@@ -326,6 +462,40 @@ simulated function GetWeaponDebug( out Array<String> DebugInfo )
     }
 }
 
+
+/**
+ * Dump debug information for this weapon to log file.
+ */
+
+simulated function DumpWeaponDebugToLog()
+{
+	local Array<String>	DebugInfo;
+	local int			i;
+
+	WeaponLog( "Weapon:" @ Self, GetFuncName() );
+
+	GetWeaponDebug( DebugInfo );
+
+	for (i=0;i<DebugInfo.Length;i++)
+	{
+		LogInternal("Weapondebuginfo "$ DebugInfo[i]);
+	}
+}
+
+
+/**
+ * Prints out weapon debug information to log file
+ *
+ * @param	Msg		String to display
+ * @param	FuncStr	String telling where the log came from (format: Class::Function)
+ */
+
+simulated function WeaponLog( coerce String Msg, coerce String FuncStr )
+{
+	LogInternal("[" $ WorldInfo.TimeSeconds $"]" @ Msg @ "(" $ FuncStr $ ")");
+}
+
+
 /*********************************************************************************************
  * Ammunition / Inventory
  *********************************************************************************************/
@@ -335,6 +505,7 @@ simulated function GetWeaponDebug( out Array<String> DebugInfo )
  * Consumes ammunition when firing a shot.
  * Subclass me to define weapon ammunition consumption.
  */
+
 function ConsumeAmmo( byte FireModeNum );
 
 
@@ -345,6 +516,7 @@ function ConsumeAmmo( byte FireModeNum );
  *
  * Subclass me to define ammo addition rules.
  */
+
 function int AddAmmo(int Amount);
 
 
@@ -355,6 +527,7 @@ function int AddAmmo(int Amount);
  * @param	Amount			- [Optional] Check to see if this amount is available.
  * @return	true if ammo is available for Firemode FireModeNum.
  */
+
 simulated function bool HasAmmo( byte FireModeNum, optional int Amount )
 {
 	return true;
@@ -364,6 +537,7 @@ simulated function bool HasAmmo( byte FireModeNum, optional int Amount )
 /**
  * returns true if this weapon has any ammo left, regardless of the actual firing mode.
  */
+
 simulated function bool HasAnyAmmo()
 {
 	return true;
@@ -373,38 +547,28 @@ simulated function bool HasAnyAmmo()
  * Pending Fire / Inv Manager
  *********************************************************************************************/
 
-final simulated function INT GetPendingFireLength()
+simulated function bool PendingFire(int FireMode)
 {
-	if( InvManager != none )
+	if (InvManager != none)
 	{
-		return InvManager.GetPendingFireLength(Self);
-	}
-
-	return 0;
-}
-
-final simulated function bool PendingFire(int FireMode)
-{
-	if( InvManager != none )
-	{
-		return InvManager.IsPendingFire(Self, FireMode);
+		return bool( InvManager.PendingFire[FireMode] );
 	}
 	return false;
 }
 
-final simulated function SetPendingFire(int FireMode)
+simulated function SetPendingFire(int FireMode)
 {
-	if( InvManager != None )
+	if (InvManager != none)
 	{
-		InvManager.SetPendingFire(Self, FireMode);
+		InvManager.PendingFire[FireMode] = 1;
 	}
 }
 
-final simulated function ClearPendingFire(int FireMode)
+simulated function ClearPendingFire(int FireMode)
 {
-	if( InvManager != None )
+	if (InvManager != none)
 	{
-		InvManager.ClearPendingFire(Self, FireMode);
+		InvManager.PendingFire[FireMode] = 0;
 	}
 }
 
@@ -412,6 +576,7 @@ final simulated function ClearPendingFire(int FireMode)
  * Returns the type of projectile to spawn.  We use a function so subclasses can
  * override it if needed (case in point, homing rockets).
  */
+
 function class<Projectile> GetProjectileClass()
 {
 	return (CurrentFireMode < WeaponProjectiles.length) ? WeaponProjectiles[CurrentFireMode] : None;
@@ -471,6 +636,39 @@ simulated function float MaxRange()
 	return CachedMaxRange;
 }
 
+
+/**
+ * Returns the DamageRadius of projectiles being shot
+ */
+function float GetDamageRadius()
+{
+	local class<Projectile> CurrentProjectileClass;
+
+	CurrentProjectileClass = GetProjectileClass();
+	if( CurrentProjectileClass == None )
+	{
+		return 0;
+	}
+	return CurrentProjectileClass.default.DamageRadius;
+}
+
+
+/**
+ * This Weapon has just been given to this Pawn
+ *
+ * @param	thisPawn	new weapon owner
+ */
+function GivenTo(Pawn ThisPawn, optional bool bDoNotActivate)
+{
+	Super.GivenTo(ThisPawn, bDoNotActivate);
+
+	if( !bDoNotActivate && ThisPawn != None /*&& ThisPawn.Controller != None*/ )
+	{
+		// Evaluate if we should switch to this weapon
+		ClientWeaponSet(TRUE);
+	}
+}
+
 /*********************************************************************************************
  * AI interface
  *********************************************************************************************/
@@ -480,6 +678,11 @@ function float GetAIRating()
 	return AIRating;
 }
 
+function float RelativeStrengthVersus(Pawn P, float Dist)
+{
+	return 0;
+}
+
 /**
  * Returns a weight reflecting the desire to use the
  * given weapon, used for AI and player best weapon
@@ -487,6 +690,7 @@ function float GetAIRating()
  *
  * @return	weapon rating (range -1.f to 1.f)
  */
+
 simulated function float GetWeaponRating()
 {
 	if( InvManager != None )
@@ -502,10 +706,42 @@ simulated function float GetWeaponRating()
 	return 1;
 }
 
+function bool RecommendRangedAttack()
+{
+	return false;
+}
+
+function bool FocusOnLeader(bool bLeaderFiring)
+{
+	return false;
+}
+
+function bool RecommendLongRangedAttack()
+{
+	return false;
+}
+
+function float RangedAttackTime()
+{
+	return 0;
+}
+
 // CanAttack() - return false if out of range, can't see target, etc.
 function bool CanAttack(Actor Other)
 {
 	return true;
+}
+
+// tells bot whether to charge or back off while using this weapon
+function float SuggestAttackStyle()
+{
+    return 0.0;
+}
+
+// tells bot whether to charge or back off while defending against this weapon
+function float SuggestDefenseStyle()
+{
+    return 0.0;
 }
 
 // tells AI that it needs to release the fire button for this weapon to do anything
@@ -548,12 +784,36 @@ simulated function AnimNodeSequence GetWeaponAnimNodeSeq()
 }
 
 /**
+ * This function handles playing sounds for weapons.  How it plays the sound depends on the following:
+ *
+ * If we are a listen server, then this sound is played and replicated as normal
+ * If we are a remote client, but locally controlled (ie: we are on the client) we play the sound and don't replicate it
+ * If we are a dedicated server, play the sound and replicate it to everyone BUT the owner (he will play it locally).
+ *
+ *
+ * @param	SoundCue	- The Source Cue to play
+ */
+simulated function WeaponPlaySound( SoundCue Sound, optional float NoiseLoudness )
+{
+	// if we are a listen server, just play the sound.  It will play locally
+	// and be replicated to all other clients.
+	if( Sound == None || Instigator == None )
+	{
+		return;
+	}
+
+	Instigator.PlaySound(Sound, false, true);
+}
+
+
+/**
  * Play an animation on the weapon mesh
  * Network: Local Player and clients
  *
  * @param	Anim Sequence to play on weapon skeletal mesh
  * @param	desired duration, in seconds, animation should be played
  */
+
 simulated function PlayWeaponAnimation( Name Sequence, float fDesiredDuration, optional bool bLoop, optional SkeletalMeshComponent SkelMesh)
 {
 	local AnimNodeSequence WeapNode;
@@ -604,6 +864,7 @@ simulated function PlayWeaponAnimation( Name Sequence, float fDesiredDuration, o
  * Network: Local Player and clients
  *
  */
+
 simulated function StopWeaponAnimation()
 {
 	local AnimNodeSequence AnimSeq;
@@ -626,6 +887,7 @@ simulated function StopWeaponAnimation()
  * Main function to play Weapon fire effects.
  * This is called from Pawn::WeaponFired in the base implementation.
  */
+
 simulated function PlayFireEffects( byte FireModeNum, optional vector HitLocation );
 
 /**
@@ -633,7 +895,15 @@ simulated function PlayFireEffects( byte FireModeNum, optional vector HitLocatio
  * Main function to stop any active effects
  * This is called from Pawn::WeaponStoppedFiring
  */
+
 simulated function StopFireEffects(byte FireModeNum);
+
+
+/**
+ * PlayFiringSound - Called after a shot is fired.
+ */
+
+simulated function PlayFiringSound();
 
 
 /*********************************************************************************************
@@ -647,6 +917,7 @@ simulated function StopFireEffects(byte FireModeNum);
  * @param	FireModeNum	fire mode
  * @return	Period in seconds of firing mode
  */
+
 simulated function float GetFireInterval( byte FireModeNum )
 {
 	return FireInterval[FireModeNum] > 0 ? FireInterval[FireModeNum] : 0.01;
@@ -662,12 +933,13 @@ simulated function float GetFireInterval( byte FireModeNum )
  *
  * @param	FireModeNum		Fire Mode.
  */
+
 simulated function TimeWeaponFiring( byte FireModeNum )
 {
 	// if weapon is not firing, then start timer. Firing state is responsible to stopping the timer.
 	if( !IsTimerActive('RefireCheckTimer') )
 	{
-		SetTimer( GetFireInterval(FireModeNum), true, nameof(RefireCheckTimer) );
+		SetTimer( GetFireInterval(FireModeNum), true, 'RefireCheckTimer' );
 	}
 }
 
@@ -678,7 +950,7 @@ simulated function RefireCheckTimer();
 */
 simulated function TimeWeaponPutDown()
 {
-	SetTimer( PutDownTime>0 ? PutDownTime : 0.01, false, nameof(WeaponIsDown) );
+	SetTimer( PutDownTime>0 ? PutDownTime : 0.01, false, 'WeaponIsDown' );
 }
 
 
@@ -686,6 +958,7 @@ simulated function TimeWeaponPutDown()
  * Sets the timing for equipping a weapon.
  * The WeaponEquipped event is trigged when expired
  */
+
 simulated function TimeWeaponEquipping()
 {
 	SetTimer( EquipTime>0 ? EquipTime : 0.01 , false, 'WeaponEquipped');
@@ -697,6 +970,7 @@ simulated function TimeWeaponEquipping()
  * For weapons, this function starts the Equipping process. If the weapon is the inactive state,
  * it will go to the 'WeaponEquipping' followed by 'Active' state, and ready to be fired.
  */
+
 simulated function Activate()
 {
 	// don't reactivate if already firing
@@ -710,6 +984,7 @@ simulated function Activate()
 /**
  * This function is called to put a weapon down
  */
+
 simulated function PutDownWeapon()
 {
 	GotoState('WeaponPuttingDown');
@@ -719,6 +994,7 @@ simulated function PutDownWeapon()
 /**
  * When you pickup an weapon, the inventory system has a chance to restrict the pickup.
  */
+
 function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 {
 	// By default, you can only carry a single item of a given class.
@@ -734,12 +1010,14 @@ function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
 /**
  * Called when the weapon runs out of ammo during firing
  */
+
 simulated function WeaponEmpty();
 
 
 /*********************************************************************************************
  * Firtst/Third person weapon attachment functions
  *********************************************************************************************/
+
 
 /**
  * Increment Pawn's FlashCount variable.
@@ -748,6 +1026,7 @@ simulated function WeaponEmpty();
  *
  * Network: Server and Local Player
  */
+
 simulated function IncrementFlashCount()
 {
 	if( Instigator != None )
@@ -763,6 +1042,7 @@ simulated function IncrementFlashCount()
  *
  * Network: Server or Local Player
  */
+
 simulated function ClearFlashCount()
 {
 	if( Instigator != None )
@@ -777,6 +1057,7 @@ simulated function ClearFlashCount()
  *
  * Network: Server only
  */
+
 function SetFlashLocation( vector HitLocation )
 {
 	if( Instigator != None )
@@ -790,6 +1071,7 @@ function SetFlashLocation( vector HitLocation )
  * Reset flash location variable. and call stop firing.
  * Network: Server only
  */
+
 function ClearFlashLocation()
 {
 	if( Instigator != None )
@@ -803,6 +1085,7 @@ function ClearFlashLocation()
  * AttachWeaponTo is called when it's time to attach the weapon's mesh to a location.
  * it should be subclassed.
  */
+
 simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name SocketName );
 
 
@@ -810,6 +1093,7 @@ simulated function AttachWeaponTo( SkeletalMeshComponent MeshCpnt, optional Name
  * Detach weapon components from instigator. Perform any clean up.
  * Should be subclassed.
  */
+
 simulated function DetachWeapon();
 
 
@@ -817,13 +1101,27 @@ simulated function DetachWeapon();
  * Pawn/Controller/View functions
  *********************************************************************************************/
 
-reliable client function ClientGivenTo(Pawn NewOwner, bool bDoNotActivate)
-{
-	Super.ClientGivenTo(NewOwner, bDoNotActivate);
 
-	// Evaluate if we should switch to this weapon
-	ClientWeaponSet(TRUE, bDoNotActivate);
+/** Returns the base view aim of the weapon owner */
+simulated function GetViewAxes( out vector XAxis, out vector YAxis, out vector ZAxis )
+{
+	local Rotator	AimRot;
+
+	// get base weapon aiming
+	AimRot = Instigator.GetBaseAimRotation();
+	GetAxes( AimRot, XAxis, YAxis, ZAxis );
 }
+
+
+/**
+ * This function can be used by a weapon to override a playercontroller's FOVAngle.  It should
+ * be overriden in a subclass.
+ */
+simulated function float AdjustFOVAngle(float FOVAngle)
+{
+	return FOVAngle;	// Don't do anything by default
+}
+
 
 /**
  * is called by the server to tell the client about potential weapon changes after the player runs over
@@ -831,34 +1129,33 @@ reliable client function ClientGivenTo(Pawn NewOwner, bool bDoNotActivate)
  * Network: LocalPlayer
  *
  * @param	bOptionalSet.	Set to true if the switch is optional. (simple weapon pickup and weight against current weapon).
- * @param	bDoNotActivate.	Override, do not activate this weapon. It's just been received in the inventory.
  */
-reliable client function ClientWeaponSet(bool bOptionalSet, optional bool bDoNotActivate)
+reliable client function ClientWeaponSet(bool bOptionalSet)
 {
-	`LogInv("bOptionalSet:" @ bOptionalSet @ "bDoNotActivate:" @ bDoNotActivate @ "Instigator:" @ Instigator @ "InvManager:" @ InvManager);
-
-	// Save variables in case we need to go to PendingClientWeaponSet to wait for replication
-	bWasOptionalSet = bOptionalSet;
-	bWasDoNotActivate = bDoNotActivate;
-
 	// If weapon's instigator isn't replicated to client, wait for it in PendingClientWeaponSet state
 	if( Instigator == None )
 	{
-		`LogInv("Instigator == None, going to PendingClientWeaponSet");
+		//WeaponLog("Instigator == None, going to PendingClientWeaponSet", "Weapon::ClientWeaponSet");
 		GotoState('PendingClientWeaponSet');
 		return;
 	}
 
-	// If InvManager isn't replicated to client, wait for it in PendingClientWeaponSet state
+	// If weapon's instigator isn't replicated to client, wait for it in PendingClientWeaponSet state
 	if( InvManager == None )
 	{
-		`LogInv("InvManager == None, going to PendingClientWeaponSet");
+		//WeaponLog("InvManager == None, going to PendingClientWeaponSet", "Weapon::ClientWeaponSet");
 		GotoState('PendingClientWeaponSet');
 		return;
 	}
 
-	InvManager.ClientWeaponSet(Self, bOptionalSet, bDoNotActivate);
+	InvManager.ClientWeaponSet(Self, bOptionalSet);
 }
+
+
+/**
+ * WeaponCalcCamera allows a weapon to adjust the pawn's controller's camera.  Should be subclassed
+ */
+simulated function WeaponCalcCamera(float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot);
 
 
 /*********************************************************************************************
@@ -917,7 +1214,7 @@ reliable client function ClientWeaponSet(bool bOptionalSet, optional bool bDoNot
  */
 simulated function StartFire(byte FireModeNum)
 {
-	if( Instigator == None || !Instigator.bNoWeaponFiring )
+	if (Instigator == None || !Instigator.bNoWeaponFiring)
 	{
 		if( Role < Role_Authority )
 		{
@@ -927,6 +1224,7 @@ simulated function StartFire(byte FireModeNum)
 
 		// Start fire locally
 		BeginFire(FireModeNum);
+		DemoBeginFire(FireModeNum);
 	}
 }
 
@@ -940,11 +1238,12 @@ simulated function StartFire(byte FireModeNum)
  */
 reliable server function ServerStartFire(byte FireModeNum)
 {
-	if( Instigator == None || !Instigator.bNoWeaponFiring )
+	if (Instigator == None || !Instigator.bNoWeaponFiring)
 	{
 		// A client has fired, so the server needs to
 		// begin to fire as well
 		BeginFire(FireModeNum);
+		DemoBeginFire(FireModeNum);
 	}
 }
 
@@ -958,9 +1257,10 @@ simulated function BeginFire(Byte FireModeNum)
 {
 	// Flag this mode as pending a fire.  The only thing that can remove
 	// this flag is a Stop Fire/Putdown command.
-	`LogInv("FireModeNum:" @ FireModeNum);
+
 	SetPendingFire(FireModeNum);
 }
+
 
 
 /**
@@ -972,6 +1272,7 @@ simulated function StopFire(byte FireModeNum)
 {
 	// Locally shut down the fire sequence
 	EndFire(FireModeNum);
+	DemoEndFire(FireModeNum);
 
 	// Notify the server
 	if( Role < Role_Authority )
@@ -988,6 +1289,7 @@ simulated function StopFire(byte FireModeNum)
 reliable server function ServerStopFire(byte FireModeNum)
 {
 	EndFire(FireModeNum);
+	DemoEndFire(FireModeNum);
 }
 
 
@@ -1002,6 +1304,14 @@ simulated function EndFire(byte FireModeNum)
 	ClearPendingFire(FireModeNum);
 }
 
+/**
+ * Passes on EndFire calls to demos
+ */
+reliable demorecording function DemoEndFire(byte FireModeNum)
+{
+	EndFire(FireModeNum);
+}
+
 
 /**
  * Clear all pending fires.
@@ -1009,18 +1319,15 @@ simulated function EndFire(byte FireModeNum)
  */
 simulated function ForceEndFire()
 {
-	local int i, Num;
+	local int i;
 
 	// Clear all pending fires
-	if (InvManager != None)
+	for ( i=0; i<InvManager.PendingFire.Length; i++ )
 	{
-		Num = GetPendingFireLength();
-		for (i = 0; i < Num; i++)
+		if( PendingFire(i) )
 		{
-			if (PendingFire(i))
-			{
-				EndFire(i);
-			}
+			EndFire(i);
+			DemoEndFire(i);
 		}
 	}
 }
@@ -1038,7 +1345,7 @@ simulated function SendToFiringState(byte FireModeNum)
 	// make sure fire mode is valid
 	if( FireModeNum >= FiringStatesArray.Length )
 	{
-		`LogInv("Invalid FireModeNum");
+		WeaponLog("Invalid FireModeNum", "Weapon::SendToFiringState");
 		return;
 	}
 
@@ -1052,7 +1359,6 @@ simulated function SendToFiringState(byte FireModeNum)
 	// set current fire mode
 	SetCurrentFireMode(FireModeNum);
 
-	`LogInv(FireModeNum @ "Sending to state:" @ FiringStatesArray[FireModeNum]);
 	// transition to firing mode state
 	GotoState(FiringStatesArray[FireModeNum]);
 }
@@ -1070,7 +1376,7 @@ simulated function SetCurrentFireMode(byte FiringModeNum)
 	// set on instigator, to replicate it to remote clients
 	if( Instigator != None )
 	{
-		Instigator.SetFiringMode(Self, FiringModeNum);
+		Instigator.SetFiringMode(FiringModeNum);
 	}
 }
 
@@ -1096,6 +1402,9 @@ simulated function FireAmmunition()
 	// Use ammunition to fire
 	ConsumeAmmo( CurrentFireMode );
 
+	// if this is the local player, play the firing effects
+	PlayFiringSound();
+
 	// Handle the different fire types
 	switch( WeaponFireTypes[CurrentFireMode] )
 	{
@@ -1112,7 +1421,12 @@ simulated function FireAmmunition()
 			break;
 	}
 
-	NotifyWeaponFired( CurrentFireMode );
+	if( ( Instigator != None)
+		&& ( AIController(Instigator.Controller) != None )
+		)
+	{
+		AIController(Instigator.Controller).NotifyWeaponFired(self,CurrentFireMode);
+	}
 }
 
 
@@ -1141,7 +1455,8 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
  *
  * @return	range of weapon, to be used mainly for traces.
  */
-simulated event float GetTraceRange()
+
+simulated function float GetTraceRange()
 {
 	return WeaponRange;
 }
@@ -1165,13 +1480,12 @@ simulated function Actor GetTraceOwner()
  *
  * @param	StartTrace	world location to start trace from
  * @param	EndTrace	world location to end trace at
- * @param	Extent		extent of trace performed
  * @output	ImpactList	list of all impacts that occured during simulation
  * @return	first 'real geometry' impact that occured.
  *
  * @note if an impact didn't occur, and impact is still returned, with its HitLocation being the EndTrace value.
  */
-simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace, optional out array<ImpactInfo> ImpactList, optional vector Extent)
+simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace, optional out array<ImpactInfo> ImpactList)
 {
 	local vector			HitLocation, HitNormal, Dir;
 	local Actor				HitActor;
@@ -1179,10 +1493,9 @@ simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace,
 	local ImpactInfo		CurrentImpact;
 	local PortalTeleporter	Portal;
 	local float				HitDist;
-	local bool				bOldBlockActors, bOldCollideActors;
 
 	// Perform trace to retrieve hit info
-	HitActor = GetTraceOwner().Trace(HitLocation, HitNormal, EndTrace, StartTrace, TRUE, Extent, HitInfo, TRACEFLAG_Bullet);
+	HitActor = GetTraceOwner().Trace(HitLocation, HitNormal, EndTrace, StartTrace, TRUE, vect(0,0,0), HitInfo, TRACEFLAG_Bullet);
 
 	// If we didn't hit anything, then set the HitLocation as being the EndTrace location
 	if( HitActor == None )
@@ -1195,7 +1508,6 @@ simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace,
 	CurrentImpact.HitLocation	= HitLocation;
 	CurrentImpact.HitNormal		= HitNormal;
 	CurrentImpact.RayDir		= Normal(EndTrace-StartTrace);
-	CurrentImpact.StartTrace	= StartTrace;
 	CurrentImpact.HitInfo		= HitInfo;
 
 	// Add this hit to the ImpactList
@@ -1205,33 +1517,14 @@ simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace,
 	// In this case, we want to add this actor to the list so we can give it damage, and then continue tracing through.
 	if( HitActor != None )
 	{
-		if (PassThroughDamage(HitActor))
+		if (!HitActor.bBlockActors && PassThroughDamage(HitActor))
 		{
-			// disable collision temporarily for the actor we can pass-through
+			// disable collision temporarily for the trigger so that we can catch anything inside the trigger
 			HitActor.bProjTarget = false;
-			bOldCollideActors = HitActor.bCollideActors;
-			bOldBlockActors = HitActor.bBlockActors;
-			if (HitActor.IsA('Pawn'))
-			{
-				// For pawns, we need to disable bCollideActors as well
-				HitActor.SetCollision(false, false);
-
-				// recurse another trace
-				CalcWeaponFire(HitLocation, EndTrace, ImpactList, Extent);
-			}
-			else
-			{
-				if( bOldBlockActors )
-				{
-					HitActor.SetCollision(bOldCollideActors, false);
-				}
-				// recurse another trace and override CurrentImpact
-				CurrentImpact = CalcWeaponFire(HitLocation, EndTrace, ImpactList, Extent);
-			}
-
+			// recurse another trace
+			CurrentImpact = CalcWeaponFire(HitLocation, EndTrace, ImpactList);
 			// and reenable collision for the trigger
 			HitActor.bProjTarget = true;
-			HitActor.SetCollision(bOldCollideActors, bOldBlockActors);
 		}
 		else
 		{
@@ -1243,10 +1536,10 @@ simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace,
 				HitDist = VSize(HitLocation - StartTrace);
 				// calculate new start and end points on the other side of the portal
 				StartTrace = Portal.TransformHitLocation(HitLocation);
-				EndTrace = StartTrace + Portal.TransformVectorDir(Normal(Dir) * (VSize(Dir) - HitDist));
+				EndTrace = StartTrace + Portal.TransformVector(Normal(Dir) * (VSize(Dir) - HitDist));
 				//@note: intentionally ignoring return value so our hit of the portal is used for effects
 				//@todo: need to figure out how to replicate that there should be effects on the other side as well
-				CalcWeaponFire(StartTrace, EndTrace, ImpactList, Extent);
+				CalcWeaponFire(StartTrace, EndTrace, ImpactList);
 			}
 		}
 	}
@@ -1257,10 +1550,9 @@ simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace,
 /**
   * returns true if should pass trace through this hitactor
   */
-simulated static function bool PassThroughDamage(Actor HitActor)
+simulated function bool PassThroughDamage(Actor HitActor)
 {
-	return (!HitActor.bBlockActors && (HitActor.IsA('Trigger') || HitActor.IsA('TriggerVolume')))
-		|| HitActor.IsA('InteractiveFoliageActor');
+	return HitActor.IsA('Trigger') || HitActor.IsA('TriggerVolume');
 }
 
 /**
@@ -1312,38 +1604,19 @@ simulated function InstantFire()
 /**
  * Processes a successful 'Instant Hit' trace and eventually spawns any effects.
  * Network: LocalPlayer and Server
- * @param FiringMode: index of firing mode being used
- * @param Impact: hit information
- * @param NumHits (opt): number of hits to apply using this impact
- * 			this is useful for handling multiple nearby impacts of multihit weapons (e.g. shotguns)
- *			without having to execute the entire damage code path for each one
- *			an omitted or <= 0 value indicates a single hit
+ *
+ * @param	HitActor	Actor hit by trace
+ * @param	AimDir		Aim direction of shot
+ * @param	HitLocation world location vector where HitActor was hit by trace
+ * @param	HitNormal	hit normal vector
+ * @param	HitInto		TraceHitInfo struct returning useful info like component hit, bone, material..
  */
-simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optional int NumHits)
-{
-	local int TotalDamage;
-	local KActorFromStatic NewKActor;
-	local StaticMeshComponent HitStaticMesh;
 
+simulated function ProcessInstantHit( byte FiringMode, ImpactInfo Impact )
+{
 	if (Impact.HitActor != None)
 	{
-		// default damage model is just hits * base damage
-		NumHits = Max(NumHits, 1);
-		TotalDamage = InstantHitDamage[CurrentFireMode] * NumHits;
-
-		if ( Impact.HitActor.bWorldGeometry )
-		{
-			HitStaticMesh = StaticMeshComponent(Impact.HitInfo.HitComponent);
-			if ( (HitStaticMesh != None) && HitStaticMesh.CanBecomeDynamic() )
-			{
-				NewKActor = class'KActorFromStatic'.Static.MakeDynamic(HitStaticMesh);
-				if ( NewKActor != None )
-				{
-					Impact.HitActor = NewKActor;
-				}
-			}
-		}
-		Impact.HitActor.TakeDamage( TotalDamage, Instigator.Controller,
+		Impact.HitActor.TakeDamage( InstantHitDamage[CurrentFireMode], Instigator.Controller,
 						Impact.HitLocation, InstantHitMomentum[FiringMode] * Impact.RayDir,
 						InstantHitDamageTypes[FiringMode], Impact.HitInfo, self );
 	}
@@ -1404,13 +1677,14 @@ simulated function Projectile ProjectileFire()
  * If the weapon isn't an instant hit, or a simple projectile, it should use the tyoe EWFT_Custom.  In those cases
  * this function will be called.  It should be subclassed by the custom weapon.
  */
+
 simulated function CustomFire();
 
 
 /**
  * This function returns the world location for spawning the visual effects
  */
-simulated event vector GetMuzzleLoc()
+simulated event Vector GetMuzzleLoc()
 {
 	if( Instigator != none )
 	{
@@ -1423,7 +1697,37 @@ simulated event vector GetMuzzleLoc()
 /**
  * This function returns the world location for spawning the projectile, pulled in to the Pawn's collision along the AimDir direction.
  */
-simulated native event vector GetPhysicalFireStartLoc(optional vector AimDir);
+simulated function vector GetPhysicalFireStartLoc(optional vector AimDir)
+{
+	local float MuzzleDist;
+	local vector MuzzleLoc, PulledInMuzzleLoc, ExtraPullIn;
+
+	MuzzleLoc = GetMuzzleLoc();
+
+	if ( (Instigator == None) || (AimDir == vect(0,0,0)) )
+		return MuzzleLoc;
+
+	// is muzzle outside pawn's collision cylinder?
+	MuzzleDist = VSize2D(MuzzleLoc - Instigator.Location);
+	if ( MuzzleDist > Instigator.CylinderComponent.CollisionRadius )
+	{
+		// pull MuzzleLoc back toward cylinder
+		PulledInMuzzleLoc = MuzzleLoc - MuzzleDist * AimDir;
+		MuzzleDist = VSize2D(PulledInMuzzleLoc - Instigator.Location);
+		if ( MuzzleDist < Instigator.CylinderComponent.CollisionRadius )
+		{
+			MuzzleLoc = PulledInMuzzleLoc;
+		}
+		else
+		{
+			ExtraPullIn = Instigator.Location - PulledInMuzzleLoc;
+			ExtraPullIn.Z = 0;
+			ExtraPullIn = (2.0 + MuzzleDist - Instigator.CylinderComponent.CollisionRadius) * Normal(ExtraPullIn);
+			MuzzleLoc = PulledInMuzzleLoc + ExtraPullIn;
+		}
+	}
+	return MuzzleLoc;
+}
 
 /**
  * Put Down current weapon
@@ -1455,47 +1759,25 @@ auto state Inactive
 //		ForceEndFire();
 	}
 
-	reliable server function ServerStartFire(byte FireModeNum)
+	reliable server function ServerStartFire( byte FireModeNum )
 	{
-		Global.ServerStartFire(FireModeNum);
-
-		`Warn(WorldInfo.TimeSeconds @ Instigator @ "received ServerStartFire in Inactive State!!!");
-
-		// We haven't received the activate yet so pass it along
-		if( Instigator != None && Instigator.Weapon == Self)
+		if (Instigator != none && Instigator.Weapon == self)	// We haven't received the activate yet so pass it along
 		{
-			`Warn( " - I'm the current weapon, so gotostate active and start firing" );
 			GotoState('Active');
+			Global.ServerStartFire(FireModeNum);
 		}
-		else if( InvManager != None && InvManager.PendingWeapon == Self )
+		else if (InvManager != none && InvManager.PendingWeapon == self)
 		{
-			// If our weapon is being put down, then let's just trigger the transition now.
-			if( Instigator.Weapon.IsInState('WeaponPuttingDown') )
-			{
-				`Warn( " - I'm the pending weapon, and current weapon is being put down, so force switch now" );
-				Instigator.Weapon.WeaponIsDown();
-			}
-			else
-			{
-				`Warn( " - I'm the pending weapon, but current weapon is NOT being put down, so resync client and server" );
-				InvManager.SetCurrentWeapon(Self);
-				InvManager.ServerSetCurrentWeapon(Self);
-				if( Instigator.Weapon != Self && InvManager.PendingWeapon == Self && Instigator.Weapon.IsInState('WeaponPuttingDown') )
-				{
-					Instigator.Weapon.WeaponIsDown();
-				}
-			}
+			InvManager.ChangedWeapon();
+			SetPendingFire(FireModeNum);
 		}
-		else if( Instigator != None )
+		else if (Instigator != None)
 		{
+			//`log("#   - Attempting to sync up the weapon");
+
 			// Have the client switch to the current weapon
-			`Warn( " - I'm just in the inventory, so resync client and server" );
-			InvManager.SetCurrentWeapon(Self);
-			InvManager.ServerSetCurrentWeapon(Self);
-			if( Instigator.Weapon != Self && InvManager.PendingWeapon == Self && Instigator.Weapon.IsInState('WeaponPuttingDown') )
-			{
-				Instigator.Weapon.WeaponIsDown();
-			}
+
+			InvManager.ClientSyncWeapon(Instigator.Weapon);
 		}
 	}
 
@@ -1529,16 +1811,9 @@ simulated state Active
 	{
 		local int i;
 
-		// Cache a reference to the AI controller
-		if (Role == ROLE_Authority)
-		{
-			CacheAIController();
-		}
-
-		// Check to see if we need to go down
+ 		// Check to see if we need to go down
    		if( bWeaponPutDown )
 		{
-			`LogInv("Weapon put down requested during transition, put it down now");
 			PutDownWeapon();
 		}
 		else if ( !HasAnyAmmo() )
@@ -1548,11 +1823,12 @@ simulated state Active
 		else
 		{
 	        // if either of the fire modes are pending, perform them
-			for( i=0; i<GetPendingFireLength(); i++ )
+			for( i=0; i<InvManager.PendingFire.Length; i++ )
 			{
 				if( PendingFire(i) )
 				{
 					BeginFire(i);
+					DemoBeginFire(i);
 					break;
 				}
 			}
@@ -1623,7 +1899,6 @@ simulated state WeaponFiring
 		// if switching to another weapon, abort firing and put down right away
 		if( bWeaponPutDown )
 		{
-			`LogInv("Weapon put down requested during fire, put it down now");
 			PutDownWeapon();
 			return;
 		}
@@ -1635,13 +1910,13 @@ simulated state WeaponFiring
 			return;
 		}
 
-		// Otherwise we're done firing
-		HandleFinishedFiring();
+		// Otherwise we're done firing, so go back to active state.
+		GotoState('Active');
+
 	}
 
 	simulated event BeginState( Name PreviousStateName )
 	{
-		`LogInv("PreviousStateName:" @ PreviousStateName);
 		// Fire the first shot right away
 		FireAmmunition();
 		TimeWeaponFiring( CurrentFireMode );
@@ -1649,42 +1924,18 @@ simulated state WeaponFiring
 
 	simulated event EndState( Name NextStateName )
 	{
-		`LogInv("NextStateName:" @ NextStateName);
 		// Set weapon as not firing
 		ClearFlashCount();
 		ClearFlashLocation();
-		ClearTimer( nameof(RefireCheckTimer) );
+		ClearTimer('RefireCheckTimer');
 
-		NotifyWeaponFinishedFiring( CurrentFireMode );
+		if (Instigator != none && AIController(Instigator.Controller) != None)
+		{
+			AIController(Instigator.Controller).NotifyWeaponFinishedFiring(self,CurrentFireMode);
+		}
 	}
 }
 
-simulated function HandleFinishedFiring()
-{
-	// Go back to active state.
-	GotoState('Active');
-}
-
-/**
- *	AI function to handle a single shot being fired
- */
-function NotifyWeaponFired( byte FireMode )
-{
-	if( AIController != None )
-	{
-		AIController.NotifyWeaponFired( self, FireMode );
-	}
-}
-/**
- *	AI function to handle a firing sequence (ie burst/melee strike/etc) being finished
- */
-function NotifyWeaponFinishedFiring( byte FireMode )
-{
-	if( AIController != None )
-	{
-		AIController.NotifyWeaponFinishedFiring( self, FireMode );
-	}
-}
 
 /**
  * Check if current fire mode can/should keep on firing.
@@ -1727,7 +1978,6 @@ simulated state WeaponEquipping
 
 	simulated event BeginState(Name PreviousStateName)
 	{
-		`LogInv("");
 		TimeWeaponEquipping();
 		bWeaponPutDown	= false;
 	}
@@ -1769,8 +2019,6 @@ simulated state WeaponPuttingDown
 	 */
 	simulated event BeginState(Name PreviousStateName)
 	{
-		`LogInv("");
-
 		TimeWeaponPutDown();
 		bWeaponPutDown = FALSE;
 
@@ -1788,8 +2036,6 @@ simulated state WeaponPuttingDown
 			return;
 		}
 
-		`LogInv("");
-
 		// This weapon is down, remove it from the mesh
 		DetachWeapon();
 
@@ -1806,22 +2052,12 @@ simulated state WeaponPuttingDown
 		return FALSE;
 	}
 
-	reliable client function ClientWeaponThrown()
-	{
-		// Call Weapon is down before cleaning up this one.
-		WeaponIsDown();
-
-		global.ClientWeaponThrown();
-	}
-
 	simulated event EndState(Name NextStateName)
 	{
-		`LogInv("");
 		ClearTimer('WeaponIsDown');
 	}
 }
 
-simulated function WeaponIsDown();
 
 /*********************************************************************************************
  * State PendingClientWeaponSet
@@ -1835,85 +2071,44 @@ State PendingClientWeaponSet
 	{
 		// When variables are replicated, ClientWeaponSet, will send weapon to another state.
 		// Therefore aborting this timer.
-		ClientWeaponSet(bWasOptionalSet, bWasDoNotActivate);
+		ClientWeaponSet( true );
 	}
 
 	/** Event called when weapon enters this state */
 	simulated event BeginState(Name PreviousStateName)
 	{
 		// Set a timer to keep checking for replicated variables.
-		SetTimer(0.03f, TRUE, nameof(PendingWeaponSetTimer) );
+		SetTimer(0.05, true, 'PendingWeaponSetTimer');
 	}
 
 	/** Event called when weapon leaves this state */
 	simulated event EndState(Name NextStateName)
 	{
-		ClearTimer( nameof(PendingWeaponSetTimer) );
-	}
-}
-
-simulated function CacheAIController()
-{
-	if( Instigator == None )
-	{
-		AIController = None;
-	}
-	else
-	{
-		AIController = AIController(Instigator.Controller);
+		ClearTimer('PendingWeaponSetTimer');
 	}
 }
 
 /**
- * Compute the approximate Screen distance from the camera to whatever is at the center of the viewport.
- * Useful for stereoizing the crosshair to reduce eyestrain.
- * NOTE: The dotproduct at the end is currently unnecessary, but if you were to use a different value for
- * TargetLoc that was not at center of screen, it'd become necessary to do the way screen projection works.
+ * Passes on BeginFire calls to demos
  */
-simulated function float GetTargetDistance( )
+reliable demorecording function DemoBeginFire(byte FireModeNum)
 {
-	local float VeryFar;
-	local vector HitLocation, HitNormal, ProjStart, TargetLoc, X, Y, Z;
-	local rotator CameraRot;
-	local PlayerController PC;
-
-	VeryFar = 32768;
-
-	PC = PlayerController(Instigator.Controller);
-	PC.GetPlayerViewPoint(ProjStart, CameraRot);
-	GetAxes(CameraRot, X, Y, Z);
-
-	TargetLoc = ProjStart + X * VeryFar;
-
-	if (None == GetTraceOwner().Trace(HitLocation, HitNormal, TargetLoc, ProjStart, true,,, TRACEFLAG_Bullet))
-	{
-		return VeryFar;
-	}
-
-	return (HitLocation - ProjStart) Dot X;
+	BeginFire(FireModeNum);
 }
 
 defaultproperties
 {
-	// Weapons often fire physics impulses which are invalid during physics ticking
-	TickGroup=TG_PreAsyncWork
-
-	Components.Remove(Sprite)
-
-	bOnlyRelevantToOwner=true
-	DroppedPickupClass=class'DroppedPickup'
-	RespawnTime=+00030.000000
-
-	bHidden=true
-	MessageClass=class'LocalMessage'
-
-	bCanThrow=true
-	bReplicateInstigator=true
-	bOnlyDirtyReplication=false
-	RemoteRole=ROLE_SimulatedProxy
-	AIRating=+0.5
-	EquipTime=+0.33
-	PutDownTime=+0.33
-	WeaponRange=16384
-	DefaultAnimSpeed=1.0
+   EquipTime=0.330000
+   PutDownTime=0.330000
+   bCanThrow=True
+   WeaponRange=16384.000000
+   DefaultAnimSpeed=1.000000
+   Priority=-1.000000
+   AIRating=0.500000
+   ItemName="Weapon"
+   RespawnTime=30.000000
+   bReplicateInstigator=True
+   bOnlyDirtyReplication=False
+   Name="Default__Weapon"
+   ObjectArchetype=Inventory'Engine.Default__Inventory'
 }

@@ -1,9 +1,36 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
-class UTWeaponPawn extends UDKWeaponPawn
+class UTWeaponPawn extends UTVehicleBase
+	native(Vehicle)
+	nativereplication
 	notplaceable;
+
+/** MyVehicleWeapon points to the weapon assoicated with this WeaponPawn and is replcated */
+var repnotify UTVehicleWeapon MyVehicleWeapon;
+
+/** MyVehicle points to the vehicle that houses this WeaponPawn and is replicated */
+var repnotify UTVehicle MyVehicle;
+
+/** An index in to the Seats array of the vehicle housing this WeaponPawn.  It is replicated */
+var repnotify int MySeatIndex;
+
+replication
+{
+	if (Role == ROLE_Authority)
+		MySeatIndex, MyVehicle, MyVehicleWeapon;
+}
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+simulated native function vector GetTargetLocation(optional Actor RequestedBy, optional bool bRequestAlternateLoc) const;
+
 
 /**
  *   Statistics gathering
@@ -85,7 +112,7 @@ simulated function bool CalcCamera(float fDeltaTime, out vector out_CamLoc, out 
 
 	if (MyVehicle != None && MySeatIndex > 0 && MySeatIndex < MyVehicle.Seats.length)
 	{
-		UTVehicle(MyVehicle).VehicleCalcCamera(fDeltaTime, MySeatIndex, out_CamLoc, out_CamRot, out_CamStart);
+		MyVehicle.VehicleCalcCamera(fDeltaTime, MySeatIndex, out_CamLoc, out_CamRot, out_CamStart);
 		return true;
 	}
 	else
@@ -93,6 +120,20 @@ simulated function bool CalcCamera(float fDeltaTime, out vector out_CamLoc, out 
 		return Super.CalcCamera(fDeltaTime, out_CamLoc, out_CamRot, out_FOV);
 	}
 }
+
+
+exec function FixedView(string VisibleMeshes)
+{
+	local UTPawn P;
+
+	// pass onto driver utpawn
+	P = UTPawn(Driver);
+	if (P != None)
+	{
+		P.FixedView(VisibleMeshes);
+	}
+}
+
 
 simulated function ProcessViewRotation(float DeltaTime, out rotator out_ViewRotation, out rotator out_DeltaRot)
 {
@@ -117,11 +158,11 @@ simulated function ProcessViewRotation(float DeltaTime, out rotator out_ViewRota
 	Super.ProcessViewRotation(DeltaTime, out_ViewRotation, out_DeltaRot);
 }
 
-simulated function SetFiringMode(Weapon Weap, byte FiringModeNum)
+simulated function SetFiringMode(byte FiringModeNum)
 {
 	if (MyVehicle != None && MySeatIndex > 0 && MySeatIndex < MyVehicle.Seats.length)
 	{
-		UTVehicle(MyVehicle).SeatFiringMode(MySeatIndex, FiringModeNum, false);
+		MyVehicle.SeatFiringMode(MySeatIndex, FiringModeNum, false);
 	}
 }
 
@@ -156,7 +197,7 @@ simulated function ClearFlashCount(Weapon Who)
  * We need to pass SetFlashLocation calls to the controlling vehicle
  */
 
-simulated function SetFlashLocation( Weapon Who, byte FireModeNum, vector NewLoc )
+function SetFlashLocation( Weapon Who, byte FireModeNum, vector NewLoc )
 {
 	if (MyVehicle==none)
 	{
@@ -202,16 +243,8 @@ function PossessedBy(Controller C, bool bVehicleTransition)
   */
 function DriverLeft()
 {
-	local UTPlayerReplicationInfo DriverPRI;
-
-	DriverPRI = UTPlayerReplicationInfo(Driver.PlayerReplicationInfo);
-	if (DriverPRI != None && DriverPRI.bHasFlag && UDKPawn(Driver) != None)
-	{
-		UDKPawn(Driver).HoldGameObject(DriverPRI.GetFlag());
-	}
-	
 	Super.DriverLeft();
-	UTVehicle(MyVehicle).PassengerLeave(MySeatIndex);
+	MyVehicle.PassengerLeave(MySeatIndex);
 }
 
 /**
@@ -225,7 +258,7 @@ reliable server function ServerAdjacentSeat(int Direction, Controller C)
 reliable server function ServerChangeSeat(int RequestedSeat)
 {
 	if (MyVehicle!=none)
-		UTVehicle(MyVehicle).ChangeSeat(Controller, RequestedSeat);
+		MyVehicle.ChangeSeat(Controller, RequestedSeat);
 }
 
 /**
@@ -236,9 +269,9 @@ reliable server function ServerChangeSeat(int RequestedSeat)
  */
 simulated function AdjustCameraScale(bool bIn)
 {
-	if ( UTVehicle(MyVehicle) != None)
+	if (MyVehicle != None)
 	{
-		UTVehicle(MyVehicle).AdjustCameraScale(bIn);
+		MyVehicle.AdjustCameraScale(bIn);
 	}
 }
 
@@ -270,7 +303,7 @@ function SetMovementPhysics() {}
 
 function bool DoJump( bool bUpdating )
 {
-	if ( (MyVehicle != None) && UTVehicle(MyVehicle).bAcceptTurretJump )
+	if ( (MyVehicle != None) && MyVehicle.bAcceptTurretJump )
 	{
 		return MyVehicle.DoJump(bUpdating);
 	}
@@ -317,12 +350,12 @@ simulated function AttachDriver( Pawn P )
 			UTP.SetLocation(Location);
 			UTP.SetPhysics(PHYS_None);
 
-			UTVehicle(MyVehicle).SitDriver(UTP, MySeatIndex);
+			MyVehicle.SitDriver(UTP, MySeatIndex);
 		}
 	}
 }
 
-simulated event HoldGameObject(UDKCarriedObject GameObj)
+simulated event HoldGameObject(UTCarriedObject GameObj)
 {
 	if (MyVehicle != None)
 	{
@@ -389,7 +422,7 @@ function bool TooCloseToAttack(Actor Other)
 	}
 
 	NeededPitch = rotator(Other.GetTargetLocation(self) - Weapon.GetPhysicalFireStartLoc()).Pitch & 65535;
-	return UTVehicle(MyVehicle).CheckTurretPitchLimit(NeededPitch, MySeatIndex);
+	return MyVehicle.CheckTurretPitchLimit(NeededPitch, MySeatIndex);
 }
 
 /**
@@ -399,7 +432,23 @@ function DisplayHud(UTHud Hud, Canvas Canvas, vector2D HudPOS, optional int SInd
 {
 	if ( MyVehicle != none )
 	{
-		UTVehicle(MyVehicle).DisplayHud(Hud, Canvas, HUDPOS, MySeatIndex);
+		MyVehicle.DisplayHud(Hud, Canvas, HUDPOS, MySeatIndex);
+	}
+}
+
+simulated function GetQuickPickCells(UTHud Hud, out array<QuickPickCell> Cells, out int CurrentWeaponIndex)
+{
+	if ( MyVehicle != none )
+	{
+		MyVehicle.GetQuickPickCells(HUD, Cells, CurrentWeaponIndex);
+	}
+}
+
+simulated function QuickPick(int Quad)
+{
+	if ( MyVehicle != none )
+	{
+		MyVehicle.QuickPick(Quad);
 	}
 }
 
@@ -411,36 +460,57 @@ simulated function ApplyWeaponEffects(int OverlayFlags, optional int SeatIndex)
 	}
 }
 
+
+exec function EditUDmgFX(optional int Index)
+{
+	if (WorldInfo.NetMode == NM_Standalone)
+	{
+		class<UTInventory>(DynamicLoadObject("UTGameContent.UTUDamage", class'Class')).static.AddWeaponOverlay(UTGameReplicationInfo(WorldInfo.GRI));
+		MyVehicle.ApplyWeaponEffects(1, MySeatIndex);
+		ConsoleCommand("EditObject name=" $ string(MyVehicle) $ "_WeaponEffect_" $ Index);
+	}
+}
+
 defaultproperties
 {
-	//@note: even though UTWeaponPawns don't usually have visible components, they must have bHidden=false so AI can see them
-
-	Physics=PHYS_None
-	bProjTarget=false
-	InventoryManagerClass=class'UTInventoryManager'
-	bOnlyRelevantToOwner=true
-
-	// No Collision
-	bCollideActors=false
-	bCollideWorld=false
-
-	Begin Object Name=CollisionCylinder
-		CollisionRadius=0
-		CollisionHeight=0
-		BlockNonZeroExtent=false
-		BlockZeroExtent=false
-		BlockActors=false
-		CollideActors=false
-		BlockRigidBody=false
-	End Object
-
-	BaseEyeheight=180
-	Eyeheight=180
-
-	bIgnoreBaseRotation=true
-	bStationary=true
-	bFollowLookDir=true
-	bTurnInPlace=true
-
-	MySeatIndex=INDEX_NONE
+   MySeatIndex=-1
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup ObjName=MyStayUprightSetup Archetype=RB_StayUprightSetup'UTGame.Default__UTVehicleBase:MyStayUprightSetup'
+      ObjectArchetype=RB_StayUprightSetup'UTGame.Default__UTVehicleBase:MyStayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTWeaponPawn:MyStayUprightSetup'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance ObjName=MyStayUprightConstraintInstance Archetype=RB_ConstraintInstance'UTGame.Default__UTVehicleBase:MyStayUprightConstraintInstance'
+      ObjectArchetype=RB_ConstraintInstance'UTGame.Default__UTVehicleBase:MyStayUprightConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTWeaponPawn:MyStayUprightConstraintInstance'
+   bTurnInPlace=True
+   bFollowLookDir=True
+   bStationary=True
+   BaseEyeHeight=180.000000
+   EyeHeight=180.000000
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTVehicleBase:SVehicleMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTVehicleBase:SVehicleMesh'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTVehicleBase:CollisionCylinder'
+      CollisionHeight=0.000000
+      CollisionRadius=0.000000
+      CollideActors=False
+      BlockActors=False
+      BlockZeroExtent=False
+      BlockNonZeroExtent=False
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTVehicleBase:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   InventoryManagerClass=Class'UTGame.UTInventoryManager'
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Physics=PHYS_None
+   bOnlyRelevantToOwner=True
+   bIgnoreBaseRotation=True
+   bCollideActors=False
+   bCollideWorld=False
+   bProjTarget=False
+   CollisionComponent=SVehicleMesh
+   Name="Default__UTWeaponPawn"
+   ObjectArchetype=UTVehicleBase'UTGame.Default__UTVehicleBase'
 }

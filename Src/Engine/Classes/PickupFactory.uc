@@ -3,28 +3,24 @@
 // Produces pickups when active and touched by valid toucher
 // Combines functionality of old Pickup and InventorySpot classes
 // Pickup class now just used for dropped/individual items
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class PickupFactory extends NavigationPoint
 	abstract
 	placeable
 	native
-	nativereplication
-	ClassGroup(Pickups);
+	nativereplication;
 
 var		bool						bOnlyReplicateHidden;	// only replicate changes in bPickupHidden and bHidden
 var		RepNotify bool				bPickupHidden;			// Whether the pickup mesh should be hidden
 var		bool						bPredictRespawns;		// high skill bots may predict respawns for this item
 var		bool						bIsSuperItem;
 
-/** set when the respawn process has been paused because DelayRespawn() is returning true */
-var bool bRespawnPaused;
-
-var repnotify class<Inventory>		InventoryType;
+var repnotify class<Inventory>				InventoryType;
 var		float						RespawnEffectTime;
 var		float						MaxDesireability;
 
-var	PrimitiveComponent				PickupMesh;
+var	transient PrimitiveComponent	PickupMesh;
 
 /** when replacing a pickup factory with another (e.g. mutators), set this property on the original to point to the replacement
  * so that AI queries can be redirected to the right one
@@ -35,13 +31,13 @@ var PickupFactory ReplacementFactory;
  */
 var PickupFactory OriginalFactory;
 
-cpptext
-{
-	virtual APickupFactory* GetAPickupFactory() { return this; }
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-	virtual UBOOL ReachedBy(APawn* P, const FVector& TestPosition, const FVector& Dest);
-	virtual ANavigationPoint* SpecifyEndAnchor(APawn* RouteFinder);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -82,7 +78,7 @@ simulated function InitializePickup()
 {
 	if ( InventoryType == None )
 	{
-		`Warn("No inventory type for" @ self);
+		WarnInternal("No inventory type for" @ self);
 		return;
 	}
 
@@ -100,7 +96,7 @@ simulated event SetInitialState()
 
 	if (InventoryType == None)
 	{
-		`warn("Disabling as no inventory type for " $ self);
+		WarnInternal("Disabling as no inventory type for " $ self);
 		GotoState('Disabled');
 	}
 	else if (bIsSuperItem)
@@ -142,6 +138,8 @@ simulated function SetPickupMesh()
 	}
 }
 
+static function StaticPrecache(Worldinfo W);
+
 /* Reset()
 reset actor to initial state - used when restarting level without reloading.
 */
@@ -162,7 +160,7 @@ function bool CheckForErrors()
 	HitActor = Trace(HitLocation, HitNormal,Location - Vect(0,0,10), Location,false);
 	if ( HitActor == None )
 	{
-		`log(self$" FLOATING");
+		LogInternal(self$" FLOATING");
 		return true;
 	}
 	return Super.CheckForErrors();
@@ -264,13 +262,13 @@ auto state Pickup
 		{
 			// re-check later in case this Pawn is in the middle of spawning, exiting a vehicle, etc
 			// and will have a Controller shortly
-			SetTimer( 0.2, false, nameof(RecheckValidTouch) );
+			SetTimer(0.2, false, 'RecheckValidTouch');
 			return false;
 		}
 		// make sure not touching through wall
 		else if ( !FastTrace(Other.Location, Location) )
 		{
-			SetTimer( 0.5, false, nameof(RecheckValidTouch) );
+			SetTimer(0.5, false, 'RecheckValidTouch');
 			return false;
 		}
 
@@ -331,9 +329,6 @@ function float GetRespawnTime()
 
 function RespawnEffect();
 
-/** 
-  * Make pickup mesh and associated effects hidden.
-  */
 simulated function SetPickupHidden()
 {
 	bForceNetUpdate = TRUE;
@@ -342,9 +337,6 @@ simulated function SetPickupHidden()
 		PickupMesh.SetHidden(true);
 }
 
-/** 
-  * Make pickup mesh and associated effects visible.
-  */
 simulated function SetPickupVisible()
 {
 	bForceNetUpdate = TRUE;
@@ -381,10 +373,9 @@ State WaitingForMatch
 	}
 }
 
-/** @return whether the respawning process for this pickup is currently halted */
-function bool DelayRespawn()
+function bool ShouldRespawn()
 {
-	return false;
+	return TRUE;
 }
 
 State Sleeping
@@ -393,7 +384,7 @@ State Sleeping
 
 	function bool ReadyToPickup(float MaxWait)
 	{
-		return (bPredictRespawns && !bRespawnPaused && LatentFloat <= MaxWait && LatentFloat > 0.0);
+		return ( bPredictRespawns && (LatentFloat <= MaxWait) && (LatentFloat > 0) );
 	}
 
 	function StartSleeping() {}
@@ -409,17 +400,18 @@ State Sleeping
 	}
 
 Begin:
-	bRespawnPaused = true;
-	while (DelayRespawn())
-	{
-		Sleep(1.0);
-	}
-	bRespawnPaused = false;
 	Sleep( GetReSpawnTime() - RespawnEffectTime );
 Respawn:
 	RespawnEffect();
 	Sleep(RespawnEffectTime);
-	GotoState('Pickup');
+	if (ShouldRespawn())
+	{
+		GotoState('Pickup');
+	}
+	else
+	{
+		Goto('Begin');
+	}
 }
 
 State Disabled
@@ -439,38 +431,51 @@ State Disabled
 
 	simulated event BeginState(Name PreviousStateName)
 	{
-		SetPickupHidden();
+		SetHidden(True);
 		SetCollision(false,false);
-	}
-
-	simulated event EndState(Name NextStateName)
-	{
-		SetPickupVisible();
 	}
 }
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	Begin Object NAME=CollisionCylinder
-		CollisionRadius=+00040.000000
-		CollisionHeight=+00080.000000
-		CollideActors=true
-	End Object
-
-	bCollideWhenPlacing=False
-	bHiddenEd=false
-	bOnlyReplicateHidden=true
-	bStatic=false
-	bNoDelete=true
-	RemoteRole=ROLE_SimulatedProxy
-	bAlwaysRelevant=true
-	bCollideActors=true
-	bCollideWorld=false
-	bBlockActors=false
-	bIgnoreEncroachers=true
-	bHidden=false
-	NetUpdateFrequency=1.0
-	SupportedEvents.Add(class'SeqEvent_PickupStatusChange')
+   bOnlyReplicateHidden=True
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+      CollisionHeight=80.000000
+      CollisionRadius=40.000000
+      CollideActors=True
+      ObjectArchetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   RemoteRole=ROLE_SimulatedProxy
+   TickGroup=TG_DuringAsyncWork
+   bStatic=False
+   bIgnoreEncroachers=True
+   bAlwaysRelevant=True
+   bCollideWhenPlacing=False
+   bCollideActors=True
+   NetUpdateFrequency=1.000000
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_TouchAll
+   SupportedEvents(3)=Class'Engine.SeqEvent_PickupStatusChange'
+   Name="Default__PickupFactory"
+   ObjectArchetype=NavigationPoint'Engine.Default__NavigationPoint'
 }

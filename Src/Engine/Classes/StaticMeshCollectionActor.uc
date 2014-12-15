@@ -4,7 +4,7 @@
  * multiple normal StaticMeshActors in content which has been cooked for the a console platform, becoming the owner for
  * those StaticMeshActors' StaticMeshComponent.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved
  */
 class StaticMeshCollectionActor extends StaticMeshActorBase
 	native
@@ -21,23 +21,25 @@ var	const	array<StaticMeshComponent>	StaticMeshComponents;
  */
 var	config	int							MaxStaticMeshComponents;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	/* === UObject interface === */
-	/**
-	 * Serializes the LocalToWorld transforms for the StaticMeshComponents contained in this actor.
-	 */
-	virtual void Serialize( FArchive& Ar );
-
-	/**
-	  * Used by Octree ActorRadius check to determine whether to return a component even if the actor owning the component has already been returned.
-	  * Make sure all static mesh components which can become dynamic are returned
-	  */
-	virtual UBOOL ForceReturnComponent(UPrimitiveComponent* TestPrimitive);
+   MaxStaticMeshComponents=1000
+   Name="Default__StaticMeshCollectionActor"
+   ObjectArchetype=StaticMeshActorBase'Engine.Default__StaticMeshActorBase'
 }
-
-DefaultProperties
-{
-}
-
-

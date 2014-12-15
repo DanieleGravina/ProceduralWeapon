@@ -3,7 +3,7 @@
  * draw or input proxy for a particular property, or for a particular property type.  This class is a singleton; to access
  * the values stored in this class, use UCustomPropertyItemBindings::StaticClass()->GetDefaultObject<UCustomPropertyItemBinding>();
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CustomPropertyItemBindings extends Object
 	native(Private)
@@ -102,7 +102,7 @@ struct native PropertyItemCustomClass
 	var()		config			string							PropertyPathName;
 
 	/**
-	 * The name of the WxItemPropertyControl subclass to use in the property item window for the associated property.
+	 * The name of the WxPropertyWindow_Item subclass to use in the property item window for the associated property.
 	 */
 	var()		config			string							PropertyItemClassName;
 
@@ -120,7 +120,7 @@ struct native PropertyItemCustomClass
 	var()		config			bool							bIgnoreArrayElements;
 
 	/**
-	 * A pointer to the WxItemPropertyControl class corresponding to PropertyItemClassName.  This value is filled the first
+	 * A pointer to the WxPropertyWindow_Item class corresponding to PropertyItemClassName.  This value is filled the first
 	 * time this PropertyItemCustomClass's custom property item class is requested.
 	 */
 	var	transient	native		pointer							WxPropertyItemClass{class wxClassInfo};
@@ -142,7 +142,7 @@ struct native PropertyTypeCustomClass
 	var()		config			string							PropertyObjectClassPathName;
 
 	/**
-	 * The name of the WxItemPropertyControl subclass to use in the property item window for the associated property.
+	 * The name of the WxPropertyWindow_Item subclass to use in the property item window for the associated property.
 	 */
 	var()		config			string							PropertyItemClassName;
 
@@ -160,7 +160,7 @@ struct native PropertyTypeCustomClass
 	var()		config			bool							bIgnoreArrayElements;
 
 	/**
-	 * A pointer to the WxItemPropertyControl class corresponding to PropertyItemClassName.  This value is filled the first
+	 * A pointer to the WxPropertyWindow_Item class corresponding to PropertyItemClassName.  This value is filled the first
 	 * time this PropertyTypeCustomClass's custom property item class is requested.
 	 */
 	var	transient	native		pointer							WxPropertyItemClass{class wxClassInfo};
@@ -181,53 +181,83 @@ var()			config			array<PropertyTypeCustomProxy>			CustomPropertyTypeDrawProxies;
 /** custom input proxy classes, per property type */
 var()			config			array<PropertyTypeCustomProxy>			CustomPropertyTypeInputProxies;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	/**
-	 * Returns the custom draw proxy class that should be used for the property associated with
-	 * the WxPropertyControl specified.
-	 *
-	 * @param	ProxyOwnerItem	the property window item that will be using this draw proxy
-	 * @param	ArrayIndex		specifies which element of an array property that this property window will represent.  Only valid
-	 *							when creating property window items for individual elements of an array.
-	 *
-	 * @return	a pointer to a child of UPropertyDrawProxy that should be used as the draw proxy
-	 *			for the specified property, or NULL if there is no custom draw proxy configured for
-	 *			the property.
-	 */
-	class UClass* GetCustomDrawProxy( const class WxPropertyControl* ProxyOwnerItem, INT ArrayIndex=INDEX_NONE );
-
-	/**
-	 * Returns the custom input proxy class that should be used for the property associated with
-	 * the WxPropertyControl specified.
-	 *
-	 * @param	ProxyOwnerItem	the property window item that will be using this input proxy
-	 * @param	ArrayIndex		specifies which element of an array property that this property window will represent.  Only valid
-	 *							when creating property window items for individual elements of an array.
-	 *
-	 * @return	a pointer to a child of UPropertyInputProxy that should be used as the input proxy
-	 *			for the specified property, or NULL if there is no custom input proxy configured for
-	 *			the property.
-	 */
-	class UClass* GetCustomInputProxy( const class WxPropertyControl* ProxyOwnerItem, INT ArrayIndex=INDEX_NONE );
-
-	/**
-	 * Returns an instance of a custom property item class that should be used for the property specified.
-	 *
-	 * @param	InProperty	the property that will use the custom property item
-	 * @param	ArrayIndex	specifies which element of an array property that this property window will represent.  Only valid
-	 *						when creating property window items for individual elements of an array.
-	 * @param	ParentItem	specified the property window item that will contain this new property window item.  Only
-	 *						valid when creating property window items for individual array elements or struct member properties
-	 *
-	 * @return	a pointer to a child of WxItemPropertyControl that should be used as the property
-	 *			item for the specified property, or NULL if there is no custom property item configured
-	 * 			for the property.
-	 */
-	class WxItemPropertyControl* GetCustomPropertyWindow( class UProperty* InProperty, INT ArrayIndex=INDEX_NONE);
-}
-
-DefaultProperties
-{
-
+   CustomPropertyClasses(0)=(PropertyPathName="Engine.UIRoot:UIStyleOverride.DrawColor",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(1)=(PropertyPathName="Engine.UIRoot:UIStyleOverride.Opacity",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(2)=(PropertyPathName="Engine.UIRoot:UIStyleOverride.Padding",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem",bReplaceArrayHeaders=True,bIgnoreArrayElements=True)
+   CustomPropertyClasses(3)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.DrawFont",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(4)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.TextAttributes",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(5)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.TextAlignment",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem",bReplaceArrayHeaders=True,bIgnoreArrayElements=True)
+   CustomPropertyClasses(6)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.ClipMode",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(7)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.ClipAlignment",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(8)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.AutoScaling",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(9)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.DrawScale",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem",bReplaceArrayHeaders=True,bIgnoreArrayElements=True)
+   CustomPropertyClasses(10)=(PropertyPathName="Engine.UIRoot:UITextStyleOverride.SpacingAdjust",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem",bReplaceArrayHeaders=True,bIgnoreArrayElements=True)
+   CustomPropertyClasses(11)=(PropertyPathName="Engine.UIRoot:UIImageStyleOverride.Coordinates",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem")
+   CustomPropertyClasses(12)=(PropertyPathName="Engine.UIRoot:UIImageStyleOverride.Formatting",PropertyItemClassName="WxCustomPropertyItem_ConditionalItem",bReplaceArrayHeaders=True,bIgnoreArrayElements=True)
+   CustomPropertyClasses(13)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:VectorParameterValues",PropertyItemClassName="WxPropertyWindow_MaterialInstanceConstantParameters",bReplaceArrayHeaders=True)
+   CustomPropertyClasses(14)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:StaticSwitchParameterValues",PropertyItemClassName="WxPropertyWindow_MaterialInstanceConstantParameters",bReplaceArrayHeaders=True)
+   CustomPropertyClasses(15)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:StaticComponentMaskParameterValues",PropertyItemClassName="WxPropertyWindow_MaterialInstanceConstantParameters",bReplaceArrayHeaders=True)
+   CustomPropertyClasses(16)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:ScalarParameterValues",PropertyItemClassName="WxPropertyWindow_MaterialInstanceConstantParameters",bReplaceArrayHeaders=True)
+   CustomPropertyClasses(17)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:TextureParameterValues",PropertyItemClassName="WxPropertyWindow_MaterialInstanceConstantParameters",bReplaceArrayHeaders=True)
+   CustomPropertyClasses(18)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:EditorVectorParameterValue.ParameterValue",PropertyItemClassName="WxCustomPropertyItem_MaterialInstanceConstantParameter")
+   CustomPropertyClasses(19)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:EditorStaticSwitchParameterValue.ParameterValue",PropertyItemClassName="WxCustomPropertyItem_MaterialInstanceConstantParameter")
+   CustomPropertyClasses(20)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:EditorStaticComponentMaskParameterValue.ParameterValue",PropertyItemClassName="WxCustomPropertyItem_MaterialInstanceConstantParameter")
+   CustomPropertyClasses(21)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:EditorScalarParameterValue.ParameterValue",PropertyItemClassName="WxCustomPropertyItem_MaterialInstanceConstantParameter")
+   CustomPropertyClasses(22)=(PropertyPathName="UnrealEd.MaterialEditorInstanceConstant:EditorTextureParameterValue.ParameterValue",PropertyItemClassName="WxCustomPropertyItem_MaterialInstanceConstantParameter")
+   CustomPropertyDrawProxies(0)=(PropertyPathName="Engine.UIScreenObject:PlayerInputMask",PropertyItemClassName="UnrealEd.PlayerInputMask_CustomDrawProxy")
+   CustomPropertyInputProxies(0)=(PropertyPathName="Engine.UIScreenObject:PlayerInputMask",PropertyItemClassName="UnrealEd.PlayerInputMask_CustomInputProxy")
+   CustomPropertyInputProxies(1)=(PropertyPathName="Engine.UIScreenObject:InactiveStates.InactiveStates",PropertyItemClassName="UnrealEd.UIState_CustomInputProxy")
+   CustomPropertyInputProxies(2)=(PropertyPathName="Engine.UIScreenObject:InitialState",PropertyItemClassName="UnrealEd.UIStateClass_CustomInputProxy")
+   CustomPropertyTypeDrawProxies(0)=(PropertyName="ObjectProperty",PropertyObjectClassPathName="Engine.UITexture",PropertyItemClassName="UnrealEd.UITexture_CustomDrawProxy")
+   CustomPropertyTypeInputProxies(0)=(PropertyName="ObjectProperty",PropertyObjectClassPathName="Engine.UITexture",PropertyItemClassName="UnrealEd.UITexture_CustomInputProxy")
+   Name="Default__CustomPropertyItemBindings"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,5 +1,5 @@
 /**
- *	Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ *	Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  *	Utility class designed to allow you to connect a MaterialInterface to a Matinee action.
  */
@@ -19,16 +19,16 @@ var()	MaterialInstanceConstant	MatInst;
 
 defaultproperties
 {
-	TickGroup=TG_DuringAsyncWork
-
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.MatInstActSprite'
-		HiddenGame=true
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Materials"
-	End Object
-	Components.Add(Sprite)
-
-	bNoDelete=true
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.MatInstActSprite'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   bNoDelete=True
+   Name="Default__MaterialInstanceActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

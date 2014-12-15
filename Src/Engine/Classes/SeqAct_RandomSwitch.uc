@@ -1,28 +1,45 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_RandomSwitch extends SeqAct_Switch
 	native(Sequence);
 
-/** List of indices we've already used once and disabled (for when bLooping and bAutoDisableLinks are both checked) **/
-var array<INT> AutoDisabledIndices; 
-
-cpptext
-{
-	virtual void Activated();
-};
-
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Random"
-	ObjCategory="Switch"
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Int',LinkDesc="Active Link",bWriteable=true,MinVars=0,PropertyName=Indices)
-
-	InputLinks(1)=(LinkDesc="Reset")
+   VariableLinks(0)=(LinkDesc="Active Link",bWriteable=True,MinVars=0)
+   ObjName="Random"
+   Name="Default__SeqAct_RandomSwitch"
+   ObjectArchetype=SeqAct_Switch'Engine.Default__SeqAct_Switch'
 }

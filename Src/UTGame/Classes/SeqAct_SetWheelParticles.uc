@@ -1,12 +1,14 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetWheelParticles extends SequenceAction;
 
-var() ParticleSystem	NewParticleSystem; 
+var() ParticleSystem	NewParticleSystem;
 
 defaultproperties
 {
-	ObjName="Set Wheel Particles"	
-	ObjCategory="DemoGame"
+   ObjName="Set Wheel Particles"
+   ObjCategory="DemoGame"
+   Name="Default__SeqAct_SetWheelParticles"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

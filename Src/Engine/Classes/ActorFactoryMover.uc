@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryMover extends ActorFactoryDynamicSM
 	config(Editor)
@@ -9,6 +9,8 @@ class ActorFactoryMover extends ActorFactoryDynamicSM
 
 defaultproperties
 {
-	MenuName="Add InterpActor"
-	NewActorClass=class'Engine.InterpActor'
+   MenuName="Add InterpActor"
+   NewActorClass=Class'Engine.InterpActor'
+   Name="Default__ActorFactoryMover"
+   ObjectArchetype=ActorFactoryDynamicSM'Engine.Default__ActorFactoryDynamicSM'
 }

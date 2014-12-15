@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -59,10 +59,8 @@ function bool ShowInviteUI(byte LocalUserNum,optional string InviteText);
  * Displays the marketplace UI for content
  *
  * @param LocalUserNum the local user viewing available content
- * @param CategoryMask the bitmask to use to filter content by type
- * @param OfferId a specific offer that you want shown
  */
-function bool ShowContentMarketplaceUI(byte LocalUserNum,optional int CategoryMask = -1,optional int OfferId);
+function bool ShowContentMarketplaceUI(byte LocalUserNum);
 
 /**
  * Displays the marketplace UI for memberships
@@ -76,18 +74,12 @@ function bool ShowMembershipMarketplaceUI(byte LocalUserNum);
  *
  * @param LocalUserNum the controller number of the associated user
  * @param SizeNeeded the size of the data to be saved in bytes
- * @param bManageStorage whether to allow the user to manage their storage or not
+ * @param bForceShowUI true to always show the UI, false to only show the
+ *		  UI if there are multiple valid choices
  *
  * @return TRUE if it was able to show the UI, FALSE if it failed
  */
-function bool ShowDeviceSelectionUI(byte LocalUserNum,int SizeNeeded,optional bool bManageStorage);
-
-/**
- * Delegate used when the device selection request has completed
- *
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnDeviceSelectionComplete(bool bWasSuccessful);
+function bool ShowDeviceSelectionUI(byte LocalUserNum,int SizeNeeded,bool bForceShowUI = false);
 
 /**
  * Adds the delegate used to notify the gameplay code that the user has completed
@@ -113,18 +105,63 @@ function ClearDeviceSelectionDoneDelegate(byte LocalUserNum,delegate<OnDeviceSel
  * @return the ID of the device that was selected
  * NOTE: Zero means the user hasn't selected one
  */
-function int GetDeviceSelectionResults(byte LocalUserNum,out string DeviceName);
+function int GetDeviceSelectionResults(byte LocalUserNum,out string DeviceName); 
 
 /**
- * Checks the device id to determine if it is still valid (could be removed) and/or
- * if there is enough space on the specified device
+ * Delegate used when the device selection request has completed
+ *
+ * @param bWasSuccessful true if the async action completed without error, false if there was an error
+ */
+delegate OnDeviceSelectionComplete(bool bWasSuccessful);
+
+/**
+ * Checks the device id to determine if it is still valid (could be removed)
  *
  * @param DeviceId the device to check
- * @param SizeNeeded the amount of space requested
  *
  * @return true if valid, false otherwise
  */
-function bool IsDeviceValid(int DeviceId,optional int SizeNeeded);
+function bool IsDeviceValid(int DeviceId);
+
+/**
+ * Unlocks the specified achievement for the specified user
+ *
+ * @param LocalUserNum the controller number of the associated user
+ * @param AchievementId the id of the achievement to unlock
+ *
+ * @return TRUE if the call worked, FALSE otherwise
+ */
+function bool UnlockAchievement(byte LocalUserNum,int AchievementId);
+
+/**
+ * Adds the delegate used to notify the gameplay code that the achievement unlocking has completed
+ *
+ * @param LocalUserNum which user to watch for read complete notifications
+ * @param UnlockAchievementCompleteDelegate the delegate to use for notifications
+ */
+function AddUnlockAchievementCompleteDelegate(byte LocalUserNum,delegate<OnUnlockAchievementComplete> UnlockAchievementCompleteDelegate);
+
+/**
+ * Clears the delegate used to notify the gameplay code that the achievement unlocking has completed
+ *
+ * @param LocalUserNum which user to watch for read complete notifications
+ * @param UnlockAchievementCompleteDelegate the delegate to use for notifications
+ */
+function ClearUnlockAchievementCompleteDelegate(byte LocalUserNum,delegate<OnUnlockAchievementComplete> UnlockAchievementCompleteDelegate);
+
+/**
+ * Delegate used when the achievement unlocking has completed
+ *
+ * @param bWasSuccessful true if the async action completed without error, false if there was an error
+ */
+delegate OnUnlockAchievementComplete(bool bWasSuccessful);
+
+/**
+* Returns whether or not an achievement has been unlocked
+*
+* @return true if the achievement is already unlocked, false otherwise
+*/
+function bool IsAchievementUnlocked(int AchievementId);
 
 /**
  * Unlocks a gamer picture for the local user
@@ -174,90 +211,8 @@ function bool ShowFriendsInviteUI(byte LocalUserNum,UniqueNetId PlayerId);
  */
 function bool ShowPlayersUI(byte LocalUserNum);
 
-/**
- * Shows a custom players UI for the specified list of players
- *
- * @param LocalUserNum the controller number of the associated user
- * @param Players the list of players to show in the custom UI
- * @param Title the title to use for the UI
- * @param Description the text to show at the top of the UI
- *
- * @return TRUE if it was able to show the UI, FALSE if it failed
- */
-function bool ShowCustomPlayersUI(byte LocalUserNum,const out array<UniqueNetId> Players,string Title,string Description);
-
-/**
- * Unlocks an avatar award for the local user
- *
- * @param LocalUserNum the user to unlock the avatar item for
- * @param AvatarItemId the id of the avatar item to unlock
- */
-function bool UnlockAvatarAward(byte LocalUserNum,int AvatarItemId);
-
-/**
- * Reads the online profile settings for a given user and title id
- *
- * @param LocalUserNum the user that we are reading the data for
- * @param TitleId the title that the profile settings are being read for
- * @param ProfileSettings the object to copy the results to and contains the list of items to read
- *
- * @return true if the call succeeds, false otherwise
- */
-function bool ReadCrossTitleProfileSettings(byte LocalUserNum,int TitleId,OnlineProfileSettings ProfileSettings);
-
-/**
- * Delegate used when the last read profile settings request has completed
- *
- * @param LocalUserNum the controller index of the player who's read just completed
- * @param TitleId the title that the profile settings were read for
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnReadCrossTitleProfileSettingsComplete(byte LocalUserNum,int TitleId,bool bWasSuccessful);
-
-/**
- * Sets the delegate used to notify the gameplay code that the last read request has completed
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param ReadProfileSettingsCompleteDelegate the delegate to use for notifications
- */
-function AddReadCrossTitleProfileSettingsCompleteDelegate(byte LocalUserNum,delegate<OnReadCrossTitleProfileSettingsComplete> ReadProfileSettingsCompleteDelegate);
-
-/**
- * Searches the existing set of delegates for the one specified and removes it
- * from the list
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param ReadProfileSettingsCompleteDelegate the delegate to find and clear
- */
-function ClearReadCrossTitleProfileSettingsCompleteDelegate(byte LocalUserNum,delegate<OnReadCrossTitleProfileSettingsComplete> ReadProfileSettingsCompleteDelegate);
-
-/**
- * Returns the online profile settings for a given user and title id
- *
- * @param LocalUserNum the user that we are reading the data for
- * @param TitleId the title that the profile settings are being read for
- *
- * @return the profile settings object
- */
-function OnlineProfileSettings GetCrossTitleProfileSettings(byte LocalUserNum,int TitleId);
-
-/**
- * Removes a cached entry of a profile for the specified title id
- *
- * @param LocalUserNum the user that we are reading the data for
- * @param TitleId the title that the profile settings are being read for
- */
-function ClearCrossTitleProfileSettings(byte LocalUserNum,int TitleId);
-
-/**
- * Shows a dialog with the message pre-populated in it
- *
- * @param LocalUserNum the user sending the message
- * @param Recipients the list of people to send the message to
- * @param MessageTitle the title of the message being sent
- * @param NonEditableMessage the portion of the message that the user cannot edit
- * @param EditableMessage the portion of the message the user can edit
- *
- * @return true if successful, false otherwise
- */
-function bool ShowCustomMessageUI(byte LocalUserNum,const out array<UniqueNetId> Recipients,string MessageTitle,string NonEditableMessage,optional string EditableMessage);	
+defaultproperties
+{
+   Name="Default__OnlinePlayerInterfaceEx"
+   ObjectArchetype=Interface'Core.Default__Interface'
+}

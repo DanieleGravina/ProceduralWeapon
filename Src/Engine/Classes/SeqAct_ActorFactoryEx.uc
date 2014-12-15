@@ -1,25 +1,23 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class SeqAct_ActorFactoryEx extends SeqAct_ActorFactory
 	native(Sequence);
 
-cpptext
-{
-	virtual void UpdateDynamicLinks();
-	virtual void Spawned(UObject *NewSpawn);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Actor Factory Ex"
-
-	OutputLinks(2)=(LinkDesc="Spawned 1")
-
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Spawn Point",PropertyName=SpawnPoints)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Spawned 1",bWriteable=TRUE)
+   OutputLinks(2)=(LinkDesc="Spawned 1")
+   VariableLinks(1)=(LinkDesc="Spawned 1",MinVars=1)
+   ObjName="Actor Factory Ex"
+   Name="Default__SeqAct_ActorFactoryEx"
+   ObjectArchetype=SeqAct_ActorFactory'Engine.Default__SeqAct_ActorFactory'
 }

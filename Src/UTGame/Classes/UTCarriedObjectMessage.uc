@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTCarriedObjectMessage extends UTLocalMessage
@@ -125,7 +125,7 @@ static function string GetString(
 		if (RelatedPRI_1 == None)
 			return "";
 
-		return RelatedPRI_1.PlayerName@Default.CaptureRed;
+		return RelatedPRI_1.GetPlayerAlias()@Default.CaptureRed;
 		break;
 
 		// Returned the flag.
@@ -134,7 +134,7 @@ static function string GetString(
 		{
 			return Default.ReturnedRed;
 		}
-		return RelatedPRI_1.PlayerName@Default.ReturnRed;
+		return RelatedPRI_1.GetPlayerAlias()@Default.ReturnRed;
 		break;
 
 		// Dropped the flag.
@@ -142,9 +142,9 @@ static function string GetString(
 		if (RelatedPRI_1 == None)
 			return "";
 		if ( (RelatedPRI_2 != None) && (RelatedPRI_2 != RelatedPRI_1) )
-			return RelatedPRI_2.PlayerName@Default.KilledRed;
+			return RelatedPRI_2.GetPlayerAlias()@Default.KilledRed;
 		else
-			return RelatedPRI_1.PlayerName@Default.DroppedRed;
+			return RelatedPRI_1.GetPlayerAlias()@Default.DroppedRed;
 		break;
 
 		// Was returned.
@@ -156,7 +156,7 @@ static function string GetString(
 	case 4:
 		if (RelatedPRI_1 == None)
 			return "";
-		return RelatedPRI_1.PlayerName@Default.HasRed;
+		return RelatedPRI_1.GetPlayerAlias()@Default.HasRed;
 		break;
 
 		// Auto send home.
@@ -168,7 +168,7 @@ static function string GetString(
 	case 6:
 		if (RelatedPRI_1 == None)
 			return "";
-		return RelatedPRI_1.PlayerName@Default.HasRed;
+		return RelatedPRI_1.GetPlayerAlias()@Default.HasRed;
 		break;
 
 		// BLUE TEAM
@@ -177,7 +177,7 @@ static function string GetString(
 		if (RelatedPRI_1 == None)
 			return "";
 
-		return RelatedPRI_1.PlayerName@Default.CaptureBlue;
+		return RelatedPRI_1.GetPlayerAlias()@Default.CaptureBlue;
 		break;
 
 		// Returned the flag.
@@ -186,7 +186,7 @@ static function string GetString(
 		{
 			return Default.ReturnedBlue;
 		}
-		return RelatedPRI_1.PlayerName@Default.ReturnBlue;
+		return RelatedPRI_1.GetPlayerAlias()@Default.ReturnBlue;
 		break;
 
 		// Dropped the flag.
@@ -195,9 +195,9 @@ static function string GetString(
 			return "";
 
 		if ( (RelatedPRI_2 != None) && (RelatedPRI_2 != RelatedPRI_1) )
-			return RelatedPRI_2.PlayerName@Default.KilledBlue;
+			return RelatedPRI_2.GetPlayerAlias()@Default.KilledBlue;
 		else
-			return RelatedPRI_1.PlayerName@Default.DroppedBlue;
+			return RelatedPRI_1.GetPlayerAlias()@Default.DroppedBlue;
 		break;
 
 		// Was returned.
@@ -209,7 +209,7 @@ static function string GetString(
 	case 11:
 		if (RelatedPRI_1 == None)
 			return "";
-		return RelatedPRI_1.PlayerName@Default.HasBlue;
+		return RelatedPRI_1.GetPlayerAlias()@Default.HasBlue;
 		break;
 
 		// Auto send home.
@@ -221,7 +221,7 @@ static function string GetString(
 	case 13:
 		if (RelatedPRI_1 == None)
 			return "";
-		return RelatedPRI_1.PlayerName@Default.HasBlue;
+		return RelatedPRI_1.GetPlayerAlias()@Default.HasBlue;
 		break;
 	}
 	return "";
@@ -285,10 +285,11 @@ static function bool PartiallyDuplicates(INT Switch1, INT Switch2, object Option
 
 defaultproperties
 {
-	bIsUnique=True
-	FontSize=1
-	MessageArea=1
-	bBeep=false
-	DrawColor=(R=0,G=160,B=255,A=255)
-	AnnouncementPriority=4
+   AnnouncementPriority=4
+   bIsUnique=True
+   bIsConsoleMessage=True
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=1
+   Name="Default__UTCarriedObjectMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

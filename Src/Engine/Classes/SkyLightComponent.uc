@@ -1,8 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SkyLightComponent extends LightComponent
-	native(Light)
+	native
+	collapsecategories
 	hidecategories(Object)
 	editinlinenew;
 
@@ -12,27 +13,30 @@ var() const float LowerBrightness;
 /** The color of the lower hemisphere of the sky light. */
 var() const color LowerColor;
 
-cpptext
-{
-	/**
-	 * Called when a property is being changed.
-	 *
-	 * @param PropertyThatChanged	Property that changed or NULL if unknown or multiple
-	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	/**
-	 * Called after data has been serialized.
-	 */
-	virtual void PostLoad();
-
-	// ULightComponent interface.
-	virtual FLightSceneInfo* CreateSceneInfo() const;
-	virtual FVector4 GetPosition() const;
-	virtual ELightComponentType GetLightType() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	CastShadows=False
-	LowerColor=(R=255,G=255,B=255)
+   LowerColor=(B=255,G=255,R=255,A=0)
+   CastShadows=False
+   bCastCompositeShadow=True
+   Name="Default__SkyLightComponent"
+   ObjectArchetype=LightComponent'Engine.Default__LightComponent'
 }

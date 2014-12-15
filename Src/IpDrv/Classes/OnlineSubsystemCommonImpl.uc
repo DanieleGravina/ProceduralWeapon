@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -7,7 +7,6 @@
  */
 class OnlineSubsystemCommonImpl extends OnlineSubsystem
 	native
-	abstract
 	config(Engine);
 
 /**
@@ -28,9 +27,6 @@ var config bool bIsUsingSpeechRecognition;
 /** The object that handles the game interface implementation across platforms */
 var OnlineGameInterfaceImpl GameInterfaceImpl;
 
-/** The object that handles the auth interface implementation across platforms */
-var OnlineAuthInterfaceImpl AuthInterfaceImpl;
-
 /**
  * Returns the name of the player for the specified index
  *
@@ -41,36 +37,19 @@ var OnlineAuthInterfaceImpl AuthInterfaceImpl;
 event string GetPlayerNicknameFromIndex(int UserIndex);
 
 /**
- * Determine if the player is registered in the specified session
+ * Returns the unique id of the player for the specified index
  *
- * @param PlayerId the player to check if in session or not
- * @return TRUE if the player is a registrant in the session
+ * @param UserIndex the user to return the id of
+ *
+ * @return the unique id of the player at the specified index
  */
-native function bool IsPlayerInSession(name SessionName,UniqueNetId PlayerId);
+event UniqueNetId GetPlayerUniqueNetIdFromIndex(int UserIndex);
 
-/**
- * Get a list of the net ids for the players currently registered on the session
- *
- * @param SessionName name of the session to find
- * @param OutRegisteredPlayers [out] list of player net ids in the session (empty if not found)
- */
-function GetRegisteredPlayers(name SessionName,out array<UniqueNetId> OutRegisteredPlayers)
+defaultproperties
 {
-	local int Idx,PlayerIdx;
-
-	OutRegisteredPlayers.Length = 0;
-	for (Idx=0; Idx < Sessions.Length; Idx++)
-	{
-		// find session by name
-		if (Sessions[Idx].SessionName == SessionName)
-		{
-			// return list of player ids currently registered on the session
-			OutRegisteredPlayers.Length = Sessions[Idx].Registrants.Length;
-			for (PlayerIdx=0; PlayerIdx < Sessions[Idx].Registrants.Length; PlayerIdx++)
-			{
-				OutRegisteredPlayers[PlayerIdx] = Sessions[Idx].Registrants[PlayerIdx].PlayerNetId;
-			}
-			break;
-		}
-	}
+   MaxLocalTalkers=1
+   MaxRemoteTalkers=16
+   bIsUsingSpeechRecognition=True
+   Name="Default__OnlineSubsystemCommonImpl"
+   ObjectArchetype=OnlineSubsystem'Engine.Default__OnlineSubsystem'
 }

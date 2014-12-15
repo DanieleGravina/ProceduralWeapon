@@ -1,19 +1,25 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * This is the material instance label renderer.
  */
 class MaterialInstanceLabelRenderer extends ThumbnailLabelRenderer
 	native;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-protected:
-	/**
-	 * Adds the name of the object and information about the material.
-	 *
-	 * @param Object		The object to build the labels for.
-	 * @param OutLabels		The array that is added to.
-	 */
-	void BuildLabelList(UObject* Object, const ThumbnailOptions& InOptions, TArray<FString>& OutLabels);
+   Name="Default__MaterialInstanceLabelRenderer"
+   ObjectArchetype=ThumbnailLabelRenderer'UnrealEd.Default__ThumbnailLabelRenderer'
 }

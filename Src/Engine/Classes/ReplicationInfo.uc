@@ -1,22 +1,21 @@
 //=============================================================================
 // ReplicationInfo.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class ReplicationInfo extends Info
 	abstract
-	native(ReplicationInfo);
+	native;
 
-cpptext
-{
-	INT* GetOptimizedRepList( BYTE* Recent, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	RemoteRole=ROLE_SimulatedProxy
-	bAlwaysRelevant=True
-	bStatic=False
-	bNoDelete=False
-
-	Components.Remove(Sprite)
+   RemoteRole=ROLE_SimulatedProxy
+   bAlwaysRelevant=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__ReplicationInfo"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

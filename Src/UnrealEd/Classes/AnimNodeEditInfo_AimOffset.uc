@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -11,18 +11,20 @@ class AnimNodeEditInfo_AimOffset extends AnimNodeEditInfo
 var native const pointer	EditWindow{class WxAnimAimOffsetEditor};	
 var	AnimNodeAimOffset		EditNode;
 
-cpptext
-{
-	virtual void OnDoubleClickNode(UAnimNode* InNode, class WxAnimTreeEditor* InEditor);
-	virtual void OnCloseAnimTreeEditor();
-	virtual UBOOL ShouldDrawWidget();
-	virtual UBOOL IsRotationWidget();
-	virtual FMatrix GetWidgetTM();
-	virtual void HandleWidgetDrag(const FQuat& DeltaQuat, const FVector& DeltaTranslate);
-	virtual void Draw3DInfo(const FSceneView* View, FPrimitiveDrawInterface* PDI);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	AnimNodeClass=class'Engine.AnimNodeAimOffset'
+   AnimNodeClass=Class'Engine.AnimNodeAimOffset'
+   Name="Default__AnimNodeEditInfo_AimOffset"
+   ObjectArchetype=AnimNodeEditInfo'UnrealEd.Default__AnimNodeEditInfo'
 }

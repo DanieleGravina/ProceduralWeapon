@@ -1,25 +1,40 @@
 /**
+ * UTHUD
  * UT Heads Up Display
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ *
+* Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTHUD extends UTHUDBase
+class UTHUD extends GameHUD
 	dependson(UTWeapon)
+	native(UI)
 	config(Game);
 
 var class<UTLocalMessage> WeaponSwitchMessage;
 
+/** Holds a list of Actors that need PostRender calls */
+var array<Actor> PostRenderedActors;
+
 /** Cached reference to the another hud texture */
 var const Texture2D AltHudTexture;
+var const Texture2D IconHudTexture;
 var const Texture2D TalkingTexture;
 var const Texture2D UT3GHudTexture;
 
+/** Holds a reference to the font to use for a given console */
+var config string ConsoleIconFontClassName;
+var font ConsoleIconFont;
+
+var TextureCoordinates ToolTipSepCoords;
+var float LastTimeTooltipDrawn;
+
 var const LinearColor LC_White;
 
+var const color LightGoldColor, LightGreenColor;
 var const color GrayColor;
 
 /** used to pulse the scaled of several hud elements */
-var float LastAmmoPickupTime, LastHealthPickupTime, LastArmorPickupTime;
+var float LastPickupTime, LastAmmoPickupTime, LastHealthPickupTime, LastArmorPickupTime;
 
 /** The Pawn that is currently owning this hud */
 var Pawn PawnOwner;
@@ -27,16 +42,44 @@ var Pawn PawnOwner;
 /** Points to the UT Pawn.  Will be resolved if in a vehicle */
 var UTPawn UTPawnOwner;
 
+/** Cached a typed Player controller.  Unlike PawnOwner we only set this once in PostBeginPlay */
+var UTPlayerController UTPlayerOwner;
+
 /** Cached typed reference to the PRI */
 var UTPlayerReplicationInfo UTOwnerPRI;
+
+/** If true, we will allow Weapons to show their crosshairs */
+var bool bCrosshairShow;
 
 /** Debug flag to show AI information */
 var bool bShowAllAI;
 
+/** Cached reference to the GRI */
+var UTGameReplicationInfo UTGRI;
+
+/** Holds the scaling factor given the current resolution.  This is calculated in PostRender() */
+var float ResolutionScale, ResolutionScaleX;
+
 var bool bHudMessageRendered;
+
+/******************************************************************************************
+  UI/SCENE data for the hud
+ ******************************************************************************************/
+
+/** The Scoreboard. */
+var UTUIScene_Scoreboard ScoreboardSceneTemplate;
+
+/** class of dynamic music manager used with this hud/gametype */
+var class<UTMusicManager> MusicManagerClass;
 
 /** A collection of fonts used in the hud */
 var array<font> HudFonts;
+
+/** If true, we will alter the crosshair when it's over a friendly */
+var bool bCrosshairOnFriendly;
+
+/** Make the crosshair green (found valid friendly */
+var bool bGreenCrosshair;
 
 /******************************************************************************************
  Character Portraits
@@ -82,6 +125,9 @@ var UTPlayerReplicationInfo CharPendingPRI;
 /** If true, weapon bar is never displayed */
 var config bool bShowWeaponbar;
 
+/** If true, only show available weapons on weapon bar */
+var config bool bShowOnlyAvailableWeapons;
+
 /** If true, only weapon bar if have pendingweapon */
 var config bool bOnlyShowWeaponBarIfChanging;
 
@@ -93,6 +139,7 @@ var float WeaponBoxWidth, WeaponBoxHeight;
 /** Resolution dependent HUD scaling factor */
 var float HUDScaleX, HUDScaleY;
 var linearcolor TeamHUDColor;
+var color TeamColor;  //UNUSED BY ANYONE
 var color TeamTextColor;
 
 /** Weapon bar top left corner at 1024x768, normal scale */
@@ -124,11 +171,20 @@ var bool bNoWeaponNumbers;
 var float LastWeaponBarDrawnTime;
 
 /******************************************************************************************
+ MOTD
+ ******************************************************************************************/
+
+var UTUIScene_MOTD MOTDSceneTemplate;
+
+/******************************************************************************************
  Messaging
  ******************************************************************************************/
 
 /** Y offsets for local message areas - value above 1 = special position in right top corner of HUD */
 var float MessageOffset[7];
+
+/** Various colors */
+var const color BlackColor, GoldColor;
 
 /******************************************************************************************
  Map / Radar
@@ -147,6 +203,13 @@ var string DisplayedOrders;
 var float OrderUpdateTime;
 
 var Weapon LastSelectedWeapon;
+
+
+/******************************************************************************************
+ Glowing Fonts
+ ******************************************************************************************/
+
+var font GlowFonts[2];	// 0 = the Glow, 1 = Text
 
 /******************************************************************************************
  Safe Regions
@@ -210,6 +273,36 @@ var MaterialEffect HitEffect;
 
 /** material instance for the hit effect */
 var transient MaterialInstanceConstant HitEffectMaterialInstance;
+
+
+/******************************************************************************************
+ QuickPick Menu
+ ******************************************************************************************/
+var bool bShowQuickPick;
+var config bool bShowAllWeapons;
+var array<utweapon> QuickPickClasses;
+var pawn QuickPickTarget;
+
+var int QuickPickNumCells;
+var float QuickPickDeltaAngle;
+var float QuickPickRadius;
+var int	QuickPickCurrentSelection;
+/** true when the player has made a new selection since bringing the menu up this time
+ * (can't check QuickPickCurrentSelection for that since it defaults to current weapon)
+ */
+var bool bQuickPickMadeNewSelection;
+
+var texture2D QuickPickBkgImage;
+var textureCoordinates QuickPickBkgCoords;
+
+var texture2D QuickPickSelImage;
+var textureCoordinates QuickPickSelCoords;
+
+var Texture2D QuickPickCircleImage;
+var TextureCoordinates QuickPickCircleCoords;
+
+/** controller rumble to play when switching weapons. */
+var ForceFeedbackWaveform QuickPickWaveForm;
 
 /******************************************************************************************
  Widget Locations / Visibility flags
@@ -298,7 +391,19 @@ var TextureCoordinates NameplateRight;
 var LinearColor BlackBackgroundColor;
 
 /******************************************************************************************
- Localize Strings 
+ Pulses
+ ******************************************************************************************/
+
+/** How long should the pulse take total */
+var float PulseDuration;
+/** When should the pulse switch from Out to in */
+var float PulseSplit;
+/** How much should the text pulse - NOTE this will be added to 1.0 (so PulseMultipler 0.5 = 1.5) */
+var float PulseMultiplier;
+
+
+/******************************************************************************************
+ Localize Strings -- TODO - Go through and make sure these are all localized
  ******************************************************************************************/
 
 var localized string WarmupString;				// displayed when playing warmup round
@@ -352,12 +457,40 @@ var const linearcolor AmmoBarColor, RedLinearColor, BlueLinearColor, DMLinearCol
  Splitscreen
  ******************************************************************************************/
 
+/** This will be true if the hud is in splitscreen */
+var bool bIsSplitscreen;
+
 /** This will be true if this is the first player */
 var bool bIsFirstPlayer;
 
-var() texture2D BkgTexture;
-var() TextureCoordinates BkgTexCoords;
-var() color BkgTexColor;
+/** Configurable crosshair scaling */
+var float ConfiguredCrosshairScaling;
+
+/** Hero meter display */
+var float OldHeroScore;
+var float LastHeroScoreBumpTime;
+var int LastHeroBump;
+var float HeroPointOffX; //offset of point count in X
+var float HeroPointOffY; //offset of point count in Y
+var float HeroMeterOffsetX; //offset from ammo count in X
+var float HeroMeterOffsetY; //offset from ammo count in Y
+var float HeroMeterVehicleOffsetX; //offset when in a vehicle
+var float HeroMeterVehicleOffsetY; //offset when in a vehicle
+var float HeroMeterWidth;	//width of the hero meter
+var float HeroMeterHeight;  //height of the hero meter
+var TextureCoordinates HeroMeterTexCoords;
+var TextureCoordinates HeroMeterOverlayTexCoords;
+
+/** Coordinates for the hero tooltip textures */
+var UIRoot.TextureCoordinates HeroToolTipIconCoords;
+
+/** Time when the tooltip started to display */
+var float HeroTooltipTimeStamp;
+
+/**
+ * Draw a glowing string
+ */
+native function DrawGlowText(string Text, float X, float Y, optional float MaxHeightInPixels=0.0, optional float PulseTime=-100.0, optional bool bRightJustified);
 
 /**
  * Draws a textured centered around the current position
@@ -369,8 +502,8 @@ function DrawTileCentered(texture2D Tex, float xl, float yl, float u, float v, f
 	x = Canvas.CurX - (xl * 0.5);
 	y = Canvas.CurY - (yl * 0.5);
 
-	Canvas.SetPos(x,y, Canvas.CurZ);
-	Canvas.DrawTile(Tex, xl,yl,u,v,ul,vl,C);
+	Canvas.SetPos(x,y);
+	Canvas.DrawColorizedTile(Tex, xl,yl,u,v,ul,vl,C);
 }
 
 function SetDisplayedOrders(string OrderText)
@@ -403,6 +536,10 @@ exec function GrowHUD()
 	else if ( !bShowWeaponbar )
 	{
 		bShowWeaponBar = true;
+	}
+	else if ( bShowOnlyAvailableWeapons )
+	{
+		bShowOnlyAvailableWeapons = false;
 	}
 	else if ( !bShowVehicleArmorCount )
 	{
@@ -448,6 +585,10 @@ exec function ShrinkHUD()
 	{
 		bShowVehicleArmorCount = false;
 	}
+	else if ( !bShowOnlyAvailableWeapons )
+	{
+		bShowOnlyAvailableWeapons = true;
+	}
 	else if ( bShowWeaponbar )
 	{
 		bShowWeaponBar = false;
@@ -468,17 +609,92 @@ exec function ShrinkHUD()
 }
 
 /**
+ * This function will attempt to auto-link up HudWidgets to their associated transient
+ * property here in the hud.
+ */
+native function LinkToHudScene();
+
+/**
  * Create a list of actors needing post renders for.  Also Create the Hud Scene
  */
 simulated function PostBeginPlay()
 {
+	local Pawn P;
+	local UTGameObjective O;
+	local UTDeployableNodeLocker DNL;
+	local UTOnslaughtFlag F;
+	local UTOnslaughtNodeTeleporter NT;
+	local LocalPlayer LP;
+	local UTCTFFlag CTFFlag;
 	local int i;
+	local bool bFound;
 
 	super.PostBeginPlay();
+	SetTimer(1.0, true);
+
+	UTPlayerOwner = UTPlayerController(PlayerOwner);
+
+	// add actors to the PostRenderedActors array
+	ForEach DynamicActors(class'Pawn', P)
+	{
+		if ( (UTPawn(P) != None) || (UTVehicle(P) != None) )
+			AddPostRenderedActor(P);
+	}
+
+	foreach WorldInfo.AllNavigationPoints(class'UTGameObjective',O)
+	{
+		AddPostRenderedActor(O);
+	}
+
+	foreach WorldInfo.AllNavigationPoints(class'UTOnslaughtNodeTeleporter',NT)
+	{
+		AddPostRenderedActor(NT);
+	}
+
+	ForEach AllActors(class'UTDeployableNodeLocker',DNL)
+	{
+		AddPostRenderedActor(DNL);
+	}
+
+	ForEach AllActors(class'UTOnslaughtFlag',F)
+	{
+		AddPostRenderedActor(F);
+		bFound = false;
+		for ( i=0; i<UTPlayerOwner.PotentiallyHiddenActors.Length; i++ )
+		{
+			if ( UTPlayerOwner.PotentiallyHiddenActors[i] == F )
+			{
+				bFound = true;
+				break;
+			}
+		}
+		if ( !bFound )
+		{
+			UTPlayerOwner.PotentiallyHiddenActors[UTPlayerOwner.PotentiallyHiddenActors.Length] = F;
+		}
+	}
 
 	if ( UTConsolePlayerController(PlayerOwner) != None )
 	{
+		bShowOnlyAvailableWeapons = true;
 		bNoWeaponNumbers = true;
+	}
+
+	// Cache data that will be used a lot
+	UTPlayerOwner = UTPlayerController(Owner);
+
+	//Make sure the right team flag is excluded from being visible when you hold it
+	if (UTPlayerOwner != None && class<UTCTFGame>(WorldInfo.GRI.GameClass) != none)
+	{
+		LP = LocalPlayer(UTPlayerOwner.Player);
+		if (LP != None)
+		{
+			//Add flags for culling consideration based on distance
+			ForEach AllActors(class'UTCTFFlag',CTFFlag)
+			{
+				UpdateCTFFlagVisibility(CTFFlag);
+			}
+		}
 	}
 
 	// Setup Damage indicators,etc.
@@ -496,15 +712,9 @@ simulated function PostBeginPlay()
 			DamageData[i].MatConstant.SetParent(BaseMaterial);
 		}
 	}
-}
 
-/**
- * Called in PostBeginPlay or postprocessing chain has changed (happens because of the worldproperties can define it's own chain and this one is set late).
- */
-function NotifyBindPostProcessEffects()
-{
 	// create hit effect material instance
-	HitEffect = MaterialEffect(LocalPlayer(PlayerOwner.Player).PlayerPostProcess.FindPostProcessEffect('HitEffect'));
+	HitEffect = MaterialEffect(LocalPlayer(UTPlayerOwner.Player).PlayerPostProcess.FindPostProcessEffect('HitEffect'));
 	if (HitEffect != None)
 	{
 		if (MaterialInstanceConstant(HitEffect.Material) != None && HitEffect.Material.GetPackageName() == 'Transient')
@@ -520,6 +730,71 @@ function NotifyBindPostProcessEffects()
 		}
 		HitEffect.bShowInGame = false;
 	}
+
+	// find the controller icons font
+	ConsoleIconFont=Font(DynamicLoadObject(ConsoleIconFontClassName, class'font', true));
+}
+
+simulated function UpdateCTFFlagVisibility(UTCTFFlag CTFFlag)
+{
+	local UTPlayerController UTPC;
+	local LocalPlayer LP;
+	local int i;
+	local bool bFound;
+
+	UTPC = UTPlayerController(PlayerOwner);
+	if (UTPC != None && class<UTCTFGame>(WorldInfo.GRI.GameClass) != none)
+	{
+		LP = LocalPlayer(UTPC.Player);
+		if (LP != None)
+		{
+			//Is this flag already in the list?
+			bFound = false;
+			for ( i=0; i<UTPC.PotentiallyHiddenActors.Length; i++ )
+			{
+				if ( UTPC.PotentiallyHiddenActors[i] == CTFFlag )
+				{
+					bFound = true;
+					if (WorldInfo.GRI.OnSameTeam(CTFFlag, UTPC))
+					{
+						//Never have your own flag in the list
+						UTPC.PotentiallyHiddenActors.Remove(i, 1);
+					}
+					break;
+				}
+			}
+
+			//Only the opposing flag is considered
+			if (!bFound && WorldInfo.GRI.OnSameTeam(CTFFlag, UTPC) == false)
+			{
+				UTPC.PotentiallyHiddenActors[UTPC.PotentiallyHiddenActors.Length] = CTFFlag;
+			}
+		}
+	}
+}
+
+simulated function NotifyLocalPlayerTeamReceived()
+{
+	local UTPlayerController UTPC;
+	local LocalPlayer LP;
+	local UTCTFFlag CTFFlag;
+
+	//Make sure the right team flag is excluded from being visible when you hold it
+	UTPC = UTPlayerController(PlayerOwner);
+	if (UTPC != None && class<UTCTFGame>(WorldInfo.GRI.GameClass) != none)
+	{
+		LP = LocalPlayer(UTPC.Player);
+		if (LP != None)
+		{
+			//Add flags for culling consideration based on distance
+			ForEach AllActors(class'UTCTFFlag',CTFFlag)
+			{
+				UpdateCTFFlagVisibility(CTFFlag);
+			}
+		}
+	}
+
+	Super.NotifyLocalPlayerTeamReceived();
 }
 
 function Message( PlayerReplicationInfo PRI, coerce string Msg, name MsgType, optional float LifeTime )
@@ -534,7 +809,7 @@ function Message( PlayerReplicationInfo PRI, coerce string Msg, name MsgType, op
 	MsgClass = class'UTSayMsg';
 	if (MsgType == 'Say' || MsgType == 'TeamSay')
 	{
-		Msg = PRI.PlayerName$": "$Msg;
+		Msg = PRI.GetPlayerAlias()$": "$Msg;
 		if (MsgType == 'TeamSay')
 		{
 			MsgClass = class'UTTeamSayMsg';
@@ -562,6 +837,31 @@ function Vector2D ResolveHUDPosition(vector2D Position, float Width, float Heigh
 	FinalPos.Y = (Position.Y < 0) ? Canvas.ClipY - (Position.Y * ResolutionScale) - (Height * ResolutionScale) : Position.Y * ResolutionScale;
 
 	return FinalPos;
+}
+
+
+/* toggles displaying scoreboard (used by console controller)
+*/
+exec function ReleaseShowScores()
+{
+	SetShowScores(false);
+}
+
+exec function SetShowScores(bool bNewValue)
+{
+	local UTGameReplicationInfo GRI;
+
+	if (!bNewValue && WorldInfo.IsInSeamlessTravel() )
+	{
+		return;
+	}
+
+	GRI = UTGameReplicationInfo(WorldInfo.GRI);
+
+	if ( GRI != none )
+	{
+		GRI.ShowScores(bNewValue, UTPlayerOwner, ScoreboardSceneTemplate);
+	}
 }
 
 function GetScreenCoords(float PosY, out float ScreenX, out float ScreenY, out HudLocalizedMessage InMessage )
@@ -594,7 +894,7 @@ function GetScreenCoords(float PosY, out float ScreenX, out float ScreenY, out H
     ScreenX -= InMessage.DX * 0.5;
     ScreenY -= InMessage.DY * 0.5;
 
-	// make sure not behind minimap
+	// make sure not behind minimap    
    	if ( bHasMap && bShowMap && !bIsSplitScreen )
    	{
 		MapSize = MapDefaultSize * Canvas.ClipY/768;
@@ -634,12 +934,12 @@ function DrawMessageText(HudLocalizedMessage LocalMessage, float ScreenX, float 
 	Canvas.DrawColor = BlackColor;
 	Canvas.DrawColor.A = CanvasColor.A;
 	Canvas.SetPos( ScreenX+2, ScreenY+2 );
-	Canvas.DrawText( StringMessage, false, , , TextRenderInfo );
+	Canvas.DrawTextClipped( StringMessage, false );
 
 	// now draw string with normal color
 	Canvas.DrawColor = CanvasColor;
 	Canvas.SetPos( ScreenX, ScreenY );
-	Canvas.DrawText( StringMessage, false, , , TextRenderInfo );
+	Canvas.DrawTextClipped( StringMessage, false );
 }
 
 /**
@@ -652,10 +952,22 @@ event PostRender()
 	local int TeamIndex;
 	local LocalPlayer Lp;
 
-	super.PostRender();
+	//@debug: display giant "BROKEN DATA" message when the campaign bots aren't configured correctly
 
+
+	if (WorldInfo.NetMode != NM_Client && UTGame(WorldInfo.Game) != None && UTGame(WorldInfo.Game).bBadSinglePlayerBotNames)
+	{
+		Canvas.Font = class'Engine'.static.GetLargeFont();
+		Canvas.DrawColor = RedColor;
+		Canvas.SetPos(0.0, Canvas.ClipY * 0.5);
+		Canvas.DrawText("SOME CAMPAIGN BOTS WERE NOT FOUND! CHECK LOG FOR DETAILS");
+	}
+
+
+
+	bIsSplitscreen = class'Engine'.static.IsSplitScreen();
 	LP = LocalPlayer(PlayerOwner.Player);
-	bIsFirstPlayer = (LP != none) && (LP.Outer.GamePlayers[0] == LP);
+	bIsFirstPlayer = (LP != none) && (LP.ViewportClient.GamePlayers[0] == LP);
 
 	// Clear the flag
 	bHudMessageRendered = false;
@@ -669,16 +981,13 @@ event PostRender()
 	UTPawnOwner = UTPawn(PawnOwner);
 	if ( UTPawnOwner == none )
 	{
-		if ( UDKVehicleBase(PawnOwner) != none )
+		if ( UTVehicleBase(PawnOwner) != none )
 		{
-			UTPawnOwner = UTPawn( UDKVehicleBase(PawnOwner).Driver);
+			UTPawnOwner = UTPawn( UTVehicleBase(PawnOwner).Driver);
 		}
 	}
 
 	UTOwnerPRI = UTPlayerReplicationInfo(UTPlayerOwner.PlayerReplicationInfo);
-
-	// draw any debug text in real-time
-	PlayerOwner.DrawDebugTextList(Canvas,RenderDelta);
 
 	// Cache the current Team Index of this hud and the GRI
 	TeamIndex = 2;
@@ -694,8 +1003,15 @@ event PostRender()
 		TeamIndex = PlayerOwner.PlayerReplicationInfo.Team.TeamIndex;
 	}
 
+	UTGRI = UTGameReplicationInfo(WorldInfo.GRI);
+
 	HUDScaleX = Canvas.ClipX/1280;
 	HUDScaleY = Canvas.ClipX/1280;
+
+	ResolutionScaleX = Canvas.ClipX/1024;
+	ResolutionScale = Canvas.ClipY / 768;
+	if ( bIsSplitScreen )
+		ResolutionScale *= 2.0;
 
 	GetTeamColor(TeamIndex, TeamHUDColor, TeamTextColor);
 
@@ -707,25 +1023,30 @@ event PostRender()
 
 	// Handle displaying the scoreboard.  Allow the Mid Game Menu to override displaying
 	// it.
-	if ( bShowScores || (UTGRI == None) )
-	{
-		return;
-	}
+	if ( bShowScores || (UTGRI == None) || (UTGRI.CurrentMidGameMenu != none) )
+		{
+			return;
+		}
 
-	if ( bShowHud && bShowGameHud )
+	if ( UTPlayerOwner.bViewingMap )
+		{
+			return;
+		}
+
+	if ( bShowHud )
 	{
 		DrawHud();
 	}
 
-	// let iphone draw any always present overlays
-
-	if (bShowMobileHud)
-	{
-		DrawInputZoneOverlays();
-	}
-
-	RenderMobileMenu();
+	// Draw the chapter title
+	//if ( TitleDrawStartTime > 0.0f )
+	//{
+	//	UpdateChapterTitle();
+	//}
 }
+
+/** We override this here so we do not have the copyright screen show up in envyentry or when you skip past a movie **/
+function DrawEngineHUD();
 
 /**
  * This is the main drawing pump.  It will determine which hud we need to draw (Game or PostGame).  Any drawing that should occur
@@ -856,12 +1177,12 @@ function DrawGameHud()
 		if (UTOwnerPRI.bOnlySpectator || UTPlayerOwner.IsInState('Spectating'))
 		{
 			P = Pawn(UTPlayerOwner.ViewTarget);
-			if (P != None && P.PlayerReplicationInfo != None && P.PlayerReplicationInfo != UTOwnerPRI)
+			if (P != None && P.PlayerReplicationInfo != None && P.PlayerReplicationInfo != UTOwnerPRI )
 			{
 				if (  UTPlayerOwner.bBehindView )
 				{
-				DisplayHUDMessage(SpectatorMessage @ "-" @ P.PlayerReplicationInfo.PlayerName, 0.05, 0.15);
-			}
+					DisplayHUDMessage(SpectatorMessage @ "-" @ P.PlayerReplicationInfo.GetPlayerAlias(), 0.05, 0.15);
+				}
 			}
 			else
 			{
@@ -942,16 +1263,16 @@ function DrawGameHud()
 	Canvas.Font = GetFontSizeIndex(1);
 
 	// Check if any remote players are using VOIP
-	if ( (CharPRI == None) && (PlayerOwner.VoiceInterface != None) && (WorldInfo.NetMode != NM_Standalone)
+	if ( (CharPRI == None) && (PlayerOwner.VoiceInterface != None) && (WorldInfo.NetMode != NM_Standalone) 
 		&& (WorldInfo.GRI != None) )
 	{
 		len = WorldInfo.GRI.PRIArray.Length;
 		for ( i=0; i<len; i++ )
 		{
 			OtherPlayerNetId = WorldInfo.GRI.PRIArray[i].UniqueID;
-			if ( PlayerOwner.VoiceInterface.IsRemotePlayerTalking(OtherPlayerNetId)
-				&& (WorldInfo.GRI.PRIArray[i] != PlayerOwner.PlayerReplicationInfo)
-				&& (UTPlayerReplicationInfo(WorldInfo.GRI.PRIArray[i]) != None)
+			if ( PlayerOwner.VoiceInterface.IsRemotePlayerTalking(OtherPlayerNetId) 
+				&& (WorldInfo.GRI.PRIArray[i] != PlayerOwner.PlayerReplicationInfo) 
+				&& (UTPlayerReplicationInfo(WorldInfo.GRI.PRIArray[i]) != None) 
 				&& (PlayerOwner.GameplayVoiceMuteList.Find('Uid', OtherPlayerNetId.Uid) == INDEX_NONE) )
 			{
 				ShowPortrait(UTPlayerReplicationInfo(WorldInfo.GRI.PRIArray[i]));
@@ -999,6 +1320,11 @@ function DrawGameHud()
 	{
 		DrawMicIcon();
 	}
+
+	if ( bShowQuickPick )
+	{
+		DisplayQuickPickMenu();
+	}
 }
 
 function DrawMicIcon()
@@ -1039,16 +1365,9 @@ function DrawLivingHud()
 	}
 
 	// If we are driving a vehicle, give it hud time
-	if ( bShowVehicle && UDKVehicleBase(PawnOwner) != none )
+	if ( bShowVehicle && UTVehicleBase(PawnOwner) != none )
 	{
-		if ( UTVehicle(PawnOwner) != None )
-		{
-			UTVehicle(PawnOwner).DisplayHud(self, Canvas, VehiclePosition);
-		}
-		else if ( UTWeaponPawn(PawnOwner) != None )
-		{
-			UTWeaponPawn(PawnOwner).DisplayHud(self, Canvas, VehiclePosition);
-		}
+		UTVehicleBase(PawnOwner).DisplayHud(self, Canvas, VehiclePosition);
 	}
 
 	// Powerups
@@ -1088,6 +1407,11 @@ function DrawLivingHud()
 				DisplayAmmo(Weapon);
 			}
 		}
+
+		if ( UTGameReplicationInfo(WorldInfo.GRI).bHeroesAllowed )
+		{
+			DisplayHeroMeter();
+	}
 	}
 }
 
@@ -1098,8 +1422,8 @@ function DrawPostGameHud()
 {
 	local bool bWinner;
 
-	if (WorldInfo.GRI != None
-		&& PlayerOwner.PlayerReplicationInfo != None
+	if (WorldInfo.GRI != None 
+		&& PlayerOwner.PlayerReplicationInfo != None 
 		&& !PlayerOwner.PlayerReplicationInfo.bOnlySpectator
 		&& !PlayerOwner.IsInState('InQueue') )
 	{
@@ -1119,280 +1443,76 @@ function DrawPostGameHud()
 	DisplayConsoleMessages();
 }
 
-/*
-*/
-function DisplayWeaponBar()
+
+function bool CheckCrosshairOnFriendly()
 {
-	local int i, SelectedWeapon, LastWeapIndex, PrevWeapIndex, NextWeapIndex, FirstWeaponIndex;
-	local float TotalOffsetX, OffsetX, OffsetY, BoxOffsetSize, OffsetSizeX, OffsetSizeY, DesiredWeaponScale[10], Delta, MaxWidth;
+	local float Size;
+	local vector HitLocation, HitNormal, StartTrace, EndTrace;
+	local actor HitActor;
+	local UTVehicle V, HitV;
 	local UTWeapon W;
-	local UTVehicle V;
-	local LinearColor FadedAmmoBarColor;
-	local float SelectedAmmoBarX, SelectedAmmoBarY, AlphaScale, AmmoCountScale;
-	local Rotator r;
-	local Inventory Inv;
+	local int SeatIndex;
 
-	// never show weapon bar in split screen
-	if ( (PawnOwner == None) || bIsSplitScreen )
+	if ( PawnOwner == None )
 	{
-		return;
+		return false;
 	}
 
-	FirstWeaponIndex = WorldInfo.bUseConsoleInput ? 1 : 0;
-	if ( (PawnOwner.InvManager != None) && (UTWeapon(PawnOwner.InvManager.PendingWeapon) != None)
-		&& (UTWeapon(PawnOwner.InvManager.PendingWeapon).InventoryGroup >FirstWeaponIndex) )
+	V = UTVehicle(PawnOwner);
+	if ( V != None )
 	{
-		LastWeaponBarDrawnTime = WorldInfo.TimeSeconds;
-	}
-
-	if ( (PawnOwner.Weapon == None) || (PawnOwner.InvManager == None) || (UTVehicle(PawnOwner) != None) )
-	{
-		V = UTVehicle(PawnOwner);
-		if ( V != None )
+		for ( SeatIndex=0; SeatIndex<V.Seats.Length; SeatIndex++ )
 		{
-			if ( V.bHasWeaponBar )
+			if ( V.Seats[SeatIndex].SeatPawn == PawnOwner )
 			{
-				V.DisplayWeaponBar(Canvas, self);
-			}
-			else if ( PawnOwner.Weapon != LastSelectedWeapon )
-			{
-				LastSelectedWeapon = PawnOwner.Weapon;
-				PlayerOwner.ReceiveLocalizedMessage( WeaponSwitchMessage, 0, None, None, LastSelectedWeapon );
+				HitActor = V.Seats[SeatIndex].AimTarget;
+				break;
 			}
 		}
-		return;
-	}
-	if ( bOnlyShowWeaponBarIfChanging )
-	{
-		if ( WorldInfo.TimeSeconds - LastWeaponBarDrawnTime > 1.0 )
-		{
-			return;
-		}
-		AlphaScale = FClamp(1.0 - 3.0 * (WorldInfo.TimeSeconds - LastWeaponBarDrawnTime - 0.333), 0.0, 1.0);
 	}
 	else
 	{
-		AlphaScale = 1.0;
-	}
-
-	for ( i=0; i<10; i++ )
-	{
-		WeaponList[i] = None;
-	}
-	i = 0;
-	Inv = PawnOwner.InvManager.InventoryChain;
-	while (Inv != None)
-	{
-		W = UTWeapon(Inv);
-		if (W != None && W.InventoryGroup < 11 && W.InventoryGroup > 0)
+		W = UTWeapon(PawnOwner.Weapon);
+		if ( W != None && W.EnableFriendlyWarningCrosshair())
 		{
-			WeaponList[W.InventoryGroup-1] = W;
-		}
-		Inv = Inv.Inventory;
-	}
+			StartTrace = W.InstantFireStartTrace();
+			EndTrace = StartTrace + W.MaxRange() * vector(PlayerOwner.Rotation);
+			HitActor = PawnOwner.Trace(HitLocation, HitNormal, EndTrace, StartTrace, true, vect(0,0,0),, TRACEFLAG_Bullet);
 
-	SelectedWeapon = (PawnOwner.InvManager.PendingWeapon != None) ? UTWeapon(PawnOwner.InvManager.PendingWeapon).InventoryGroup-1 : UTWeapon(PawnOwner.Weapon).InventoryGroup-1;
-	Delta = WeaponScaleSpeed * (WorldInfo.TimeSeconds - LastHUDUpdateTime);
-	BoxOffsetSize = HUDScaleX * WeaponBarScale * WeaponBoxWidth;
-	PrevWeapIndex = -1;
-	NextWeapIndex = -1;
-	LastWeapIndex = -1;
-
-	if ( (PawnOwner.InvManager.PendingWeapon != None) && (PawnOwner.InvManager.PendingWeapon != LastSelectedWeapon) )
-	{
-		LastSelectedWeapon = PawnOwner.InvManager.PendingWeapon;
-
-		// clear any pickup messages for this weapon
-		for ( i=0; i<8; i++ )
-		{
-			if( LocalMessages[i].Message == None )
+			if ( Pawn(HitActor) == None )
 			{
-				break;
-			}
-			if( LocalMessages[i].OptionalObject == LastSelectedWeapon.Class )
-			{
-				LocalMessages[i].EndOfLife = WorldInfo.TimeSeconds - 1.0;
-				break;
-			}
-		}
-
-		PlayerOwner.ReceiveLocalizedMessage( WeaponSwitchMessage, 0, None, None, LastSelectedWeapon );
-	}
-
-	// calculate offsets
-	for ( i=FirstWeaponIndex; i<10; i++ )
-	{
-		if ( WeaponList[i] != None )
-		{
-			// optimization if needed - cache desiredweaponscale[] when pending weapon changes
-			if ( SelectedWeapon == i )
-			{
-				PrevWeapIndex = LastWeapIndex;
-				if ( BouncedWeapon == i )
+				if ( UTWalkerBody(HitActor) != None )
 				{
-					DesiredWeaponScale[i] = SelectedWeaponScale;
+					HitActor = UTWalkerBody(HitActor).WalkerVehicle;
 				}
 				else
 				{
-					DesiredWeaponScale[i] = BounceWeaponScale;
-					if ( CurrentWeaponScale[i] >= DesiredWeaponScale[i] )
-					{
-						BouncedWeapon = i;
-					}
+					HitActor = (HitActor == None) ? None : Pawn(HitActor.Base);
 				}
 			}
-			else
-			{
-				if ( LastWeapIndex == SelectedWeapon )
-				{
-					NextWeapIndex = i;
-				}
-				DesiredWeaponScale[i] = 1.0;
-			}
-			if ( CurrentWeaponScale[i] != DesiredWeaponScale[i] )
-			{
-				if ( DesiredWeaponScale[i] > CurrentWeaponScale[i] )
-				{
-					CurrentWeaponScale[i] = FMin(CurrentWeaponScale[i]+Delta,DesiredWeaponScale[i]);
-				}
-				else
-				{
-					CurrentWeaponScale[i] = FMax(CurrentWeaponScale[i]-Delta,DesiredWeaponScale[i]);
-				}
-			}
-			TotalOffsetX += CurrentWeaponScale[i] * BoxOffsetSize;
-			LastWeapIndex = i;
-		}
-		else 
-		{
-			CurrentWeaponScale[i] = 0;
 		}
 	}
 
-	OffsetX = HUDScaleX * WeaponBarXOffset + 0.5 * (Canvas.ClipX - TotalOffsetX);
-	OffsetY = Canvas.ClipY - HUDScaleY * WeaponBarY;
-
-	// draw weapon boxes
-	Canvas.SetDrawColor(255,255,255,255);
-	OffsetSizeX = HUDScaleX * WeaponBarScale * 96 * SelectedBoxScale;
-	OffsetSizeY = HUDScaleY * WeaponBarScale * 64 * SelectedBoxScale;
-	FadedAmmoBarColor = AmmoBarColor;
-	FadedAmmoBarColor.A *= AlphaScale;
-	for ( i=FirstWeaponIndex; i<10; i++ )
+	if ( (Pawn(HitActor) == None) || !Worldinfo.GRI.OnSameTeam(HitActor, PawnOwner) )
 	{
-		if ( WeaponList[i] != None )
-		{
-			Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-			if ( SelectedWeapon == i )
-			{
-				//Current slot overlay
-				TeamHUDColor.A = SelectedWeaponAlpha * AlphaScale;
-				Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 530, 248, 69, 49, TeamHUDColor);
-
-				Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-				Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 459, 148, 69, 49, TeamHUDColor);
-
-				Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-				Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 459, 248, 69, 49, TeamHUDColor);
-
-				// draw ammo bar ticks for selected weapon
-				SelectedAmmoBarX = HUDScaleX * (SelectedWeaponAmmoOffsetX - WeaponBarXOffset) + OffsetX;
-				SelectedAmmoBarY = Canvas.ClipY - HUDScaleY * (WeaponBarY + CurrentWeaponScale[i]*WeaponAmmoOffsetY);
-				Canvas.SetPos(SelectedAmmoBarX, SelectedAmmoBarY);
-				MaxWidth = CurrentWeaponScale[i]*HUDScaleY * WeaponBarScale * WeaponAmmoLength;
-
-				Canvas.DrawTileStretched(AltHudTexture, MaxWidth, CurrentWeaponScale[i]*HUDScaleY*WeaponBarScale*WeaponAmmoThickness, 407, 479, FMin(118, MaxWidth), 16, FadedAmmoBarColor);
-			}
-			else
-			{
-				TeamHUDColor.A = OffWeaponAlpha * AlphaScale;
-				Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 459, 148, 69, 49, TeamHUDColor);
-
-				// draw slot overlay?
-				if ( i == PrevWeapIndex )
-				{
-					Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-					Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 530, 97, 69, 49, TeamHUDColor);
-				}
-				else if ( i == NextWeapIndex )
-				{
-					Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-					Canvas.DrawTile(AltHudTexture, CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY, 530, 148, 69, 49, TeamHUDColor);
-				}
-			}
-			OffsetX += CurrentWeaponScale[i] * BoxOffsetSize;
-		}
+		return false;
 	}
 
-	// draw weapon ammo bars
-	// Ammo Bar:  273,494 12,13 (The ammo bar is meant to be stretched)
-	Canvas.SetDrawColor(255,255,255,255);
-	OffsetX = HUDScaleX * WeaponAmmoOffsetX + 0.5 * (Canvas.ClipX - TotalOffsetX);
-	OffsetSizeY = HUDScaleY * WeaponBarScale * WeaponAmmoThickness;
-	FadedAmmoBarColor = AmmoBarColor;
-	FadedAmmoBarColor.A *= AlphaScale;
-	for ( i=FirstWeaponIndex; i<10; i++ )
+	// if trace hits friendly, draw "no shoot" symbol
+	Size = 28 * (Canvas.ClipY / 768);
+	Canvas.SetPos( (Canvas.ClipX * 0.5) - (Size *0.5), (Canvas.ClipY * 0.5) - (Size * 0.5) );
+	HitV = UTVehicle(HitActor);
+	if ( (HitV != None) && (HitV.Health < HitV.default.Health) && ((V != None) ? (UTStealthVehicle(V) != None) : (UTWeap_Linkgun(W) != None)) )
 	{
-		if ( (WeaponList[i] != None) && (WeaponList[i].AmmoCount > 0) )
-		{
-			if ( SelectedWeapon == i )
-			{
-				Canvas.SetPos(SelectedAmmoBarX - 0.2*HUDScaleY * WeaponBarScale * WeaponAmmoLength*CurrentWeaponScale[i], SelectedAmmoBarY);
-			}
-			else
-			{
-				Canvas.SetPos(OffsetX, Canvas.ClipY - HUDScaleY * (WeaponBarY + CurrentWeaponScale[i]*WeaponAmmoOffsetY));
-			}
-			AmmoCountScale = 0.3 + FMin(1.0,float(WeaponList[i].AmmoCount)/float(WeaponList[i].MaxAmmoCount));
-			Canvas.DrawTileStretched(AltHudTexture, HUDScaleY * WeaponBarScale * WeaponAmmoLength*CurrentWeaponScale[i]*AmmoCountScale, CurrentWeaponScale[i]*OffsetSizeY, 273, 494,12,13, FadedAmmoBarColor);
-		}
-		OffsetX += CurrentWeaponScale[i] * BoxOffsetSize;
+		Canvas.SetDrawColor(255,255,128,255);
+		Canvas.DrawTile(AltHudTexture, Size, Size, 600, 262, 28, 27);
 	}
-
-	// draw weapon numbers
-	if ( !bNoWeaponNumbers )
-	{
-		OffsetX = HUDScaleX * (WeaponAmmoOffsetX + WeaponXOffset) * 0.5 + 0.5 * (Canvas.ClipX - TotalOffsetX);
-		OffsetY = Canvas.ClipY - HUDScaleY * (WeaponBarY + WeaponYOffset);
-		Canvas.SetDrawColor(255,255,255,255);
-		Canvas.DrawColor.A = 255.0 * AlphaScale;
-		Canvas.Font = HudFonts[0];
-		for ( i=0; i<10; i++ )
-		{
-			if ( WeaponList[i] != None )
-			{
-				Canvas.SetPos(OffsetX, OffsetY - OffsetSizeY*CurrentWeaponScale[i]);
-				Canvas.DrawText(string((I+1)%10));
-				OffsetX += CurrentWeaponScale[i] * BoxOffsetSize;
-			}
-		}
-	}
-
-	// draw weapon icons
-	OffsetX = HUDScaleX * WeaponXOffset + 0.5 * (Canvas.ClipX - TotalOffsetX);
-	OffsetY = Canvas.ClipY - HUDScaleY * (WeaponBarY + WeaponYOffset);
-	OffsetSizeX = HUDScaleX * WeaponBarScale * 100;
-	OffsetSizeY = HUDScaleY * WeaponBarScale * WeaponYScale;
-	Canvas.SetDrawColor(255,255,255,255);
-	Canvas.DrawColor.A = 255.0 * AlphaScale;
-
-	r.Yaw=2048;
-
-	for ( i=FirstWeaponIndex; i<10; i++ )
-	{
-		if ( WeaponList[i] != NONE )
-		{
-			OffsetSizeX = HUDScaleX * WeaponBarScale * 100;
-			OffsetSizeY = OffsetSizeX * (WeaponList[i].IconCoordinates.VL / WeaponList[i].IconCoordinates.UL);
-
-			Canvas.SetPos(OffsetX, OffsetY - 1.1f * OffsetSizeY * CurrentWeaponScale[i]);
-			Canvas.DrawRotatedTile(IconHudTexture, r,
-					CurrentWeaponScale[i]*OffsetSizeX, CurrentWeaponScale[i]*OffsetSizeY,
-					WeaponList[i].IconCoordinates.U, WeaponList[i].IconCoordinates.V, WeaponList[i].IconCoordinates.UL, WeaponList[i].IconCoordinates.VL,1.0,1.0);
-			OffsetX += CurrentWeaponScale[i] * BoxOffsetSize;
-		}
-	}
+	return true;
 }
+
+/*
+*/
+native function DisplayWeaponBar();
 
 /**
  * Draw the Map
@@ -1430,14 +1550,14 @@ function DisplayMap()
 		{
 			Canvas.DrawColor = BlackColor;
 			Canvas.SetPos( ScreenX+2, ScreenY+2 );
-			Canvas.DrawText( DisplayedOrders, false, OrdersScale, OrdersScale, TextRenderInfo );
+			Canvas.DrawTextClipped( DisplayedOrders, false, OrdersScale, OrdersScale );
 		}
 
 		// now draw string with normal color
 		Canvas.DrawColor = LightGoldColor;
 		Canvas.DrawColor.A = 255 * ScaleAlpha;
 		Canvas.SetPos( ScreenX, ScreenY );
-		Canvas.DrawText( DisplayedOrders, false, OrdersScale, OrdersScale, TextRenderInfo );
+		Canvas.DrawTextClipped( DisplayedOrders, false, OrdersScale, OrdersScale );
 		Canvas.DrawColor = CanvasColor;
 	}
 
@@ -1489,7 +1609,7 @@ function DrawAIOverlays()
 				Canvas.SetPos(Pos.X, Pos.Y);
 				if (B.PlayerReplicationInfo != None && B.PlayerReplicationInfo.Team != None)
 				{
-					Canvas.DrawColor = UTTeaminfo(B.PlayerReplicationInfo.Team).GetHUDColor();
+					Canvas.DrawColor = B.PlayerReplicationInfo.Team.GetHUDColor();
 					// brighten the color a bit
 					Canvas.DrawColor.R = Min(Canvas.DrawColor.R + 64, 255);
 					Canvas.DrawColor.G = Min(Canvas.DrawColor.G + 64, 255);
@@ -1499,12 +1619,17 @@ function DrawAIOverlays()
 				{
 					Canvas.DrawColor = ConsoleColor;
 				}
-				Canvas.DrawColor.A = (WorldInfo.TimeSeconds - B.Pawn.LastRenderTime < 0.1) ? 255 : 128;
+				Canvas.DrawColor.A = LocalPlayer(PlayerOwner.Player).GetActorVisibility(B.Pawn) ? 255 : 128;
 				Canvas.DrawText(Text);
 			}
 		}
 	}
 }
+
+/* DrawActorOverlays()
+draw overlays for actors that were rendered this tick
+*/
+native function DrawActorOverlays(vector Viewpoint, rotator ViewRotation);
 
 
 /************************************************************************************************************
@@ -1522,10 +1647,39 @@ function UIInteraction GetUIController(optional out LocalPlayer LP)
 	return none;
 }
 
+/**
+ * OpenScene - Opens a UIScene
+ *
+ * @Param Template	The scene template to open
+ */
+function UTUIScene OpenScene(UTUIScene Template)
+{
+	return UTUIScene(UTPlayerOwner.OpenUIScene(Template));
+}
+
 
 /************************************************************************************************************
  Misc / Utility functions
 ************************************************************************************************************/
+
+exec function ToggleHUD()
+{
+	bShowHUD = !bShowHUD;
+}
+
+
+function SpawnScoreBoard(class<Scoreboard> ScoringType)
+{
+	if (UTPlayerOwner.Announcer == None)
+	{
+		UTPlayerOwner.Announcer = Spawn(class'UTAnnouncer', UTPlayerOwner);
+	}
+
+	if (UTPlayerOwner.MusicManager == None)
+	{
+		UTPlayerOwner.MusicManager = Spawn(MusicManagerClass, UTPlayerOwner);
+	}
+}
 
 exec function StartMusic()
 {
@@ -1591,9 +1745,8 @@ function DisplayHit(vector HitDir, int Damage, class<DamageType> damageType)
 	{
 		DamageIntensity = FMax(0.2, 0.02*float(Damage));
 	}
-	UTDamage = class<UTDamageType>(DamageType);
 
-	if ( UTDamage != None && UTDamage.default.bLocationalHit )
+	if ( damageType.default.bLocationalHit )
 	{
 		// Figure out the directional based on the victims current view
 		PlayerOwner.GetPlayerViewPoint(Loc, Rot);
@@ -1652,6 +1805,7 @@ function DisplayHit(vector HitDir, int Damage, class<DamageType> damageType)
 			HitEffectFadeTime = default.HitEffectFadeTime * DamageIntensity;
 		}
 		HitEffectIntensity = default.HitEffectIntensity * DamageIntensity;
+		UTDamage = class<UTDamageType>(DamageType);
 		MaxHitEffectColor = (UTDamage != None && UTDamage.default.bOverrideHitEffectColor) ? UTDamage.default.HitEffectColor : default.MaxHitEffectColor;
 		HitEffectMaterialInstance.SetScalarParameterValue('HitAmount', HitEffectIntensity);
 		HitEffectMaterialInstance.SetVectorParameterValue('HitColor', MaxHitEffectColor);
@@ -1737,8 +1891,7 @@ function UpdateDamage()
 			HitEffectMaterialInstance.SetScalarParameterValue('HitAmount', HitAmount);
 			// now scale the color
 			HitEffectMaterialInstance.GetVectorParameterValue('HitColor', HitColor);
-			HitColor = HitColor - MaxHitEffectColor * (RenderDelta / HitEffectFadeTime);
-			HitEffectMaterialInstance.SetVectorParameterValue('HitColor', HitColor);
+			HitEffectMaterialInstance.SetVectorParameterValue('HitColor', HitColor - MaxHitEffectColor * (RenderDelta / HitEffectFadeTime));
 		}
 	}
 }
@@ -1747,19 +1900,72 @@ function DisplayDamage()
 {
 	local int i;
 
-		// Update the fading on the directional indicators.
-		for (i=0; i<MaxNoOfIndicators; i++)
+	// Update the fading on the directional indicators.
+	for (i=0; i<MaxNoOfIndicators; i++)
+	{
+		if (DamageData[i].FadeTime > 0)
 		{
-			if (DamageData[i].FadeTime > 0)
-			{
 
-				Canvas.SetPos( ((Canvas.ClipX * 0.5) - (DamageIndicatorSize * 0.5 * ResolutionScale)),
-					((Canvas.ClipY * 0.5) - (DamageIndicatorSize * 0.5 * ResolutionScale)));
+			Canvas.SetPos( ((Canvas.ClipX * 0.5) - (DamageIndicatorSize * 0.5 * ResolutionScale)),
+						 	((Canvas.ClipY * 0.5) - (DamageIndicatorSize * 0.5 * ResolutionScale)));
 
-				Canvas.DrawMaterialTile( DamageData[i].MatConstant, DamageIndicatorSize * ResolutionScale, DamageIndicatorSize * ResolutionScale, 0.0, 0.0, 1.0, 1.0);
-			}
+			Canvas.DrawMaterialTile( DamageData[i].MatConstant, DamageIndicatorSize * ResolutionScale, DamageIndicatorSize * ResolutionScale, 0.0, 0.0, 1.0, 1.0);
 		}
 	}
+}
+
+/************************************************************************************************************
+ Actor Render - These functions allow for actors in the world to gain access to the hud and render
+ information on it.
+************************************************************************************************************/
+
+
+/** RemovePostRenderedActor()
+remove an actor from the PostRenderedActors array
+*/
+function RemovePostRenderedActor(Actor A)
+{
+	local int i;
+
+	for ( i=0; i<PostRenderedActors.Length; i++ )
+	{
+		if ( PostRenderedActors[i] == A )
+		{
+			PostRenderedActors[i] = None;
+			return;
+		}
+	}
+}
+
+/** AddPostRenderedActor()
+add an actor to the PostRenderedActors array
+*/
+function AddPostRenderedActor(Actor A)
+{
+	local int i;
+
+	// make sure that A is not already in list
+	for ( i=0; i<PostRenderedActors.Length; i++ )
+	{
+		if ( PostRenderedActors[i] == A )
+		{
+			return;
+		}
+	}
+
+	// add A at first empty slot
+	for ( i=0; i<PostRenderedActors.Length; i++ )
+	{
+		if ( PostRenderedActors[i] == None )
+		{
+			PostRenderedActors[i] = A;
+			return;
+		}
+	}
+
+	// no empty slot found, so grow array
+	PostRenderedActors[PostRenderedActors.Length] = A;
+}
 
 /************************************************************************************************************
 ************************************************************************************************************/
@@ -1771,16 +1977,16 @@ static simulated function DrawBackground(float X, float Y, float Width, float He
 	DrawColor.R *= 0.25;
 	DrawColor.G *= 0.25;
 	DrawColor.B *= 0.25;
-	DrawCanvas.DrawTile(Default.AltHudTexture, Width, Height, 631,202,98,48, DrawColor);
+	DrawCanvas.DrawColorizedTile(Default.AltHudTexture, Width, Height, 631,202,98,48, DrawColor);
 }
 
 static simulated function DrawBeaconBackground(float X, float Y, float Width, float Height, LinearColor DrawColor, Canvas DrawCanvas)
-	{
+{
 	DrawCanvas.SetPos(X,Y);
-		DrawColor.R *= 0.25;
-		DrawColor.G *= 0.25;
-		DrawColor.B *= 0.25;
-	DrawCanvas.DrawTile(Default.UT3GHudTexture, Width, Height, 137,91,101,34, DrawColor);
+	DrawColor.R *= 0.25;
+	DrawColor.G *= 0.25;
+	DrawColor.B *= 0.25;
+	DrawCanvas.DrawColorizedTile(Default.UT3GHudTexture, Width, Height, 137,91,101,34, DrawColor);
 }
 
 /**
@@ -1826,6 +2032,15 @@ static simulated function DrawBarGraph(float X, float Y, float Width, float MaxW
 	DrawCanvas.DrawColor = BarColor;
 	DrawCanvas.SetPos(X, Y);
 	DrawCanvas.DrawTile(default.AltHudTexture,Width,Height,277,494,4,13);
+}
+
+simulated event Timer()
+{
+	Super.Timer();
+	if ( WorldInfo.GRI != None )
+	{
+		WorldInfo.GRI.SortPRIArray();
+	}
 }
 
 /**
@@ -1946,7 +2161,7 @@ simulated function DisplayPortrait(float DeltaTime)
 	{
 		XPos = Canvas.ClipX * CharPortraitXPerc;
 	}
-	else if ( (PlayerOwner.VoiceInterface != None) && PlayerOwner.VoiceInterface.IsRemotePlayerTalking(CharPRI.UniqueID) )
+	else if ( PlayerOwner.VoiceInterface.IsRemotePlayerTalking(CharPRI.UniqueID) )
 	{
 		XPos = Canvas.ClipX * CharPortraitXPerc;
 		CharPortraitTime = (1.0 - CharPortraitSlideTransitionTime) * CharPortraitSlideTime;
@@ -1974,7 +2189,15 @@ simulated function DisplayPortrait(float DeltaTime)
 	Canvas.DrawMaterialTile(CharPortraitMI,W,H,0.0,0.0,1.0,1.0);
 	Canvas.SetPos(XPos,YPos + H + 5);
 	Canvas.Font = HudFonts[0];
-	Canvas.DrawText(CharPRI.PlayerName);
+	Canvas.DrawText(CharPRI.GetPlayerAlias());
+}
+
+/**
+ * Displays the MOTD Scene
+ */
+function DisplayMOTD()
+{
+	OpenScene(MOTDSceneTemplate);
 }
 
 /**
@@ -1990,30 +2213,27 @@ function DisplayHUDMessage(string Message, optional float XOffsetPct = 0.05, opt
 		// Preset the Canvas
 		Canvas.SetDrawColor(255,255,255,255);
 		Canvas.Font = GetFontSizeIndex(2);
-		if (Canvas.Font != none)
-		{
-			Canvas.StrLen(Message,XL,YL);
+		Canvas.StrLen(Message,XL,YL);
 
-			// Figure out sizes/positions
-			BarHeight = YL * 1.1;
-			YBuffer = Canvas.ClipY * YOffsetPct;
-			XBuffer = Canvas.ClipX * XOffsetPct;
-			Height = YL * 2.0;
+		// Figure out sizes/positions
+		BarHeight = YL * 1.1;
+		YBuffer = Canvas.ClipY * YOffsetPct;
+		XBuffer = Canvas.ClipX * XOffsetPct;
+		Height = YL * 2.0;
 
-			YCenter = Canvas.ClipY - YBuffer - (Height * 0.5);
+		YCenter = Canvas.ClipY - YBuffer - (Height * 0.5);
 
-			// Draw the Bar
-			Canvas.SetPos(0,YCenter - (BarHeight * 0.5) );
-			Canvas.DrawTile(AltHudTexture, Canvas.ClipX, BarHeight, 382, 441, 127, 16);
+		// Draw the Bar
+		Canvas.SetPos(0,YCenter - (BarHeight * 0.5) );
+		Canvas.DrawTile(AltHudTexture, Canvas.ClipX, BarHeight, 382, 441, 127, 16);
 
-			// Draw the Symbol
-			Canvas.SetPos(XBuffer, YCenter - (Height * 0.5));
-			Canvas.DrawTile(AltHudTexture, Height * 1.33333, Height, 734,190, 82, 70);
+		// Draw the Symbol
+		Canvas.SetPos(XBuffer, YCenter - (Height * 0.5));
+		Canvas.DrawTile(AltHudTexture, Height * 1.33333, Height, 734,190, 82, 70);
 
-			// Draw the Text
-			Canvas.SetPos(XBuffer + Height * 1.5, YCenter - (YL * 0.5));
-			Canvas.DrawText(Message);
-		}
+		// Draw the Text
+		Canvas.SetPos(XBuffer + Height * 1.5, YCenter - (YL * 0.5));
+		Canvas.DrawText(Message);
 
 		bHudMessageRendered = true;
 	}
@@ -2030,7 +2250,7 @@ function DisplayClock()
 		Time = FormatTime(UTGRI.TimeLimit != 0 ? UTGRI.RemainingTime : UTGRI.ElapsedTime);
 
 		Canvas.SetPos(POS.X, POS.Y);
-		Canvas.DrawTile(AltHudTexture, 183 * ResolutionScale,44 * ResolutionScale,490,395,181,44,TeamHudColor);
+		Canvas.DrawColorizedTile(AltHudTexture, 183 * ResolutionScale,44 * ResolutionScale,490,395,181,44,TeamHudColor);
 
 		Canvas.DrawColor = WhiteColor;
 		DrawGlowText(Time, POS.X + (28 * ResolutionScale), POS.Y, 39 * ResolutionScale);
@@ -2050,7 +2270,7 @@ function DisplayPawnDoll()
 	Canvas.DrawColor = WhiteColor;
 
 	// should doll be visible?
-	ArmorAmount = UTPawnOwner.GetShieldStrength();
+	ArmorAmount = UTPawnOwner.ShieldBeltArmor + UTPawnOwner.VestArmor + UTPawnOwner.HelmetArmor + UTPawnOwner.ThighpadArmor;
 
 	if ( (ArmorAmount > 0) || (UTPawnOwner.JumpbootCharge > 0) )
 	{
@@ -2073,7 +2293,7 @@ function DisplayPawnDoll()
 	{
 		// The Background
 		Canvas.SetPos(POS.X,POS.Y);
-		Canvas.DrawTile(AltHudTexture, PawnDollBGCoords.UL * ResolutionScale, PawnDollBGCoords.VL * ResolutionScale, PawnDollBGCoords.U, PawnDollBGCoords.V, PawnDollBGCoords.UL, PawnDollBGCoords.VL, ScaledTeamHUDColor);
+		Canvas.DrawColorizedTile(AltHudTexture, PawnDollBGCoords.UL * ResolutionScale, PawnDollBGCoords.VL * ResolutionScale, PawnDollBGCoords.U, PawnDollBGCoords.V, PawnDollBGCoords.UL, PawnDollBGCoords.VL, ScaledTeamHUDColor);
 
 		// The ShieldBelt/Default Doll
 		Canvas.SetPos(POS.X + (DollOffsetX * ResolutionScale), POS.Y + (DollOffsetY * ResolutionScale));
@@ -2098,6 +2318,12 @@ function DisplayPawnDoll()
 			DrawTileCentered(AltHudTexture, ThighWidth * ResolutionScale, ThighHeight * ResolutionScale, 134, 263, 42, 28, ScaledWhite);
 		}
 
+		if (UTPawnOwner.HelmetArmor > 0.0f )
+		{
+			Canvas.SetPos(POS.X + (HelmetX * ResolutionScale), POS.Y + (HelmetY * ResolutionScale));
+			DrawTileCentered(AltHudTexture, HelmetHeight * ResolutionScale, HelmetWidth * ResolutionScale, 193, 265, 22, 25, ScaledWhite);
+		}
+
 		if (UTPawnOwner.JumpBootCharge > 0 )
 		{
 			Canvas.SetPos(POS.X + BootX*ResolutionScale, POS.Y + BootY*ResolutionScale);
@@ -2105,7 +2331,7 @@ function DisplayPawnDoll()
 
 			Canvas.Strlen(string(UTPawnOwner.JumpBootCharge),XL,YL);
 			Canvas.SetPos(POS.X + (BootX-1)*ResolutionScale - 0.5*XL, POS.Y + (BootY+3)*ResolutionScale - 0.5*YL);
-			Canvas.DrawText(  UTPawnOwner.JumpBootCharge, false, , , TextRenderInfo );
+			Canvas.DrawTextClipped( UTPawnOwner.JumpBootCharge, false, 1.0, 1.0 );
 		}
 	}
 
@@ -2114,7 +2340,7 @@ function DisplayPawnDoll()
    	// Draw the Health Background
 	Canvas.SetPos(POS.X + HealthBGOffsetX * ResolutionScale,POS.Y + HealthBGOffsetY * ResolutionScale);
 	
-	Canvas.DrawTile(AltHudTexture, HealthBGCoords.UL * ResolutionScale, HealthBGCoords.VL * ResolutionScale, HealthBGCoords.U, HealthBGCoords.V, HealthBGCoords.UL, HealthBGCoords.VL, TeamHudColor);
+	Canvas.DrawColorizedTile(AltHudTexture, HealthBGCoords.UL * ResolutionScale, HealthBGCoords.VL * ResolutionScale, HealthBGCoords.U, HealthBGCoords.V, HealthBGCoords.UL, HealthBGCoords.VL, TeamHudColor);
 	Canvas.DrawColor = WhiteColor;
 
 	// Draw the Health Text
@@ -2146,7 +2372,7 @@ function DisplayPawnDoll()
 
     	// Draw the Armor Background
 		Canvas.SetPos(POS.X + ArmorBGOffsetX * ResolutionScale,POS.Y + ArmorBGOffsetY * ResolutionScale);
-		Canvas.DrawTile(AltHudTexture, ArmorBGCoords.UL * ResolutionScale, ArmorBGCoords.VL * ResolutionScale, ArmorBGCoords.U, ArmorBGCoords.V, ArmorBGCoords.UL, ArmorBGCoords.VL, ScaledTeamHudColor);
+		Canvas.DrawColorizedTile(AltHudTexture, ArmorBGCoords.UL * ResolutionScale, ArmorBGCoords.VL * ResolutionScale, ArmorBGCoords.U, ArmorBGCoords.V, ArmorBGCoords.UL, ArmorBGCoords.VL, ScaledTeamHudColor);
 		Canvas.DrawColor = WhiteColor;
 		Canvas.DrawColor.A = 255.0 * DollVisibility;
 
@@ -2159,11 +2385,170 @@ function DisplayPawnDoll()
 	}
 }
 
+function ResetHeroTooltipTimeStamp()
+{
+	HeroTooltipTimeStamp = WorldInfo.TimeSeconds + 0.2;
+}
+
+function DisplayHeroMeter()
+{
+	local vector2d POS;
+	local float HeroMeter, PartialHero;
+	local LinearColor HealthColor;
+	local UTPlayerReplicationInfo OwnerPRI;
+	local UTVehicle OwnerVehicle;
+	local bool bHeroCountdown;
+	local vector2d HeroMeterPos;
+	local float myV, myVL;
+	local float ResScale, Alpha, ToolTipLerpX, ToolTipLerpY;
+	local float XL,YL,HeroBumpTextPosX, HeroBumpTextPosY;
+	local float TempSin;
+	local string HeroBumpText;
+
+	OwnerPRI = (PawnOwner == None) 
+		? UTPlayerReplicationinfo(PlayerOwner.PlayerReplicationInfo) 
+		: UTPlayerReplicationinfo(PawnOwner.PlayerReplicationInfo);
+	if ( OwnerPRI == None )
+	{
+		//Early out with no PRI
+		return;
+	}
+
+	POS = ResolveHudPosition(AmmoPosition,HeroMeterWidth,HeroMeterHeight);
+
+	// We should adjust hero meter position if we are driving a vehicle or
+	// if we are in a vehicle turret
+	if ( UTWeaponPawn(PawnOwner) != None )
+	{
+		OwnerVehicle = UTWeaponPawn(PawnOwner).MyVehicle;
+	}
+	else if ( UTVehicle(PawnOwner) != None )
+	{
+		OwnerVehicle = UTVehicle(PawnOwner);
+	}
+
+	//Calculate the upper right of the hero meter
+	if ( OwnerVehicle != None )
+	{
+		HeroMeterPos.X = Canvas.ClipX - (Abs(OwnerVehicle.HudCoords.UL) + HeroMeterTexCoords.UL) * ResolutionScale;
+		HeroMeterPos.Y = POS.Y - HeroMeterVehicleOffsetY * ResolutionScale;
+	}
+	else
+	{
+		HeroMeterPos.X = POS.X - HeroMeterOffsetX * ResolutionScale;
+		HeroMeterPos.Y = POS.Y - HeroMeterOffsetY * ResolutionScale;
+	}
+
+	bHeroCountdown = (UTPawnOwner != None) && UTPawnOwner.IsHero() && (UTPawnOwner.HeroStartTime > 0);
+
+	// draw hero meter
+	HealthColor = TeamHudColor;
+	if ( bHeroCountdown )
+	{
+		HealthColor.A *= 0.35;
+	}
+	HeroMeter = OwnerPRI.GetHeroMeter();
+		
+	Canvas.SetPos(HeroMeterPos.X, HeroMeterPos.Y);
+	Canvas.DrawColorizedTile(UT3GHudTexture, HeroMeterWidth * ResolutionScale, HeroMeterHeight * ResolutionScale, HeroMeterTexCoords.U, HeroMeterTexCoords.V, HeroMeterTexCoords.UL, HeroMeterTexCoords.VL, HealthColor);
+
+	if ( OwnerPRI.HeroThreshold < OwnerPRI.GetHeroMeter() )
+	{
+		TempSin = 0.25 * sin(10 * WorldInfo.TimeSeconds);
+		HealthColor.A = FMin(1.0, HealthColor.A + TempSin);
+
+		// also possibly show help
+		if ( OwnerPRI.CanBeHero() && (UTPawn(PawnOwner) != None) && !UTPawn(PawnOwner).bFeigningDeath )
+		{
+			Alpha = FClamp(WorldInfo.TimeSeconds - HeroTooltipTimeStamp, 0, 0.4) / 0.4;
+			ToolTipLerpX = Lerp(Canvas.ClipX * 0.5, Canvas.ClipX * 0.85, Alpha);
+			ToolTipLerpY = Lerp(Canvas.ClipY * 0.5, Canvas.ClipY * 0.88, Alpha);
+			ResScale = Lerp(Canvas.ClipY/720 * 2, Canvas.ClipY/720*(0.6 + TempSin), Alpha);
+
+			DrawToolTip(Canvas, PlayerOwner, "GBA_TriggerHero", ToolTipLerpX, ToolTipLerpY, HeroToolTipIconCoords.U, HeroToolTipIconCoords.V, HeroToolTipIconCoords.UL, HeroToolTipIconCoords.VL, ResScale, UT3GHudTexture, FMax(0.6, Alpha));
+		
+			if (WorldInfo.TimeSeconds - HeroTooltipTimeStamp > 60)
+			{
+				//Reset hero meter tooltip (adding amount of time to stay centered before moving)
+				HeroTooltipTimeStamp = WorldInfo.TimeSeconds + 0.2;
+			}
+		}
+	}
+	else
+	{
+		//Reset hero meter tooltip (adding amount of time to stay centered before moving)
+		HeroTooltipTimeStamp = WorldInfo.TimeSeconds + 0.2;
+	}
+
+	if ( bHeroCountdown )
+	{
+		Canvas.Font = GetFontSizeIndex(3);
+		Canvas.DrawColor = BlackColor;
+		Canvas.SetPos(HeroMeterPos.X + HeroPointOffX * ResolutionScale, HeroMeterPos.Y + HeroPointOffY*ResolutionScale);
+		Canvas.DrawText(""$int(45 - WorldInfo.TimeSeconds + UTPawnOwner.HeroStartTime));
+
+		Canvas.DrawColor = WhiteColor;
+		Canvas.SetPos(HeroMeterPos.X + (HeroPointOffX+2) * ResolutionScale, HeroMeterPos.Y + (HeroPointOffY+2)*ResolutionScale);
+		Canvas.DrawText(""$int(45 - WorldInfo.TimeSeconds + UTPawnOwner.HeroStartTime));
+	}
+	else
+	{
+		//Fudge the partial hero so that the meter fills up slower
+		PartialHero = FMin(0.9, (HeroMeter/OwnerPRI.HeroThreshold) * 0.85);
+		Canvas.SetPos(HeroMeterPos.X, HeroMeterPos.Y + (HeroMeterHeight * (1.0 - PartialHero) * ResolutionScale));
+
+		//Calculate the V offsets for the fill meter
+		myV = HeroMeterOverlayTexCoords.V + HeroMeterOverlayTexCoords.VL * (1.0 - PartialHero);
+		myVL= HeroMeterOverlayTexCoords.VL * PartialHero;
+
+		Canvas.DrawColorizedTile(UT3GHudTexture, HeroMeterWidth * ResolutionScale, HeroMeterHeight * PartialHero * ResolutionScale, HeroMeterOverlayTexCoords.U, myV, HeroMeterOverlayTexCoords.UL, myVL, HealthColor);
+
+		// display recent hero score bump
+		if ( HeroMeter > OldHeroScore )
+		{
+			LastHeroScoreBumpTime = WorldInfo.TimeSeconds;
+			LastHeroBump = HeroMeter - OldHeroScore;
+		}
+		OldHeroScore = HeroMeter;
+		if ( (WorldInfo.TimeSeconds - LastHeroScoreBumpTime < 2.0)
+			&& (LastHeroBump > 0) )
+		{
+			HeroBumpText = "+"$LastHeroBump;
+							
+			Canvas.Font = GetFontSizeIndex(3);
+			Canvas.StrLen(HeroBumpText, XL, YL);
+
+			//Make sure the text fits within the bounds
+			ResScale = 1;
+			if (LastHeroBump > 9)
+			{
+				ResScale = ((HeroMeterWidth - 6) / XL) * ResolutionScale;
+				XL = (HeroMeterWidth - 6);
+			}
+
+			//Center the text
+			HeroBumpTextPosX = HeroMeterPos.X + (HeroMeterWidth - XL) * 0.5 * ResolutionScale;
+			HeroBumpTextPosY = HeroMeterPos.Y + (HeroMeterHeight * 0.5 * ResolutionScale) - (YL * 0.5 * ResScale);
+			
+			//Draw a drop shadow
+			Canvas.DrawColor = BlackColor;
+			Canvas.SetPos(HeroBumpTextPosX - 2 * ResolutionScale, HeroBumpTextPosY - 2 * ResolutionScale);
+			Canvas.DrawText(HeroBumpText, ,ResScale, ResScale);
+
+			//Draw the main text
+			Canvas.DrawColor = WhiteColor;
+			Canvas.SetPos(HeroBumpTextPosX, HeroBumpTextPosY);
+			Canvas.DrawText(HeroBumpText, ,ResScale, ResScale);
+		}
+	}
+}
+
 function DisplayAmmo(UTWeapon Weapon)
 {
 	local vector2d POS;
 	local string Amount;
-	local float BarWidth, PercValue;
+	local float BarWidth;
+	local float PercValue;
 	local int AmmoCount;
 
 	if ( Weapon.AmmoDisplayType == EAWDS_None )
@@ -2189,7 +2574,7 @@ function DisplayAmmo(UTWeapon Weapon)
 
 		// Draw the background
 		Canvas.SetPos(POS.X,POS.Y - (AmmoBarOffsetY * ResolutionScale));
-		Canvas.DrawTile(AltHudTexture, AmmoBGCoords.UL * ResolutionScale, AmmoBGCoords.VL * ResolutionScale, AmmoBGCoords.U, AmmoBGCoords.V, AmmoBGCoords.UL, AmmoBGCoords.VL, TeamHudColor);
+		Canvas.DrawColorizedTile(AltHudTexture, AmmoBGCoords.UL * ResolutionScale, AmmoBGCoords.VL * ResolutionScale, AmmoBGCoords.U, AmmoBGCoords.V, AmmoBGCoords.UL, AmmoBGCoords.VL, TeamHudColor);
 
 		// Draw the amount
 		Amount = ""$AmmoCount;
@@ -2204,7 +2589,7 @@ function DisplayAmmo(UTWeapon Weapon)
 		PercValue = Weapon.GetPowerPerc();
 
 		Canvas.SetPos(POS.X + (40 * ResolutionScale), POS.Y - 8 * ResolutionScale);
-		Canvas.DrawTile(AltHudTexture, 76 * ResolutionScale, 18 * ResolutionScale, 376,458, 88, 14, LC_White);
+		Canvas.DrawColorizedTile(AltHudTexture, 76 * ResolutionScale, 18 * ResolutionScale, 376,458, 88, 14, LC_White);
 
 		BarWidth = 70 * ResolutionScale;
 		DrawHealth(POS.X + (43 * ResolutionScale), POS.Y - 4 * ResolutionScale, BarWidth * PercValue,  BarWidth, 16, Canvas);
@@ -2265,7 +2650,7 @@ function DisplayFragCount(vector2d POS)
 	FragPRI = ((PawnOwner != None) && (PawnOwner.PlayerReplicationInfo != None)) ? UTPlayerReplicationInfo(PawnOwner.PlayerReplicationInfo) : UTOwnerPRI;  
 
 	Canvas.SetPos(POS.X, POS.Y);
-	Canvas.DrawTile(AltHudTexture, 115 * ResolutionScale, 44 * ResolutionScale, 374, 395, 115, 44, TeamHudColor);
+	Canvas.DrawColorizedTile(AltHudTexture, 115 * ResolutionScale, 44 * ResolutionScale, 374, 395, 115, 44, TeamHudColor);
 	Canvas.DrawColor = WhiteColor;
 
 	// Figure out if we should be pulsing
@@ -2304,9 +2689,9 @@ function DrawNameplateBackground(vector2d Pos, float WordWidth, LinearColor Name
 
 	//Start to the right half the length of the text
 	Canvas.SetPos(Pos.X - (0.5 * WordWidth) - EndCapWidth, Pos.Y);
-	Canvas.DrawTile(UT3GHudTexture, EndCapWidth, NameplateHeight, NameplateLeft.U, NameplateLeft.V, NameplateLeft.UL, NameplateLeft.VL, NameplateColor);
-	Canvas.DrawTile(UT3GHudTexture, WordWidth, NameplateHeight, NameplateCenter.U, NameplateCenter.V, NameplateCenter.UL, NameplateCenter.VL, NameplateColor); 
-	Canvas.DrawTile(UT3GHudTexture, EndCapWidth, NameplateHeight, NameplateRight.U, NameplateRight.V, NameplateRight.UL, NameplateRight.VL, NameplateColor);
+	Canvas.DrawColorizedTile(UT3GHudTexture, EndCapWidth, NameplateHeight, NameplateLeft.U, NameplateLeft.V, NameplateLeft.UL, NameplateLeft.VL, NameplateColor);
+	Canvas.DrawColorizedTile(UT3GHudTexture, WordWidth, NameplateHeight, NameplateCenter.U, NameplateCenter.V, NameplateCenter.UL, NameplateCenter.VL, NameplateColor); 
+	Canvas.DrawColorizedTile(UT3GHudTexture, EndCapWidth, NameplateHeight, NameplateRight.U, NameplateRight.V, NameplateRight.UL, NameplateRight.VL, NameplateColor);
 }
 
 function DisplayLeaderBoard(vector2d POS)
@@ -2317,7 +2702,7 @@ function DisplayLeaderBoard(vector2d POS)
 	local vector2d BackgroundPos;
 	local bool bTravelling;
 	local UTPlayerReplicationInfo FragPRI;
-
+	
 	FragPRI = ((PawnOwner != None) && (PawnOwner.PlayerReplicationInfo != None)) ? UTPlayerReplicationInfo(PawnOwner.PlayerReplicationInfo) : UTOwnerPRI;  
 
 	if ( (UTGRI == None) || (FragPRI == None) )
@@ -2368,10 +2753,6 @@ function DisplayLeaderBoard(vector2d POS)
 	Work = string(MyPosition+1) $ PlaceMarks[min(MyPosition,3)] $ " / " $ MySpreadStr;
 
 	Canvas.Font = GetFontSizeIndex(2);
-	if (Canvas.Font == none)
-	{
-		return;
-	}
 	Canvas.SetDrawColor(255,255,255,255);
 
 	Canvas.Strlen(Work,XL,YL);
@@ -2379,7 +2760,7 @@ function DisplayLeaderBoard(vector2d POS)
 	BackgroundPos.Y = POS.Y;
 	DrawNameplateBackground(BackgroundPos, XL, BlackBackgroundColor, YL);
 	Canvas.SetPos(POS.X - XL, POS.Y);
-	Canvas.DrawText(Work, , , , TextRenderInfo);
+	Canvas.DrawTextClipped(Work);
 
 	if ( bShowLeaderboard )
 	{
@@ -2393,19 +2774,322 @@ function DisplayLeaderBoard(vector2d POS)
 			if ( UTGRI.PRIArray[i] != None && !UTGRI.PRIArray[i].bOnlySpectator &&
 				(bTravelling || !UTGRI.PRIArray[i].bFromPreviousLevel) )
 			{
-				Work = string(i+1) $ PlaceMarks[i] $ ":" @ UTGRI.PRIArray[i].PlayerName;
+				Work = string(i+1) $ PlaceMarks[i] $ ":" @ UTGRI.PRIArray[i].GetPlayerAlias();
 				Canvas.StrLen(Work,XL,YL);
 				BackgroundPos.X = POS.X - (0.5 * XL);
 				BackgroundPos.Y = POS.Y;
 				DrawNameplateBackground(BackgroundPos, XL, BlackBackgroundColor, (1.05 * YL));
 				Canvas.SetPos(POS.X-XL,POS.Y+(2*ResolutionScale));
-				Canvas.DrawText( Work, , , , TextRenderInfo );
+				Canvas.DrawTextClipped(Work);
 				POS.Y += (1.05 * YL);
 
 				LeaderboardCount++;
 			}
 		}
 	}
+}
+
+/**
+ * Toggle the Quick Pick Menu
+ */
+exec function ShowQuickPickMenu(bool bShow)
+{
+	if ( PlayerOwner != None && PlayerOwner.Pawn != None && bShow != bShowQuickPick &&
+		(!bShow || UTPawn(PlayerOwner.Pawn) == None || !UTPawn(PlayerOwner.Pawn).bFeigningDeath) )
+	{
+		bShowQuickPick = bShow;
+		if ( bShow )
+		{
+			QuickPickTarget = PlayerOwner.Pawn;
+			QuickPickCurrentSelection = -1;
+			bQuickPickMadeNewSelection = false;
+		}
+		else
+		{
+			if (QuickPickCurrentSelection != -1)
+			{
+				if (UTPawn(QuickPickTarget) != None)
+				{
+					UTPawn(QuickPickTarget).QuickPick(QuickPickCurrentSelection);
+				}
+				else if ( UTVehicleBase(QuickPickTarget) != None)
+				{
+					UTVehicleBase(QuickPickTarget).QuickPick(QuickPickCurrentSelection);
+				}
+			}
+			QuickPickTarget = None;
+		}
+	}
+}
+
+simulated function DisplayQuickPickMenu()
+{
+	local int i, CurrentWeaponIndex;
+	local float Angle,x,y;
+	local array<QuickPickCell> Cells;
+	local rotator r;
+	local float AdjustedScale;
+
+	if ( bIsSplitScreen )
+	{
+		AdjustedScale = 0.63 * ResolutionScale;
+	}
+	else
+	{
+		AdjustedScale = ResolutionScale;
+	}
+
+	if ( QuickPickTarget == PawnOwner )
+	{
+		CurrentWeaponIndex = -1;
+		if ( UTPawn(QuickPickTarget) != none )
+		{
+			UTPawn(QuickPickTarget).GetQuickPickCells(Self, Cells, CurrentWeaponIndex);
+		}
+		else if ( UTVehicleBase(QuickPickTarget) != none )
+		{
+			UTVehicleBase(QuickPickTarget).GetQuickPickCells(Self, Cells, CurrentWeaponIndex);
+		}
+		if (QuickPickCurrentSelection == -1)
+		{
+			QuickPickCurrentSelection = CurrentWeaponIndex;
+		}
+
+		if ( Cells.Length > 0 )
+		{
+			QuickPickNumCells = Cells.Length;
+			QuickPickDeltaAngle = 360.0 / float(QuickPickNumCells);
+			Angle = 0.0;
+
+			X = Canvas.ClipX * 0.5;
+			Y = Canvas.ClipY * 0.5;
+
+			//  The QuickMenu is offset differently depending if the top or bottom.
+			if ( bIsSplitScreen )
+			{
+				if ( bIsFirstPlayer )
+				{
+					Y -= (1.0 - SafeRegionPct) * 0.5 * Canvas.ClipY;
+				}
+				else
+				{
+					Y += (1.0 - SafeRegionPct) * 0.5 * Canvas.ClipY;
+				}
+			}
+
+			Canvas.SetPos(X - (164 * AdjustedScale * 0.5), Y - (264 * AdjustedScale) );
+			R.Yaw = 0;
+
+			// The base image is horz.  So adjust.
+			for (i=0; i<8; i++)
+			{
+				if (Cells[i].Icon == None)
+				{
+					//Very transparent for non-existant weapons
+					Canvas.SetDrawColor(128,128,128,128);
+				}
+				else
+				{
+		    //Weapon icon is present
+					Canvas.SetDrawColor(255,255,255,255);
+				}
+
+				Canvas.DrawRotatedTile(IconHudTexture,R, 164 * AdjustedScale, 264 * AdjustedScale,289,315,164,264,0.5,1.0);
+				r.Yaw += (QuickPickDeltaAngle * 182.04444);
+			}
+
+			Canvas.DrawColor = WHITECOLOR;
+			for (i=0; i<Cells.Length; i++)
+			{
+				DisplayQuickPickCell(Cells[i], Angle, i == QuickPickCurrentSelection);
+				Angle += QuickPickDeltaAngle;
+			}
+		}
+		else
+		{
+			bShowQuickPick = false;
+		}
+	}
+	else
+	{
+		bShowQuickPick = false;
+	}
+}
+
+simulated function DisplayQuickPickCell(QuickPickCell Cell, float Angle, bool bSelected)
+{
+	local float X,Y, rX, rY,w,h;
+	local float DrawScaler;
+	local rotator r;
+	local float AdjustedScale;
+	local float SplitScreenOffsetY;
+
+	if ( bIsSplitScreen )
+	{
+		AdjustedScale = 0.63 * ResolutionScale;
+	}
+	else
+	{
+		AdjustedScale = ResolutionScale;
+	}
+
+	if (Cell.bDrawCell)
+	{
+		SplitScreenOffsetY = 0.0;
+
+		//  The QuickMenu is offset differently depending if the top or bottom.
+		if ( bIsSplitScreen )
+		{
+			if ( bIsFirstPlayer )
+			{
+				SplitScreenOffsetY = -(1.0 - SafeRegionPct) * 0.5 * Canvas.ClipY;
+			}
+			else
+			{
+				SplitScreenOffsetY = (1.0 - SafeRegionPct) * 0.5 * Canvas.ClipY;
+			}
+		}
+
+    	if ( bSelected )
+    	{
+			X = Canvas.ClipX * 0.5;
+			Y = Canvas.ClipY * 0.5;
+
+			Canvas.SetDrawColor(255,255,255,255);
+			Canvas.SetPos( X - (164 * AdjustedScale * 0.5), Y - (264 * AdjustedScale) + SplitScreenOffsetY );
+			R.Yaw = (Angle * 182.044444);
+			Canvas.DrawRotatedTile(IconHudTexture,R, 164 * AdjustedScale, 264 * AdjustedScale,791,118,164,264,0.5,1.0);
+		}
+
+		DrawScaler = AdjustedScale * (bSelected ? 1.5 : 1.25);
+
+		Angle *= (PI / 180);
+
+		X = 0.0;
+		Y = QuickPickRadius * AdjustedScale;
+
+		// Tranform the location
+
+		rX = (cos(Angle) * X) - (sin(Angle) * Y);
+		rY = (sin(Angle) * X) - (cos(Angle) * Y);
+
+		rX = (Canvas.ClipX * 0.5) + rX * -1;	// Flip the X
+		rY = (Canvas.ClipY * 0.5) + rY;
+
+		// Draw the Cell's Icon
+
+		w = Cell.IconCoords.UL * DrawScaler;
+		h = Cell.IconCoords.VL * DrawScaler;
+
+		Canvas.SetPos( rX, rY + SplitScreenOffsetY);
+		DrawTileCentered(IconHudTexture, (w + 4) * AdjustedScale * 0.75, (h + 4) * AdjustedScale * 0.75,Cell.IconCoords.U,Cell.IconCoords.V,Cell.IconCoords.UL,Cell.IconCoords.VL, MakeLinearColor(0,0,0,1));
+
+
+		Canvas.SetPos( rX, rY + SplitScreenOffsetY);
+		//Cell.Icon
+		DrawTileCentered(IconHudTexture, Cell.IconCoords.UL * DrawScaler * AdjustedScale * 0.75, Cell.IconCoords.VL * DrawScaler * AdjustedScale * 0.75,
+						Cell.IconCoords.U,Cell.IconCoords.V,Cell.IconCoords.UL,Cell.IconCoords.VL, WhiteLinearColor);
+
+
+	}
+}
+
+/**
+ * Change the selection in a given QuickPick group
+ */
+simulated function QuickPick(int Quad)
+{
+	if (QuickPickTarget != none && Quad >= 0 )
+	{
+		if ( QuickPickCurrentSelection != Quad )
+		{
+			PlayerOwner.ClientPlaySound(soundcue'A_interface.Menu.UT3MenuWeaponSelect01Cue');
+
+			if( UTPlayerController(PlayerOwner) != None )
+			{
+				UTPlayerController(PlayerOwner).ClientPlayForceFeedbackWaveform(QuickPickWaveForm);
+			}
+		}
+		QuickPickCurrentSelection = Quad;
+		bQuickPickMadeNewSelection = true;
+	}
+	else
+	{
+		QuickPickCurrentSelection = -1;
+		bQuickPickMadeNewSelection = false;
+		PlayerOwner.ClientPlaySound(soundcue'A_interface.Menu.UT3MenuNavigateDownCue');
+	}
+}
+
+/** Convert a string with potential escape sequenced data in it to a font and the string that should be displayed */
+native static function TranslateBindToFont(string InBindStr, out Font DrawFont, out string OutBindStr);
+
+//Given a input command of the form GBA_ and its mapping store that in a lookup for future use
+function DrawToolTip(Canvas Cvs, PlayerController PC, string Command, float X, float Y, float U, float V, float UL, float VL, float ResScale, optional Texture2D IconTexture = default.IconHudTexture, optional float Alpha=1.0)
+{
+	local float Left,xl,yl;
+	local float ScaleX, ScaleY;
+	local float WholeWidth;
+	local string MappingStr; //String of key mapping
+	local font OrgFont, BindFont;
+	local string Key;
+
+	//Catchall for spectators who don't need tooltips
+    if (PC.PlayerReplicationInfo.bOnlySpectator || LastTimeTooltipDrawn == WorldInfo.TimeSeconds)
+    {
+    	return;
+    }
+
+	//Only draw one tooltip per frame
+	LastTimeTooltipDrawn = WorldInfo.TimeSeconds;
+
+	OrgFont = Cvs.Font;
+
+	//Get the fully localized version of the key binding
+	UTPlayerController(PC).BoundEventsStringDataStore.GetStringWithFieldName(Command, MappingStr);
+	if (MappingStr == "")
+	{
+			WarnInternal("No mapping for command"@Command);
+			return;
+		}
+
+	TranslateBindToFont(MappingStr, BindFont, Key);
+
+	if ( BindFont != none )
+	{
+		//These values might be negative (for flipping textures)
+		ScaleX = abs(UL);
+		ScaleY = abs(VL);
+		Cvs.DrawColor = default.WhiteColor;
+		Cvs.DrawColor.A = Alpha * 255;
+
+		//Find the size of the string to be draw
+		Cvs.Font = BindFont;
+		Cvs.StrLen(Key, XL,YL);
+
+		//Figure the offset from center for the left side
+		WholeWidth = XL + (ScaleX * ResScale) + (default.ToolTipSepCoords.UL * ResScale);
+		Left = X - (WholeWidth * 0.5);
+
+		//Center and draw the key binding string
+		Cvs.SetPos(Left, Y - (YL * 0.5));
+		Cvs.DrawTextClipped(Key, true);
+
+		//Position to the end of the keybinding string
+		Left += XL;
+		Cvs.SetPos(Left, Y - (default.ToolTipSepCoords.VL * ResScale * 0.5));
+		//Draw the separation icon (arrow)
+		Cvs.DrawTile(default.IconHudTexture,default.ToolTipSepCoords.UL * ResScale, default.ToolTipSepCoords.VL * ResScale,
+					 default.ToolTipSepCoords.U,default.ToolTipSepCoords.V,default.ToolTipSepCoords.UL,default.ToolTipSepCoords.VL);
+
+		//Position to the end of the separation icon
+		Left += (default.ToolTipSepCoords.UL * ResScale);
+		Cvs.SetPos(Left, Y - (ScaleY * ResScale * 0.5) );
+		//Draw the tooltip icon
+		Cvs.DrawTile(IconTexture, ScaleX * ResScale, ScaleY * ResScale, U, V, UL, VL);
+	}
+
+	Cvs.Font = OrgFont;
 }
 
 /**
@@ -2453,163 +3137,367 @@ function DisplayConsoleMessages()
 	}
 }
 
+simulated function DrawShadowedTile(texture2D Tex, float X, float Y, float XL, float YL, float U, float V, float UL, float VL, Color TileColor, Optional bool bScaleToRes)
+{
+	local Color B;
+
+	B = BlackColor;
+	B.A = TileColor.A;
+
+	XL *= (bScaleToRes) ? ResolutionScale : 1.0;
+	YL *= (bScaleToRes) ? ResolutionScale : 1.0;
+
+	Canvas.SetPos(X+1,Y+1);
+	Canvas.DrawColor = B;
+	Canvas.DrawTile(Tex,XL,YL,U,V,UL,VL);
+	Canvas.SetPos(X,Y);
+	Canvas.DrawColor = TileColor;
+	Canvas.DrawTile(Tex,XL,YL,U,V,UL,VL);
+}
+
+simulated function DrawShadowedStretchedTile(texture2D Tex, float X, float Y, float XL, float YL, float U, float V, float UL, float VL, Color TileColor, Optional bool bScaleToRes)
+{
+	local LinearColor C,B;
+
+	C = ColorToLinearColor(TileColor);
+	B = ColorToLinearColor(BlackColor);
+	B.A = C.A;
+
+	XL *= (bScaleToRes) ? ResolutionScale : 1.0;
+	YL *= (bScaleToRes) ? ResolutionScale : 1.0;
+
+	Canvas.SetPos(X+1,Y+1);
+	Canvas.DrawTileStretched(Tex,XL,YL,U,V,UL,VL,B);
+	Canvas.SetPos(X,Y);
+	Canvas.DrawColor = TileColor;
+	Canvas.DrawTileStretched(Tex,XL,YL,U,V,UL,VL,C);
+}
+
+simulated function DrawShadowedRotatedTile(texture2D Tex, Rotator Rot, float X, float Y, float XL, float YL, float U, float V, float UL, float VL, Color TileColor, Optional bool bScaleToRes)
+{
+	local Color B;
+
+	B = BlackColor;
+	B.A = TileColor.A;
+
+	XL *= (bScaleToRes) ? ResolutionScale : 1.0;
+	YL *= (bScaleToRes) ? ResolutionScale : 1.0;
+
+	Canvas.SetPos(X+1,Y+1);
+	Canvas.DrawColor = B;
+	Canvas.DrawRotatedTile(Tex,Rot,XL,YL,U,V,UL,VL);
+	Canvas.SetPos(X,Y);
+	Canvas.DrawColor = TileColor;
+	Canvas.DrawRotatedTile(Tex,Rot,XL,YL,U,V,UL,VL);
+}
+
+/** Draw postrenderfor team beacon for an on-foot player
+  */
+function DrawPlayerBeacon(UTPawn P, Canvas BeaconCanvas, Vector CameraPosition, Vector ScreenLoc)
+{
+	local float TextXL, XL, YL, Dist, AudioWidth, AudioHeight, PulseAudioWidth;
+	local LinearColor BeaconTeamColor;
+	local Color	TextColor;
+	local string ScreenName;
+
+	Canvas = BeaconCanvas;
+	GetTeamColor( P.GetTeamNum(), BeaconTeamColor, TextColor);
+	ScreenName = P.PlayerReplicationInfo.GetPlayerAlias();
+	Canvas.StrLen(ScreenName, TextXL, YL);
+
+	// now we always just use the text width, solves a lot of problems
+	if (true)//!WorldInfo.GRI.GameClass.Default.bTeamGame )
+	{
+		XL = TextXL;
+	}
+	else
+	{
+		Dist = VSize(CameraPosition - P.Location);
+		XL = Max( TextXL, 24 * Canvas.ClipX/1024 * (1 + 2*Square((P.TeamBeaconPlayerInfoMaxDist-Dist)/P.TeamBeaconPlayerInfoMaxDist)));
+	}
+	if ( CharPRI == P.PlayerReplicationInfo )
+	{
+		AudioHeight = 34 * Canvas.ClipX/1280;
+		YL += AudioHeight;
+	}
+
+	DrawBeaconBackground(ScreenLoc.X-0.7*XL,ScreenLoc.Y-1.8*YL,1.4*XL,1.9*YL, BeaconTeamColor, Canvas);
+
+	if ( CharPRI == P.PlayerReplicationInfo )
+	{
+		AudioWidth = 57*Canvas.ClipX/1280;
+		PulseAudioWidth = AudioWidth * (0.75 + 0.25*sin(6.0*WorldInfo.TimeSeconds));
+		Canvas.DrawColor = TextColor;
+		Canvas.SetPos(ScreenLoc.X-0.5*PulseAudioWidth,ScreenLoc.Y-1.5*AudioHeight);
+		Canvas.DrawTile(UT3GHudTexture, PulseAudioWidth, AudioHeight, 173, 132, 57, 34);
+	}
+
+	Canvas.DrawColor = TextColor;
+	Canvas.SetPos(ScreenLoc.X-0.5*TextXL,ScreenLoc.Y-1.2*YL);
+	Canvas.DrawTextClipped(ScreenName, true);
+}
+
+/** 
+ * Draw postrenderfor team beacon for a vehicle
+  */
+function DrawVehicleBeacon( UTVehicle V, Canvas BeaconCanvas, Vector ScreenLoc, float XL, float YL, float HealthY, float TextXL, float Dist, linearcolor VTeamColor, string ScreenName, color TextColor )
+{
+	local float HealthX, NumXl, NumYL, FontScale, AudioWidth, AudioHeight, PulseAudioWidth;
+	local int NumCoins;
+	local string NumString;
+	local UTPlayerReplicationInfo PRI;
+
+	if ( !V.bDisplayHealthBar )
+	{
+		HealthY = 0;
+	}
+	PRI = UTPlayerReplicationInfo(V.PlayerReplicationInfo);
+
+	if ( PRI != None )
+	{
+		// any greed coins?
+		NumCoins = PRI.GetNumCoins();
+
+		if ( NumCoins > 0 )
+		{
+			BeaconCanvas.Font = GetFontSizeIndex(2);
+			NumString = string(NumCoins);
+			BeaconCanvas.StrLen(NumString, NumXL, NumYL);
+			FontScale = FClamp(800.0/(Dist+1.0), 0.75, 1.0);
+			BeaconCanvas.Font = GetFontSizeIndex(0);
+			NumYL *= FontScale;
+		}
+
+		if ( CharPRI == PRI )
+	{
+		AudioHeight = 34 * BeaconCanvas.ClipX/1280;
+		AudioWidth = 57*BeaconCanvas.ClipX/1280;
+		XL = FMax(XL, AudioWidth);
+		YL += AudioHeight;
+	}
+	}
+
+	DrawBeaconBackground(
+		ScreenLoc.X-0.7*XL,
+		ScreenLoc.Y-(YL + HealthY + NumYL) * 1.7,
+		1.4*XL,
+		(YL + HealthY + NumYL) * 2.4,
+		VTeamColor, 
+		BeaconCanvas);
+
+	if ( (PRI != None) && (CharPRI == PRI) )
+	{
+		PulseAudioWidth = AudioWidth * (0.75 + 0.25*sin(6.0*WorldInfo.TimeSeconds));
+		BeaconCanvas.DrawColor = TextColor;
+		BeaconCanvas.SetPos(ScreenLoc.X-0.5*PulseAudioWidth, ScreenLoc.Y - AudioHeight - HealthY - NumYL);
+		BeaconCanvas.DrawTile(UT3GHudTexture, PulseAudioWidth, AudioHeight, 173, 132, 57, 34);
+	}
+
+	BeaconCanvas.DrawColor = TextColor;
+
+	if ( PRI != None && NumCoins > 0 )
+	{
+		BeaconCanvas.Font = GetFontSizeIndex(2);
+		BeaconCanvas.SetPos(ScreenLoc.X - 0.5*FontScale*NumXL,ScreenLoc.Y- NumYL - HealthY);
+		BeaconCanvas.DrawTextClipped(NumString, true, FontScale, FontScale);
+		BeaconCanvas.Font = GetFontSizeIndex(0);
+	}
+
+	if ( ScreenName != "" )
+	{
+		BeaconCanvas.SetPos(ScreenLoc.X-0.5*TextXL,ScreenLoc.Y- YL - HealthY - NumYL);
+		BeaconCanvas.DrawTextClipped(ScreenName, true);
+	}
+
+	if ( V.bDisplayHealthBar )
+	{
+		HealthX = XL * FMin(1.0, V.GetDisplayedHealth()/float(V.HealthMax));
+
+		DrawHealth(ScreenLoc.X-0.5*XL,ScreenLoc.Y - HealthY, HealthX, XL, HealthY, BeaconCanvas);
+	}
+}
+
 defaultproperties
 {
-	bHasLeaderboard=true
-	bHasMap=false
-	bShowFragCount=true
-
-	WeaponBarScale=0.75
-	WeaponBarY=16
-	SelectedWeaponScale=1.5
-	BounceWeaponScale=2.25
-	SelectedWeaponAlpha=1.0
-	OffWeaponAlpha=0.5
-	EmptyWeaponAlpha=0.4
-	WeaponBoxWidth=100.0
-	WeaponBoxHeight=64.0
-	WeaponScaleSpeed=10.0
-	WeaponBarXOffset=70
-	WeaponXOffset=60
-	SelectedBoxScale=1.0
-	WeaponYScale=64
-	WeaponYOffset=8
-
-	WeaponAmmoLength=48
-	WeaponAmmoThickness=16
-	SelectedWeaponAmmoOffsetX=110
-	WeaponAmmoOffsetX=100
-	WeaponAmmoOffsetY=16
-
-	AltHudTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
-
-	HudFonts(0)=MultiFont'UI_Fonts_Final.HUD.MF_Small'
-	HudFonts(1)=MultiFont'UI_Fonts_Final.HUD.MF_Medium'
-	HudFonts(2)=MultiFont'UI_Fonts_Final.HUD.MF_Large'
-	HudFonts(3)=MultiFont'UI_Fonts_Final.HUD.MF_Huge'
-	
-	CharPortraitMaterial=Material'UI_HUD.Materials.CharPortrait'
-	CharPortraitYPerc=0.15
-	CharPortraitXPerc=0.01
-	CharPortraitSlideTime=2.0
-	CharPortraitSlideTransitionTime=0.175
-	CharPortraitSize=(X=96,Y=120)
-
-	CurrentWeaponScale(0)=1.0
-	CurrentWeaponScale(1)=1.0
-	CurrentWeaponScale(2)=1.0
-	CurrentWeaponScale(3)=1.0
-	CurrentWeaponScale(4)=1.0
-	CurrentWeaponScale(5)=1.0
-	CurrentWeaponScale(6)=1.0
-	CurrentWeaponScale(7)=1.0
-	CurrentWeaponScale(8)=1.0
-	CurrentWeaponScale(9)=1.0
-
-	MessageOffset(0)=0.15
-	MessageOffset(1)=0.242
-	MessageOffset(2)=0.36
-	MessageOffset(3)=0.58
-	MessageOffset(4)=0.78
-	MessageOffset(5)=0.83
-	MessageOffset(6)=2.0
-
-	GlowFonts(0)=font'UI_Fonts_Final.HUD.F_GlowPrimary'
-	GlowFonts(1)=font'UI_Fonts_Final.HUD.F_GlowSecondary'
-
-  	LC_White=(R=1.0,G=1.0,B=1.0,A=1.0)
-
-	PulseDuration=0.33
-	PulseSplit=0.25
-	PulseMultiplier=0.5
-
-	MaxNoOfIndicators=3
-	BaseMaterial=Material'UI_HUD.HUD.M_UI_HUD_DamageDir'
-	FadeTime=0.5
-	PositionalParamName=DamageDirectionRotation
-	FadeParamName=DamageDirectionAlpha
-
-	HitEffectFadeTime=0.50
-	HitEffectIntensity=0.25
-	MaxHitEffectColor=(R=2.0,G=-1.0,B=-1.0)
-
-	GrayColor=(R=160,G=160,B=160,A=192)
-	PowerupYPos=0.75
-	MaxHUDAreaMessageCount=2
-
-	AmmoBarColor=(R=7.0,G=7.0,B=7.0,A=1.0)
-	RedLinearColor=(R=3.0,G=0.0,B=0.05,A=0.8)
-	BlueLinearColor=(R=0.5,G=0.8,B=10.0,A=0.8)
-	DMLinearColor=(R=1.0,G=1.0,B=1.0,A=0.5)
-	WhiteLinearColor=(R=1.0,G=1.0,B=1.0,A=1.0)
-	GoldLinearColor=(R=1.0,G=1.0,B=0.0,A=1.0)
-	SilverLinearColor=(R=0.75,G=0.75,B=0.75,A=1.0)
-
-	MapPosition=(X=0.99,Y=0.05)
-	ClockPosition=(X=0,Y=0)
-	DollPosition=(X=0,Y=-1)
-	AmmoPosition=(X=-1,Y=-1)
-	ScoringPosition=(X=-1,Y=0)
-	VehiclePosition=(X=-1,Y=-1)
-
-    WeaponSwitchMessage=class'UTWeaponSwitchMessage'
-
-	TalkingTexture=Texture2D'UT3GoldPatch.Talking'
-	UT3GHudTexture=Texture2D'UI_GoldHud.HUDIcons'
-
-	HealthBGCoords=(U=73,UL=143,V=111,VL=57)
-	HealthOffsetX=65
-	HealthBGOffsetX=65
-	HealthBGOffsetY=59
-	HealthIconX=80
-	HealthIconY=88
-	HealthTextX=185
-	HealthTextY=55
-
-	ArmorBGCoords=(U=74,UL=117,V=69,VL=42)
-	ArmorBGOffsetX=65
-	ArmorBGOffsetY=18
-	ArmorIconX=80
-	ArmorIconY=42
-	ArmorTextX=160
-	ArmorTextY=17
-
-	AmmoBGCoords=(U=1,UL=162,V=368,VL=53)
-	AmmoBarOffsetY=2
-	AmmoTextOffsetX=125
-	AmmoTextOffsetY=3
-
-	PawnDollBGCoords=(U=9,UL=65,V=52,VL=116)
-	DollOffsetX=35
-	DollOffsetY=58
-	DollWidth=56
-	DollHeight=109
-	VestX=36
-	VestY=31
-	VestWidth=46
-	VestHeight=28
-	ThighX=36
-	ThighY=72
-	ThighWidth=42
-	ThighHeight=28
-	HelmetX=36
-	HelmetY=13
-	HelmetWidth=22
-	HelmetHeight=25
-	BootX=37
-	BootY=100
-	BootWidth=54 
-	BootHeight=26
-
-
-	NameplateWidth=8			//width of the left/right endcaps
-	NameplateBubbleWidth=15		//width of the middle divot
-	NameplateLeft=(U=224, UL=14, V=11, VL=35);
-	NameplateCenter=(U=238, UL=5, V=11, VL=35);
-	NameplateBubble=(U=243, UL=26, V=11, VL=35);
-	NameplateRight=(U=275, UL=14, V=11, VL=35);
-
-	BlackBackgroundColor=(R=0.7,G=0.7,B=0.7,A=0.7)
-
-	TextRenderInfo=(bClipText=true)
+   WeaponSwitchMessage=Class'UTGame.UTWeaponSwitchMessage'
+   AltHudTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
+   IconHudTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseB'
+   TalkingTexture=Texture2D'PS3Patch.Talking'
+   UT3GHudTexture=Texture2D'UI_GoldHud.HUDIcons'
+   ConsoleIconFontClassName="UI_Fonts.Fonts.UI_Fonts_Xbox18"
+   ToolTipSepCoords=(U=260.000000,V=379.000000,UL=29.000000,VL=27.000000)
+   LC_White=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   LightGoldColor=(B=128,G=255,R=255,A=255)
+   LightGreenColor=(B=128,G=255,R=128,A=255)
+   GrayColor=(B=160,G=160,R=160,A=192)
+   bShowDoll=True
+   bShowAmmo=True
+   bShowMap=True
+   bShowPowerups=True
+   bShowScoring=True
+   bShowFragCount=True
+   bHasLeaderboard=True
+   bShowVehicle=True
+   ScoreboardSceneTemplate=Scoreboard_DM'UI_Scenes_Scoreboards.sbDM'
+   MusicManagerClass=Class'UTGame.UTMusicManager'
+   HudFonts(0)=MultiFont'UI_Fonts_Final.HUD.MF_Small'
+   HudFonts(1)=MultiFont'UI_Fonts_Final.HUD.MF_Medium'
+   HudFonts(2)=MultiFont'UI_Fonts_Final.HUD.MF_Large'
+   HudFonts(3)=MultiFont'UI_Fonts_Final.HUD.MF_Huge'
+   CharPortraitMaterial=Material'UI_HUD.Materials.CharPortrait'
+   CharPortraitYPerc=0.150000
+   CharPortraitXPerc=0.010000
+   CharPortraitSlideTime=2.000000
+   CharPortraitSlideTransitionTime=0.175000
+   CharPortraitSize=(X=96.000000,Y=120.000000)
+   WeaponBarScale=0.750000
+   WeaponBoxWidth=100.000000
+   WeaponBoxHeight=64.000000
+   TeamHUDColor=(R=0.000000,G=0.000000,B=0.000000,A=1.000000)
+   WeaponBarY=16.000000
+   CurrentWeaponScale(0)=1.000000
+   CurrentWeaponScale(1)=1.000000
+   CurrentWeaponScale(2)=1.000000
+   CurrentWeaponScale(3)=1.000000
+   CurrentWeaponScale(4)=1.000000
+   CurrentWeaponScale(5)=1.000000
+   CurrentWeaponScale(6)=1.000000
+   CurrentWeaponScale(7)=1.000000
+   CurrentWeaponScale(8)=1.000000
+   CurrentWeaponScale(9)=1.000000
+   SelectedWeaponScale=1.500000
+   BounceWeaponScale=2.250000
+   SelectedWeaponAlpha=1.000000
+   OffWeaponAlpha=0.500000
+   EmptyWeaponAlpha=0.400000
+   WeaponScaleSpeed=10.000000
+   WeaponBarXOffset=70.000000
+   WeaponXOffset=60.000000
+   SelectedBoxScale=1.000000
+   WeaponYScale=64.000000
+   WeaponYOffset=8.000000
+   WeaponAmmoLength=48.000000
+   WeaponAmmoThickness=16.000000
+   WeaponAmmoOffsetX=100.000000
+   WeaponAmmoOffsetY=16.000000
+   SelectedWeaponAmmoOffsetX=110.000000
+   MessageOffset(0)=0.150000
+   MessageOffset(1)=0.242000
+   MessageOffset(2)=0.360000
+   MessageOffset(3)=0.580000
+   MessageOffset(4)=0.780000
+   MessageOffset(5)=0.830000
+   MessageOffset(6)=2.000000
+   BlackColor=(B=0,G=0,R=0,A=255)
+   GoldColor=(B=11,G=183,R=255,A=255)
+   MapDefaultSize=255.000000
+   GlowFonts(0)=Font'UI_Fonts_Final.HUD.F_GlowPrimary'
+   GlowFonts(1)=Font'UI_Fonts_Final.HUD.F_GlowSecondary'
+   SafeRegionPct=1.000000
+   MaxNoOfIndicators=3
+   BaseMaterial=Material'UI_HUD.HUD.M_UI_HUD_DamageDir'
+   FadeTime=0.500000
+   PositionalParamName="DamageDirectionRotation"
+   FadeParamName="DamageDirectionAlpha"
+   HitEffectIntensity=0.250000
+   MaxHitEffectColor=(R=2.000000,G=-1.000000,B=-1.000000,A=1.000000)
+   HitEffectFadeTime=0.500000
+   QuickPickRadius=160.000000
+   QuickPickBkgImage=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
+   QuickPickBkgCoords=(U=459.000000,V=148.000000,UL=69.000000,VL=49.000000)
+   QuickPickSelImage=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
+   QuickPickSelCoords=(U=459.000000,V=248.000000,UL=69.000000,VL=49.000000)
+   QuickPickCircleImage=Texture2D'UI_HUD.HUD.UI_HUD_BaseB'
+   QuickPickCircleCoords=(U=18.000000,V=367.000000,UL=128.000000,VL=128.000000)
+   QuickPickWaveForm=ForceFeedbackWaveform'UTGame.Default__UTHUD:ForceFeedbackWaveformQuickPick'
+   DollPosition=(X=0.000000,Y=-1.000000)
+   HealthBGCoords=(U=73.000000,V=111.000000,UL=143.000000,VL=57.000000)
+   HealthOffsetX=65.000000
+   HealthBGOffsetX=65.000000
+   HealthBGOffsetY=59.000000
+   HealthIconX=80.000000
+   HealthIconY=88.000000
+   HealthTextX=185.000000
+   HealthTextY=55.000000
+   ArmorBGCoords=(U=74.000000,V=69.000000,UL=117.000000,VL=42.000000)
+   ArmorBGOffsetX=65.000000
+   ArmorBGOffsetY=18.000000
+   ArmorIconX=80.000000
+   ArmorIconY=42.000000
+   ArmorTextX=160.000000
+   ArmorTextY=17.000000
+   AmmoPosition=(X=-1.000000,Y=-1.000000)
+   AmmoBarOffsetY=2.000000
+   AmmoBGCoords=(U=1.000000,V=368.000000,UL=162.000000,VL=53.000000)
+   AmmoTextOffsetX=125.000000
+   AmmoTextOffsetY=3.000000
+   MapPosition=(X=0.990000,Y=0.050000)
+   PowerupYPos=0.750000
+   ScoringPosition=(X=-1.000000,Y=0.000000)
+   VehiclePosition=(X=-1.000000,Y=-1.000000)
+   DamageIndicatorSize=384.000000
+   NameplateWidth=8.000000
+   NameplateBubbleWidth=15.000000
+   NameplateLeft=(U=224.000000,V=11.000000,UL=14.000000,VL=35.000000)
+   NameplateCenter=(U=238.000000,V=11.000000,UL=5.000000,VL=35.000000)
+   NameplateBubble=(U=243.000000,V=11.000000,UL=26.000000,VL=35.000000)
+   NameplateRight=(U=275.000000,V=11.000000,UL=14.000000,VL=35.000000)
+   BlackBackgroundColor=(R=0.700000,G=0.700000,B=0.700000,A=0.700000)
+   PulseDuration=0.330000
+   PulseSplit=0.250000
+   PulseMultiplier=0.500000
+   WarmupString="Round di Riscaldamento"
+   WaitingForMatch="In attesa che la Partita Cominci..."
+   PressFireToBegin="Premi [FUOCO] per Cominciare..."
+   SpectatorMessage="Spettatore"
+   DeadMessage="Sei Morto!"
+   FireToRespawnMessage="Premi [FUOCO] per rinascere"
+   YouHaveWon="HAI VINTO LA PARTITA!"
+   YouHaveLost="HAI PERSO LA PARTITA!"
+   PlaceMarks(0)=" "
+   PlaceMarks(1)=" "
+   PlaceMarks(2)=" "
+   PlaceMarks(3)=" "
+   PawnDollBGCoords=(U=9.000000,V=52.000000,UL=65.000000,VL=116.000000)
+   DollOffsetX=35.000000
+   DollOffsetY=58.000000
+   DollWidth=56.000000
+   DollHeight=109.000000
+   VestX=36.000000
+   VestY=31.000000
+   VestWidth=46.000000
+   VestHeight=28.000000
+   ThighX=36.000000
+   ThighY=72.000000
+   ThighWidth=42.000000
+   ThighHeight=28.000000
+   HelmetX=36.000000
+   HelmetY=13.000000
+   HelmetWidth=22.000000
+   HelmetHeight=25.000000
+   BootX=37.000000
+   BootY=100.000000
+   BootWidth=54.000000
+   BootHeight=26.000000
+   AmmoBarColor=(R=7.000000,G=7.000000,B=7.000000,A=1.000000)
+   RedLinearColor=(R=3.000000,G=0.000000,B=0.050000,A=0.800000)
+   BlueLinearColor=(R=0.500000,G=0.800000,B=10.000000,A=0.800000)
+   DMLinearColor=(R=1.000000,G=1.000000,B=1.000000,A=0.500000)
+   WhiteLinearColor=(R=1.000000,G=1.000000,B=1.000000,A=1.000000)
+   GoldLinearColor=(R=1.000000,G=1.000000,B=0.000000,A=1.000000)
+   SilverLinearColor=(R=0.750000,G=0.750000,B=0.750000,A=1.000000)
+   HeroPointOffX=20.000000
+   HeroPointOffY=8.000000
+   HeroMeterOffsetX=1.000000
+   HeroMeterOffsetY=52.000000
+   HeroMeterVehicleOffsetX=93.000000
+   HeroMeterVehicleOffsetY=53.000000
+   HeroMeterWidth=95.000000
+   HeroMeterHeight=65.000000
+   HeroMeterTexCoords=(U=6.000000,V=8.000000,UL=95.000000,VL=65.000000)
+   HeroMeterOverlayTexCoords=(U=6.000000,V=74.000000,UL=95.000000,VL=65.000000)
+   HeroToolTipIconCoords=(U=136.000000,V=11.000000,UL=81.000000,VL=74.000000)
+   MaxHUDAreaMessageCount=2
+   Name="Default__UTHUD"
+   ObjectArchetype=GameHUD'GameFramework.Default__GameHUD'
 }

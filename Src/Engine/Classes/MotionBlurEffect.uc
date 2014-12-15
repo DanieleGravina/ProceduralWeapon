@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MotionBlurEffect extends PostProcessEffect
 	native;
@@ -19,46 +19,32 @@ var() float CameraRotationThreshold;
 /** Threshhold for when to turn off motion blur when the camera translates swiftly during a single frame (in world units). */
 var() float CameraTranslationThreshold;
 
-cpptext
-{
-    // UPostProcessEffect interface
-
-	/**
-	 * Creates a proxy to represent the render info for a post process effect
-	 * @param WorldSettings - The world's post process settings for the view.
-	 * @return The proxy object.
-	 */
-	virtual class FPostProcessSceneProxy* CreateSceneProxy(const FPostProcessSettings* WorldSettings);
-
-	/**
-	 * @param View - current view
-	 * @return TRUE if the effect should be rendered
-	 */
-	virtual UBOOL IsShown(const FSceneView* View) const;
-
-	/**
-	* @return TRUE if the effect requires the uber post process
-	*/
-	virtual UBOOL RequiresUberpostprocess() const 
-	{ 
-		return TRUE; 
-	}
-
-	/**
-	* This allows to print a warning when the effect is used.
-	*/
-	virtual void OnPostProcessWarning(FString& OutWarning) const
-	{
-		OutWarning = TEXT("Warning: MotionBlur should no longer be used, use Uberpostprocess instead.");
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MotionBlurAmount = 0.5f;
-	MaxVelocity      = 1.0f;
-	FullMotionBlur = true;
-	CameraRotationThreshold = 90.0f;
-	CameraTranslationThreshold = 10000.0f;
-	bShowInEditor	 = false;
+   MaxVelocity=1.000000
+   MotionBlurAmount=0.500000
+   FullMotionBlur=True
+   CameraRotationThreshold=90.000000
+   CameraTranslationThreshold=10000.000000
+   bShowInEditor=False
+   Name="Default__MotionBlurEffect"
+   ObjectArchetype=PostProcessEffect'Engine.Default__PostProcessEffect'
 }

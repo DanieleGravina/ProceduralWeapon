@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetMaterial extends SequenceAction
 	native(Sequence);
@@ -10,15 +10,16 @@ var()	MaterialInterface	NewMaterial;
 /** Index in the Materials array to replace with NewMaterial when this action is activated. */
 var()	INT					MaterialIndex;
 
-cpptext
-{
-	// UObject interface.
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Set Material"
-	ObjCategory="Actor"
-	VariableLinks[0]=(bModifiesLinkedObject=true)
+   ObjName="Set Material"
+   ObjCategory="Actor"
+   Name="Default__SeqAct_SetMaterial"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

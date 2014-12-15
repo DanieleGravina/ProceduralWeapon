@@ -1,6 +1,6 @@
 /**
  * Creates and manages all globally accessible persistent data stores.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DataStoreClient extends UIRoot
 	native(inherit)
@@ -48,14 +48,14 @@ var	const private			array<class<UIDataStore> >	PlayerDataStoreClasses;
  */
 var	const					array<PlayerDataStoreGroup>	PlayerDataStores;
 
-cpptext
-{
-	/**
-	 * Loads each of the classes from the GlobalDataStoreClasses array, creates an instance of that class, and stores
-	 * that instance in the GlobalDataStores array.
-	 */
-	virtual void InitializeDataStores();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Finds the data store indicated by DataStoreTag and returns a pointer to it.
@@ -98,6 +98,14 @@ native final function bool RegisterDataStore( UIDataStore DataStore, optional Lo
 native final function bool UnregisterDataStore( UIDataStore DataStore );
 
 /**
+ * Retrieve the list of currently available data stores, including any temporary data stores associated with the specified scene.
+ *
+ * @param	CurrentScene	the scene to use as the context for determining which data stores are available
+ * @param	out_DataStores	will be filled with the list of data stores which are available from the context of the specified scene
+ */
+native final function GetAvailableDataStores( UIScene CurrentScene, out array<UIDataStore> out_DataStores ) const;
+
+/**
  * Finds the index into the PlayerDataStores array for the data stores associated with the specified player.
  *
  * @param	PlayerOwner		the player to search for associated data stores for.
@@ -105,14 +113,6 @@ native final function bool UnregisterDataStore( UIDataStore DataStore );
 native final function int FindPlayerDataStoreIndex( LocalPlayer PlayerOwner ) const;
 
 /* === Unrealscript === */
-/**
- * Accessor for grabbing the list of player data store classes.
- */
-final function GetPlayerDataStoreClasses( out array<class<UIDataStore> > out_DataStoreClasses )
-{
-	out_DataStoreClasses = PlayerDataStoreClasses;
-}
-
 /**
  * Searches the data store client's data store class arrays for a child of the specified meta class.
  *
@@ -186,7 +186,7 @@ final event NotifyGameSessionEnded()
 
 final function DebugDumpDataStoreInfo( bool bVerbose )
 {
-`if(`notdefined(FINAL_RELEASE))
+
 	local int DataStoreIndex, PlayerDataStoreIndex;
 	local string PlayerName;
 
@@ -194,38 +194,62 @@ final function DebugDumpDataStoreInfo( bool bVerbose )
 	local array<UIDataStore> PlayerGroupDataStores;
 
 	// first, search through the global data stores array
-	`log("GlobalDataStores: " $ GlobalDataStores.Length,,'DevDataStore');
+	LogInternal("GlobalDataStores: " $ GlobalDataStores.Length,'DevDataStore');
 
 	for ( DataStoreIndex = 0; DataStoreIndex < GlobalDataStores.Length; DataStoreIndex++ )
 	{
 		//@todo ronp - expose UUIDataStore::GetDataStoreId() as a native unrealscript function, rather than using the data store's tag directly
-		`log("	GlobalDataStore[" $ DataStoreIndex $ "]:" @ GlobalDataStores[DataStoreIndex].Tag @ "(" $ GlobalDataStores[DataStoreIndex] $ ")",,'DevDataStore');
+		LogInternal("	GlobalDataStore[" $ DataStoreIndex $ "]:" @ GlobalDataStores[DataStoreIndex].Tag @ "(" $ GlobalDataStores[DataStoreIndex] $ ")",'DevDataStore');
 
 		//@todo ronp - call a function on the GlobalDataStore to allow it to log more detailed information
 	}
 
-	`log("");
-	`log("Player data store groups:" $ PlayerDataStores.Length,,'DevDataStore');
+	LogInternal("");
+	LogInternal("Player data store groups:" $ PlayerDataStores.Length,'DevDataStore');
 	for ( DataStoreIndex = 0; DataStoreIndex < PlayerDataStores.Length; DataStoreIndex++ )
 	{
 		PlayerOwner = PlayerDataStores[DataStoreIndex].PlayerOwner;
 		PlayerGroupDataStores = PlayerDataStores[DataStoreIndex].DataStores;
 
 		PlayerName = (PlayerOwner != None && PlayerOwner.Actor != None && PlayerOwner.Actor.PlayerReplicationInfo != None) ? PlayerOwner.Actor.PlayerReplicationInfo.PlayerName : "None";
-		`log("	PlayerDataStores for player " $ DataStoreIndex $ ":" @ PlayerGroupDataStores.Length @ "(" $ Playername @ "-" @ PlayerOwner $ ")",,'DevDataStore');
+		LogInternal("	PlayerDataStores for player " $ DataStoreIndex $ ":" @ PlayerGroupDataStores.Length @ "(" $ Playername @ "-" @ PlayerOwner $ ")",'DevDataStore');
 
 		for ( PlayerDataStoreIndex = 0; PlayerDataStoreIndex < PlayerGroupDataStores.Length; PlayerDataStoreIndex++ )
 		{
 			//@todo ronp - expose UUIDataStore::GetDataStoreId() as a native unrealscript function, rather than using the data store's tag directly
-			`log("		PlayerDataStore[" $ PlayerDataStoreIndex $ "]:" @ PlayerGroupDataStores[PlayerDataStoreIndex].Tag @ "(" $ PlayerGroupDataStores[PlayerDataStoreIndex] $ ")",,'DevDataStore');
+			LogInternal("		PlayerDataStore[" $ PlayerDataStoreIndex $ "]:" @ PlayerGroupDataStores[PlayerDataStoreIndex].Tag @ "(" $ PlayerGroupDataStores[PlayerDataStoreIndex] $ ")",'DevDataStore');
 
 			//@todo ronp - call a function on the GlobalDataStore to allow it to log more detailed information
 		}
 	}
-`endif
+
 }
 
-DefaultProperties
+defaultproperties
 {
-
+   GlobalDataStoreClasses(0)="Engine.UIDataStore_Strings"
+   GlobalDataStoreClasses(1)="Engine.UIDataStore_Images"
+   GlobalDataStoreClasses(2)="Engine.UIDataStore_GameResource"
+   GlobalDataStoreClasses(3)="Engine.CurrentGameDataStore"
+   GlobalDataStoreClasses(4)="Engine.UIDataStore_SessionSettings"
+   GlobalDataStoreClasses(5)="Engine.UIDataStore_Fonts"
+   GlobalDataStoreClasses(6)="Engine.UIDataStore_Color"
+   GlobalDataStoreClasses(7)="Engine.UIDataStore_Gamma"
+   GlobalDataStoreClasses(8)="Engine.UIDataStore_Registry"
+   GlobalDataStoreClasses(9)="UTGame.UTUIDataStore_Options"
+   GlobalDataStoreClasses(10)="UTGame.UTUIDataStore_MenuItems"
+   GlobalDataStoreClasses(11)="UTGame.UTDataStore_GameSettingsDM"
+   GlobalDataStoreClasses(12)="UTGame.UTDataStore_GameSearchDM"
+   GlobalDataStoreClasses(13)="UTGame.UTUIDataStore_CustomChar"
+   GlobalDataStoreClasses(14)="UTGame.UTUIDataStore_StringList"
+   GlobalDataStoreClasses(15)="UTGame.UTDataStore_OnlineStats"
+   GlobalDataStoreClasses(16)="UTGame.UTUIDataStore_StringAliasMap"
+   GlobalDataStoreClasses(17)="UTGame.UTUIDataStore_Content"
+   GlobalDataStoreClasses(18)="UTGame.UTUIDataStore_2DStringList"
+   PlayerDataStoreClassNames(0)="Engine.PlayerOwnerDataStore"
+   PlayerDataStoreClassNames(1)="Engine.UIDataStore_PlayerSettings"
+   PlayerDataStoreClassNames(2)="Engine.UIDataStore_OnlinePlayerData"
+   PlayerDataStoreClassNames(3)="UTGame.UTUIDataStore_StringAliasBindingsMap"
+   Name="Default__DataStoreClient"
+   ObjectArchetype=UIRoot'Engine.Default__UIRoot'
 }

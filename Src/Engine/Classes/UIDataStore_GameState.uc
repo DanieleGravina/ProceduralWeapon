@@ -11,7 +11,7 @@
  * Game state data stores:		Acts as the first layer between the game and the UI. Each data store contains a collection of game state
  *								data providers, which provide the data for instances of a game object
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UIDataStore_GameState extends UIDataStore
 	native(inherit)
@@ -30,6 +30,8 @@ function bool NotifyGameSessionEnded()
 	return true;
 }
 
-DefaultProperties
+defaultproperties
 {
+   Name="Default__UIDataStore_GameState"
+   ObjectArchetype=UIDataStore'Engine.Default__UIDataStore'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTIdleKickWarningMessage extends UTLocalMessage;
 
@@ -17,12 +17,11 @@ static function string GetString(
 
 defaultproperties
 {
-	bIsUnique=true
-	bIsConsoleMessage=False
-	Lifetime=1
-
-	DrawColor=(R=255,G=255,B=64,A=255)
-	FontSize=2
-
-   	MessageArea=2
+   MessageArea=2
+   bIsUnique=True
+   Lifetime=1.000000
+   DrawColor=(B=64,G=255,R=255,A=255)
+   FontSize=2
+   Name="Default__UTIdleKickWarningMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

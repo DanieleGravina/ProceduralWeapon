@@ -3,16 +3,17 @@
  *
  *	The base class for all Beam modules.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class ParticleModuleBeamBase extends ParticleModule
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object)
 	abstract;
 
-/** The method to use in determining the source/target. */
+/** The method to use in determining the source/target							*/
 enum Beam2SourceTargetMethod
 {
 	/** Default	- use the distribution. 
@@ -36,7 +37,7 @@ enum Beam2SourceTargetMethod
 	PEB2STM_Actor
 };
 
-/** The method to use in determining the source/target tangent. */
+/** The method to use in determining the source/target tangent					*/
 enum Beam2SourceTargetTangentMethod
 {
 	/** Direct - a direct line between source and target.				 */
@@ -49,13 +50,13 @@ enum Beam2SourceTargetTangentMethod
 	PEB2STTM_Emitter
 };
 
-cpptext
-{
-	virtual EModuleType	GetModuleType() const	{	return EPMT_Beam;	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSpawnModule=false
-	bUpdateModule=false
+   Name="Default__ParticleModuleBeamBase"
+   ObjectArchetype=ParticleModule'Engine.Default__ParticleModule'
 }

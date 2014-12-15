@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_AssignController extends SequenceAction;
 
@@ -7,6 +7,8 @@ var() class<Controller>			ControllerClass;
 
 defaultproperties
 {
-	ObjName="Assign Controller"
-	ObjCategory="Actor"
+   ObjName="Assign Controller"
+   ObjCategory="Actor"
+   Name="Default__SeqAct_AssignController"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

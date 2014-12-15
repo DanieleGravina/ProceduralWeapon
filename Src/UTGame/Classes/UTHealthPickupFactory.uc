@@ -1,12 +1,17 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTHealthPickupFactory extends UTItemPickupFactory
-	ClassGroup(Pickups,Health)
+	native
 	abstract;
 
 var		int					HealingAmount;
 var		bool				bSuperHeal;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 simulated static function UpdateHUD(UTHUD H)
 {
@@ -56,7 +61,7 @@ auto state Pickup
 
 		Heal = HealAmount(Other);
 
-		if ( UTBot(Other.Controller).PriorityObjective() && (Other.Health > 65) )
+		if ( AIController(Other.Controller).PriorityObjective() && (Other.Health > 65) )
 			return (0.01 * Heal)/PathWeight;
 		return (0.02 * Heal)/PathWeight;
 	}
@@ -114,35 +119,48 @@ function float BotDesireability(Pawn P, Controller C)
 
 defaultproperties
 {
-	bMovable=FALSE
-	bStatic=FALSE
-
-    PickupStatName=PICKUPS_HEALTH
-	MaxDesireability=0.700000
-	HealingAmount=20
-
-	BaseBrightEmissive=(R=2.0,G=50.0,B=10.0,A=1.0)
-	BaseDimEmissive=(R=0.20,G=5.0,B=1.0,A=0.0)
-
-	RespawnSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Respawn_Cue'
-
-	Begin Object Class=StaticMeshComponent Name=HealthPickUpMesh
-	    CastShadow=FALSE
-		bCastDynamicShadow=FALSE
-		bAcceptsLights=TRUE
-		bForceDirectLightMap=TRUE
-		LightEnvironment=PickupLightEnvironment
-
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-
-		CollideActors=false
-		BlockActors=false
-		BlockRigidBody=false
-
-		MaxDrawDistance=4500
-	End Object
-	PickupMesh=HealthPickUpMesh
-	Components.Add(HealthPickUpMesh)
-
+   HealingAmount=20
+   PickupMessage="Kit medico"
+   bTrackPickup=True
+   BaseBrightEmissive=(R=2.000000,G=50.000000,B=10.000000,A=1.000000)
+   BaseDimEmissive=(R=0.200000,G=5.000000,B=1.000000,A=0.000000)
+   RespawnSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Respawn_Cue'
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTItemPickupFactory:PickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTItemPickupFactory:PickupLightEnvironment'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   PickupStatName="PICKUPS_HEALTH"
+   MaxDesireability=0.700000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTItemPickupFactory:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTItemPickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTItemPickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTItemPickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'UTGame.Default__UTItemPickupFactory:BaseMeshComp'
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTItemPickupFactory:BaseMeshComp'
+   End Object
+   Components(3)=BaseMeshComp
+   Begin Object Class=StaticMeshComponent Name=HealthPickUpMesh ObjName=HealthPickUpMesh Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      LightEnvironment=DynamicLightEnvironmentComponent'UTGame.Default__UTHealthPickupFactory:PickupLightEnvironment'
+      CullDistance=4500.000000
+      CachedCullDistance=4500.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      CollideActors=False
+      BlockActors=False
+      BlockRigidBody=False
+      Name="HealthPickUpMesh"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   Components(4)=HealthPickUpMesh
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTHealthPickupFactory"
+   ObjectArchetype=UTItemPickupFactory'UTGame.Default__UTItemPickupFactory'
 }

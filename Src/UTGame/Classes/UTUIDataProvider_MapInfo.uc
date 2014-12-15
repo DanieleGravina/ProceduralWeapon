@@ -1,27 +1,56 @@
 /**
  * Provides data for a UT3 map.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTUIDataProvider_MapInfo extends UDKUIDataProvider_MapInfo
+class UTUIDataProvider_MapInfo extends UTUIResourceDataProvider
+	native(UI)
 	PerObjectConfig;
 
-/** Script interface for determining whether or not this provider should be filtered */
-event bool ShouldBeFiltered()
-{
-	return super.ShouldBeFiltered() || !SupportedByCurrentGameMode();
-}
+/** Unique ID for maps. */
+var config int	  MapID;
+
+/** Actual map name to load */
+var config string MapName;
+
+/** String describing how many players the map is good for. */
+var config localized string NumPlayers;
+
+/** Friendly displayable name to the player. */
+var config localized string FriendlyName;
+
+/** Localized description of the map */
+var config localized string Description;
+
+/** Markup text used to display the preview image for the map. */
+var config string PreviewImageMarkup;
+
+/**
+ * Indicates whether this data provider corresponds to an epic map.  Set natively when the data provider
+ * is initialized.
+ */
+var	const private bool bOfficialMap;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/**
+ * @return	TRUE if this data provider corresponds to an epic map.
+ */
+native final function bool IsOfficialMap() const;
 
 /** @return Returns whether or not this provider is supported by the current game mode */
-function bool SupportedByCurrentGameMode()
+event bool SupportedByCurrentGameMode()
 {
 	local int Pos, i;
 	local string ThisMapPrefix, GameModePrefixes;
 	local array<string> PrefixList;
 	local bool bResult;
-	local UIDataStore_Registry Registry;
-
-	Registry = UIDataStore_Registry(class'UIRoot'.static.StaticResolveDataStore('Registry'));
 
 	bResult = true;
 
@@ -29,12 +58,7 @@ function bool SupportedByCurrentGameMode()
 	Pos = InStr(MapName,"-");
 	ThisMapPrefix = left(MapName,Pos);
 
-	// maps show up as DM if no prefix
-	if ( ThisMapPrefix == "" )
-	{
-		ThisMapPrefix = "DM";
-	}
-	if (Registry.GetData("SelectedGameModePrefix",GameModePrefixes) && GameModePrefixes != "")
+	if (GetDataStoreStringValue("<Registry:SelectedGameModePrefix>", GameModePrefixes) && GameModePrefixes != "")
 	{
 		bResult = false;
 		ParseStringIntoArray(GameModePrefixes, PrefixList, "|", true);
@@ -53,4 +77,7 @@ function bool SupportedByCurrentGameMode()
 
 defaultproperties
 {
+   bSearchAllInis=True
+   Name="Default__UTUIDataProvider_MapInfo"
+   ObjectArchetype=UTUIResourceDataProvider'UTGame.Default__UTUIResourceDataProvider'
 }

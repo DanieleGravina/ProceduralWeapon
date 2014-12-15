@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 //
 // CTF Messages
@@ -47,16 +47,25 @@ static function bool ShouldBeRemoved(UTQueuedAnnouncement MyAnnouncement, class<
 
 defaultproperties
 {
-	ReturnSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagReturned'
-	ReturnSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagReturned'
-	DroppedSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagDropped'
-	DroppedSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagDropped'
-	TakenSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagTaken'
-	TakenSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagTaken'
-
-	bIsUnique=True
-	FontSize=2
-	MessageArea=1
-	bBeep=false
-	DrawColor=(R=0,G=160,B=255,A=255)
+   ReturnBlue="ha riportato indietro la bandiera blu!"
+   ReturnRed="ha riportato indietro la bandiera rossa!"
+   ReturnedBlue="La bandiera blu è stata riportata indietro!"
+   ReturnedRed="La bandiera rossa è stata riportata indietro!"
+   CaptureBlue="bandiera blu catturata!"
+   CaptureRed="bandiera rossa catturata!"
+   DroppedBlue="bandiera blu lasciata!"
+   DroppedRed="bandiera rossa lasciata!"
+   HasBlue="ha preso la bandiera blu!"
+   HasRed="ha preso la bandiera rossa!"
+   KilledBlue="ha ucciso il portatore della bandiera blu!"
+   KilledRed="ha ucciso il portatore della bandiera rossa!"
+   ReturnSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagReturned'
+   ReturnSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagReturned'
+   DroppedSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagDropped'
+   DroppedSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagDropped'
+   TakenSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedFlagTaken'
+   TakenSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueFlagTaken'
+   FontSize=2
+   Name="Default__UTCTFMessage"
+   ObjectArchetype=UTCarriedObjectMessage'UTGame.Default__UTCarriedObjectMessage'
 }

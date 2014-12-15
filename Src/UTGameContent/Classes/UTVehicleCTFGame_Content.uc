@@ -1,28 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicleCTFGame_Content extends UTVehicleCTFGame;
 
-var class<UTVehicle> HoverboardClass;
-
-/* SetPlayerDefaults()
- * Give appropriate hoverboard class to UTPawns
-  */
-function SetPlayerDefaults(Pawn PlayerPawn)
-{
-	if ( UTPawn(PlayerPawn) != None )
-	{
-		UTPawn(PlayerPawn).HoverboardClass = HoverboardClass;
-	}
-	super.SetPlayerDefaults(PlayerPawn);
-}
-
 defaultproperties
 {
-	HUDType=class'UTGame.UTVehicleCTFHUD'
-
-	AnnouncerMessageClass=class'UTCTFMessage'
- 	TeamScoreMessageClass=class'UTGameContent.UTTeamScoreMessage'
-
-	HoverboardClass=class'UTVehicle_Hoverboard_Content'
+   AnnouncerMessageClass=Class'UTGameContent.UTCTFMessage'
+   TeamScoreMessageClass=Class'UTGameContent.UTTeamScoreMessage'
+   HUDType=Class'UTGame.UTVehicleCTFHUD'
+   Name="Default__UTVehicleCTFGame_Content"
+   ObjectArchetype=UTVehicleCTFGame'UTGame.Default__UTVehicleCTFGame'
 }

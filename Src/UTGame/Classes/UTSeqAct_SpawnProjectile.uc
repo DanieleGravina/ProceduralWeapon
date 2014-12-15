@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 /** spawns a projectile at a certain location that moves toward the given location with the given Instigator */
 class UTSeqAct_SpawnProjectile extends SequenceAction;
@@ -57,12 +57,13 @@ event Activated()
 	}
 }
 
-
 defaultproperties
 {
-	bCallHandler=false
-	ObjName="Spawn Projectile"
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Vector',LinkDesc="Spawn Location",MinVars=1,MaxVars=1)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Vector',LinkDesc="Target Location",MinVars=1,MaxVars=1)
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Object',LinkDesc="Instigator",MinVars=0,MaxVars=1)
+   bCallHandler=False
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Vector',LinkDesc="Spawn Location",MaxVars=1)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Vector',LinkDesc="Target Location",MinVars=1,MaxVars=1)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Instigator",MaxVars=1)
+   ObjName="Spawn Projectile"
+   Name="Default__UTSeqAct_SpawnProjectile"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

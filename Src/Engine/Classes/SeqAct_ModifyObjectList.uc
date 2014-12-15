@@ -15,62 +15,46 @@
  * Empty:  This will remove all objects in the List(s)
  *
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * @todo - this should be a conditional
  */
 class SeqAct_ModifyObjectList extends SeqAct_SetSequenceVariable
 	native(Sequence);
 
-cpptext
-{
-	/**
-	* When a ModifyObjectList is Activated() it may do a number of things.
-	* In each of those cases we make use of a helper function.
-	**/
-	void Activated();
-
-private:
-	void ActivatedAddRemove();
-	void ActivateAddRemove_Helper( INT LinkNum );
-
-public:
-	/**
-	* SeqAct_ModifyObjectList determines which of its outputs should be
-	* set to active
-	**/
-	void DeActivated();
-
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() editconst int ListEntriesCount;
 
 defaultproperties
 {
-
-	ObjName="Modify ObjectList"
-	ObjCategory="Object List"
-	ObjColor=(R=255,G=0,B=255,A=255)
-
-
-    // all of the inputs / functionality this Action can do
-	InputLinks(0)=(LinkDesc="Add To List")
-	InputLinks(1)=(LinkDesc="Remove From List")
-	InputLinks(2)=(LinkDesc="Empty List")
-
-	VariableLinks.Empty
-
-	// This is the set of of objects that are used in add, remove actions
-	// objects referenced by these kismet objects will be inserted into
-	// the list this Action points to
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="ObjectRef",MinVars=1)
-
-
-	// this is the LIST(S) object that we are going to do stuff too (i.e. add, remove, empty, call actions on all of the objects)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_ObjectList',LinkDesc="ObjectListVar",bWriteable=true)
-
-
-	// I guess we need to push out to a variable the number of spawns?
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Int',LinkDesc="ListEntriesCount",bWriteable=true,PropertyName=ListEntriesCount)
-
+   InputLinks(0)=(LinkDesc="Add To List")
+   InputLinks(1)=(LinkDesc="Remove From List")
+   InputLinks(2)=(LinkDesc="Empty List")
+   VariableLinks(0)=(LinkDesc="ObjectRef",PropertyName=)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_ObjectList',LinkDesc="ObjectListVar",bWriteable=True,MinVars=1,MaxVars=255)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="ListEntriesCount",PropertyName="ListEntriesCount",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjName="Modify ObjectList"
+   ObjCategory="Object List"
+   Name="Default__SeqAct_ModifyObjectList"
+   ObjectArchetype=SeqAct_SetSequenceVariable'Engine.Default__SeqAct_SetSequenceVariable'
 }

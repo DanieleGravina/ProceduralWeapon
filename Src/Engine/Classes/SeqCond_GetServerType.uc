@@ -1,25 +1,20 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqCond_GetServerType extends SequenceCondition
 	native(Sequence);
 
-cpptext
-{
-	virtual void Activated();
-}
-
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Server Type"
-
-	OutputLinks(0)=(LinkDesc="Standalone")
-	OutputLinks(1)=(LinkDesc="Dedicated Server")
-	OutputLinks(2)=(LinkDesc="Listen Server")
-	OutputLinks(3)=(LinkDesc="Client")
+   OutputLinks(0)=(LinkDesc="Standalone")
+   OutputLinks(1)=(LinkDesc="Dedicated Server")
+   OutputLinks(2)=(LinkDesc="Listen Server")
+   ObjName="Server Type"
+   Name="Default__SeqCond_GetServerType"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

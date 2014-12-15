@@ -1,19 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_ApplySoundNode extends SequenceAction
 	native(Sequence);
 
-cpptext
-{
-	virtual void Activated();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() SoundCue PlaySound;
 var() editinline SoundNode ApplyNode;
 
 defaultproperties
 {
-	ObjName="Apply Sound Node"
-	ObjCategory="Sound"
+   ObjName="Apply Sound Node"
+   ObjCategory="Sound"
+   Name="Default__SeqAct_ApplySoundNode"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

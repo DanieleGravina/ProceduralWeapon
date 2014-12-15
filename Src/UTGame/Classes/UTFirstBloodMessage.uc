@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTFirstBloodMessage extends UTLocalMessage;
 
@@ -15,9 +15,9 @@ static function string GetString(
 {
 	if (RelatedPRI_1 == None)
 		return "";
-	if (RelatedPRI_1.PlayerName == "")
+	if (RelatedPRI_1.GetPlayerAlias() == "")
 		return "";
-	return RelatedPRI_1.PlayerName@Default.FirstBloodString;
+	return RelatedPRI_1.GetPlayerAlias()@Default.FirstBloodString;
 }
 
 static simulated function ClientReceive(
@@ -44,9 +44,11 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	MessageArea=3
-	Fontsize=2
-	bBeep=False
-	DrawColor=(R=255,G=0,B=0)
-	AnnouncementPriority=9
+   FirstBloodString="ha ucciso per primo!"
+   MessageArea=3
+   AnnouncementPriority=9
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=2
+   Name="Default__UTFirstBloodMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

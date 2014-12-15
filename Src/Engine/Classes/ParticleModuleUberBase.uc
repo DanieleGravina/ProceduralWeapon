@@ -3,7 +3,7 @@
  *
  *	Base-class for 'uber' modules, which combine other modules together.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
 class ParticleModuleUberBase extends ParticleModule
@@ -22,23 +22,24 @@ var				const								array<name>				RequiredModules;
 //------------------------------------------------------------------------------------------------
 // C++ Text
 //------------------------------------------------------------------------------------------------
-cpptext
-{
-	/** This function will determine the proper uber-module to utilize.					*/
-	static	UParticleModule*	DetermineBestUberModule(UParticleEmitter* InputEmitter);
-
-	/** Used by derived classes to indicate they could be used on the given emitter.	*/
-	virtual	UBOOL				IsCompatible(UParticleEmitter* InputEmitter);
-	
-	/** Copy the contents of the modules to the UberModule								*/
-	virtual	UBOOL				ConvertToUberModule(UParticleEmitter* InputEmitter);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //------------------------------------------------------------------------------------------------
 // Default Properties
 //------------------------------------------------------------------------------------------------
+
 defaultproperties
 {
-	// Required modules
-	//RequiredModules
+   Name="Default__ParticleModuleUberBase"
+   ObjectArchetype=ParticleModule'Engine.Default__ParticleModule'
 }

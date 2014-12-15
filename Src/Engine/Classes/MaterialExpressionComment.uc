@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionComment extends MaterialExpression
 	native(Material);
@@ -10,22 +10,16 @@ var int		SizeX;
 var int		SizeY;
 var() string	Text;
 
-cpptext
-{
-	/**
-	 * Text description of this expression.
-	 */
-	virtual FString GetCaption() const;
-
-	/**
-	 * MatchesSearchQuery: Check this expression to see if it matches the search query
-	 * @param SearchQuery - User's search query (never blank)
-	 * @return TRUE if the expression matches the search query
-     */
-	virtual UBOOL MatchesSearchQuery( const TCHAR* SearchQuery );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Utility"
+   Name="Default__MaterialExpressionComment"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

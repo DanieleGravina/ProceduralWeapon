@@ -1,40 +1,31 @@
-/** 
- *  Dynamic static mesh actor intended to be used with Matinee replaces movers
- *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+/** dynamic static mesh actor intended to be used with Matinee
+ *	replaces movers
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpActor extends DynamicSMActor
 	native
-	ClassGroup(Common)
 	placeable;
 
-cpptext
-{
-	UBOOL ShouldTrace(UPrimitiveComponent* Primitive, AActor *SourceActor, DWORD TraceFlags);
-	virtual void TickSpecial(FLOAT DeltaSeconds);
-	virtual FLOAT GetNetPriority(const FVector& ViewPos, const FVector& ViewDir, APlayerController* Viewer, UActorChannel* InChannel, FLOAT Time, UBOOL bLowBandwidth);
-
-	/**
-	 * Function that gets called from within Map_Check to allow this actor to check itself
-	 * for any potential errors and register them with map check dialog.
-	 */
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Data relevant to checkpoint save/load, see CreateCheckpointRecord/ApplyCheckpointRecord below */
 struct CheckpointRecord
 {
     var vector Location;
     var rotator Rotation;
-    var ECollisionType CollisionType;
-    var bool bHidden;
     var bool bIsShutdown;
-    var bool bNeedsPositionReplication;
 };
-/** whether this should be saved in checkpoints */
-var bool bShouldSaveForCheckpoint;
 
 /** NavigationPoint associated with this actor for sending AI related notifications (could be a LiftCenter or DoorMarker) */
 var NavigationPoint MyMarker;
@@ -68,12 +59,6 @@ var() bool bContinueOnEncroachPhysicsObject;
 /** true by default, prevents mover from completing the movement that would leave it encroaching another actor */
 var() bool bStopOnEncroach;
 
-/**
- * This is used for having the Actor ShadowParent all of the components that are "SetBased" onto it.  This allows LDs to
- * take InterpActors in the level and then SetBase a ton of other meshes to them and not incur multiple shadow casters.
- **/
-var() bool bShouldShadowParentAllAttachedActors;
-
 /** If true, have a liftcenter associated with this interpactor, so it is being used as a lift */
 var bool bIsLift;
 
@@ -81,25 +66,13 @@ simulated event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 
-	if (bShouldShadowParentAllAttachedActors)
-	{
-		SetShadowParentOnAllAttachedComponents(StaticMeshComponent, LightEnvironment);
-	}
-
 	// create ambient sound component if needed
 	if (OpeningAmbientSound != None || ClosingAmbientSound != None)
 	{
 		AmbientSoundComponent = new(self) class'AudioComponent';
 		AttachComponent(AmbientSoundComponent);
 	}
-
-	// by default don't save InterpActors that are based on a skeletal mesh bone
-	if (Base != None && (bHardAttach || (BaseSkelComponent != None && BaseBoneName != 'None')))
-	{
-		bShouldSaveForCheckpoint = false;
-	}
 }
-
 
 event bool EncroachingOn(Actor Other)
 {
@@ -193,7 +166,6 @@ event RanInto( Actor Other )
 	else if ( bIsLift )
 	{
 		// no encroach event if have liftcenter based on me
-		// keeps lifts from returning when object/player based on them bounces/jumps and then runs into lift
 		return;
 	}
 	else
@@ -306,15 +278,12 @@ simulated function PlayMovingSound(bool bClosing)
 	}
 }
 
-simulated event InterpolationStarted(SeqAct_Interp InterpAction, InterpGroupInst GroupInst)
+simulated event InterpolationStarted(SeqAct_Interp InterpAction)
 {
 	ClearTimer('Restart');
 	ClearTimer('FinishedOpen');
 
 	PlayMovingSound(InterpAction.bReversePlayback);
-
-	// we need to save it if it's affected by a matinee
-	bShouldSaveForCheckpoint = true;
 }
 
 simulated event InterpolationFinished(SeqAct_Interp InterpAction)
@@ -340,7 +309,7 @@ simulated event InterpolationFinished(SeqAct_Interp InterpAction)
 		// we are done; if something is still attached, set timer to try restart
 		if (Attached.length > 0)
 		{
-			SetTimer( StayOpenTime, false, nameof(Restart) );
+			SetTimer(StayOpenTime, false, 'Restart');
 		}
 		if (DoorNav != None)
 		{
@@ -350,7 +319,7 @@ simulated event InterpolationFinished(SeqAct_Interp InterpAction)
 	else
 	{
 		// set timer to notify any mover events
-		SetTimer( StayOpenTime, false, nameof(FinishedOpen) );
+		SetTimer(StayOpenTime, false, 'FinishedOpen');
 
 		if (DoorNav != None)
 		{
@@ -384,133 +353,61 @@ simulated event InterpolationChanged(SeqAct_Interp InterpAction)
 	PlayMovingSound(InterpAction.bReversePlayback);
 }
 
-simulated function ShutDown()
-{
-	Super.ShutDown();
-
-	// safe to save regardless of other factors because it's going to be invisible/uncollidable on load
-	bShouldSaveForCheckpoint = true;
-}
-
-function bool ShouldSaveForCheckpoint()
-{
-	return bShouldSaveForCheckpoint || RemoteRole == ROLE_SimulatedProxy;
-}
-
 /** Called when this actor is being saved in a checkpoint, records pertinent information for restoration via ApplyCheckpointRecord. */
 function CreateCheckpointRecord(out CheckpointRecord Record)
 {
-	Record.Location = Location;
-	Record.Rotation = Rotation;
-	Record.bHidden = bHidden;
-	Record.CollisionType = ReplicatedCollisionType;
-	Record.bNeedsPositionReplication = (RemoteRole == ROLE_SimulatedProxy && bUpdateSimulatedPosition);
+    Record.Location = Location;
+    Record.Rotation = Rotation;
 	//@fixme - is there a more reliable way to detect this?  maybe add a bIsShutDown flag to actor?
-	Record.bIsShutdown = (Physics == PHYS_None && bHidden);
+    Record.bIsShutdown = Physics == PHYS_Interpolating && bHidden;
 }
 
 function ApplyCheckpointRecord(const out CheckpointRecord Record)
 {
-	local Actor OldBase;
-	local SkeletalMeshComponent OldBaseComp;
-	local name OldBaseBoneName;
-	local array<Actor> OldAttached;
-	local array<vector> OldLocations;
-	local int i;
-
-	if (Record.bIsShutdown)
-	{
-		ShutDown();
-	}
-	else
-	{
-		// store and recover the location of other checkpoint saved actors
-		// as they may have already been processed
-		// otherwise their post-checkpoint location will be based on our pre-checkpoint location
-		// which will put them out of position
-		OldAttached = Attached;
-		while (i < OldAttached.length)
-		{
-			// checkpoint code clears bJustTeleported, so checking it only gets actors teleported by checkpoint loading
-			if (OldAttached[i] != None && OldAttached[i].bJustTeleported)
-			{
-				OldLocations[i] = OldAttached[i].Location;
-				i++;
-			}
-			else
-			{
-				OldAttached.Remove(i, 1);
-			}
-		}
-		// SetLocation() will clear our base, so we need to restore it
-		OldBase = Base;
-		OldBaseComp = BaseSkelComponent;
-		OldBaseBoneName = BaseBoneName;
-		SetLocation(Record.Location);
-		SetRotation(Record.Rotation);
-		SetBase(OldBase,, OldBaseComp, OldBaseBoneName);
-		// restore attached actors
-		for (i = 0; i < OldAttached.length; i++)
-		{
-			if (OldAttached[i] != None)
-			{
-				OldAttached[i].SetLocation(OldLocations[i]);
-				OldAttached[i].SetBase(self);
-			}
-		}
-
-		if (Record.CollisionType != ReplicatedCollisionType)
-		{
-			SetCollisionType(Record.CollisionType);
-			ForceNetRelevant();
-		}
-		if (Record.bHidden != bHidden)
-		{
-			SetHidden(Record.bHidden);
-			SetForcedInitialReplicatedProperty(Property'Engine.Actor.bHidden', (bHidden == default.bHidden));
-			ForceNetRelevant();
-		}
-		if (Record.bNeedsPositionReplication)
-		{
-			bUpdateSimulatedPosition = true;
-			bReplicateMovement = true;
-			ForceNetRelevant();
-		}
-	}
-
-	bShouldSaveForCheckpoint = true;
+    if (Record.bIsShutdown)
+    {
+	ShutDown();
+    }
+    else
+    {
+	//@fixme - need to fixup latentactions so that interpactors saved mid-move can be properly restored
+	LatentActions.Length = 0;
+	SetHidden(FALSE);
+	bStasis = FALSE;
+	SetCollision(TRUE,TRUE,bIgnoreEncroachers);
+	SetLocation(Record.Location);
+	SetRotation(Record.Rotation);
+    }
 }
 
 defaultproperties
 {
-	bShouldShadowParentAllAttachedActors=TRUE
-
-	Begin Object Name=StaticMeshComponent0
-		WireframeColor=(R=255,G=0,B=255,A=255)
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-		RBCollideWithChannels=(Default=TRUE,BlockingVolume=TRUE)
-	End Object
-
-	bStatic=false
-	bWorldGeometry=false
-	Physics=PHYS_Interpolating
-
-	bNoDelete=true
-	bAlwaysRelevant=true
-	bSkipActorPropertyReplication=false
-	bUpdateSimulatedPosition=false
-	bOnlyDirtyReplication=true
-	RemoteRole=ROLE_None
-	NetPriority=2.7
-	NetUpdateFrequency=1.0
-	bDestroyProjectilesOnEncroach=true
-	bStopOnEncroach=true
-	bContinueOnEncroachPhysicsObject=TRUE
-	bCollideWhenPlacing=FALSE
-	bBlocksTeleport=true
-	bShouldSaveForCheckpoint=true
-
-	SupportedEvents.Add(class'SeqEvent_Mover')
+   bDestroyProjectilesOnEncroach=True
+   bContinueOnEncroachPhysicsObject=True
+   bStopOnEncroach=True
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0 ObjName=StaticMeshComponent0 Archetype=StaticMeshComponent'Engine.Default__DynamicSMActor:StaticMeshComponent0'
+      WireframeColor=(B=255,G=0,R=255,A=255)
+      RBCollideWithChannels=(Default=True)
+      ObjectArchetype=StaticMeshComponent'Engine.Default__DynamicSMActor:StaticMeshComponent0'
+   End Object
+   StaticMeshComponent=StaticMeshComponent0
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicSMActor:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicSMActor:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   Components(0)=MyLightEnvironment
+   Components(1)=StaticMeshComponent0
+   Physics=PHYS_Interpolating
+   RemoteRole=ROLE_None
+   bNoDelete=True
+   bAlwaysRelevant=True
+   bOnlyDirtyReplication=True
+   bBlocksTeleport=True
+   NetUpdateFrequency=1.000000
+   NetPriority=2.700000
+   CollisionComponent=StaticMeshComponent0
+   SupportedEvents(3)=Class'Engine.SeqEvent_Mover'
+   SupportedEvents(4)=Class'Engine.SeqEvent_TakeDamage'
+   Name="Default__InterpActor"
+   ObjectArchetype=DynamicSMActor'Engine.Default__DynamicSMActor'
 }
-

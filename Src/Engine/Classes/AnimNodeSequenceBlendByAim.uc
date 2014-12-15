@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNodeSequenceBlendByAim extends AnimNodeSequenceBlendBase
 	native(Anim)
@@ -8,8 +7,6 @@ class AnimNodeSequenceBlendByAim extends AnimNodeSequenceBlendBase
 
 /** Angle of aiming, between -1..+1 */
 var()	Vector2d	Aim;
-/** Keep track if aim changed to force an update of the node */
-var transient const	Vector2d PreviousAim;
 var()	Vector2d	HorizontalRange;
 var()	Vector2d	VerticalRange;
 
@@ -35,40 +32,35 @@ var()	Name	AnimName_RU;
 var()	Name	AnimName_RC;
 var()	Name	AnimName_RD;
 
-cpptext
-{
-	/** Override this function in a subclass, and return normalized Aim from Pawn. */
-	virtual FVector2D GetAim();
-
-	// AnimNode interface
-	virtual	void TickAnim(FLOAT DeltaSeconds);
-
-	// For slider support	
-	virtual INT GetNumSliders() const { return 1; }
-	virtual ESliderType GetSliderType(INT InIndex) const { return ST_2D; }
-	virtual FLOAT GetSliderPosition(INT SliderIndex, INT ValueIndex);
-	virtual void HandleSliderMove(INT SliderIndex, INT ValueIndex, FLOAT NewSliderValue);
-	virtual FString GetSliderDrawValue(INT SliderIndex);
-}
-
-/** 
- * Makes sure animations are updated.
- * If you're changing any of the AnimName_XX during game, call this function afterwards. 
- */
-native final function CheckAnimsUpToDate();
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	HorizontalRange=(X=-1,Y=+1)
-	VerticalRange=(X=-1,Y=+1)
-
-	Anims(0)=(Weight=1.0)
-	Anims(1)=()
-	Anims(2)=()
-	Anims(3)=()
-	Anims(4)=()
-	Anims(5)=()
-	Anims(6)=()
-	Anims(7)=()
-	Anims(8)=()
+   HorizontalRange=(X=-1.000000,Y=1.000000)
+   VerticalRange=(X=-1.000000,Y=1.000000)
+   Anims(2)=
+   Anims(3)=
+   Anims(4)=
+   Anims(5)=
+   Anims(6)=
+   Anims(7)=
+   Anims(8)=
+   Name="Default__AnimNodeSequenceBlendByAim"
+   ObjectArchetype=AnimNodeSequenceBlendBase'Engine.Default__AnimNodeSequenceBlendBase'
 }

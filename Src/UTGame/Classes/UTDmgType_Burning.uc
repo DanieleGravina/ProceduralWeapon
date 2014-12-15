@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -49,5 +49,7 @@ static function float GetHitEffectDuration(Pawn P, float Damage)
 
 defaultproperties
 {
-	GibTrail=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
+   GibTrail=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
+   Name="Default__UTDmgType_Burning"
+   ObjectArchetype=UTDamageType'UTGame.Default__UTDamageType'
 }

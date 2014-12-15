@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTVehicleCTFGame extends UTCTFGame
@@ -8,7 +8,7 @@ class UTVehicleCTFGame extends UTCTFGame
 // Returns whether a mutator should be allowed with this gametype
 static function bool AllowMutator( string MutatorClassName )
 {
-	if ( (MutatorClassName ~= "UTGame.UTMutator_WeaponsRespawn")
+	if ( (MutatorClassName ~= "UTGame.UTMutator_Instagib") || (MutatorClassName ~= "UTGame.UTMutator_WeaponsRespawn")
 		|| (MutatorClassName ~= "UTGame.UTMutator_LowGrav") )
 	{
 		return false;
@@ -18,12 +18,15 @@ static function bool AllowMutator( string MutatorClassName )
 
 defaultproperties
 {
-	MapPrefixes[0]="VCTF"
-	Acronym="VCTF"
-
-	bAllowHoverboard=true
-	bStartWithLockerWeaps=true
-
-	OnlineGameSettingsClass=class'UTGameSettingsVCTF'
-	bMidGameHasMap=true
+   bStartWithLockerWeaps=True
+   bAllowTranslocator=False
+   bAllowHoverboard=True
+   bMidGameHasMap=True
+   Acronym="VCTF"
+   Description="Cattura la Bandiera tradizionale, con veicoli e Hoverboard invece che con Teletrasportatori. La bandiera può essere trasportata in qualsiasi veicolo eccetto gli Hoverboard."
+   MapPrefixes(0)="VCTF"
+   GameName="Veicolo CLB"
+   OnlineGameSettingsClass=Class'UTGame.UTGameSettingsVCTF'
+   Name="Default__UTVehicleCTFGame"
+   ObjectArchetype=UTCTFGame'UTGame.Default__UTCTFGame'
 }

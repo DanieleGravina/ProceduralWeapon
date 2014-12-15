@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Extended version of console that only allows the quick console to be open if there are no UI scenes open, this is to allow UI scenes to process the TAB key.
  */
@@ -20,8 +20,12 @@ var int TextCount;
  */
 function bool InputKey( int ControllerId, name Key, EInputEvent Event, float AmountDepressed = 1.f, bool bGamepad = FALSE )
 {
+	local UTGameUISceneClient UTSceneClient;
+
 	// Don't allow console commands when in seamless travel.
-	if ( ConsoleTargetPlayer != None && ConsoleTargetPlayer.Actor.WorldInfo.IsInSeamlessTravel() )
+
+    UTSceneClient = UTGameUISceneClient(class'UIRoot'.static.GetSceneClient());
+	if ( UTSceneClient != none && UTSceneClient.IsInSeamlessTravel() )
 	{
 		return false;
 	}
@@ -39,9 +43,13 @@ function bool InputKey( int ControllerId, name Key, EInputEvent Event, float Amo
 		}
 		else if ( Key == TypeKey )
 		{
-			GotoState('Typing');
-			// this already gets set in Typing.BeginState, but no harm in being explicit
-			bCaptureKeyInput = true;
+			// Only show the quick console if there are no UI scenes open that are accepting input.
+			if( UTSceneClient==None || UTSceneClient.IsUIAcceptingInput() ==false )
+			{
+				GotoState('Typing');
+				// this already gets set in Typing.BeginState, but no harm in being explicit
+				bCaptureKeyInput = true;
+			}
 		}
 	}
 
@@ -66,4 +74,10 @@ function OutputTextLine(coerce string Text)
 {
 	TextCount++;
 	Super.OutputTextLine(text);
+}
+
+defaultproperties
+{
+   Name="Default__UTConsole"
+   ObjectArchetype=Console'Engine.Default__Console'
 }

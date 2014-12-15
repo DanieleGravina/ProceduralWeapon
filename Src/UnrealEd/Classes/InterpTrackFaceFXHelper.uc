@@ -1,14 +1,20 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class InterpTrackFaceFXHelper extends InterpTrackHelper
 	native;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual	UBOOL PreCreateKeyframe( UInterpTrack *Track, FLOAT KeyTime ) const;
-	virtual void  PostCreateKeyframe( UInterpTrack *Track, INT KeyIndex ) const;
+   Name="Default__InterpTrackFaceFXHelper"
+   ObjectArchetype=InterpTrackHelper'UnrealEd.Default__InterpTrackHelper'
 }

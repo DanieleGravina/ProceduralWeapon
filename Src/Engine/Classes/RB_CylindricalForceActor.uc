@@ -1,9 +1,5 @@
-/**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
- * DO NOT USE, try the NxForceField classes instead!
- */
-class RB_CylindricalForceActor extends RigidBodyBase
-	native(ForceField)
+class RB_CylindricalForceActor extends Actor
+	native(Physics)
 	placeable;
 
 /** Used to preview the radius of the force. */
@@ -39,6 +35,9 @@ var()	interp float	HeightOffset;
 /** Indicates whether the force is active at the moment. */
 var()	bool	bForceActive;
 
+/** Force field channel, used to identify which force field exclude volumes apply to this force field */
+var()	int		ForceFieldChannel;
+
 /** Apply force field to cloth */
 var()	bool	bForceApplyToCloth;
 
@@ -55,14 +54,12 @@ var()	bool	bForceApplyToProjectiles;
 /** Which types of object to apply this force field to */
 var()	const RBCollisionChannelContainer CollideWithChannels;
 
-cpptext
-{
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void TickSpecial(FLOAT DeltaSeconds);
-#if WITH_EDITOR
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -71,7 +68,7 @@ replication
 }
 
 /** Handling Toggle event from Kismet. */
-simulated function OnToggle(SeqAct_Toggle inAction)
+simulated function onToggle(SeqAct_Toggle inAction)
 {
 	if(inAction.InputLinks[0].bHasImpulse)
 	{
@@ -91,56 +88,39 @@ simulated function OnToggle(SeqAct_Toggle inAction)
 
 defaultproperties
 {
-	Begin Object Class=DrawCylinderComponent Name=DrawCylinder0
-		CylinderRadius=200.0
-		CylinderTopRadius=200.0
-		CylinderHeight=200.0
-		bDrawOnlyIfSelected=True
-	End Object
-
-	RenderComponent=DrawCylinder0
-	Components.Add(DrawCylinder0)
-
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_RadForce'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Physics"
-	End Object
-	Components.Add(Sprite)
-
-	TickGroup=TG_PreAsyncWork
-
-	ForceRadius=200.0
-	ForceTopRadius=200.0
-	ForceHeight=200.0
-	LiftFalloffHeight=0.0
-	EscapeVelocity=10000.0
-
-	RemoteRole=ROLE_SimulatedProxy
-	bNoDelete=true
-	bAlwaysRelevant=true
-	NetUpdateFrequency=0.1
-	bOnlyDirtyReplication=true
-	
-	bForceApplyToCloth=True
-	bForceApplyToFluid=True
-	bForceApplyToRigidBodies=True
-	bForceApplyToProjectiles=False
-	
-	CollideWithChannels={( 
-                Default=True,
-                Pawn=True,
-                Vehicle=True,
-                Water=True,
-                GameplayPhysics=True,
-                EffectPhysics=True,
-                Untitled1=True,
-                Untitled2=True,
-                Untitled3=True,
-                FluidDrain=True,
-                Cloth=True
-                )}
-	
+   Begin Object Class=DrawCylinderComponent Name=DrawCylinder0 ObjName=DrawCylinder0 Archetype=DrawCylinderComponent'Engine.Default__DrawCylinderComponent'
+      CylinderRadius=200.000000
+      CylinderTopRadius=200.000000
+      CylinderHeight=200.000000
+      Name="DrawCylinder0"
+      ObjectArchetype=DrawCylinderComponent'Engine.Default__DrawCylinderComponent'
+   End Object
+   RenderComponent=DrawCylinder0
+   EscapeVelocity=10000.000000
+   ForceRadius=200.000000
+   ForceTopRadius=200.000000
+   ForceHeight=200.000000
+   bForceApplyToCloth=True
+   bForceApplyToFluid=True
+   bForceApplyToRigidBodies=True
+   ForceFieldChannel=1
+   CollideWithChannels=(Default=True,Pawn=True,Vehicle=True,Water=True,GameplayPhysics=True,EffectPhysics=True,Untitled1=True,Untitled2=True,Untitled3=True,Cloth=True,FluidDrain=True)
+   Components(0)=DrawCylinder0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_RadForce'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(1)=Sprite
+   RemoteRole=ROLE_SimulatedProxy
+   bNoDelete=True
+   bAlwaysRelevant=True
+   bOnlyDirtyReplication=True
+   NetUpdateFrequency=0.100000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__RB_CylindricalForceActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

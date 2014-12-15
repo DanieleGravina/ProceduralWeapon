@@ -1,27 +1,27 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqVar_RandomFloat extends SeqVar_Float
 	native(Sequence);
 
-cpptext
-{
-	virtual FLOAT* GetRef()
-	{
-		FloatValue = Min + appFrand() * (Max - Min);
-		return &FloatValue;
-	}
-
-	virtual FString GetValueStr()
-	{
-		return FString::Printf(TEXT("%2.2f..%2.2f"),Min,Max);
-	}
-
-	virtual UBOOL SupportsProperty(UProperty *Property)
-	{
-		return FALSE;
-	}
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Min value for randomness */
 var() float Min;
@@ -31,9 +31,8 @@ var() float Max;
 
 defaultproperties
 {
-	ObjName="Random Float"
-	ObjCategory="Float"
-
-	Min=0.f
-	Max=1.f
+   Max=1.000000
+   ObjName="Random Float"
+   Name="Default__SeqVar_RandomFloat"
+   ObjectArchetype=SeqVar_Float'Engine.Default__SeqVar_Float'
 }

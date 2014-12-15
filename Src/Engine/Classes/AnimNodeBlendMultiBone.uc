@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -52,17 +52,24 @@ var() array<ChildBoneBlendInfo>	BlendTargetList;
 var	transient array<byte>		SourceRequiredBones;
 
 
-cpptext
-{
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// AnimNode interface
-	virtual void InitAnim( USkeletalMeshComponent* meshComp, UAnimNodeBlendBase* Parent );
-	virtual void GetBoneAtoms(FBoneAtomArray& Atoms, const TArray<BYTE>& DesiredBones, FBoneAtom& RootMotionDelta, INT& bHasRootMotion, FCurveKeyArray& CurveKeys);
-
-	/** Utility for creating the TargetPerBoneWeight array. Starting from the named bone, walk down the heirarchy increasing the weight by PerBoneIncrease each step. */
-	virtual void SetTargetStartBone( INT TargetIdx, FName StartBoneName, FLOAT PerBoneIncrease = 1.f );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Updating the StartBoneName or PerBoneIncrease, will cause the TargetPerBoneWeight to be automatically re-updated, you'll loose custom values! */
 //@todo - support opt. params
@@ -70,8 +77,8 @@ native noexport final function SetTargetStartBone( int TargetIdx, name StartBone
 
 defaultproperties
 {
-	Children(0)=(Name="Source",Weight=1.0)
-	Children(1)=(Name="Target")
-
-	CategoryDesc = "Filter"
+   Children(0)=(Name="Source",Weight=1.000000)
+   Children(1)=(Name="Target")
+   Name="Default__AnimNodeBlendMultiBone"
+   ObjectArchetype=AnimNodeBlendBase'Engine.Default__AnimNodeBlendBase'
 }

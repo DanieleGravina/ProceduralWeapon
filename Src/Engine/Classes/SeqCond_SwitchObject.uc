@@ -1,43 +1,43 @@
 /**
  * Base class for all switch condition ops which use an object value for branching.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved
  */
 class SeqCond_SwitchObject extends SeqCond_SwitchBase
 	native(inherit);
 
-cpptext
-{
-	/* === USeqCond_SwitchBase interface === */
-	/**
-	 * Returns the index of the OutputLink to activate for the specified object.
-	 *
-	 * @param	out_LinksToActivate
-	 *						the indexes [into the OutputLinks array] for the most appropriate OutputLinks to activate
-	 *						for the specified object, or INDEX_NONE if none are found.  Should only contain 0 or 1 elements
-	 *						unless one of the matching cases is configured to fall through.
-	 *
-	 * @return	TRUE if at least one match was found, FALSE otherwise.
-	 */
-	virtual UBOOL GetOutputLinksToActivate( TArray<INT>& out_LinksToActivate );
-
-	/**
-	 * Returns the index [into the switch op's array of values] that corresponds to the specified OutputLink.
-	 *
-	 * @param	OutputLinkIndex		index into [into the OutputLinks array] to find the corresponding value index for
-	 *
-	 * @return	INDEX_NONE if no value was found which matches the specified output link.
-	 */
-	virtual INT FindCaseValueIndex( INT OutputLinkIndex ) const;
-
-	/** Returns the number of elements in this switch op's array of values. */
-	virtual INT GetSupportedValueCount() const;
-
-	/**
-	 * Returns a string representation of the value at the specified index.  Used to populate the LinkDesc for the OutputLinks array.
-	 */
-	virtual FString GetCaseValueString( INT ValueIndex ) const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Stores class name to compare for each output link and whether it should fall through to next node */
 struct native SwitchObjectCase
@@ -56,6 +56,13 @@ struct native SwitchObjectCase
  * Stores the list of values which are handled by this switch object.
  */
 var() array<SwitchObjectCase>	SupportedValues;
+
+/**
+ * Limits which types of objects can be used by this switch op.
+ *
+ * @fixme ronp - not yet implemented!
+ */
+var() class						MetaClass;
 
 /* === Events === */
 /**
@@ -109,10 +116,12 @@ event RemoveValueEntry( int RemoveIndex )
 	}
 }
 
-DefaultProperties
+defaultproperties
 {
-	SupportedValues(0)=(bDefaultValue=true)
-
-	ObjName="Switch Object"
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Object")
+   SupportedValues(0)=(bDefaultValue=True)
+   MetaClass=Class'Core.Object'
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Object",MinVars=1,MaxVars=255)
+   ObjName="Switch Object"
+   Name="Default__SeqCond_SwitchObject"
+   ObjectArchetype=SeqCond_SwitchBase'Engine.Default__SeqCond_SwitchBase'
 }

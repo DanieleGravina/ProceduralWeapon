@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // UTTeamInfo.
@@ -7,23 +7,31 @@
 //
 //=============================================================================
 
-class UTTeamInfo extends TeamInfo;
+class UTTeamInfo extends TeamInfo
+	native;
 
 var int DesiredTeamSize;
 var UTTeamAI AI;
-
+var string TeamSymbolName;
+var RepNotify Material TeamIcon;
 var UTGameObjective HomeBase;			// key objective associated with this team
 var UTCarriedObject TeamFlag;
 /** only bot characters in this faction will be used */
 var string Faction;
 
 var color BaseTeamColor[4];
+var color TextColor[4];
 var localized string TeamColorNames[4];
 
 replication
 {
+	// Variables the server should send to the client.
+	if (bNetInitial)
+		TeamIcon;
+
 	if (bNetDirty)
 		HomeBase, TeamFlag;
+
 }
 
 simulated function string GetHumanReadableName()
@@ -40,6 +48,11 @@ simulated function string GetHumanReadableName()
 simulated function color GetHUDColor()
 {
 	return BaseTeamColor[TeamIndex];
+}
+
+simulated function color GetTextColor()
+{
+	return TextColor[TeamIndex];
 }
 
 /* Reset()
@@ -101,8 +114,30 @@ function bool BotNameTaken(string BotName)
 		{
 			return true;
 		}
+
+		// Since players might not have the same name in game as the character,
+		// we need to check the references.
+		if (PRI.SinglePlayerCharacterIndex != INDEX_NONE)
+		{
+			if ( BotName == GRI.SinglePlayerBotNames[PRI.SinglePlayerCharacterIndex])
+			{
+				return true;
+			}
+		}
 	}
 	return false;
+}
+
+function bool FamilyIsMale(string FamilyID)
+{
+	if(FamilyID == "IRNF" || FamilyID == "TWIF" || FamilyID == "NECF")
+	{
+		return FALSE;
+	}
+	else
+	{
+		return TRUE;
+	}
 }
 
 function GetAvailableBotList(out array<int> AvailableBots, optional string FactionFilter, optional bool bMalesOnly)
@@ -110,16 +145,17 @@ function GetAvailableBotList(out array<int> AvailableBots, optional string Facti
 	local int i;
 
 	AvailableBots.length = 0;
-	for (i=0;i<class'UTCharInfo'.default.Characters.length;i++)
+	for (i=0;i<class'UTCustomChar_Data'.default.Characters.length;i++)
 	{
-		if(	(FactionFilter == "" || class'UTCharInfo'.default.Characters[i].Faction ~= FactionFilter) &&
-			!bMalesOnly &&
-			!BotNameTaken(class'UTCharInfo'.default.Characters[i].CharName) )
+		if(	(FactionFilter == "" || class'UTCustomChar_Data'.default.Characters[i].Faction ~= FactionFilter) &&
+			(!bMalesOnly || FamilyIsMale(class'UTCustomChar_Data'.default.Characters[i].CharData.FamilyID)) &&
+			!BotNameTaken(class'UTCustomChar_Data'.default.Characters[i].CharName) )
 		{
 			AvailableBots[AvailableBots.Length] = i;
 		}
 	}
 }
+
 
 /** retrieves bot info, for the named bot if a valid name is specified, otherwise from a random bot */
 function CharacterInfo GetBotInfo(string BotName)
@@ -131,7 +167,7 @@ function CharacterInfo GetBotInfo(string BotName)
 	// Only allow male chars once game is in progress..
 	bMalesOnly = WorldInfo.Game.IsInState('MatchInProgress');
 
-	Index = class'UTCharInfo'.default.Characters.Find('CharName', BotName);
+	Index = class'UTCustomChar_Data'.default.Characters.Find('CharName', BotName);
 	if (Index == INDEX_NONE)
 	{
 		// First attempt to add a bot from the Faction
@@ -167,11 +203,11 @@ function CharacterInfo GetBotInfo(string BotName)
 		// At this point, if we haven't found a bot, just take any bot
 		if ( Index == INDEX_None )
 		{
-			Index = Rand(class'UTCharInfo'.default.Characters.length);
+			Index = Rand(class'UTCustomChar_Data'.default.Characters.length);
 		}
 	}
 
-	return class'UTCharInfo'.default.Characters[Index];
+	return class'UTCustomChar_Data'.default.Characters[Index];
 }
 
 simulated event Destroyed()
@@ -186,10 +222,19 @@ simulated event Destroyed()
 
 defaultproperties
 {
-	DesiredTeamSize=8
-	BaseTeamColor(0)=(r=255,g=64,b=64,a=255)
-	BaseTeamColor(1)=(r=64,g=64,b=255,a=255)
-	BaseTeamColor(2)=(r=65,g=255,b=64,a=255)
-	BaseTeamColor(3)=(r=255,g=255,b=0,a=255)
+   DesiredTeamSize=8
+   BaseTeamColor(0)=(B=64,G=64,R=255,A=255)
+   BaseTeamColor(1)=(B=255,G=64,R=64,A=255)
+   BaseTeamColor(2)=(B=64,G=255,R=65,A=255)
+   BaseTeamColor(3)=(B=0,G=255,R=255,A=255)
+   TextColor(0)=(B=96,G=96,R=255,A=255)
+   TextColor(1)=(B=255,G=128,R=128,A=255)
+   TextColor(2)=(B=96,G=255,R=96,A=255)
+   TextColor(3)=(B=96,G=255,R=255,A=255)
+   TeamColorNames(0)="Rosso"
+   TeamColorNames(1)="Blu"
+   TeamColorNames(2)="Verde"
+   TeamColorNames(3)="Oro"
+   Name="Default__UTTeamInfo"
+   ObjectArchetype=TeamInfo'Engine.Default__TeamInfo'
 }
-

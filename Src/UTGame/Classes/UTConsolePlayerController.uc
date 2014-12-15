@@ -1,9 +1,10 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTConsolePlayerController extends UTPlayerController
-	config(Game);
+	config(Game)
+	native;
 
 /** Whether TargetAdhesion is enabled or not **/
 var() config bool bTargetAdhesionEnabled;
@@ -21,6 +22,24 @@ struct native ProfileSettingToUE3BindingDatum
 var array<ProfileSettingToUE3BindingDatum> ProfileSettingToUE3BindingMapping360;
 var array<ProfileSettingToUE3BindingDatum> ProfileSettingToUE3BindingMappingPS3;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+
+/**
+ * This will find the best AdhesionFriction target based on the params passed in.
+ **/
+native function Pawn GetTargetAdhesionFrictionTarget( FLOAT MaxDistance, const out vector CamLoc, const out Rotator CamRot ) const;
+
 /**
  * We need to override this function so we can do our adhesion code.
  *
@@ -32,10 +51,7 @@ function UpdateRotation( float DeltaTime )
 	local Rotator	DeltaRot, NewRotation, ViewRotation;
 
 	ViewRotation	= Rotation;
-	if (Pawn!=none)
-	{
-		Pawn.SetDesiredRotation(ViewRotation); //save old rotation
-	}
+	DesiredRotation = ViewRotation; //save old rotation
 
 	// Calculate Delta to be applied on ViewRotation
 	DeltaRot.Yaw	= PlayerInput.aTurn;
@@ -93,7 +109,7 @@ simulated function bool PerformedUseAction()
 	}
 	else if ( (Role == ROLE_Authority) && !bJustFoundVehicle )
 	{
-		// console smart use - bring out hoverboard if no other use possible
+		// console smart use - bring out translocator or hoverboard if no other use possible
 		ClientSmartUse();
 		return true;
 	}
@@ -105,27 +121,13 @@ unreliable client function ClientSmartUse()
 	ToggleTranslocator();
 }
 
-reliable client function ClientRestart(Pawn NewPawn)
-{
-	Super.ClientRestart(NewPawn);
-
-	// we never want the tilt thing on when using UTPawns
-
-	if (UTPawn(NewPawn) != None)
-	{
-		SetOnlyUseControllerTiltInput(false);
-		SetUseTiltForwardAndBack(true);
-		SetControllerTiltActive(false);
-	}
-}
-
 exec function PrevWeapon()
 {
 	if (Pawn == None || Vehicle(Pawn) != None)
 	{
-		if ( UDKVehicleBase(Pawn) != None )
+		if ( UTVehicleBase(Pawn) != None )
 		{
-			UDKVehicleBase(Pawn).AdjacentSeat(-1, self);
+			UTVehicleBase(Pawn).AdjacentSeat(-1, self);
 		}
 	}
 	else if (!Pawn.IsInState('FeigningDeath'))
@@ -138,9 +140,9 @@ exec function NextWeapon()
 {
 	if (Pawn == None || Vehicle(Pawn) != None)
 	{
-		if ( UDKVehicleBase(Pawn) != None )
+		if ( UTVehicleBase(Pawn) != None )
 		{
-			UDKVehicleBase(Pawn).AdjacentSeat(1, self);
+			UTVehicleBase(Pawn).AdjacentSeat(1, self);
 		}
 	}
 	else if (!Pawn.IsInState('FeigningDeath'))
@@ -162,6 +164,150 @@ function ResetPlayerMovementInput()
 	}
 }
 
+/** Gathers player settings from the client's profile. */
+function LoadSettingsFromProfile(bool bLoadCharacter)
+{
+	local int OutIntValue;
+	local UTProfileSettings Profile;
+	local UTConsolePlayerInput ConsolePlayerInput;
+	local int BindingIdx;
+
+	// If we are NOT epic internal, then do not set any settings.
+	if(IsEpicInternal()==false)
+	{
+		LogInternal("UTConsolePlayerController::LoadSettingsFromProfile() - Not an Epic internal build, skipping setting profile settings.");
+		return;
+	}
+
+	Profile = UTProfileSettings(OnlinePlayerData.ProfileProvider.Profile);
+	ConsolePlayerInput = UTConsolePlayerInput(PlayerInput);
+
+	// AutoCenterPitch
+	if(Profile.GetProfileSettingValueIdByName('AutoCenterPitch', OutIntValue))
+	{
+		ConsolePlayerInput.bAutoCenterPitch = (OutIntValue == UTPID_VALUE_YES);
+	}
+
+	// AutoCenterVehiclePitch
+	if(Profile.GetProfileSettingValueIdByName('AutoCenterVehiclePitch', OutIntValue))
+	{
+		ConsolePlayerInput.bAutoCenterVehiclePitch = (OutIntValue == UTPID_VALUE_YES);
+	}
+
+	// TiltSensing
+	if(Profile.GetProfileSettingValueIdByName('TiltSensing', OutIntValue))
+	{
+		ConsolePlayerInput.SetControllerTiltDesiredIfAvailable(OutIntValue == UTPID_VALUE_YES);
+	}
+
+
+	// ControllerSensitivityMultiplier
+	if(Profile.GetProfileSettingValueIntByName('ControllerSensitivityMultiplier', OutIntValue))
+	{
+		ConsolePlayerInput.SensitivityMultiplier = float(OutIntValue) / 10.0f;
+	}
+
+	// TurningAccelerationFactor
+	if(Profile.GetProfileSettingValueIntByName('TurningAccelerationFactor', OutIntValue))
+	{
+		// 1 is .25  ....
+		// 2 is .5  ????
+		// 4 is our default value for speed so we want it to be a 1.0 multiplier
+		// 8 is 2.0
+		// 10 is 2.5!!!
+		//`log( "OutIntValue: " $ OutIntValue );
+		ConsolePlayerInput.TurningAccelerationMultiplier = float(OutIntValue) / 5.333f;    // .75
+		//`log( "ConsolePlayerInput.TurningAccelerationMultiplier: " $ ConsolePlayerInput.TurningAccelerationMultiplier );
+	}
+
+	if ( class'UIRoot'.static.IsConsole(CONSOLE_PS3) )
+	{
+		// @todo amitt update this to work with version 2 of the controller UI mapping system
+		for( BindingIdx = ProfileSettingToUE3BindingMappingPS3.length-1; BindingIdx >= 0; BindingIdx-- )
+		{
+			//`log( "RetrieveSettingsFromProfile: " $ ProfileSettingToUE3BindingMappingPS3[BindingIdx].ProfileSettingName );
+
+			if( Profile.GetProfileSettingValueIdByName( ProfileSettingToUE3BindingMappingPS3[BindingIdx].ProfileSettingName, OutIntValue) )
+			{
+				//`log( "  RetrieveSettingsFromProfile: FOUND: " $ ProfileSettingToUE3BindingMappingPS3[BindingIdx].ProfileSettingName );
+				UpdateControllerSettings_Worker( ProfileSettingToUE3BindingMappingPS3[BindingIdx].UE3BindingName, class'UTProfileSettings'.default.DigitalButtonActionsToCommandMapping[OutIntValue] );
+			}
+		}
+	}
+	// default to 360
+	else
+	{
+		// @todo amitt update this to work with version 2 of the controller UI mapping system
+		for( BindingIdx = ProfileSettingToUE3BindingMapping360.length-1; BindingIdx >= 0; BindingIdx-- )
+		{
+			//`log( "RetrieveSettingsFromProfile: " $ ProfileSettingToUE3BindingMapping360[BindingIdx].ProfileSettingName );
+
+			if( Profile.GetProfileSettingValueIdByName( ProfileSettingToUE3BindingMapping360[BindingIdx].ProfileSettingName, OutIntValue) )
+			{
+				//`log( "  RetrieveSettingsFromProfile: FOUND: " $ ProfileSettingToUE3BindingMapping360[BindingIdx].ProfileSettingName );
+				UpdateControllerSettings_Worker( ProfileSettingToUE3BindingMapping360[BindingIdx].UE3BindingName, class'UTProfileSettings'.default.DigitalButtonActionsToCommandMapping[OutIntValue] );
+			}
+		}
+	}
+
+
+
+	// Handle stick mappings.
+	if(Profile.GetProfileSettingValueId(class'UTProfileSettings'.const.UTPID_GamepadBinding_AnalogStickPreset, OutIntValue))
+	{
+		LogInternal("Setting Stick configuration: "$EAnalogStickActions(OutIntValue));
+
+		switch(EAnalogStickActions(OutIntValue))
+		{
+		case ESA_Legacy:
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftX', "GBA_TurnLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftY', "GBA_MoveForward_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightX', "GBA_StrafeLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightY', "GBA_Look_Gamepad" );
+			break;
+		case ESA_SouthPaw:
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftX', "GBA_TurnLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftY', "GBA_Look_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightX', "GBA_StrafeLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightY', "GBA_MoveForward_Gamepad" );
+			break;
+		case ESA_LegacySouthPaw:
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftX', "GBA_StrafeLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftY', "GBA_Look_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightX', "GBA_TurnLeft_Gamepad" );
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightY', "GBA_MoveForward_Gamepad" );
+			break;
+		case ESA_Normal: default:
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftX', "GBA_StrafeLeft_Gamepad" ); // Axis aStrafe Speed=1.0 DeadZone=0.3
+			UpdateControllerSettings_Worker( 'XboxTypeS_LeftY', "GBA_MoveForward_Gamepad" ); //  Axis aBaseY Speed=1.0 DeadZone=0.3
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightX', "GBA_TurnLeft_Gamepad" ); // Axis aTurn Speed=1.0 DeadZone=0.3
+			UpdateControllerSettings_Worker( 'XboxTypeS_RightY', "GBA_Look_Gamepad" ); //  Axis aLookup Speed=0.65 DeadZone=0.3
+			break;
+		}
+	}
+
+	// make sure to call the super version after, since it updates the current pawn as well.
+	Super.LoadSettingsFromProfile(bLoadCharacter);
+}
+
+
+private function UpdateControllerSettings_Worker( name TheName, string TheCommand )
+{
+	PlayerInput.SetBind(TheName, TheCommand);
+}
+
+
+/** @returns whether the controller is active **/
+native simulated function bool IsControllerTiltActive() const;
+
+native simulated function SetControllerTiltDesiredIfAvailable( bool bActive );
+
+native simulated function SetControllerTiltActive( bool bActive );
+
+native simulated function SetOnlyUseControllerTiltInput( bool bActive );
+
+native simulated function SetUseTiltForwardAndBack( bool bActive );
+
 // Player movement.
 // Player Standing, walking, running, falling.
 state PlayerWalking
@@ -173,6 +319,10 @@ state PlayerWalking
 	  */
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
 	{
+		if ( !bEnableDodging )
+		{
+			DoubleClickMove = DCLICK_None;
+		}
 		if ( (DoubleClickMove == DCLICK_Active) && (Pawn.Physics == PHYS_Falling) )
 			DoubleClickDir = DCLICK_Active;
 		else if ( (DoubleClickMove != DCLICK_None) && (DoubleClickMove < DCLICK_Active) )
@@ -194,53 +344,51 @@ state PlayerWalking
 
 defaultproperties
 {
-	InputClass=class'UTGame.UTConsolePlayerInput'
-	VehicleCheckRadiusScaling=1.5
-
-	// @todo amitt update this to work with version 2 of the controller UI mapping system
-	ProfileSettingToUE3BindingMapping360(0)=(ProfileSettingName="GamepadBinding_ButtonA",UE3BindingName="XboxTypeS_A")
-	ProfileSettingToUE3BindingMapping360(1)=(ProfileSettingName="GamepadBinding_ButtonB",UE3BindingName="XboxTypeS_B")
-	ProfileSettingToUE3BindingMapping360(2)=(ProfileSettingName="GamepadBinding_ButtonX",UE3BindingName="XboxTypeS_X")
-	ProfileSettingToUE3BindingMapping360(3)=(ProfileSettingName="GamepadBinding_ButtonY",UE3BindingName="XboxTypeS_Y")
-	ProfileSettingToUE3BindingMapping360(4)=(ProfileSettingName="GamepadBinding_Back",UE3BindingName="XboxTypeS_Back")
-	ProfileSettingToUE3BindingMapping360(5)=(ProfileSettingName="GamepadBinding_Start",UE3BindingName="XboxTypeS_Start")
-
-	ProfileSettingToUE3BindingMapping360(6)=(ProfileSettingName="GamepadBinding_RightBumper",UE3BindingName="XboxTypeS_RightTrigger")
-	ProfileSettingToUE3BindingMapping360(7)=(ProfileSettingName="GamepadBinding_LeftBumper",UE3BindingName="XboxTypeS_LeftTrigger")
-
-	ProfileSettingToUE3BindingMapping360(8)=(ProfileSettingName="GamepadBinding_RightTrigger",UE3BindingName="XboxTypeS_RightShoulder")
-	ProfileSettingToUE3BindingMapping360(9)=(ProfileSettingName="GamepadBinding_LeftTrigger",UE3BindingName="XboxTypeS_LeftShoulder")
-
-	ProfileSettingToUE3BindingMapping360(10)=(ProfileSettingName="GamepadBinding_RightThumbstickPressed",UE3BindingName="XboxTypeS_RightThumbstick")
-	ProfileSettingToUE3BindingMapping360(11)=(ProfileSettingName="GamepadBinding_LeftThumbstickPressed",UE3BindingName="XboxTypeS_LeftThumbstick")
-	ProfileSettingToUE3BindingMapping360(12)=(ProfileSettingName="GamepadBinding_DPadUp",UE3BindingName="XboxTypeS_DPad_Up")
-	ProfileSettingToUE3BindingMapping360(13)=(ProfileSettingName="GamepadBinding_DPadDown",UE3BindingName="XboxTypeS_DPad_Down")
-	ProfileSettingToUE3BindingMapping360(14)=(ProfileSettingName="GamepadBinding_DPadLeft",UE3BindingName="XboxTypeS_DPad_Left")
-	ProfileSettingToUE3BindingMapping360(15)=(ProfileSettingName="GamepadBinding_DPadRight",UE3BindingName="XboxTypeS_DPad_Right")
-
-
-	ProfileSettingToUE3BindingMappingPS3(0)=(ProfileSettingName="GamepadBinding_ButtonA",UE3BindingName="XboxTypeS_A")
-	ProfileSettingToUE3BindingMappingPS3(1)=(ProfileSettingName="GamepadBinding_ButtonB",UE3BindingName="XboxTypeS_B")
-	ProfileSettingToUE3BindingMappingPS3(2)=(ProfileSettingName="GamepadBinding_ButtonX",UE3BindingName="XboxTypeS_X")
-	ProfileSettingToUE3BindingMappingPS3(3)=(ProfileSettingName="GamepadBinding_ButtonY",UE3BindingName="XboxTypeS_Y")
-	ProfileSettingToUE3BindingMappingPS3(4)=(ProfileSettingName="GamepadBinding_Back",UE3BindingName="XboxTypeS_Back")
-	ProfileSettingToUE3BindingMappingPS3(5)=(ProfileSettingName="GamepadBinding_Start",UE3BindingName="XboxTypeS_Start")
-
-
-	ProfileSettingToUE3BindingMappingPS3(6)=(ProfileSettingName="GamepadBinding_RightBumper",UE3BindingName="XboxTypeS_RightShoulder")
-	ProfileSettingToUE3BindingMappingPS3(7)=(ProfileSettingName="GamepadBinding_LeftBumper",UE3BindingName="XboxTypeS_LeftShoulder")
-	ProfileSettingToUE3BindingMappingPS3(8)=(ProfileSettingName="GamepadBinding_RightTrigger",UE3BindingName="XboxTypeS_RightTrigger")
-	ProfileSettingToUE3BindingMappingPS3(9)=(ProfileSettingName="GamepadBinding_LeftTrigger",UE3BindingName="XboxTypeS_LeftTrigger")
-
-	ProfileSettingToUE3BindingMappingPS3(10)=(ProfileSettingName="GamepadBinding_RightThumbstickPressed",UE3BindingName="XboxTypeS_RightThumbstick")
-	ProfileSettingToUE3BindingMappingPS3(11)=(ProfileSettingName="GamepadBinding_LeftThumbstickPressed",UE3BindingName="XboxTypeS_LeftThumbstick")
-	ProfileSettingToUE3BindingMappingPS3(12)=(ProfileSettingName="GamepadBinding_DPadUp",UE3BindingName="XboxTypeS_DPad_Up")
-	ProfileSettingToUE3BindingMappingPS3(13)=(ProfileSettingName="GamepadBinding_DPadDown",UE3BindingName="XboxTypeS_DPad_Down")
-	ProfileSettingToUE3BindingMappingPS3(14)=(ProfileSettingName="GamepadBinding_DPadLeft",UE3BindingName="XboxTypeS_DPad_Left")
-	ProfileSettingToUE3BindingMappingPS3(15)=(ProfileSettingName="GamepadBinding_DPadRight",UE3BindingName="XboxTypeS_DPad_Right")
-	
-	bConsolePlayer=true
+   bTargetAdhesionEnabled=True
+   ProfileSettingToUE3BindingMapping360(0)=(ProfileSettingName="GamepadBinding_ButtonA",UE3BindingName="XboxTypeS_A")
+   ProfileSettingToUE3BindingMapping360(1)=(ProfileSettingName="GamepadBinding_ButtonB",UE3BindingName="XboxTypeS_B")
+   ProfileSettingToUE3BindingMapping360(2)=(ProfileSettingName="GamepadBinding_ButtonX",UE3BindingName="XboxTypeS_X")
+   ProfileSettingToUE3BindingMapping360(3)=(ProfileSettingName="GamepadBinding_ButtonY",UE3BindingName="XboxTypeS_Y")
+   ProfileSettingToUE3BindingMapping360(4)=(ProfileSettingName="GamepadBinding_Back",UE3BindingName="XboxTypeS_Back")
+   ProfileSettingToUE3BindingMapping360(5)=(ProfileSettingName="GamepadBinding_Start",UE3BindingName="XboxTypeS_Start")
+   ProfileSettingToUE3BindingMapping360(6)=(ProfileSettingName="GamepadBinding_RightBumper",UE3BindingName="XboxTypeS_RightTrigger")
+   ProfileSettingToUE3BindingMapping360(7)=(ProfileSettingName="GamepadBinding_LeftBumper",UE3BindingName="XboxTypeS_LeftTrigger")
+   ProfileSettingToUE3BindingMapping360(8)=(ProfileSettingName="GamepadBinding_RightTrigger",UE3BindingName="XboxTypeS_RightShoulder")
+   ProfileSettingToUE3BindingMapping360(9)=(ProfileSettingName="GamepadBinding_LeftTrigger",UE3BindingName="XboxTypeS_LeftShoulder")
+   ProfileSettingToUE3BindingMapping360(10)=(ProfileSettingName="GamepadBinding_RightThumbstickPressed",UE3BindingName="XboxTypeS_RightThumbstick")
+   ProfileSettingToUE3BindingMapping360(11)=(ProfileSettingName="GamepadBinding_LeftThumbstickPressed",UE3BindingName="XboxTypeS_LeftThumbstick")
+   ProfileSettingToUE3BindingMapping360(12)=(ProfileSettingName="GamepadBinding_DPadUp",UE3BindingName="XboxTypeS_DPad_Up")
+   ProfileSettingToUE3BindingMapping360(13)=(ProfileSettingName="GamepadBinding_DPadDown",UE3BindingName="XboxTypeS_DPad_Down")
+   ProfileSettingToUE3BindingMapping360(14)=(ProfileSettingName="GamepadBinding_DPadLeft",UE3BindingName="XboxTypeS_DPad_Left")
+   ProfileSettingToUE3BindingMapping360(15)=(ProfileSettingName="GamepadBinding_DPadRight",UE3BindingName="XboxTypeS_DPad_Right")
+   ProfileSettingToUE3BindingMappingPS3(0)=(ProfileSettingName="GamepadBinding_ButtonA",UE3BindingName="XboxTypeS_A")
+   ProfileSettingToUE3BindingMappingPS3(1)=(ProfileSettingName="GamepadBinding_ButtonB",UE3BindingName="XboxTypeS_B")
+   ProfileSettingToUE3BindingMappingPS3(2)=(ProfileSettingName="GamepadBinding_ButtonX",UE3BindingName="XboxTypeS_X")
+   ProfileSettingToUE3BindingMappingPS3(3)=(ProfileSettingName="GamepadBinding_ButtonY",UE3BindingName="XboxTypeS_Y")
+   ProfileSettingToUE3BindingMappingPS3(4)=(ProfileSettingName="GamepadBinding_Back",UE3BindingName="XboxTypeS_Back")
+   ProfileSettingToUE3BindingMappingPS3(5)=(ProfileSettingName="GamepadBinding_Start",UE3BindingName="XboxTypeS_Start")
+   ProfileSettingToUE3BindingMappingPS3(6)=(ProfileSettingName="GamepadBinding_RightBumper",UE3BindingName="XboxTypeS_RightShoulder")
+   ProfileSettingToUE3BindingMappingPS3(7)=(ProfileSettingName="GamepadBinding_LeftBumper",UE3BindingName="XboxTypeS_LeftShoulder")
+   ProfileSettingToUE3BindingMappingPS3(8)=(ProfileSettingName="GamepadBinding_RightTrigger",UE3BindingName="XboxTypeS_RightTrigger")
+   ProfileSettingToUE3BindingMappingPS3(9)=(ProfileSettingName="GamepadBinding_LeftTrigger",UE3BindingName="XboxTypeS_LeftTrigger")
+   ProfileSettingToUE3BindingMappingPS3(10)=(ProfileSettingName="GamepadBinding_RightThumbstickPressed",UE3BindingName="XboxTypeS_RightThumbstick")
+   ProfileSettingToUE3BindingMappingPS3(11)=(ProfileSettingName="GamepadBinding_LeftThumbstickPressed",UE3BindingName="XboxTypeS_LeftThumbstick")
+   ProfileSettingToUE3BindingMappingPS3(12)=(ProfileSettingName="GamepadBinding_DPadUp",UE3BindingName="XboxTypeS_DPad_Up")
+   ProfileSettingToUE3BindingMappingPS3(13)=(ProfileSettingName="GamepadBinding_DPadDown",UE3BindingName="XboxTypeS_DPad_Down")
+   ProfileSettingToUE3BindingMappingPS3(14)=(ProfileSettingName="GamepadBinding_DPadLeft",UE3BindingName="XboxTypeS_DPad_Left")
+   ProfileSettingToUE3BindingMappingPS3(15)=(ProfileSettingName="GamepadBinding_DPadRight",UE3BindingName="XboxTypeS_DPad_Right")
+   VehicleCheckRadiusScaling=1.500000
+   InputClass=Class'UTGame.UTConsolePlayerInput'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTPlayerController:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTPlayerController:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTPlayerController:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTPlayerController:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTConsolePlayerController"
+   ObjectArchetype=UTPlayerController'UTGame.Default__UTPlayerController'
 }
-
-
-

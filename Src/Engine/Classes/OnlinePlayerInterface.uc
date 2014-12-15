@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -10,11 +10,9 @@
 interface OnlinePlayerInterface	dependson(OnlineSubsystem);
 
 /**
- * Delegate called when a player logs in/out
- *
- * @param LocalUserNum the player that logged in/out
+ * Delegate used in login notifications
  */
-delegate OnLoginChange(byte LocalUserNum);
+delegate OnLoginChange();
 
 /**
  * Delegate used to notify when a login request was cancelled by the user
@@ -149,24 +147,6 @@ function bool GetUniquePlayerId(byte LocalUserNum,out UniqueNetId PlayerId);
 function string GetPlayerNickname(byte LocalUserNum);
 
 /**
- * Determines whether the specified user is a guest login or not
- *
- * @param LocalUserNum the controller number of the associated user
- *
- * @return true if a guest, false otherwise
- */
-function bool IsGuestLogin(byte LocalUserNum);
-
-/**
- * Determines whether the specified user is a local (non-online) login or not
- *
- * @param LocalUserNum the controller number of the associated user
- *
- * @return true if a local profile, false otherwise
- */
-function bool IsLocalLogin(byte LocalUserNum);
-
-/**
  * Determines whether the player is allowed to play online
  *
  * @param LocalUserNum the controller number of the associated user
@@ -265,39 +245,17 @@ function bool ShowFriendsUI(byte LocalUserNum);
  * Sets the delegate used to notify the gameplay code that a login changed
  *
  * @param LoginDelegate the delegate to use for notifications
+ * @param LocalUserNum whether to watch for changes on a specific slot or all slots
  */
-function AddLoginChangeDelegate(delegate<OnLoginChange> LoginDelegate);
+function AddLoginChangeDelegate(delegate<OnLoginChange> LoginDelegate,optional byte LocalUserNum = 255);
 
 /**
  * Removes the specified delegate from the notification list
  *
  * @param LoginDelegate the delegate to use for notifications
+ * @param LocalUserNum whether to watch for changes on a specific slot or all slots
  */
-function ClearLoginChangeDelegate(delegate<OnLoginChange> LoginDelegate);
-
-/**
- * Delegate called when a player's status changes but doesn't change profiles
- *
- * @param NewStatus the new login status for the user
- * @param NewId the new id to associate with the user
- */
-delegate OnLoginStatusChange(ELoginStatus NewStatus,UniqueNetId NewId);
-
-/**
- * Sets the delegate used to notify the gameplay code that a login status has changed
- *
- * @param LoginDelegate the delegate to use for notifications
- * @param LocalUserNum the player to watch login status changes for
- */
-function AddLoginStatusChangeDelegate(delegate<OnLoginStatusChange> LoginStatusDelegate,byte LocalUserNum);
-
-/**
- * Removes the specified delegate from the notification list
- *
- * @param LoginDelegate the delegate to use for notifications
- * @param LocalUserNum the player to watch login status changes for
- */
-function ClearLoginStatusChangeDelegate(delegate<OnLoginStatusChange> LoginStatusDelegate,byte LocalUserNum);
+function ClearLoginChangeDelegate(delegate<OnLoginChange> LoginDelegate,optional byte LocalUserNum = 255);
 
 /**
  * Adds a delegate to the list of delegates that are fired when a login is cancelled
@@ -356,10 +314,9 @@ function bool ReadProfileSettings(byte LocalUserNum,OnlineProfileSettings Profil
 /**
  * Delegate used when the last read profile settings request has completed
  *
- * @param LocalUserNum the controller index of the player who's read just completed
  * @param bWasSuccessful true if the async action completed without error, false if there was an error
  */
-delegate OnReadProfileSettingsComplete(byte LocalUserNum,bool bWasSuccessful);
+delegate OnReadProfileSettingsComplete(bool bWasSuccessful);
 
 /**
  * Sets the delegate used to notify the gameplay code that the last read request has completed
@@ -400,10 +357,9 @@ function bool WriteProfileSettings(byte LocalUserNum,OnlineProfileSettings Profi
 /**
  * Delegate used when the last write profile settings request has completed
  *
- * @param LocalUserNum the controller index of the player who's write just completed
  * @param bWasSuccessful true if the async action completed without error, false if there was an error
  */
-delegate OnWriteProfileSettingsComplete(byte LocalUserNum,bool bWasSuccessful);
+delegate OnWriteProfileSettingsComplete(bool bWasSuccessful);
 
 /**
  * Sets the delegate used to notify the gameplay code that the last write request has completed
@@ -420,124 +376,6 @@ function AddWriteProfileSettingsCompleteDelegate(byte LocalUserNum,delegate<OnWr
  * @param WriteProfileSettingsCompleteDelegate the delegate to use for notifications
  */
 function ClearWriteProfileSettingsCompleteDelegate(byte LocalUserNum,delegate<OnWriteProfileSettingsComplete> WriteProfileSettingsCompleteDelegate);
-
-/**
- * Reads the online player storage data for a given local user
- * If a valid storage device ID is specified then data is also read from that device and the newer version is kept.
- *
- * @param LocalUserNum the user that we are reading the data for
- * @param PlayerStorage the object to copy the results to and contains the list of items to read
- * @param DeviceId optional ID for connected device to read from. -1 for no device
- *
- * @return true if the call succeeds, false otherwise
- */
-function bool ReadPlayerStorage(byte LocalUserNum,OnlinePlayerStorage PlayerStorage,optional int DeviceId = -1);
-
-/**
- * Delegate used when the last read of online player storage data request has completed
- *
- * @param LocalUserNum the controller index of the player who's read just completed
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnReadPlayerStorageComplete(byte LocalUserNum,bool bWasSuccessful);
-
-/**
- * Sets the delegate used to notify the gameplay code that the last read request has completed 
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param ReadPlayerStorageCompleteDelegate the delegate to use for notifications
- */
-function AddReadPlayerStorageCompleteDelegate(byte LocalUserNum,delegate<OnReadPlayerStorageComplete> ReadPlayerStorageCompleteDelegate);
-
-/**
- * Searches the existing set of delegates for the one specified and removes it
- * from the list
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param ReadPlayerStorageCompleteDelegate the delegate to find and clear
- */
-function ClearReadPlayerStorageCompleteDelegate(byte LocalUserNum,delegate<OnReadPlayerStorageComplete> ReadPlayerStorageCompleteDelegate);
-
-/**
- * Reads the online player storage data for a given net user
- *
- * @param LocalUserNum the local user that is initiating the read
- * @param NetId the net user that we are reading the data for
- * @param PlayerStorage the object to copy the results to and contains the list of items to read
- *
- * @return true if the call succeeds, false otherwise
- */
-function bool ReadPlayerStorageForNetId(byte LocalUserNum,UniqueNetId NetId,OnlinePlayerStorage PlayerStorage);
-
-/**
- * Delegate used when the last read of online player storage data request has completed
- *
- * @param NetId the net id for the user who's read just completed
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnReadPlayerStorageForNetIdComplete(UniqueNetId NetId,bool bWasSuccessful);
-
-/**
- * Sets the delegate used to notify the gameplay code that the last read request has completed
- *
- * @param NetId the net id for the user to watch for read complete notifications
- * @param ReadPlayerStorageForNetIdCompleteDelegate the delegate to use for notifications
- */
-function AddReadPlayerStorageForNetIdCompleteDelegate(UniqueNetId NetId,delegate<OnReadPlayerStorageForNetIdComplete> ReadPlayerStorageForNetIdCompleteDelegate);
-
-/**
- * Searches the existing set of delegates for the one specified and removes it
- * from the list
- *
- * @param NetId the net id for the user to watch for read complete notifications
- * @param ReadPlayerStorageForNetIdCompleteDelegate the delegate to find and clear
- */
-function ClearReadPlayerStorageForNetIdCompleteDelegate(UniqueNetId NetId,delegate<OnReadPlayerStorageForNetIdComplete> ReadPlayerStorageForNetIdCompleteDelegate);
-
-/**
- * Returns the online player storage for a given local user
- *
- * @param LocalUserNum the user that we are reading the data for
- *
- * @return the player storage object
- */
-function OnlinePlayerStorage GetPlayerStorage(byte LocalUserNum);
-
-/**
- * Writes the online player storage data for a given local user to the online data store
- * If a valid storage device ID is specified then data is also written to that device.
- *
- * @param LocalUserNum the user that we are writing the data for
- * @param PlayerStorage the object that contains the list of items to write
- * @param DeviceId optional ID for connected device to write to. -1 for no device
- *
- * @return true if the call succeeds, false otherwise
- */
-function bool WritePlayerStorage(byte LocalUserNum,OnlinePlayerStorage PlayerStorage,optional int DeviceId = -1);
-
-/**
- * Delegate used when the last write online player storage request has completed
- *
- * @param LocalUserNum the controller index of the player who's write just completed
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnWritePlayerStorageComplete(byte LocalUserNum,bool bWasSuccessful);
-
-/**
- * Sets the delegate used to notify the gameplay code that the last write request has completed
- *
- * @param LocalUserNum which user to watch for write complete notifications
- * @param WritePlayerStorageCompleteDelegate the delegate to use for notifications
- */
-function AddWritePlayerStorageCompleteDelegate(byte LocalUserNum,delegate<OnWritePlayerStorageComplete> WritePlayerStorageCompleteDelegate);
-
-/**
- * Clears the delegate used to notify the gameplay code that the last write request has completed
- *
- * @param LocalUserNum which user to watch for write complete notifications
- * @param WritePlayerStorageCompleteDelegate the delegate to use for notifications
- */
-function ClearWritePlayerStorageCompleteDelegate(byte LocalUserNum,delegate<OnWritePlayerStorageComplete> WritePlayerStorageCompleteDelegate);
 
 /**
  * Starts an async task that retrieves the list of friends for the player from the
@@ -618,13 +456,6 @@ function bool ShowKeyboardUI(byte LocalUserNum,string TitleText,string Descripti
 	optional int MaxResultLength = 256);
 
 /**
- * Delegate used when the keyboard input request has completed
- *
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnKeyboardInputComplete(bool bWasSuccessful);
-
-/**
  * Adds the delegate used to notify the gameplay code that the user has completed
  * their keyboard input
  *
@@ -649,6 +480,13 @@ function ClearKeyboardInputDoneDelegate(delegate<OnKeyboardInputComplete> InputD
  * fails validation
  */
 function string GetKeyboardInputResults(out byte bWasCanceled);
+
+/**
+ * Delegate used when the keyboard input request has completed
+ *
+ * @param bWasSuccessful true if the async action completed without error, false if there was an error
+ */
+delegate OnKeyboardInputComplete(bool bWasSuccessful);
 
 /**
  * Sends a friend invite to the specified player
@@ -883,81 +721,8 @@ function ClearFriendMessageReceivedDelegate(byte LocalUserNum,delegate<OnFriendM
  */
 function bool DeleteMessage(byte LocalUserNum,int MessageIndex);
 
-/**
- * Unlocks the specified achievement for the specified user
- *
- * @param LocalUserNum the controller number of the associated user
- * @param AchievementId the id of the achievement to unlock
- *
- * @return TRUE if the call worked, FALSE otherwise
- */
-function bool UnlockAchievement(byte LocalUserNum,int AchievementId,float PercentComplete=100.0);
-
-/**
- * Delegate used when the achievement unlocking has completed
- *
- * @param bWasSuccessful true if the async action completed without error, false if there was an error
- */
-delegate OnUnlockAchievementComplete(bool bWasSuccessful);
-
-/**
- * Adds the delegate used to notify the gameplay code that the achievement unlocking has completed
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param UnlockAchievementCompleteDelegate the delegate to use for notifications
- */
-function AddUnlockAchievementCompleteDelegate(byte LocalUserNum,delegate<OnUnlockAchievementComplete> UnlockAchievementCompleteDelegate);
-
-/**
- * Clears the delegate used to notify the gameplay code that the achievement unlocking has completed
- *
- * @param LocalUserNum which user to watch for read complete notifications
- * @param UnlockAchievementCompleteDelegate the delegate to use for notifications
- */
-function ClearUnlockAchievementCompleteDelegate(byte LocalUserNum,delegate<OnUnlockAchievementComplete> UnlockAchievementCompleteDelegate);
-
-/**
- * Starts an async read for the achievement list
- *
- * @param LocalUserNum the controller number of the associated user
- * @param TitleId the title id of the game the achievements are to be read for
- * @param bShouldReadText whether to fetch the text strings or not
- * @param bShouldReadImages whether to fetch the image data or not
- *
- * @return TRUE if the task starts, FALSE if it failed
- */
-function bool ReadAchievements(byte LocalUserNum,optional int TitleId = 0,optional bool bShouldReadText = true,optional bool bShouldReadImages = false);
-
-/**
- * Called when the async achievements read has completed
- *
- * @param TitleId the title id that the read was for (0 means current title)
- */
-delegate OnReadAchievementsComplete(int TitleId);
-
-/**
- * Sets the delegate used to notify the gameplay code that the achievements read request has completed
- *
- * @param LocalUserNum the user to read the achievements list for
- * @param ReadAchievementsCompleteDelegate the delegate to use for notifications
- */
-function AddReadAchievementsCompleteDelegate(byte LocalUserNum,delegate<OnReadAchievementsComplete> ReadAchievementsCompleteDelegate);
-
-/**
- * Clears the delegate used to notify the gameplay code that the achievements read request has completed
- *
- * @param LocalUserNum the user to read the achievements list for
- * @param ReadAchievementsCompleteDelegate the delegate to use for notifications
- */
-function ClearReadAchievementsCompleteDelegate(byte LocalUserNum,delegate<OnReadAchievementsComplete> ReadAchievementsCompleteDelegate);
-
-/**
- * Copies the list of achievements for the specified player and title id
- *
- * @param LocalUserNum the user to read the friends list of
- * @param Achievements the out array that receives the copied data
- * @param TitleId the title id of the game that these were read for
- *
- * @return OERS_Done if the read has completed, otherwise one of the other states
- */
-function EOnlineEnumerationReadState GetAchievements(byte LocalUserNum,out array<AchievementDetails> Achievements,optional int TitleId = 0);
+defaultproperties
+{
+   Name="Default__OnlinePlayerInterface"
+   ObjectArchetype=Interface'Core.Default__Interface'
+}

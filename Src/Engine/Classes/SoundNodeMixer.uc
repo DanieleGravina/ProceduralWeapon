@@ -1,19 +1,40 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
-/** 
- * Defines how concurrent sounds are mixed together
- */
- 
 class SoundNodeMixer extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
 
 /** A volume for each input.  Automatically sized. */
-var()	export	editfixedsize	array<float>	InputVolume;
+var() export editfixedsize array<float>	InputVolume;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__SoundNodeMixer"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

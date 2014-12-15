@@ -3,9 +3,9 @@
  * servers that the player wishes to query.  It is aware of the main game search data store, and ensures that the main
  * search data store is not busy before allowing any action to take place.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTDataStore_GameSearchPersonal extends UDKDataStore_GameSearchBase
+class UTDataStore_GameSearchPersonal extends UTDataStore_GameSearchBase
 	config(Game)
 	abstract;
 
@@ -17,8 +17,14 @@ var	transient	UTDataStore_GameSearchDM	PrimaryGameSearchDataStore;
 /** the maximum number of most recently visited servers that will be retained */
 const MAX_PERSONALSERVERS=15;
 
+struct native ServerEntry
+{
+	var string ServerUniqueId;
+	var string ServerName;
+};
+
 /** the list of servers stored in this data store */
-var	config	string		ServerUniqueId[MAX_PERSONALSERVERS];
+var	config ServerEntry ServerList[MAX_PERSONALSERVERS];
 
 /**
  * @param	bRestrictCheckToSelf	if TRUE, will not check related game search data stores for outstanding queries.
@@ -36,6 +42,92 @@ function bool HasOutstandingQueries( optional bool bRestrictCheckToSelf )
 	}
 
 	return bResult;
+}
+
+/**
+* Called by the online subsystem when the game search has completed
+*
+* @param bWasSuccessful true if the async action completed without error, false if there was an error
+*/
+function OnSearchComplete(bool bWasSuccessful)
+{
+	local GameSearchCfg Cfg;
+	local OnlineGameSearchResult Result;
+	local int i, Index;
+	local string ServerId, ServerIP;
+	local bool bSaveConfig;
+
+	local ServerEntry AServer;
+	local array<ServerEntry> OfflineServers;
+
+	/*  
+	 * We check the personal servers list against the returned
+	 * array from the master server.  Any missing servers are added as placeholder. 
+	 */
+	if((ActiveSearchIndex != INDEX_NONE) && (HasOutstandingQueries()==false))
+	{
+		//Copy the list so we can work on it
+		for (i=0; i<MAX_PERSONALSERVERS; i++)
+		{
+			if (GetServerUID(ServerList[i].ServerUniqueId) != "")
+			{
+				AServer.ServerUniqueId = ServerList[i].ServerUniqueId;
+				AServer.ServerName = ServerList[i].ServerName;
+				OfflineServers.AddItem(AServer);
+			}
+		}
+
+		Cfg = GameSearchCfgList[ActiveSearchIndex];
+
+		// Search the results for all servers found and remove them from 'offline list'
+		for (Index = 0; Index < Cfg.Search.Results.length; Index++)
+		{
+			Result = Cfg.Search.Results[Index];
+			ServerId = class'Engine.OnlineSubsystem'.static.UniqueNetIdToString(Result.GameSettings.OwningPlayerId);
+			for (i = 0; i<OfflineServers.length; i++)
+			{
+				if (GetServerUID(OfflineServers[i].ServerUniqueId) == ServerId)
+				{
+					OfflineServers.Remove(i,1);
+					break;
+				}
+			}
+
+			// Update the server name (maybe it changed)
+			for (i=0; i<MAX_PERSONALSERVERS; i++)
+			{
+				if (GetServerUID(ServerList[i].ServerUniqueId) == ServerId)
+				{
+					// If the server doesn't have an associated IP in the config file, then add it
+					if (GetServerIP(ServerList[i].ServerUniqueID) == "")
+					{
+						ServerList[i].ServerUniqueID $= "-"$Result.GameSettings.ServerIP;
+						bSaveConfig = True;
+					}
+
+					ServerList[i].ServerName = Result.GameSettings.OwningPlayerName;
+					break;
+				}
+			}
+		}
+
+		if (bSaveConfig)
+			SaveConfig();
+
+		for (i = 0; i<OfflineServers.length; i++)
+		{
+			ServerIP = GetServerIP(OfflineServers[i].ServerUniqueID);
+
+			if (ServerIP == "")
+				AddOfflineServer(OfflineServers[i].ServerUniqueId, OfflineServers[i].ServerName);
+			else
+				AddJoinableOfflineServer(OfflineServers[i].ServerUniqueID, OfflineServers[i].ServerName, ServerIP);
+		}
+	}
+
+
+	// Always return true, so that offline servers are always listed
+	Super.OnSearchComplete(True);
 }
 
 /**
@@ -139,7 +231,7 @@ function int FindServerIndexByString( int ControllerId, string IdToFind )
 	Result = INDEX_NONE;
 	for ( i = 0; i < MAX_PERSONALSERVERS; i++ )
 	{
-		if ( ServerUniqueId[i] == IdToFind )
+		if ( GetServerUID(ServerList[i].ServerUniqueId) == IdToFind )
 		{
 			Result = i;
 			break;
@@ -169,7 +261,7 @@ function int FindServerIndexById( int ControllerId, const out UniqueNetId IdToFi
  * @param	ControllerId	the index of the controller associated with the logged in player.
  * @param	IdToFind		the UniqueNetId for the server to add
  */
-function bool AddServer( int ControllerId, UniqueNetId IdToAdd )
+function bool AddServer( int ControllerId, UniqueNetId IdToAdd, const string ServerNameToAdd )
 {
 	local int i, CurrentIndex;
 	local string UniqueIdString;
@@ -188,12 +280,52 @@ function bool AddServer( int ControllerId, UniqueNetId IdToAdd )
 	{
 		for ( i = CurrentIndex; i > 0; i-- )
 		{
-			ServerUniqueId[i] = ServerUniqueId[i - 1];
+			ServerList[i].ServerUniqueId = ServerList[i-1].ServerUniqueId;
+			ServerList[i].ServerName = ServerList[i-1].ServerName;
 		}
 
-		ServerUniqueId[0] = UniqueIdString;
+		ServerList[0].ServerUniqueId = UniqueIdString;
+		ServerList[0].ServerName = ServerNameToAdd;
 		SaveConfig();
 		bResult = true;
+
+		InvalidateCurrentSearchResults();
+	}
+
+	return bResult;
+}
+
+function bool AddServerPlusIP(int ControllerID, UniqueNetID IDToAdd, string ServerNameToAdd, string IPToAdd)
+{
+	local int i, CurrentIndex;
+	local string UniqueIDString;
+	local bool bResult;
+
+	// First, determine whether the server is already in our list
+	UniqueIDString = Class'Engine.OnlineSubsystem'.static.UniqueNetIDToString(IDToAdd);
+	CurrentIndex = FindServerIndexByString(ControllerID, UniqueIDString);
+
+	if (CurrentIndex == INDEX_None)
+		CurrentIndex = MAX_PERSONALSERVERS - 1;
+
+	// If this server is already at position 0, leave it there
+	if (CurrentIndex != 0)
+	{
+		for (i=CurrentIndex; i>0; --i)
+		{
+			ServerList[i].ServerUniqueID = ServerList[i-1].ServerUniqueID;
+			ServerList[i].ServerName = ServerList[i-1].ServerName;
+		}
+
+		if (IPToAdd == "")
+			ServerList[0].ServerUniqueID = UniqueIDString;
+		else
+			ServerList[0].ServerUniqueID = UniqueIDString$"-"$IPToAdd;
+
+		ServerList[0].ServerName = ServerNameToAdd;
+
+		SaveConfig();
+		bResult = True;
 
 		InvalidateCurrentSearchResults();
 	}
@@ -218,11 +350,14 @@ function bool RemoveServer( int ControllerId, UniqueNetId IdToRemove )
 	{
 		for ( i = CurrentIndex + 1; i < MAX_PERSONALSERVERS; i++ )
 		{
-			ServerUniqueId[i - 1] = ServerUniqueId[i];
+			ServerList[i-1].ServerUniqueId = ServerList[i].ServerUniqueId;
+			ServerList[i-1].ServerName = ServerList[i].ServerName;
 		}
 
 		// now clear the last element
-		ServerUniqueId[MAX_PERSONALSERVERS-1] = "";
+		ServerList[MAX_PERSONALSERVERS-1].ServerUniqueId = "";
+		ServerList[MAX_PERSONALSERVERS-1].ServerName = "";
+
 		SaveConfig();
 		bResult = true;
 
@@ -245,8 +380,8 @@ function GetServerIdList( out array<UniqueNetId> out_ServerList )
 	out_ServerList.Length = MAX_PERSONALSERVERS;
 	for ( i = 0; i < MAX_PERSONALSERVERS; i++ )
 	{
-		if ( ServerUniqueId[i] == ""
-		||	!class'Engine.OnlineSubsystem'.static.StringToUniqueNetId(ServerUniqueId[i], ServerNetId) )
+		if ( ServerList[i].ServerUniqueId == ""
+		||	!class'Engine.OnlineSubsystem'.static.StringToUniqueNetId(GetServerUID(ServerList[i].ServerUniqueId), ServerNetId) )
 		{
 			out_ServerList.Length = i;
 			break;
@@ -262,20 +397,48 @@ function GetServerStringList( out array<string> out_ServerList )
 	out_ServerList.Length = MAX_PERSONALSERVERS;
 	for ( i = 0; i < MAX_PERSONALSERVERS; i++ )
 	{
-		if ( ServerUniqueId[i] == "" )
+		if ( ServerList[i].ServerUniqueId == "" )
 		{
 			out_ServerList.Length = i;
 			break;
 		}
 
-		out_ServerList[i] = ServerUniqueId[i];
+		out_ServerList[i] = GetServerUID(ServerList[i].ServerUniqueId);
 	}
 }
 
 
-DefaultProperties
-{
-	Tag=UTGameSearchPersonal
+// This data store was updated to store the IP along with the UID, so these now have to be separately parsed from the UID string
 
-	GameSearchCfgList.Empty
+function string GetServerUID(out const string IDString)
+{
+	local int i;
+
+	i = InStr(IDString, "-");
+
+	if (i == INDEX_None)
+		return IDString;
+
+
+	return Left(IDString, i);
+}
+
+function string GetServerIP(out const string IDString)
+{
+	local int i;
+
+	i = InStr(IDString, "-");
+
+	if (i == INDEX_None)
+		return "";
+
+
+	return Mid(IDString, i+1);
+}
+
+defaultproperties
+{
+   Tag="UTGameSearchPersonal"
+   Name="Default__UTDataStore_GameSearchPersonal"
+   ObjectArchetype=UTDataStore_GameSearchBase'UTGame.Default__UTDataStore_GameSearchBase'
 }

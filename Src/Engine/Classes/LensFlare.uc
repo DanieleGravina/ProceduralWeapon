@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class LensFlare extends Object
 	native(LensFlare)
@@ -88,32 +88,22 @@ struct native LensFlareElement
 
 	/**	Rotation.	 */
 	var(Rotation)	rawdistributionfloat		Rotation;
-	/** If TRUE, always rotate the element to orient towards the source */
-	var(Rotation)	bool						bOrientTowardsSource;
 
-	/** Color (passed to the element material via the VertexColor expression) */
+	/** Color. */
 	var(Color)		rawdistributionvector		Color;
-	/** Alpha (passed to the element material via the VertexColor expression) */
 	var(Color)		rawdistributionfloat		Alpha;
 
 	/** Offset. */
 	var(Offset)		rawdistributionvector		Offset;
 
 	/** Source to camera distance scaling. */
-	/** Value to scale the AxisScaling by. Uses source to camera distance to look up the value (in Unreal units) */
 	var(Scaling)	rawdistributionvector		DistMap_Scale;
-	/** Value to scale the Color by. Uses source to camera distance to look up the value (in Unreal units) */
 	var(Scaling)	rawdistributionvector		DistMap_Color;
-	/** Value to scale the Alpha by. Uses source to camera distance to look up the value (in Unreal units) */
 	var(Scaling)	rawdistributionfloat		DistMap_Alpha;
 
 	structcpptext
 	{
 		void GetCurveObjects(TArray<FLensFlareElementCurvePair>& OutCurves);
-		void DuplicateDistribution_Float(const FRawDistributionFloat& SourceDist, UObject* Outer, FRawDistributionFloat& NewDist);
-		void DuplicateDistribution_Vector(const FRawDistributionVector& SourceDist, UObject* Outer, FRawDistributionVector& NewDist);
-		UBOOL DuplicateFromSource(const FLensFlareElement& InSource, UObject* Outer);
-		UObject* GetCurve(FString& CurveName);
 	}
 
 	structdefaultproperties
@@ -174,14 +164,14 @@ struct native LensFlareElement
 };
 
 /** The Source of the lens flare */
-var					editinline	export	LensFlareElement			SourceElement;
+var(Source)			editinline	export	LensFlareElement			SourceElement;
 /** The StaticMesh to use as the source (optional) */
 var(Source)								StaticMesh					SourceMesh;
 /** The scene depth priority group to draw the source primitive in. */
-var					const				ESceneDepthPriorityGroup	SourceDPG;
+var(Source)			const				ESceneDepthPriorityGroup	SourceDPG;
 
 /** The individual reflection elements of the lens flare */
-var					editinline	export	array<LensFlareElement>		Reflections;
+var(Reflections)	editinline	export	array<LensFlareElement>		Reflections;
 /** The scene depth priority group to draw the reflection primitive(s) in. */
 var(Reflections)	const				ESceneDepthPriorityGroup	ReflectionsDPG;
 
@@ -190,16 +180,8 @@ var(Visibility)							float						OuterCone;
 var(Visibility)							float						InnerCone;
 var(Visibility)							float						ConeFudgeFactor;
 var(Visibility)							float						Radius;
-/** When true the new algorithm is used (NOTE: The new algorithm does not use ConeFudgeFactor). */
-var(Visibility)							bool						bUseTrueConeCalculation;
-/** (New Algorithm only) If this is non-zero the lens flare will always draw with at least the strength specified, even behind or outside outer cone. */
-var(Visibility)							float						MinStrength;
 
 /** Occlusion. */
-/** 
- *	The mapping of screen coverage percentage (the result returned by occlusion checks)
- *	to the value passed into the materials for LensFlareOcclusion.
- */
 var(Occlusion)							rawdistributionfloat		ScreenPercentageMap;
 
 /**
@@ -232,79 +214,39 @@ var										bool						ThumbnailImageOutOfDate;
 var										Texture2D					ThumbnailImage;
 
 //
-cpptext
-{
-	// UObject interface.
-	virtual void PreEditChange(UProperty* PropertyAboutToChange);
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void PostLoad();
-	
-	// CurveEditor helper interface
-	void	AddElementCurvesToEditor(INT ElementIndex, UInterpCurveEdSetup* EdSetup);
-	void	RemoveElementCurvesFromEditor(INT ElementIndex, UInterpCurveEdSetup* EdSetup);
-	void	AddElementCurveToEditor(INT ElementIndex, FString& CurveName, UInterpCurveEdSetup* EdSetup);
-	UObject* GetElementCurve(INT ElementIndex, FString& CurveName);
-	
-	//
-	const FLensFlareElement* GetElement(INT ElementIndex) const;
-	
-	/** Return TRUE if element was found and bIsEnabled set to given value. */
-	UBOOL SetElementEnabled(INT ElementIndex, UBOOL bInIsEnabled);
-	
-	/** Initialize the element at the given index */
-	UBOOL InitializeElement(INT ElementIndex);
-
-	/** Get the curve objects associated with the LensFlare itself */
-	void GetCurveObjects(TArray<FLensFlareElementCurvePair>& OutCurves);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //
+
 defaultproperties
 {
-	Begin Object Class=DistributionFloatConstant Name=DistributionLFMaterialIndex
-		Constant=0.0;
-	End Object
-	Begin Object Class=DistributionFloatConstant Name=DistributionScaling
-		Constant=1.0;
-	End Object
-	Begin Object Class=DistributionVectorConstant Name=DistributionAxisScaling
-		Constant=(X=1.0,Y=1.0,Z=0.0)
-	End Object
-	Begin Object Class=DistributionFloatConstant Name=DistributionRotation
-		Constant=0.0;
-	End Object
-	Begin Object Class=DistributionVectorConstant Name=DistributionColor
-		Constant=(X=1.0,Y=1.0,Z=1.0)
-	End Object
-	Begin Object Class=DistributionFloatConstant Name=DistributionAlpha
-		Constant=1.0f;
-	End Object
-	Begin Object Class=DistributionVectorConstant Name=DistributionOffset
-		Constant=(X=0.0,Y=0.0,Z=0.0)
-	End Object
-	Begin Object Class=DistributionVectorConstant Name=DistributionDistMap_Scale
-		Constant=(X=1.0,Y=1.0,Z=1.0)
-	End Object
-	Begin Object Class=DistributionVectorConstant Name=DistributionDistMap_Color
-		Constant=(X=1.0,Y=1.0,Z=1.0)
-	End Object
-	Begin Object Class=DistributionFloatConstant Name=DistributionDistMap_Alpha
-		Constant=1.0f;
-	End Object
-
-	SourceElement=(ElementName="Source",RayDistance=0.0,bIsEnabled=true,Size=(X=75.0f,Y=75.0f,Z=75.0f),LFMaterialIndex=(Distribution=DistributionLFMaterialIndex),Scaling=(Distribution=DistributionScaling),AxisScaling=(Distribution=DistributionAxisScaling),Rotation=(Distribution=DistributionRotation),Color=(Distribution=DistributionColor),Alpha=(Distribution=DistributionAlpha),Offset=(Distribution=DistributionOffset),DistMap_Scale=(Distribution=DistributionDistMap_Scale),DistMap_Color=(Distribution=DistributionDistMap_Color),DistMap_Alpha=(Distribution=DistributionDistMap_Alpha))
-	SourceDPG=SDPG_World
-	ReflectionsDPG=SDPG_Foreground
-
-	OuterCone=0.0
-	InnerCone=0.0
-	ConeFudgeFactor=0.5
-	Radius=0.0
-	bUseTrueConeCalculation=false
-	MinStrength=0.0
-
-	Begin Object Class=DistributionFloatConstantCurve Name=DistributionScreenPercentageMap
-		ConstantCurve=(Points=((InVal=0.0,OutVal=0.0),(InVal=1.0,OutVal=1.0)))
-	End Object
-	ScreenPercentageMap=(Distribution=DistributionScreenPercentageMap)
+   SourceElement=(ElementName="Source",bIsEnabled=True,Size=(X=0.500000,Y=0.500000,Z=0.000000),LFMaterialIndex=(Distribution=DistributionLFMaterialIndex,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000)),Scaling=(Distribution=DistributionScaling,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1.000000,1.000000,1.000000,1.000000)),AxisScaling=(Distribution=DistributionAxisScaling,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,1.000000,1.000000,1.000000,0.000000,1.000000,1.000000,0.000000)),Rotation=(Distribution=DistributionRotation,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000)),Color=(Distribution=DistributionColor,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000)),Alpha=(Distribution=DistributionAlpha,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1.000000,1.000000,1.000000,1.000000)),Offset=(Distribution=DistributionOffset,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000)))
+   SourceDPG=SDPG_World
+   ReflectionsDPG=SDPG_Foreground
+   ConeFudgeFactor=0.500000
+   ScreenPercentageMap=(Distribution=DistributionScreenPercentageMap,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1.000000,1.000000,1.000000,1.000000))
+   Name="Default__LensFlare"
+   ObjectArchetype=Object'Core.Default__Object'
 }

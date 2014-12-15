@@ -1,21 +1,17 @@
 /**
  * An actor used to generate collision events (touch/untouch), and
  * interactions events (ue) as inputs into the scripting system.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Trigger extends Actor
 	placeable
-	ClassGroup(Common)
 	native;
 
-cpptext
-{
-#if WITH_EDITOR
-	// AActor interface.
-	virtual void EditorApplyScale(const FVector& DeltaScale, const FMatrix& ScaleMatrix, const FVector* PivotLocation, UBOOL bAltDown, UBOOL bShiftDown, UBOOL bCtrlDown);
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 struct CheckpointRecord
 {
@@ -29,36 +25,13 @@ var bool bRecentlyTriggered;
 /** how long bRecentlyTriggered should stay set after each triggering */
 var() float AITriggerDelay;
 
-
-simulated event PostBeginPlay()
-{
-`if(`isdefined(FINAL_RELEASE))
-	local SpriteComponent ASpriteComp;
-	// if we are in final release we don't want to pay the runtime cost of these components.  We will not have a cheat command to actually see them
-	// and we don't do lots of debugging in final_release so just remove them!
-    foreach ComponentList( class'SpriteComponent', ASpriteComp )
-    {
-		DetachComponent( ASpriteComp );
-    }
-`endif
-
-	Super.PostBeginPlay();
-}
-
-
 event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal)
 {
 	if (FindEventsOfClass(class'SeqEvent_Touch'))
 	{
-		NotifyTriggered();
+		bRecentlyTriggered = true;
+		SetTimer(AITriggerDelay, false, 'UnTrigger');
 	}
-}
-
-/** called when this trigger has successfully been used to activate a Kismet event */
-function NotifyTriggered()
-{
-	bRecentlyTriggered = true;
-	SetTimer( AITriggerDelay, false, nameof(UnTrigger) );
 }
 
 function UnTrigger()
@@ -71,50 +44,44 @@ simulated function bool StopsProjectile(Projectile P)
 	return bBlockActors;
 }
 
-function bool ShouldSaveForCheckpoint()
-{
-	return (bStatic || bNoDelete);
-}
-
 function CreateCheckpointRecord(out CheckpointRecord Record)
 {
-    // actor collision is the primary method of toggling triggers apparently
+    // actor collision is the primary method of toggling triggers apparentlyttttttttttttt
     Record.bCollideActors = bCollideActors;
 }
 
 function ApplyCheckpointRecord(const out CheckpointRecord Record)
 {
     SetCollision(Record.bCollideActors,bBlockActors,bIgnoreEncroachers);
-	ForceNetRelevant();
 }
 
 defaultproperties
 {
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Trigger'
-		HiddenGame=False
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Triggers"
-	End Object
-	Components.Add(Sprite)
-
-	Begin Object Class=CylinderComponent NAME=CollisionCylinder LegacyClassName=Trigger_TriggerCylinderComponent_Class
-		CollideActors=true
-		CollisionRadius=+0040.000000
-		CollisionHeight=+0040.000000
-		bAlwaysRenderIfSelected=true
-	End Object
-	CollisionComponent=CollisionCylinder
-	CylinderComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-	bHidden=true
-	bCollideActors=true
-	bProjTarget=true
-	bStatic=false
-	bNoDelete=true
-	AITriggerDelay=2.0
-
-	SupportedEvents.Add(class'SeqEvent_Used')
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__CylinderComponent'
+      CollisionHeight=40.000000
+      CollisionRadius=40.000000
+      CollideActors=True
+      Name="CollisionCylinder"
+      ObjectArchetype=CylinderComponent'Engine.Default__CylinderComponent'
+   End Object
+   CylinderComponent=CollisionCylinder
+   AITriggerDelay=2.000000
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_Trigger'
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   bHidden=True
+   bNoDelete=True
+   bCollideActors=True
+   bProjTarget=True
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   SupportedEvents(3)=Class'Engine.SeqEvent_Used'
+   Name="Default__Trigger"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

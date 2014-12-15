@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -87,51 +87,48 @@ function bool IsHeadsetPresent(byte LocalUserNum);
 function bool SetRemoteTalkerPriority(byte LocalUserNum,UniqueNetId PlayerId,int Priority);
 
 /**
- * Mutes a remote talker for the specified local player. NOTE: This only mutes them in the
- * game unless the bIsSystemWide flag is true, which attempts to mute them globally
+ * Mutes a remote talker for the specified local player. NOTE: This is separate
+ * from the user's permanent online mute list
  *
  * @param LocalUserNum the user that is muting the remote talker
  * @param PlayerId the remote talker that is being muted
- * @param bIsSystemWide whether to try to mute them globally or not
  *
  * @return TRUE if the function succeeds, FALSE otherwise
  */
-function bool MuteRemoteTalker(byte LocalUserNum,UniqueNetId PlayerId,optional bool bIsSystemWide);
+function bool MuteRemoteTalker(byte LocalUserNum,UniqueNetId PlayerId);
 
 /**
- * Allows a remote talker to talk to the specified local player. NOTE: This only unmutes them in the
- * game unless the bIsSystemWide flag is true, which attempts to unmute them globally
+ * Allows a remote talker to talk to the specified local player. NOTE: This call
+ * will fail for remote talkers on the user's permanent online mute list
  *
  * @param LocalUserNum the user that is allowing the remote talker to talk
  * @param PlayerId the remote talker that is being restored to talking
- * @param bIsSystemWide whether to try to unmute them globally or not
  *
  * @return TRUE if the function succeeds, FALSE otherwise
  */
-function bool UnmuteRemoteTalker(byte LocalUserNum,UniqueNetId PlayerId,optional bool bIsSystemWide);
+function bool UnmuteRemoteTalker(byte LocalUserNum,UniqueNetId PlayerId);
 
 /**
  * Called when a player is talking either locally or remote. This will be called
  * once for each active talker each frame.
  *
  * @param Player the player that is talking
- * @param bIsTalking if true, the player is now talking, if false they are no longer talking
  */
-delegate OnPlayerTalkingStateChange(UniqueNetId Player,bool bIsTalking);
+delegate OnPlayerTalking(UniqueNetId Player);
 
 /**
  * Adds a talker delegate to the list of notifications
  *
  * @param TalkerDelegate the delegate to call when a player is talking
  */
-function AddPlayerTalkingDelegate(delegate<OnPlayerTalkingStateChange> TalkerDelegate);
+function AddPlayerTalkingDelegate(delegate<OnPlayerTalking> TalkerDelegate);
 
 /**
  * Removes a talker delegate to the list of notifications
  *
  * @param TalkerDelegate the delegate to remove from the notification list
  */
-function ClearPlayerTalkingDelegate(delegate<OnPlayerTalkingStateChange> TalkerDelegate);
+function ClearPlayerTalkingDelegate(delegate<OnPlayerTalking> TalkerDelegate);
 
 /**
  * Tells the voice layer that networked processing of the voice data is allowed
@@ -236,3 +233,9 @@ function bool MuteAll(byte LocalUserNum,bool bAllowFriends);
  * @param LocalUserNum the local user that is making the change
  */
 function bool UnmuteAll(byte LocalUserNum);
+
+defaultproperties
+{
+   Name="Default__OnlineVoiceInterface"
+   ObjectArchetype=Interface'Core.Default__Interface'
+}

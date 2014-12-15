@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetVector extends SeqAct_SetSequenceVariable;
 
@@ -32,10 +32,10 @@ event Activated()
 
 defaultproperties
 {
-	bCallHandler=false
-	ObjName="Vector"
-
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Vector',LinkDesc="Value")
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Vector',LinkDesc="Target",bWriteable=true)
+   bCallHandler=False
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Vector',PropertyName=,bWriteable=True)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Vector',LinkDesc="Value",MinVars=1,MaxVars=255)
+   ObjName="Vector"
+   Name="Default__SeqAct_SetVector"
+   ObjectArchetype=SeqAct_SetSequenceVariable'Engine.Default__SeqAct_SetSequenceVariable'
 }

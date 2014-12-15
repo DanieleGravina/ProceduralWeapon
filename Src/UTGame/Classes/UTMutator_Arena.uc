@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTMutator_Arena extends UTMutator
@@ -21,8 +21,8 @@ function PostBeginPlay()
 		Game.DefaultInventory[0] = class<Weapon>(DynamicLoadObject(ArenaWeaponClassPath, class'Class'));
 		if (Game.DefaultInventory[0] == None)
 		{
-			`Warn("Failed to load arena weapon, falling back to rocket launcher");
-			Game.DefaultInventory[0] = class<Weapon>(DynamicLoadObject("UTGameContent.UTWeap_RocketLauncher_Content", class'Class'));
+			WarnInternal("Failed to load arena weapon, falling back to rocket launcher");
+			Game.DefaultInventory[0] = class'UTWeap_RocketLauncher';
 		}
 	}
 }
@@ -47,6 +47,13 @@ function ModifyPlayer(Pawn Other)
 
 defaultproperties
 {
-	GroupNames[0]="WEAPONMOD"
-	GroupNames[1]="WEAPONRESPAWN"
+   ArenaWeaponClassPath="UTGame.UTWeap_ShockRifle"
+   GroupNames(0)="WEAPONMOD"
+   GroupNames(1)="WEAPONRESPAWN"
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+      ObjectArchetype=SpriteComponent'UTGame.Default__UTMutator:Sprite'
+   End Object
+   Components(0)=Sprite
+   Name="Default__UTMutator_Arena"
+   ObjectArchetype=UTMutator'UTGame.Default__UTMutator'
 }

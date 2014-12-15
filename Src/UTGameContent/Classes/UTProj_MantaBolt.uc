@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTProj_MantaBolt extends UTProjectile;
@@ -22,23 +22,25 @@ simulated function SpawnExplosionEffects(vector HitLocation, vector HitNormal)
 	}
 }
 
-
 defaultproperties
 {
-	ProjFlightTemplate=ParticleSystem'VH_Manta.Effects.PS_Manta_Projectile'
-	ProjExplosionTemplate=ParticleSystem'VH_Manta.Effects.PS_Manta_Gun_Impact'
-	ExplosionSound=SoundCue'A_Vehicle_Manta.SoundCues.A_Vehicle_Manta_Shot'
-    Speed=2000
-    MaxSpeed=7000
-    AccelRate=16000.0
-
-    Damage=36
-    DamageRadius=0
-    MomentumTransfer=4000
-	CheckRadius=30.0
-    MyDamageType=class'UTDmgType_MantaBolt'
-    LifeSpan=1.6
-
-    bCollideWorld=true
-    DrawScale=2.0
+   ExplosionSound=SoundCue'A_Vehicle_Manta.SoundCues.A_Vehicle_Manta_Shot'
+   ProjFlightTemplate=ParticleSystem'VH_Manta.Effects.PS_Manta_Projectile'
+   ProjExplosionTemplate=ParticleSystem'VH_Manta.Effects.PS_Manta_Gun_Impact'
+   AccelRate=16000.000000
+   CheckRadius=30.000000
+   MaxSpeed=7000.000000
+   Damage=36.000000
+   MomentumTransfer=4000.000000
+   MyDamageType=Class'UTGameContent.UTDmgType_MantaBolt'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   LifeSpan=1.600000
+   DrawScale=2.000000
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTProj_MantaBolt"
+   ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
 }

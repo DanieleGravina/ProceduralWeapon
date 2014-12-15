@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawSoundRadiusComponent extends DrawSphereComponent
 	native
@@ -8,11 +8,11 @@ class DrawSoundRadiusComponent extends DrawSphereComponent
 
 defaultproperties
 {
-	SphereColor=(R=173,G=239,B=231,A=255)
-	SphereSides=32
-
-	AlwaysLoadOnClient=False
-	AlwaysLoadOnServer=False
-
-	AbsoluteScale=TRUE
+   SphereColor=(B=231,G=239,R=173,A=255)
+   SphereSides=32
+   AlwaysLoadOnClient=False
+   AlwaysLoadOnServer=False
+   AbsoluteScale=True
+   Name="Default__DrawSoundRadiusComponent"
+   ObjectArchetype=DrawSphereComponent'Engine.Default__DrawSphereComponent'
 }

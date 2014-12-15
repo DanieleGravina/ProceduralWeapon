@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CurveEdPreset_Nothing extends CurveEdPresetBase
 	native
@@ -17,11 +17,14 @@ function string GetDisplayName()
 }
 
 /** */
-cpptext
-{
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** */
+
 defaultproperties
 {
+   Name="Default__CurveEdPreset_Nothing"
+   ObjectArchetype=CurveEdPresetBase'UnrealEd.Default__CurveEdPresetBase'
 }

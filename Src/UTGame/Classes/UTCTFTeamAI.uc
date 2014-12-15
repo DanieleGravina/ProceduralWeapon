@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFTeamAI extends UTTeamAI;
 
@@ -11,7 +11,7 @@ function UTSquadAI AddSquadWithLeader(Controller C, UTGameObjective O)
 	local UTCTFSquadAI S;
 
 	if ( O == None )
-		O = UTGameObjective(EnemyFlag.HomeBase);
+		O = EnemyFlag.HomeBase;
 	S = UTCTFSquadAI(Super.AddSquadWithLeader(C,O));
 	if ( S != None )
 	{
@@ -32,13 +32,14 @@ function UTGameObjective GetPriorityFreelanceObjectiveFor(UTSquadAI InFreelanceS
 
 defaultproperties
 {
-	OrderList(0)=ATTACK
-	OrderList(1)=DEFEND
-	OrderList(2)=ATTACK
-	OrderList(3)=FREELANCE
-	OrderList(4)=ATTACK
-	OrderList(5)=DEFEND
-	OrderList(6)=ATTACK
-	OrderList(7)=ATTACK
-	SquadType=class'UTGame.UTCTFSquadAI'
+   SquadType=Class'UTGame.UTCTFSquadAI'
+   OrderList(0)="ATTACK"
+   OrderList(1)="Defend"
+   OrderList(2)="ATTACK"
+   OrderList(4)="ATTACK"
+   OrderList(5)="Defend"
+   OrderList(6)="ATTACK"
+   OrderList(7)="ATTACK"
+   Name="Default__UTCTFTeamAI"
+   ObjectArchetype=UTTeamAI'UTGame.Default__UTTeamAI'
 }

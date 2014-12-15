@@ -2,7 +2,7 @@
  * This specialized online game search data store provides the UI access to the search query and results for the player's
  * most recently visited servers.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTDataStore_GameSearchHistory extends UTDataStore_GameSearchPersonal;
 
@@ -56,10 +56,11 @@ function bool HasOutstandingQueries( optional bool bRestrictCheckToSelf )
 	return bResult;
 }
 
-
-DefaultProperties
+defaultproperties
 {
-	Tag=UTGameHistory
-	FavoritesGameSearchDataStoreClass=class'UTGame.UTDataStore_GameSearchFavorites'
-	GameSearchCfgList.Add((GameSearchClass=class'UTGame.UTGameSearchPersonal',DefaultGameSettingsClass=class'UTGame.UTGameSettingsPersonal',SearchResultsProviderClass=class'UTGame.UTUIDataProvider_SearchResult',SearchName="UTGameSearchHistory"))
+   FavoritesGameSearchDataStoreClass=Class'UTGame.UTDataStore_GameSearchFavorites'
+   GameSearchCfgList(0)=(GameSearchClass=Class'UTGame.UTGameSearchPersonal',DefaultGameSettingsClass=Class'UTGame.UTGameSettingsPersonal',SearchResultsProviderClass=Class'UTGame.UTUIDataProvider_SearchResult',SearchName="UTGameSearchHistory")
+   Tag="UTGameHistory"
+   Name="Default__UTDataStore_GameSearchHistory"
+   ObjectArchetype=UTDataStore_GameSearchPersonal'UTGame.Default__UTDataStore_GameSearchPersonal'
 }

@@ -1,13 +1,21 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicle_Cicada extends UTAirVehicle
+	native(Vehicle)
 	abstract;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var repnotify vector TurretFlashLocation;
 var repnotify rotator TurretWeaponRotation;
 var	repnotify byte TurretFlashCount;
 var repnotify byte TurretFiringMode;
+
 
 var bool bFreelanceStart;
 
@@ -28,86 +36,6 @@ replication
 		TurretFlashCount, TurretFiringMode, TurretWeaponRotation;
 }
 
-event Tick(float DeltaTime)
-{
-	local UTBot Bot;
-	local float JetScale;
-	local int i, JetIndex;
-	local vector HitLocation, HitNormal;
-	local actor HitActor;
-	
-	super.tick(DeltaTime);
-
-	if ( bDriving )
-	{
-		if ( Controller == None ) 
-		{
-			if (Seats.Length > 1 && Seats[1].SeatPawn != None && Seats[1].SeatPawn.Controller != None && (Location.Z < WorldInfo.StallZ) )
-			{
-				// if turret passenger, try to bring vehicle to a halt
-				Rise = FClamp((-1.0 * Velocity.Z)/GetMaxRiseForce(), -1.0, 1.0);
-			}
-		}
-		else 
-		{
-			// AI altitude control
-			Bot = UTBot(Controller);
-			if ( Bot != None )
-			{
-				if ( Bot.bScriptedFrozen )
-				{
-					Rise = FClamp((-1.0 * Velocity.Z) / GetMaxRiseForce(), 0.0, 1.0);
-				}
-				else if ( !Bot.InLatentExecution(Bot.LATENT_MOVETOWARD) )
-				{
-					if (Rise < 0.0)
-					{
-						if (Velocity.Z < 0.0)
-						{
-							if (Velocity.Z < -1000.0)
-							{
-								Rise = -0.001;
-							}
-							HitActor = Trace(HitLocation, HitNormal, Location - vect(0.0, 0.0, 2000.0), Location, FALSE);
-							if (HitActor != None)
-							{
-								if ((Location.Z - HitLocation.Z) / (-1.0 * Velocity.Z) < 0.85)
-								{
-									Rise = 1.0;
-								}
-							}
-						}
-					}
-					else if (Rise == 0.0)
-					{
-						if ( !FastTrace(Location - vect(0.0, 0.0, 500.0), Location) )
-						{
-							Rise = FClamp((-1.0 * Velocity.Z) / GetMaxRiseForce(), 0.0, 1.0);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if ( LastRenderTime > WorldInfo.TimeSeconds - 0.2 )
-	{
-		if ( JetControl != None )
-		{
-			JetScale = FClamp(1.0-JetControl.ControlStrength, 0.2 , 1.0);
-			for ( i=0; i<JetEffectIndices.Length; i++ )
-			{
-				JetIndex = JetEffectIndices[i];
-				if ( JetIndex < VehicleEffects.Length && (VehicleEffects[JetIndex].EffectRef != None) )
-				{
-					VehicleEffects[JetIndex].EffectRef.SetFloatParameter(JetScalingParam, JetScale);
-				}
-			}
-		}
-	}
-}
-
-
 simulated event RigidBodyCollision( PrimitiveComponent HitComponent, PrimitiveComponent OtherComponent,
 					const out CollisionImpactData RigidCollisionData, int ContactIndex )
 {
@@ -117,8 +45,9 @@ simulated event RigidBodyCollision( PrimitiveComponent HitComponent, PrimitiveCo
 		SetTimer(0.7f,false,'ResetTurningSpeed');
 		MaxSpeed = default.MaxSpeed/2.0;
 		MaxAngularVelocity = default.MaxAngularVelocity/4.0;
-		if( UDKVehicleSimChopper(SimObj) != none)
-			UDKVehicleSimChopper(SimObj).bRecentlyHit = true;
+		if( UTVehicleSimChopper(SimObj) != none)
+			UTVehicleSimChopper(SimObj).bRecentlyHit = true;
+		//UTVehicleSimChopper(SimObj).TurnDamping = 0.8;
 	}
 }
 
@@ -126,10 +55,11 @@ simulated function ResetTurningSpeed()
 { // this is safe since this only gets called above after checking SimObj is a chopper.
 	MaxSpeed = default.MaxSpeed;
 	MaxAngularVelocity = default.MaxAngularVelocity;
-	if( UDKVehicleSimChopper(SimObj) != none)
-		UDKVehicleSimChopper(SimObj).bRecentlyHit = false;
-}
+	if( UTVehicleSimChopper(SimObj) != none)
+		UTVehicleSimChopper(SimObj).bRecentlyHit = false;
 
+	//UTVehicleSimChopper(SimObj).TurnDamping = UTVehicleSimChopper(default.SimObj).TurnDamping;
+}
 // AI hint
 function bool ImportantVehicle()
 {
@@ -144,7 +74,7 @@ function bool DriverEnter(Pawn P)
 		return false;
 
 	B = UTBot(Controller);
-	bFreelanceStart = (B != None && B.Squad != None && UTSquadAI(B.Squad).bFreelance);
+	bFreelanceStart = (B != None && B.Squad != None && B.Squad.bFreelance && !UTOnslaughtTeamAI(B.Squad.Team.AI).bAllNodesTaken);
 	return true;
 }
 
@@ -276,61 +206,81 @@ simulated function bool ShouldClamp()
 
 defaultproperties
 {
-	Begin Object Class=UDKVehicleSimChopper Name=SimObject
-		MaxThrustForce=700.0
-		MaxReverseForce=700.0
-		LongDamping=0.6
-		MaxStrafeForce=680.0
-		LatDamping=0.7
-		MaxRiseForce=1000.0
-		UpDamping=0.7
-		TurnTorqueFactor=7000.0
-		TurnTorqueMax=10000.0
-		TurnDamping=1.2
-		MaxYawRate=1.8
-		PitchTorqueFactor=450.0
-		PitchTorqueMax=60.0
-		PitchDamping=0.3
-		RollTorqueTurnFactor=700.0
-		RollTorqueStrafeFactor=100.0
-		RollTorqueMax=300.0
-		RollDamping=0.1
-		MaxRandForce=30.0
-		RandForceInterval=0.5
-		StopThreshold=100
-		bShouldCutThrustMaxOnImpact=true
-	End Object
-	SimObj=SimObject
-	Components.Add(SimObject)
-
-	COMOffset=(X=-40,Z=-50.0)
-
-	BaseEyeheight=30
-	Eyeheight=30
-	bRotateCameraUnderVehicle=false
-	CameraLag=0.05
-	LookForwardDist=290.0
-	bLimitCameraZLookingUp=true
-
-	AirSpeed=2000.0
-	GroundSpeed=1600.0
-
-	UprightLiftStrength=30.0
-	UprightTorqueStrength=30.0
-
-	bStayUpright=true
-	StayUprightRollResistAngle=5.0
-	StayUprightPitchResistAngle=5.0
-	StayUprightStiffness=1200
-	StayUprightDamping=20
-
-	SpawnRadius=180.0
-	RespawnTime=45.0
-
-	bOverrideAVRiLLocks=true
-
-	PushForce=50000.0
-	HUDExtent=140.0
-
-	HornIndex=0
+   PushForce=50000.000000
+   bOverrideAVRiLLocks=True
+   bLimitCameraZLookingUp=True
+   Begin Object Class=DynamicLightEnvironmentComponent Name=MyLightEnvironment ObjName=MyLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTAirVehicle:MyLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTAirVehicle:MyLightEnvironment'
+   End Object
+   LightEnvironment=MyLightEnvironment
+   RespawnTime=45.000000
+   VehicleIndex=0
+   VehiclePositionString="In un Cicada"
+   VehicleNameString="Cicada"
+   HUDExtent=140.000000
+   SpawnRadius=180.000000
+   CameraLag=0.050000
+   LookForwardDist=290.000000
+   Begin Object Class=UTVehicleSimChopper Name=SimObject ObjName=SimObject Archetype=UTVehicleSimChopper'UTGame.Default__UTVehicleSimChopper'
+      MaxThrustForce=700.000000
+      MaxReverseForce=700.000000
+      LongDamping=0.600000
+      MaxStrafeForce=680.000000
+      LatDamping=0.700000
+      MaxRiseForce=1000.000000
+      UpDamping=0.700000
+      TurnTorqueFactor=7000.000000
+      TurnTorqueMax=10000.000000
+      TurnDamping=1.200000
+      MaxYawRate=1.800000
+      PitchTorqueFactor=450.000000
+      PitchTorqueMax=60.000000
+      PitchDamping=0.300000
+      RollTorqueTurnFactor=700.000000
+      RollTorqueStrafeFactor=100.000000
+      RollTorqueMax=300.000000
+      RollDamping=0.100000
+      StopThreshold=100.000000
+      MaxRandForce=30.000000
+      RandForceInterval=0.500000
+      bShouldCutThrustMaxOnImpact=True
+      Name="SimObject"
+      ObjectArchetype=UTVehicleSimChopper'UTGame.Default__UTVehicleSimChopper'
+   End Object
+   SimObj=SimObject
+   COMOffset=(X=-40.000000,Y=0.000000,Z=-50.000000)
+   bStayUpright=True
+   StayUprightRollResistAngle=5.000000
+   StayUprightPitchResistAngle=5.000000
+   StayUprightStiffness=1200.000000
+   StayUprightDamping=20.000000
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup_0 ObjName=MyStayUprightSetup_0 Archetype=RB_StayUprightSetup'UTGame.Default__UTAirVehicle:MyStayUprightSetup'
+      Name="MyStayUprightSetup_0"
+      ObjectArchetype=RB_StayUprightSetup'UTGame.Default__UTAirVehicle:MyStayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'UTGame.Default__UTVehicle_Cicada:MyStayUprightSetup_0'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance_0 ObjName=MyStayUprightConstraintInstance_0 Archetype=RB_ConstraintInstance'UTGame.Default__UTAirVehicle:MyStayUprightConstraintInstance'
+      Name="MyStayUprightConstraintInstance_0"
+      ObjectArchetype=RB_ConstraintInstance'UTGame.Default__UTAirVehicle:MyStayUprightConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'UTGame.Default__UTVehicle_Cicada:MyStayUprightConstraintInstance_0'
+   UprightLiftStrength=30.000000
+   UprightTorqueStrength=30.000000
+   GroundSpeed=1600.000000
+   AirSpeed=2000.000000
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTAirVehicle:SVehicleMesh'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTAirVehicle:SVehicleMesh'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTAirVehicle:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTAirVehicle:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Components(2)=MyLightEnvironment
+   Components(3)=SimObject
+   CollisionComponent=SVehicleMesh
+   Name="Default__UTVehicle_Cicada"
+   ObjectArchetype=UTAirVehicle'UTGame.Default__UTAirVehicle'
 }

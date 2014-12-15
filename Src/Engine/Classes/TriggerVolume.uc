@@ -1,16 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class TriggerVolume extends Volume
 	native
 	placeable;
-
-cpptext
-{
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-}
 
 simulated event PostBeginPlay()
 {
@@ -30,12 +23,17 @@ simulated function bool StopsProjectile(Projectile P)
 
 defaultproperties
 {
-	bColored=true
-	BrushColor=(R=100,G=255,B=100,A=255)
-
-	bCollideActors=true
-	bProjTarget=true
-	SupportedEvents.Empty
-	SupportedEvents(0)=class'SeqEvent_Touch'
-	SupportedEvents(1)=class'SeqEvent_TakeDamage'
+   BrushColor=(B=100,G=255,R=100,A=255)
+   bColored=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bProjTarget=True
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   SupportedEvents(1)=Class'Engine.SeqEvent_TakeDamage'
+   Name="Default__TriggerVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

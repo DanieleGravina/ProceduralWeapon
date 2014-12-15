@@ -1,11 +1,10 @@
 //=============================================================================
 // Vehicle: The base class of all vehicles.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class Vehicle extends Pawn
-	ClassGroup(Vehicles)
-    native(Pawn)
+    native
     nativereplication
     abstract;
 
@@ -90,42 +89,33 @@ var() bool		bIgnoreStallZ;
 /** If true, do extra traces to vehicle extremities for net relevancy checks */
 var bool bDoExtraNetRelevancyTraces;
 
-cpptext
-{
-	virtual INT* GetOptimizedRepList(BYTE* Recent, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel);
-	virtual UBOOL IsNetRelevantFor(APlayerController* RealViewer, AActor* Viewer, const FVector& SrcLocation);
-	virtual UBOOL ReachedBy(APawn* P, const FVector& TestPosition, const FVector& Dest);
-	virtual ANavigationPoint* CheckDetour(ANavigationPoint* BestDest, ANavigationPoint* Start, UBOOL bWeightDetours);
-	virtual void performPhysics(FLOAT DeltaSeconds);
-	virtual UBOOL HasRelevantDriver();
-	virtual AVehicle* GetAVehicle() { return this; }
-
-	/**
-	 * Check if this actor is the owner when doing relevancy checks for actors marked bOnlyRelevantToOwner
-	 * 
-	 * @param ReplicatedActor - the actor we're doing a relevancy test on
-	 * 
-	 * @param ActorOwner - the owner of ReplicatedActor
-	 * 
-	 * @param ConnectionActor - the controller of the connection that we're doing relevancy checks for
-	 * 
-	 * @return TRUE if this actor should be considered the owner
-	 */
-	virtual UBOOL IsRelevancyOwnerFor(AActor* ReplicatedActor, AActor* ActorOwner, AActor* ConnectionActor);
-
-	// AI Interface
-	virtual void setMoveTimer(FVector MoveDir);
-	virtual UBOOL IsStuck();
-	virtual UBOOL AdjustFlight(FLOAT ZDiff, UBOOL bFlyingDown, FLOAT Distance, AActor* GoalActor);
-	virtual void SteerVehicle(FVector Direction);
-	virtual void AdjustThrottle( FLOAT Distance );
-	virtual UBOOL moveToward(const FVector &Dest, AActor *GoalActor);
-	virtual void rotateToward(FVector FocalPoint);
-	virtual UBOOL JumpOutCheck(AActor *GoalActor, FLOAT Distance, FLOAT ZDiff);
-	virtual void MarkEndPoints(ANavigationPoint* EndAnchor, AActor* Goal, const FVector& GoalLocation);
-	virtual FLOAT SecondRouteAttempt(ANavigationPoint* Anchor, ANavigationPoint* EndAnchor, NodeEvaluator NodeEval, FLOAT BestWeight, AActor *goal, const FVector& GoalLocation, FLOAT StartDist, FLOAT EndDist, INT MaxPathLength, INT SoftMaxNodes);
-	virtual UBOOL IsGlider();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -186,12 +176,6 @@ function Suicide()
 }
 
 /**
-  * @RETURNS max rise force for this vehicle (used by AI)
-  */
-native function float GetMaxRiseForce();
-
-
-/**
  * @returns Figure out who we are targetting.
  */
 simulated native function vector GetTargetLocation(optional Actor RequestedBy, optional bool bRequestAlternateLoc) const;
@@ -219,30 +203,29 @@ simulated function TakeRadiusDamage
 	float				Momentum,
 	vector				HurtOrigin,
 	bool				bFullDamage,
-	Actor               DamageCauser,
-	optional float      DamageFalloffExponent=1.f
+	Actor DamageCauser
 )
 {
-	if ( Role == ROLE_Authority )
-	{
-		Super.TakeRadiusDamage(InstigatedBy, BaseDamage, DamageRadius, DamageType, Momentum, HurtOrigin, bFullDamage, DamageCauser, DamageFalloffExponent);
+	if ( Role < ROLE_Authority )
+		return;
 
-		if (Health > 0)
-		{
-			DriverRadiusDamage(BaseDamage, DamageRadius, InstigatedBy, DamageType, Momentum, HurtOrigin, DamageCauser);
-		}
+	Super.TakeRadiusDamage(InstigatedBy, BaseDamage, DamageRadius, DamageType, Momentum, HurtOrigin, bFullDamage, DamageCauser);
+
+	if (Health > 0)
+	{
+		DriverRadiusDamage(BaseDamage, DamageRadius, InstigatedBy, DamageType, Momentum, HurtOrigin, DamageCauser);
 	}
 }
 
 /** DriverRadiusDamage()
 determine if radius damage that hit the vehicle should damage the driver
 */
-function DriverRadiusDamage(float DamageAmount, float DamageRadius, Controller EventInstigator, class<DamageType> DamageType, float Momentum, vector HitLocation, Actor DamageCauser, optional float DamageFalloffExponent=1.f)
+function DriverRadiusDamage(float DamageAmount, float DamageRadius, Controller EventInstigator, class<DamageType> DamageType, float Momentum, vector HitLocation, Actor DamageCauser)
 {
 	//if driver has collision, whatever is causing the radius damage will hit the driver by itself
 	if (EventInstigator != None && Driver != None && bAttachDriver && !Driver.bCollideActors && !Driver.bBlockActors)
 	{
-		Driver.TakeRadiusDamage(EventInstigator, DamageAmount, DamageRadius, DamageType, Momentum, HitLocation, false, DamageCauser, DamageFalloffExponent);
+		Driver.TakeRadiusDamage(EventInstigator, DamageAmount, DamageRadius, DamageType, Momentum, HitLocation, false, DamageCauser);
 	}
 }
 
@@ -340,9 +323,8 @@ function bool TryToDrive(Pawn P)
 }
 
 /** DriverEnter()
- * Make Pawn P the new driver of this vehicle
- * Changes controller ownership across pawns
- */
+Make Pawn P the new driver of this vehicle
+*/
 function bool DriverEnter(Pawn P)
 {
 	local Controller C;
@@ -363,7 +345,7 @@ function bool DriverEnter(Pawn P)
 	Driver.SetOwner( Self ); // This keeps the driver relevant.
 	C.Possess( Self, true );
 
-	if( PlayerController(C) != None && !C.IsChildState(C.GetStateName(), LandMovementState) )
+	if( PlayerController(C) != None )
 	{
 		PlayerController(C).GotoState( LandMovementState );
 	}
@@ -441,13 +423,6 @@ event bool ContinueOnFoot()
 	}
 }
 
-function rotator GetExitRotation(Controller C)
-{
-	local rotator rot;
-	rot.Yaw = C.Rotation.Yaw;
-	return rot;
-}
-
 /**
 Called from the Controller when player wants to get out. */
 event bool DriverLeave( bool bForceLeave )
@@ -458,7 +433,7 @@ event bool DriverLeave( bool bForceLeave )
 
 	if (Role < ROLE_Authority)
 	{
-		`Warn("DriverLeave() called on client");
+		WarnInternal("DriverLeave() called on client");
 		ScriptTrace();
 		return false;
 	}
@@ -499,7 +474,7 @@ event bool DriverLeave( bool bForceLeave )
 	    }
 	}
 
-	ExitRotation = GetExitRotation(Controller);
+	ExitRotation.Yaw = Controller.Rotation.Yaw;
 	SetDriving(False);
 
 	// Reconnect Controller to Driver.
@@ -695,7 +670,7 @@ event TakeDamage(int Damage, Controller EventInstigator, vector HitLocation, vec
 		momentum *= DamageType.default.VehicleMomentumScaling * MomentumMult;
 	}
 
-	super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+	super.TakeDamage(Damage, EventInstigator, HitLocation, Momentum, DamageType, HitInfo);
 }
 
 function AdjustDriverDamage(out int Damage, Controller InstigatedBy, Vector HitLocation, out Vector Momentum, class<DamageType> DamageType)
@@ -704,13 +679,13 @@ function AdjustDriverDamage(out int Damage, Controller InstigatedBy, Vector HitL
 	{
  		Damage = 0;
  	}
-	else
+	else if (!DamageType.default.bIgnoreDriverDamageMult)
 	{
  		Damage *= DriverDamageMult;
  	}
 }
 
-function ThrowActiveWeapon( optional bool bDestroyWeap );
+function ThrowActiveWeapon() {}
 
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
@@ -725,7 +700,7 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 	}
 }
 
-function DriverDied(class<DamageType> DamageType)
+function DriverDied()
 {
 	local Controller C;
 	local PlayerReplicationInfo RealPRI;
@@ -871,16 +846,11 @@ Called for pawns that have bCanBeBaseForPawns=false when another pawn becomes ba
 */
 function CrushedBy(Pawn OtherPawn) {}
 
-simulated event vector GetEntryLocation()
+simulated function vector GetEntryLocation()
 {
 	return Location;
 }
 
-/*
- *   Change the driving status of the vehicle
- * replicates to clients and notifies via DrivingStatusChanged()
- * @param b - TRUE for actively driving the vehicle, FALSE otherwise
- */
 simulated function SetDriving(bool b)
 {
 	if (bDriving != b)
@@ -889,6 +859,9 @@ simulated function SetDriving(bool b)
 		DrivingStatusChanged();
 	}
 }
+
+/** handles the driver pawn of the dead vehicle (decide whether to ragdoll it, etc) */
+function HandleDeadVehicleDriver();
 
 simulated function DrivingStatusChanged()
 {
@@ -921,33 +894,26 @@ simulated event ReplicatedEvent(name VarName)
 /** called when the driver of this vehicle takes damage */
 function NotifyDriverTakeHit(Controller InstigatedBy, vector HitLocation, int Damage, class<DamageType> DamageType, vector Momentum);
 
-simulated function ZeroMovementVariables()
-{
-	Super.ZeroMovementVariables();
-
-	Steering = 0.f;
-	Rise	 = 0.f;
-	Throttle = 0.f;
-}
-
 defaultproperties
 {
-	Components.Remove(Arrow)
-	Components.Remove(Sprite)
-
-	LandMovementState=PlayerDriving
-	bDontPossess=true
-
-	bCanBeBaseForPawns=true
-	MomentumMult=1.0
-	bAttachDriver=true
-	CrushedDamageType=class'DmgType_Crushed'
-	TurnTime=2.0
-
-	MinCrushSpeed=20.0
-	ForceCrushPenetration=10.0
-	bDoExtraNetRelevancyTraces=true
-	bRetryPathfindingWithDriver=true
-	bPathfindsAsVehicle=true
-	bReplicateHealthToAll=true
+   bAttachDriver=True
+   bRetryPathfindingWithDriver=True
+   bDoExtraNetRelevancyTraces=True
+   MomentumMult=1.000000
+   CrushedDamageType=Class'Engine.DmgType_Crushed'
+   MinCrushSpeed=20.000000
+   ForceCrushPenetration=10.000000
+   TurnTime=2.000000
+   bCanBeBaseForPawns=True
+   bDontPossess=True
+   bPathfindsAsVehicle=True
+   LandMovementState="PlayerDriving"
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Pawn:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Pawn:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   Name="Default__Vehicle"
+   ObjectArchetype=Pawn'Engine.Default__Pawn'
 }

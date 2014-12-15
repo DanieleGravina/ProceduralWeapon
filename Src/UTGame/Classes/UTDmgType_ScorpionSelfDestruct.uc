@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTDmgType_ScorpionSelfDestruct extends UTDmgType_Burning;
 
@@ -17,12 +17,18 @@ static function int IncrementKills(UTPlayerReplicationInfo KillerPRI)
 
 defaultproperties
 {
-	KillStatsName=KILLS_SCORPIONSELFDESTRUCT
-	DeathStatsName=DEATHS_SCORPIONSELFDESTRUCT
-	SuicideStatsName=SUICIDES_SCORPIONSELFDESTRUCT
-	KDamageImpulse=12000
-	bDontHurtInstigator=true
-	bSelfDestructDamage=true
-
-	DamageGivenForSelfDestruct=610
+   DamageGivenForSelfDestruct=610
+   bSelfDestructDamage=True
+   KillStatsName="KILLS_SCORPIONSELFDESTRUCT"
+   DeathStatsName="DEATHS_SCORPIONSELFDESTRUCT"
+   SuicideStatsName="SUICIDES_SCORPIONSELFDESTRUCT"
+   DeathString="`o stava troppo vicino all'autodistruzione dello Scorpion di `k."
+   FemaleSuicide="`o si è incenerita con l'autodistruzione della sua Scorpion."
+   MaleSuicide="`o si è incenerito con l'autodistruzione della sua Scorpion."
+   bDontHurtInstigator=True
+   bKRadialImpulse=True
+   KDamageImpulse=12000.000000
+   KImpulseRadius=500.000000
+   Name="Default__UTDmgType_ScorpionSelfDestruct"
+   ObjectArchetype=UTDmgType_Burning'UTGame.Default__UTDmgType_Burning'
 }

@@ -1,19 +1,25 @@
 /**
  * This is the anim tree label renderer
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimTreeLabelRenderer extends ThumbnailLabelRenderer
 	native;
 
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-protected:
-	/**
-	 * Adds the name of the object and information about the anim tree
-	 *
-	 * @param Object the object to build the labels for
-	 * @param OutLabels the array that is added to
-	 */
-	void BuildLabelList(UObject* Object, const ThumbnailOptions& InOptions, TArray<FString>& OutLabels);
+   Name="Default__AnimTreeLabelRenderer"
+   ObjectArchetype=ThumbnailLabelRenderer'UnrealEd.Default__ThumbnailLabelRenderer'
 }

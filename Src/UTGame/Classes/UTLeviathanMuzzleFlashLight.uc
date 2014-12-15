@@ -1,17 +1,19 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
-class UTLeviathanMuzzleFlashLight extends UDKExplosionLight;
+class UTLeviathanMuzzleFlashLight extends UTExplosionLight;
 
 defaultproperties
 {
-	HighDetailFrameTime=+0.02
-	Brightness=8
-	Radius=512
-	LightColor=(R=255,G=255,B=255,A=255)
-
-	TimeShift=((StartTime=0.0,Radius=256,Brightness=8,LightColor=(R=255,G=192,B=128,A=255)),(StartTime=2.8,Radius=256,Brightness=24,LightColor=(R=255,G=192,B=128,A=255)),(StartTime=2.9,Radius=512,Brightness=16,LightColor=(R=255,G=228,B=192,A=255)),(StartTime=3.3,Radius=256,Brightness=4,LightColor=(R=255,G=192,B=128,A=255)))
+   HighDetailFrameTime=0.020000
+   TimeShift(0)=(Radius=256.000000,Brightness=8.000000,LightColor=(B=128,G=192,R=255,A=255))
+   TimeShift(1)=(StartTime=2.800000,Radius=256.000000,Brightness=24.000000,LightColor=(B=128,G=192,R=255,A=255))
+   TimeShift(2)=(StartTime=2.900000,Radius=512.000000,Brightness=16.000000,LightColor=(B=192,G=228,R=255,A=255))
+   TimeShift(3)=(StartTime=3.300000,Radius=256.000000,Brightness=4.000000,LightColor=(B=128,G=192,R=255,A=255))
+   Radius=512.000000
+   Name="Default__UTLeviathanMuzzleFlashLight"
+   ObjectArchetype=UTExplosionLight'UTGame.Default__UTExplosionLight'
 }

@@ -1,27 +1,28 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MorphNodePose extends MorphNodeBase
 	native(Anim)
 	hidecategories(Object);
 
-cpptext
-{
-	// UObject interface
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// MorphNodeBase interface
-	virtual void GetActiveMorphs(TArray<FActiveMorph>& OutMorphs);
-	virtual void InitMorphNode(USkeletalMeshComponent* InSkelComp);
-
-	/** 
-	 * Draws this morph node in the AnimTreeEditor.
-	 *
-	 * @param	Canvas			The canvas to use.
-	 * @param	SelectedNodes	Reference to array of all currently selected nodes, potentially including this node
-	 */	
-	virtual void DrawMorphNode(FCanvas* Canvas, const TArray<UAnimObject*>& SelectedNodes);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Cached pointer to actual MorphTarget object. */
 var		transient MorphTarget	Target;
@@ -43,5 +44,7 @@ native final function SetMorphTarget(Name MorphTargetName);
 
 defaultproperties
 {
-	Weight=1.f
+   Weight=1.000000
+   Name="Default__MorphNodePose"
+   ObjectArchetype=MorphNodeBase'Engine.Default__MorphNodeBase'
 }

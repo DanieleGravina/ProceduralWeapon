@@ -1,16 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
-/** 
- * Defines how a sounds changes volume with distance to the listener
- */ 
- 
 class SoundNodeAttenuation extends SoundNode
-	native( Sound )
-	hidecategories( Object )
-	dontsortcategories( Attenuation, LowPassFilter )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
+
 
 enum SoundDistanceModel
 {
@@ -21,43 +17,42 @@ enum SoundDistanceModel
 	ATTENUATION_NaturalSound
 };
 
-enum ESoundDistanceCalc
-{
-	SOUNDDISTANCE_Normal,
-	SOUNDDISTANCE_InfiniteXYPlane,
-	SOUNDDISTANCE_InfiniteXZPlane,
-	SOUNDDISTANCE_InfiniteYZPlane,
-};
+var()					SoundDistanceModel		DistanceModel;
 
-/* The settings for attenuating. */
-var( Attenuation )		bool					bAttenuate<ToolTip=Enable attenuation via volume>;
-var( Attenuation )		bool					bSpatialize<ToolTip=Enable the source to be positioned in 3D>;
-var( Attenuation )		float					dBAttenuationAtMax<ToolTip=The volume at maximum distance in deciBels>;
-var( Attenuation )		float					OmniRadius<ToolTip=At what distance to start blending the sound from as omnidirectional>;
+/**
+ * This is the point at which to start attenuating.  Prior to this point the sound will be at full volume.
+ **/
+var()					rawdistributionfloat	MinRadius;
+var()					rawdistributionfloat	MaxRadius;
+var()					float					dBAttenuationAtMax;
+/**
+ * This is the point at which to start applying a low pass filter.  Prior to this point the sound will be dry.
+ **/
+var()					rawdistributionfloat	LPFMinRadius;
+var()					rawdistributionfloat	LPFMaxRadius;
 
-/** What kind of attenuation model to use */
-var( Attenuation )		SoundDistanceModel		DistanceAlgorithm<ToolTip=The type of volume versus distance algorithm to use>;
+var()					bool					bSpatialize;
+var()					bool					bAttenuate;
+var()					bool					bAttenuateWithLowPassFilter;
 
-/** How to calculate the distance from the sound to the listener */
-var( Attenuation )		ESoundDistanceCalc		DistanceType<ToolTip=Special attenuation modes>;
-
-var( Attenuation )		float					RadiusMin<ToolTip=The range at which the sound starts attenuating>;
-var( Attenuation )		float					RadiusMax<ToolTip=The range at which the sound has attenuated completely>;
-
-/* The settings for attenuating with a low pass filter. */
-var( LowPassFilter )	bool					bAttenuateWithLPF<ToolTip=Enable attenuation via low pass filter>;
-var( LowPassFilter )	float					LPFRadiusMin<ToolTip=The range at which to start applying a low passfilter>;
-var( LowPassFilter )	float					LPFRadiusMax<ToolTip=The range at which to apply the maximum amount of low pass filter>;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bAttenuate=true
-	bSpatialize=true
-	dBAttenuationAtMax=-60;
-	DistanceAlgorithm=ATTENUATION_Linear
-	RadiusMin=400
-	RadiusMax=4000
-	
-	LPFRadiusMin=3000
-	LPFRadiusMax=6000
+   MinRadius=(Distribution=DistributionMinRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(400.000000,400.000000,400.000000,400.000000,400.000000,400.000000))
+   MaxRadius=(Distribution=DistributionMaxRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(5000.000000,5000.000000,5000.000000,5000.000000,5000.000000,5000.000000))
+   dBAttenuationAtMax=-60.000000
+   LPFMinRadius=(Distribution=DistributionLPFMinRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(1500.000000,1500.000000,1500.000000,1500.000000,1500.000000,1500.000000))
+   LPFMaxRadius=(Distribution=DistributionLPFMaxRadius,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(5000.000000,5000.000000,5000.000000,5000.000000,5000.000000,5000.000000))
+   bSpatialize=True
+   bAttenuate=True
+   bAttenuateWithLowPassFilter=True
+   Name="Default__SoundNodeAttenuation"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

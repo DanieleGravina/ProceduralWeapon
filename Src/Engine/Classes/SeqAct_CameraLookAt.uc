@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_CameraLookAt extends SequenceAction
 	native(Sequence);
@@ -22,8 +22,6 @@ var()	Vector2d	InFocusFOV;
 var() 	Name		FocusBoneName;
 /** Should this turn the character's head? */
 var()	bool		bAffectHead;
-/** Should this turn affect the player's rotation? */
-var()   bool        bRotatePlayerWithCamera;
 /** Set this player in god mode?  Only works if bAffectCamera == TRUE */
 var() 	bool		bToggleGodMode;
 /** Leave the camera focused on the actor? */
@@ -33,58 +31,41 @@ var()	String		TextDisplay;
 /** Don't allow input */
 var()	bool		bDisableInput;
 /** The total amount of time the camera lookat will happen */
-var()	float		TotalTime<ClampMin=0.0>;
+var()	float		TotalTime;
 /** Whether this event used a timer or not */
 var		bool		bUsedTimer;
 /** TRUE to validate visibility of lookat target before doing any camera changes */
 var()	bool		bCheckLineOfSight;
 /** If >= 0, override camera fov to be this. */
-var()	float		CameraFOV<ClampMin=1.0 | ClampMax=179.0>;
+var()	float		CameraFOV;
 
 var transient float RemainingTime;
 
-cpptext
-{
-	void Activated();
-	UBOOL UpdateOp(FLOAT DeltaTime);
-	void DeActivated();
-
-	void UpdateObject();
-};
-
-/**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
- *
- * @return	the version number for this specific class.
- */
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 3;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Look At"
-	ObjCategory="Camera"
-
-	bAffectCamera=TRUE
-	bTurnInPlace=TRUE
-	InterpSpeedRange=(X=3,Y=3)
-	InFocusFOV=(X=1,Y=1)
-	CameraFOV=-1.f
-
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Focus")
-
-	OutputLinks(0)=(LinkDesc="Out")				// always fires on activation
-	OutputLinks(1)=(LinkDesc="Finished")		// fires after lookat finishes, if using timer (i.e. TotalTime > 0)
-	OutputLinks(2)=(LinkDesc="Succeeded")		// fires if lookat actually happens
-	OutputLinks(3)=(LinkDesc="Failed")			// fires if lookat fails (eg bCheckLineOfSight=true but trace fails)
-
-	bDisableInput=TRUE
-	TotalTime=0.0f
-	bLatentExecution=TRUE
-	bUsedTimer=FALSE
+   bAffectCamera=True
+   bTurnInPlace=True
+   bDisableInput=True
+   InterpSpeedRange=(X=3.000000,Y=3.000000)
+   InFocusFOV=(X=1.000000,Y=1.000000)
+   CameraFOV=-1.000000
+   bLatentExecution=True
+   OutputLinks(1)=(LinkDesc="Finished")
+   OutputLinks(2)=(LinkDesc="Succeeded")
+   OutputLinks(3)=(LinkDesc="Failed")
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Focus",MinVars=1,MaxVars=255)
+   ObjClassVersion=4
+   ObjName="Look At"
+   ObjCategory="Camera"
+   Name="Default__SeqAct_CameraLookAt"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

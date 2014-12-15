@@ -1,9 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTWeaponAttachment extends Actor
 	abstract
-	dependson(UTPawn);
+	dependson(UTPhysicalMaterialProperty);
 
 /*********************************************************************************************
  Animations and Sounds
@@ -40,8 +40,8 @@ var color					MuzzleFlashColor;
 var bool					bMuzzleFlashPSCLoops;
 
 /** dynamic light */
-var class<UDKExplosionLight> MuzzleFlashLightClass;
-var	UDKExplosionLight		MuzzleFlashLight;
+var class<UTExplosionLight> MuzzleFlashLightClass;
+var	UTExplosionLight		MuzzleFlashLight;
 
 /** How long the Muzzle Flash should be there */
 var float					MuzzleFlashDuration;
@@ -83,10 +83,17 @@ var bool bMakeSplash;
  Anim
 ********************************************************************************************* */
 
+var enum EWeapAnimType
+{
+	EWAT_Default,
+	EWAT_Pistol,
+	EWAT_DualPistols,
+	EWAT_ShoulderRocket,
+	EWAT_Stinger
+} WeapAnimType;
+
 /** anims to play when firing */
 var name FireAnim, AltFireAnim;
-
-var EWeapAnimType WeapAnimType;
 
 simulated event PostBeginPlay()
 {
@@ -128,9 +135,9 @@ simulated function CreateOverlayMesh()
 		OverlayMesh.bIgnoreControllersWhenNotRendered = true;
 		OverlayMesh.bOverrideAttachmentOwnerVisibility = true;
 
-		if (UDKSkeletalMeshComponent(OverlayMesh) != none)
+		if (UTSkeletalMeshComponent(OverlayMesh) != none)
 		{
-			UDKSkeletalMeshComponent(OverlayMesh).SetFOV(UDKSkeletalMeshComponent(Mesh).FOV);
+			UTSkeletalMeshComponent(OverlayMesh).SetFOV(UTSkeletalMeshComponent(Mesh).FOV);
 		}
 	}
 }
@@ -230,6 +237,9 @@ simulated function AttachTo(UTPawn OwnerPawn)
 	GotoState('CurrentlyAttached');
 }
 
+
+/** sets whether the weapon is being dual wielded */
+simulated function SetDualWielding(bool bNowDual);
 /** sets whether the weapon is being put away */
 simulated function SetPuttingDownWeapon(bool bNowPuttingDown);
 
@@ -297,8 +307,7 @@ simulated function CauseMuzzleFlash()
 	local ParticleSystem MuzzleTemplate;
 
 	// only enable muzzleflash light if performance is high enough
-	// enable muzzleflash on mobile since its one of the few ways to show dynamic lighting on skelmeshes
-	if ((!WorldInfo.bDropDetail && !class'Engine'.static.IsSplitScreen()) || WorldInfo.IsConsoleBuild(CONSOLE_Mobile) )
+	if ( !WorldInfo.bDropDetail && !class'Engine'.static.IsSplitScreen() )
 	{
 		if ( MuzzleFlashLight == None )
 		{
@@ -384,6 +393,17 @@ simulated function StopFirstPersonFireEffects(Weapon PawnWeapon)	// Should be su
 	}
 }
 
+simulated function bool EffectIsRelevant(vector SpawnLocation, bool bForceDedicated, optional float CullDistance )
+{
+	if ( Instigator != None )
+	{
+		if ( SpawnLocation == Location )
+			SpawnLocation = Instigator.Location;
+		return Instigator.EffectIsRelevant(SpawnLocation, bForceDedicated, CullDistance);
+	}
+	return Super.EffectIsRelevant(SpawnLocation, bForceDedicated, CullDistance);
+}
+
 /**
  * Spawn all of the effects that will be seen in behindview/remote clients.  This
  * function is called from the pawn, and should only be called when on a remote client or
@@ -392,6 +412,7 @@ simulated function StopFirstPersonFireEffects(Weapon PawnWeapon)	// Should be su
 simulated function ThirdPersonFireEffects(vector HitLocation)
 {
 	local UTPawn P;
+
 	if ( EffectIsRelevant(Location,false,MaxFireEffectDistance) )
 	{
 		// Light it up
@@ -419,6 +440,21 @@ simulated function ThirdPersonFireEffects(vector HitLocation)
 simulated event StopThirdPersonFireEffects()
 {
 	StopMuzzleFlash();
+}
+
+/** 
+*   Optimized equivalent of calling ThirdPersonFireEffects while in splitscreen
+*/
+simulated function SplitScreenEffects(vector HitLocation)
+{
+	if (Instigator.FiringMode == 1 && AltFireAnim != 'None')
+	{
+		Mesh.PlayAnim(AltFireAnim,,, false);
+	}
+	else if (FireAnim != 'None')
+	{
+		Mesh.PlayAnim(FireAnim,,, false);
+	}
 }
 
 /** returns the impact sound that should be used for hits on the given physical material */
@@ -462,7 +498,7 @@ simulated function bool AllowImpactEffects(Actor HitActor, vector HitLocation, v
 	return (PortalTeleporter(HitActor) == None);
 }
 
-simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector HitNormal, TraceHitInfo HitInfo);
+simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector HitNormal);
 
 /**
  * Spawn any effects that occur at the impact point.  It's called from the pawn.
@@ -497,7 +533,7 @@ simulated function PlayImpactEffects(vector HitLocation)
 		{
 			CheckHitInfo(HitInfo, Pawn(HitActor).Mesh, -HitNormal, NewHitLoc);
 		}
-		SetImpactedActor(HitActor, HitLocation, HitNormal, HitInfo);
+		SetImpactedActor(HitActor, HitLocation, HitNormal);
 		// figure out the impact sound to use
 		ImpactEffect = GetImpactEffect(HitInfo.PhysMaterial);
 		V = Vehicle(HitActor);
@@ -530,6 +566,7 @@ simulated function PlayImpactEffects(vector HitLocation)
 			// this code is mostly duplicated in:  UTGib, UTProjectile, UTVehicle, UTWeaponAttachment be aware when updating
 			if ( !WorldInfo.bDropDetail
 				&& (Pawn(HitActor) == None)
+				&& (UTOnslaughtNodeObjective(HitActor) == None)
 				&& (VSizeSQ(Owner.Location - HitLocation) < MaxDecalRangeSq)
 				&& (((WorldInfo.GetDetailMode() != DM_Low) && !class'Engine'.static.IsSplitScreen()) || (P.IsLocallyControlled() && P.IsHumanControlled())) )
 			{
@@ -545,19 +582,19 @@ simulated function PlayImpactEffects(vector HitLocation)
 							// hack, since they don't show up on terrain anyway
 							if ( Terrain(HitActor) == None )
 							{
-							MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
-							MITV_Decal.SetParent( MI );
+								MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
+								MITV_Decal.SetParent( MI );
 
-							WorldInfo.MyDecalManager.SpawnDecal( MITV_Decal, HitLocation, rotator(-HitNormal), ImpactEffect.DecalWidth,
+								WorldInfo.MyDecalManager.SpawnDecal( MITV_Decal, HitLocation, rotator(-HitNormal), ImpactEffect.DecalWidth,
 								ImpactEffect.DecalHeight, 10.0, false,, HitInfo.HitComponent, true, false, HitInfo.BoneName, HitInfo.Item, HitInfo.LevelIndex );
-							//here we need to see if we are an MITV and then set the burn out times to occur
-							MITV_Decal.SetScalarStartTime( ImpactEffect.DecalDissolveParamName, ImpactEffect.DurationOfDecal );
-						}
+								//here we need to see if we are an MITV and then set the burn out times to occur
+								MITV_Decal.SetScalarStartTime( ImpactEffect.DecalDissolveParamName, ImpactEffect.DurationOfDecal );
+							}
 						}
 						else
 						{
 							WorldInfo.MyDecalManager.SpawnDecal( MI, HitLocation, rotator(-HitNormal), ImpactEffect.DecalWidth,
-								ImpactEffect.DecalHeight, 10.0, false,, HitInfo.HitComponent, true, false, HitInfo.BoneName, HitInfo.Item, HitInfo.LevelIndex );
+							ImpactEffect.DecalHeight, 10.0, false,, HitInfo.HitComponent, true, false, HitInfo.BoneName, HitInfo.Item, HitInfo.LevelIndex );
 						}
 					}
 				}
@@ -691,38 +728,37 @@ simulated function vector GetEffectLocation()
 
 defaultproperties
 {
-	Begin Object class=UTAnimNodeSequence Name=MeshSequenceA
-	End Object
-
-	// Weapon SkeletalMesh
-	Begin Object Class=SkeletalMeshComponent Name=SkeletalMeshComponent0
-		bOwnerNoSee=true
-		bOnlyOwnerSee=false
-		CollideActors=false
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-		MaxDrawDistance=4000
-		bForceRefPose=1
-		bUpdateSkelWhenNotRendered=false
-		bIgnoreControllersWhenNotRendered=true
-		bOverrideAttachmentOwnerVisibility=true
-		bAcceptsDynamicDecals=FALSE
-		Animations=MeshSequenceA
-		CastShadow=true
-		bCastDynamicShadow=true
-		bPerBoneMotionBlur=true
-	End Object
-	Mesh=SkeletalMeshComponent0
-
-	TickGroup=TG_DuringAsyncWork
-	NetUpdateFrequency=10
-	RemoteRole=ROLE_None
-	bReplicateInstigator=true
-	MaxImpactEffectDistance=4000.0
-	MaxFireEffectDistance=5000.0
-	bAlignToSurfaceNormal=true
-	MuzzleFlashDuration=0.3
-	MuzzleFlashColor=(R=255,G=255,B=255,A=255)
-	MaxDecalRangeSQ=16000000.0
-	DistFactorForRefPose=0.14
+   Begin Object Class=SkeletalMeshComponent Name=SkeletalMeshComponent0 ObjName=SkeletalMeshComponent0 Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+      Begin Object Class=UTAnimNodeSequence Name=MeshSequenceA ObjName=MeshSequenceA Archetype=UTAnimNodeSequence'UTGame.Default__UTAnimNodeSequence'
+         Name="MeshSequenceA"
+         ObjectArchetype=UTAnimNodeSequence'UTGame.Default__UTAnimNodeSequence'
+      End Object
+      Animations=UTAnimNodeSequence'UTGame.Default__UTWeaponAttachment:MeshSequenceA'
+      bForceRefpose=1
+      bUpdateSkelWhenNotRendered=False
+      bIgnoreControllersWhenNotRendered=True
+      bOverrideAttachmentOwnerVisibility=True
+      CullDistance=4000.000000
+      CachedCullDistance=4000.000000
+      bOwnerNoSee=True
+      bUseAsOccluder=False
+      Name="SkeletalMeshComponent0"
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+   End Object
+   Mesh=SkeletalMeshComponent0
+   MuzzleFlashColor=(B=255,G=255,R=255,A=255)
+   bAlignToSurfaceNormal=True
+   MuzzleFlashDuration=0.300000
+   DefaultImpactEffect=(DurationOfDecal=4.000000,DecalDissolveParamName="DissolveAmount")
+   DefaultAltImpactEffect=(DurationOfDecal=4.000000,DecalDissolveParamName="DissolveAmount")
+   MaxImpactEffectDistance=4000.000000
+   MaxFireEffectDistance=5000.000000
+   MaxDecalRangeSq=16000000.000000
+   DistFactorForRefPose=0.140000
+   TickGroup=TG_DuringAsyncWork
+   bReplicateInstigator=True
+   NetUpdateFrequency=10.000000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTWeaponAttachment"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

@@ -11,7 +11,7 @@
  *
  *	Intended for use in the Rain particle system.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
  
 class ParticleModuleUberRainImpacts extends ParticleModuleUberBase
@@ -71,125 +71,54 @@ var(Color)			rawdistributionfloat	AlphaOverLife;
 
 //*-----------------------------------------------------------------------------*/
 //*-----------------------------------------------------------------------------*/
-cpptext
-{
-	virtual void	Spawn(FParticleEmitterInstance* Owner, INT Offset, FLOAT SpawnTime);
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-
-	virtual void	Render3DPreview(FParticleEmitterInstance* Owner, const FSceneView* View,FPrimitiveDrawInterface* PDI);
-
-	void	DetermineUnitDirection(FParticleEmitterInstance* Owner, FVector& vUnitDir);
-
-	/** Used by derived classes to indicate they could be used on the given emitter.	*/
-	virtual	UBOOL				IsCompatible(UParticleEmitter* InputEmitter);
-	
-	/** Copy the contents of the modules to the UberModule								*/
-	virtual	UBOOL				ConvertToUberModule(UParticleEmitter* InputEmitter);
-
-	/**
-	 *	Return TRUE if this module impacts rotation of Mesh emitters
-	 *	@return	UBOOL		TRUE if the module impacts mesh emitter rotation
-	 */
-	virtual UBOOL	TouchesMeshRotation() const	{ return TRUE; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //*-----------------------------------------------------------------------------*/
 //*-----------------------------------------------------------------------------*/
+
 defaultproperties
 {
-	bSpawnModule=true
-	bUpdateModule=true
-	bSupported3DDrawMode=true
-
-	//*-----------------------------------------------------------------------------*/
-	/** Lifetime Module Defaults													*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionFloatUniform Name=DistributionLifetime
-	End Object
-	Lifetime=(Distribution=DistributionLifetime)
-
-	//*-----------------------------------------------------------------------------*/
-	/** Size Module Defaults														*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionVectorUniform Name=DistributionStartSize
-		Min=(X=1,Y=1,Z=1)
-		Max=(X=1,Y=1,Z=1)
-	End Object
-	StartSize=(Distribution=DistributionStartSize)
-
-	//*-----------------------------------------------------------------------------*/
-	/** MeshRotation Module Defaults												*/
-	//*-----------------------------------------------------------------------------*/
-	Begin Object Class=DistributionVectorUniform Name=DistributionStartRotation
-		Min=(X=0.0,Y=0.0,Z=0.0)
-		Max=(X=360.0,Y=360.0,Z=360.0)
-	End Object
-	StartRotation=(Distribution=DistributionStartRotation)
-	
-	bInheritParent=false
-
-	//*-----------------------------------------------------------------------------*/
-	/** SizeByLife Module Defaults													*/
-	//*-----------------------------------------------------------------------------*/
-	MultiplyX=true
-	MultiplyY=true
-	MultiplyZ=true
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionLifeMultiplier
-	End Object
-	LifeMultiplier=(Distribution=DistributionLifeMultiplier)
-
-	//*-----------------------------------------------------------------------------*/
-	/** PrimitiveCylinder Module Defaults											*/
-	//*-----------------------------------------------------------------------------*/
-	bIsUsingCylinder=true
-
-	bPositive_X=true
-	bPositive_Y=true
-	bPositive_Z=true
-	bNegative_X=true
-	bNegative_Y=true
-	bNegative_Z=true
-
-	bSurfaceOnly=false
-	bVelocity=false
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionPC_VelocityScale
-		Constant=1
-	End Object
-	PC_VelocityScale=(Distribution=DistributionPC_VelocityScale)
-
-	Begin Object Class=DistributionVectorConstant Name=DistributionPC_StartLocation
-		Constant=(X=0,Y=0,Z=0)
-	End Object
-	PC_StartLocation=(Distribution=DistributionPC_StartLocation)
-
-	bRadialVelocity=true
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionPC_StartRadius
-		Constant=50.0
-	End Object
-	PC_StartRadius=(Distribution=DistributionPC_StartRadius)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionPC_StartHeight
-		Constant=50.0
-	End Object
-	PC_StartHeight=(Distribution=DistributionPC_StartHeight)
-
-	PC_HeightAxis=PMLPC_HEIGHTAXIS_Z
-
-	//*-----------------------------------------------------------------------------*/
-	/** ColorOverLife Module Defaults												*/
-	//*-----------------------------------------------------------------------------*/
-	// This will screw up all the other curves...
-	//bCurvesAsColor=true
-
-	Begin Object Class=DistributionVectorConstantCurve Name=DistributionColorOverLife
-	End Object
-	ColorOverLife=(Distribution=DistributionColorOverLife)
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionAlphaOverLife
-		Constant=255.9f;
-	End Object
-	AlphaOverLife=(Distribution=DistributionAlphaOverLife)
+   Lifetime=(Distribution=DistributionLifetime,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   StartSize=(Distribution=DistributionStartSize,Op=2,LookupTableNumElements=2,LookupTableChunkSize=6,LookupTable=(1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000,1.000000))
+   StartRotation=(Distribution=DistributionStartRotation,Op=2,LookupTableNumElements=2,LookupTableChunkSize=6,LookupTable=(0.000000,360.000000,0.000000,0.000000,0.000000,360.000000,360.000000,360.000000,0.000000,0.000000,0.000000,360.000000,360.000000,360.000000))
+   MultiplyX=True
+   MultiplyY=True
+   MultiplyZ=True
+   bIsUsingCylinder=True
+   bPositive_X=True
+   bPositive_Y=True
+   bPositive_Z=True
+   bNegative_X=True
+   bNegative_Y=True
+   bNegative_Z=True
+   bRadialVelocity=True
+   LifeMultiplier=(Distribution=DistributionLifeMultiplier,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   PC_VelocityScale=(Distribution=DistributionPC_VelocityScale,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1.000000,1.000000,1.000000,1.000000))
+   PC_StartLocation=(Distribution=DistributionPC_StartLocation,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   PC_StartRadius=(Distribution=DistributionPC_StartRadius,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(50.000000,50.000000,50.000000,50.000000))
+   PC_StartHeight=(Distribution=DistributionPC_StartHeight,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(50.000000,50.000000,50.000000,50.000000))
+   PC_HeightAxis=PMLPC_HEIGHTAXIS_Z
+   ColorOverLife=(Distribution=DistributionColorOverLife,Op=1,LookupTableNumElements=1,LookupTableChunkSize=3,LookupTable=(0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000))
+   AlphaOverLife=(Distribution=DistributionAlphaOverLife,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(255.899994,255.899994,255.899994,255.899994))
+   bSpawnModule=True
+   bUpdateModule=True
+   bSupported3DDrawMode=True
+   Name="Default__ParticleModuleUberRainImpacts"
+   ObjectArchetype=ParticleModuleUberBase'Engine.Default__ParticleModuleUberBase'
 }

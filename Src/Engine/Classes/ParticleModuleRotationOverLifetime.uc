@@ -1,14 +1,14 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleRotationOverLifetime extends ParticleModuleRotationBase
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object);
 
-/** 
- *	The rotation of the particle (1.0 = 360 degrees).
- *	The value is retrieved using the RelativeTime of the particle.
+/**
+ *	The rotation to apply.
  */
 var(Rotation) rawdistributionfloat	RotationOverLife;
 
@@ -18,20 +18,17 @@ var(Rotation) rawdistributionfloat	RotationOverLife;
  */
 var(Rotation)					bool				Scale;
 
-cpptext
-{
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSpawnModule=false
-	bUpdateModule=true
-
-	Begin Object Class=DistributionFloatConstantCurve Name=DistributionRotOverLife
-	End Object
-	RotationOverLife=(Distribution=DistributionRotOverLife)
-	
-	// Setting to true to support existing modules...
-	Scale=true
+   RotationOverLife=(Distribution=DistributionRotOverLife,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   Scale=True
+   bUpdateModule=True
+   Name="Default__ParticleModuleRotationOverLifetime"
+   ObjectArchetype=ParticleModuleRotationBase'Engine.Default__ParticleModuleRotationBase'
 }

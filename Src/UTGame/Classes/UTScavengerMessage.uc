@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTScavengerMessage extends UTLocalMessage;
@@ -20,8 +20,11 @@ static function string GetString(
 
 defaultproperties
 {
-	DrawColor=(R=255,G=255,B=128,A=255)
-	FontSize=2
-	MessageArea=2
-    bIsPartiallyUnique=true
+   MessageText(0)="Boost in ricarica!"
+   MessageArea=2
+   bIsPartiallyUnique=True
+   DrawColor=(B=128,G=255,R=255,A=255)
+   FontSize=2
+   Name="Default__UTScavengerMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

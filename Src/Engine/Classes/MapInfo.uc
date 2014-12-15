@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -10,10 +10,15 @@ class MapInfo extends Object
 	abstract
 	editinlinenew;
 
-cpptext
-{
-#if WITH_EDITOR
-	virtual void CheckForErrors() {}
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
+defaultproperties
+{
+   Name="Default__MapInfo"
+   ObjectArchetype=Object'Core.Default__Object'
+}

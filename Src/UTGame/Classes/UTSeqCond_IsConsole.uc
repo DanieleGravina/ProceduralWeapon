@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqCond_IsConsole extends SequenceCondition;
@@ -9,10 +9,11 @@ event Activated()
 	OutputLinks[ (Class'WorldInfo'.Static.IsConsoleBuild()) ? 0 : 1].bHasImpulse = true;
 }
 
-
 defaultproperties
 {
-	ObjName="UTIsConsole"
-	OutputLinks(0)=(LinkDesc="Console Game")
-	OutputLinks(1)=(LinkDesc="PC Game")
+   OutputLinks(0)=(LinkDesc="Console Game")
+   OutputLinks(1)=(LinkDesc="PC Game")
+   ObjName="UTIsConsole"
+   Name="Default__UTSeqCond_IsConsole"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

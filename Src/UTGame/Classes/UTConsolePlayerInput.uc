@@ -1,12 +1,10 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTConsolePlayerInput extends UTPlayerInput within UTConsolePlayerController
-	config(Input);
-
-/** Multiplier used to scale the sensitivity of the controls. */
-var float SensitivityMultiplier;
+	config(Input)
+	native;
 
 /** Multiplier used to scale the sensitivity of the turning. */
 var float TurningAccelerationMultiplier;
@@ -114,9 +112,9 @@ var config float AutoPitchStopAdjustingValue;
 var private bool bIsLookingUp;
 var private bool bIsLookingDown;
 
-/**
+/**	
  * HoverBoards don't have a real turret.  All of the code that exists for modifying the rotation speed is within that set of code
- * So we are going to just modify it here.
+ * So we are going to just modify it here. 
  * This is the multiplier we are going to use to make the hoverboard look up and down feel nice.
  **/
 var config float HoverBoardPitchMultiplier;
@@ -124,6 +122,8 @@ var config float HoverBoardPitchMultiplier;
 
 simulated event PostBeginPlay()
 {
+	Super.PostBeginPlay();
+
 	ViewAccel_CurrMutliplier = ViewAccel_BaseMultiplier;
 }
 
@@ -135,10 +135,7 @@ function PreProcessInput( float DeltaTime )
 	local UTWeapon UW;
 	local bool bUsingTiltController;
 
-	Super.PreProcessInput(DeltaTime);
-	RawJoyLookRight	= aMouseX;
-	RawJoyLookUp	= aMouseY;
-	//`log( " RawJoyUp: " $ RawJoyUp $ " RawJoyRight: " $ RawJoyRight );
+	Super(PlayerInput).PreProcessInput(DeltaTime);
 
 	if( Pawn == none )
 	{
@@ -150,46 +147,47 @@ function PreProcessInput( float DeltaTime )
 	// to do any input help
 	if (!bUsingGamepad)
 	{
-		// if we are playing in a Game that only allows Gamepads and we have received input from a non gamepad
-		// we blank all inputs
-		if (UTGameReplicationInfo(WorldInfo.GRI) != None && !UTGameReplicationInfo(WorldInfo.GRI).bAllowKeyboardAndMouse)
+		// if we are playing in a Game that only allows Gamepads and we have received input from a non gamepad we disconnect the player
+		// as we consider that cheating
+        // if we are the server then we want to set our server to allow KeyBoardAndMouse
+        /* Disabled for PC
+		if( UTGameReplicationInfo(WorldInfo.GRI).bAllowKeyboardAndMouse == FALSE )
 		{
-			RawJoyLookRight = 0.0f;
-			RawJoyLookUp = 0.0f;
+				// leaving this here now for when inevitably someone does this and wonders why they have no input
+				//`log( "You have been detected as using a keyboard/mouse in a GamePad only game and have been disconnected from the game." );
+				//UTConsolePlayerController(Pawn.Controller).SetFrontEndErrorMessage("<Strings:UTGameUI.Errors.CannotUseKeyboardMouse_Title>","<Strings:UTGameUI.Errors.CannotUseKeyboardMouse_Message>");
 
-			aBaseX = 0.0f;
-			aBaseY = 0.0f;
-			aBaseZ = 0.0f;
-			aMouseX = 0.0f;
-			aMouseY = 0.0f;
-			aForward = 0.0f;
-			aTurn = 0.0f;
-			aStrafe = 0.0f;
-			aUp = 0.0f;
-			aLookUp = 0.0f;
-		}
+				RawJoyLookRight = 0.0f;
+				RawJoyLookUp = 0.0f;
 
-		// mouse seems to be slower on PS3 for some reason so give it a boost
-		aTurn *= 1.5;
-		aLookUp *= 1.5;
-		aMouseX *= 1.5;
-		aMouseY *= 1.5;
+				aBaseX = 0.0f;
+				aBaseY = 0.0f;
+				aBaseZ = 0.0f;
+				aMouseX = 0.0f;
+				aMouseY = 0.0f;
+				aForward = 0.0f;
+				aTurn = 0.0f;
+				aStrafe = 0.0f;
+				aUp = 0.0f;
+				aLookUp = 0.0f;
 
-		// let mobile platforms do the return to center, etc, code below
-		if (!WorldInfo.IsConsoleBuild(CONSOLE_Mobile))
-		{
+				//ConsoleCommand("Disconnect");
+	
 			return;
 		}
+		*/
 	}
 
 	bUsingTiltController = FALSE;
 
-	if( Pawn == none )
-	{
-		return;
-	}
-
+// 	// haha so tricky
  	bUsingTiltController = UTConsolePlayerController(Pawn.Controller).IsControllerTiltActive();
+
+	// so based on what we are doing (e.g. vehicle<type>, redeemer, weapon selector, etc.)
+	// so we will want to do the following (per axis)
+	//   -modify the dead zone
+	//   -modify the scalar for that axis
+	//   -
 
 	UW = UTWeapon(Pawn.Weapon);
 
@@ -200,6 +198,7 @@ function PreProcessInput( float DeltaTime )
 		ApplyViewAcceleration( DeltaTime );
 	}
 
+
 	if( bTargetFrictionEnabled )
 	{
 		if( UW != none )
@@ -209,10 +208,12 @@ function PreProcessInput( float DeltaTime )
 		}
 	}
 
+
 	// these needs to happen after aForward has been updated.
 	// might be out of place here
 	if( !bAppliedTargetFriction
-		&& (( UW != none ) && ( UW.GetZoomedState() != ZST_Zoomed )) )
+		&& ( ( UW != none ) && ( UW.GetZoomedState() != ZST_Zoomed ) )
+		)
 	{
 		if( bAutoCenterPitch )
 		{
@@ -231,6 +232,7 @@ function PreProcessInput( float DeltaTime )
 		aTurn *= UW.ZoomedTurnSpeedScalePct;
 		aLookUp *= UW.ZoomedTurnSpeedScalePct;
 	}
+
 
 	aTurn *= TurningAccelerationMultiplier;
 
@@ -259,13 +261,13 @@ function ApplyViewAutoPitchCentering( float DeltaTime )
 	local float CurrentPitch;
 
 	// so if we are not doing any looking or firing
-	if( /*(aTurn != 0) ||*/ ( abs(RawJoyLookUp) > 0 ) || /*( abs(RawJoyLookRight) > 0 ) ||*/ Pawn.IsFiring() || (Pawn.Physics == PHYS_Falling) )
+	if( (aTurn != 0) || ( abs(RawJoyLookUp) > 0.2f ) || ( abs(RawJoyLookRight) > 0.2f ) || Pawn.IsFiring() || (Pawn.Physics == PHYS_Falling) )
 	{
-//		`log( "skipping auto-center" $ RawJoyLookUp @ RawJoyLookRight);
 		// don't auto-align camera if player is currently moving it
 		LastTurnTime = WorldInfo.TimeSeconds;
 		return;
 	}
+
 
 	if( ( (WorldInfo.TimeSeconds - LastTurnTime) > AutoCenterDelay ) && ( VSize(Pawn.Velocity) > 10.0f ) )
 	{
@@ -302,6 +304,7 @@ function ApplyViewAutoPitchCentering( float DeltaTime )
 		}
 	}
 }
+
 
 /**
  * This will auto center the player's view when they in a vehicle.
@@ -361,9 +364,11 @@ function ApplyViewAutoVehiclePitchCentering( float DeltaTime )
 			{
 				aBaseY *= -1;
 			}
+
 			RawJoyUp = aBaseY;
 		}
 	}
+
 
 	if( ( UTVehicle(Pawn) != None) && ( VSize(Pawn.Velocity) != 0 ) && UTVehicle(Pawn).bShouldAutoCenterViewPitch )
 	{
@@ -374,6 +379,7 @@ function ApplyViewAutoVehiclePitchCentering( float DeltaTime )
 			LastTurnTime = WorldInfo.TimeSeconds;
 			return;
 		}
+
 
 		if( ( (WorldInfo.TimeSeconds - LastTurnTime) > AutoCenterDelay ) && ( VSize(Pawn.Velocity) > 10.0f ) )
 		{
@@ -413,6 +419,7 @@ function ApplyViewAutoVehiclePitchCentering( float DeltaTime )
 }
 
 
+
 /**
  * This will scale the player's rotation speed depending on the location of their thumbstick and how
  * long they have held it there.
@@ -424,8 +431,6 @@ function ApplyViewAcceleration( float DeltaTime )
 
 	UW = UTWeapon(Pawn.Weapon);
 	CurrentPitch = NormalizeRotAxis(Rotation.Pitch);
-
-	//`log( "ahh: " $ square(Abs(RawJoyLookRight)) + square(Abs(RawJoyLookUp/0.75)) $ " RawJoyLookRight: " $ RawJoyLookRight $ " RawJoyLookUp: " $ RawJoyLookUp );
 
 	if( CurrentPitch < -1*ViewAccel_LookingUpOrDownBoundary )
 	{
@@ -444,7 +449,6 @@ function ApplyViewAcceleration( float DeltaTime )
 		|| ( ( bIsLookingUp == TRUE ) && ( RawJoyLookUp > ViewAccel_PitchThreshold ) )
 		)
 	{
-		//aLookUp = ( aLookUp < 0 ) ? (aLookUp*ViewAccel_BackToCenterSpeed) : (aLookUp*ViewAccel_BackToCenterSpeed);
 		aLookUp *= ViewAccel_BackToCenterSpeed;
 	}
 	// non-linear scale for turn magnitude
@@ -467,6 +471,9 @@ function ApplyViewAcceleration( float DeltaTime )
 			aTurn /= MagicScaleForSensitivityEdge;
 			ViewAccel_CurrMutliplier = aTurn;
 			ViewAccel_TimeHeld += DeltaTime;
+
+			//`log( "aTurn *= ViewAccel_CurrMutliplier: " $ ViewAccel_CurrMutliplier $ " aTurn: " $ aTurn $ " ViewAccel_BaseMultiplier: " $ ViewAccel_BaseMultiplier );
+
 		}
 	}
 	// we are doing a non slam to the edge movement
@@ -475,6 +482,10 @@ function ApplyViewAcceleration( float DeltaTime )
 
 		aTurn = ( aTurn < 0 ) ? -1*Square(aTurn) : Square(aTurn);
 		aTurn /= MagicScaleForSensitivityMiddle;
+
+		//aTurn *= 0.;
+		//aTurn = ( aTurn < 0 ) ? -1*Square(aTurn) : Square(aTurn);
+		//`log( "aTurn Post: " $ aTurn );
 
 		// reset
 		ViewAccel_CurrMutliplier = ViewAccel_BaseMultiplier;
@@ -524,7 +535,7 @@ function ApplyTargetAdhesion( float DeltaTime, UTWeapon W, out int out_YawRot, o
 
 	// attempt to use the friction target if available
 	AdhesionTarget = LastFrictionTarget;
-	if (AdhesionTarget == None || `TimeSince(LastFrictionTargetTime) > W.TargetAdhesionTimeMax)
+	if (AdhesionTarget == None || TimeSince(LastFrictionTargetTime) > W.TargetAdhesionTimeMax)
 	{
 		// otherwise look for a new target
 		AdhesionTarget = GetTargetAdhesionFrictionTarget( W.TargetAdhesionDistanceMax, CamLoc, CamRot );
@@ -588,6 +599,7 @@ function ApplyTargetAdhesion( float DeltaTime, UTWeapon W, out int out_YawRot, o
 
 						AdhesionAmtY = GetRangeValueByPct(W.TargetAdhesionScaleRange, Pct);
 
+						//`log( "AdhesionAmtY: " $ AdhesionAmtY );
 						// Apply the adhesion
 						AdjustY = DeltaRot.Yaw * (AdhesionAmtY * DeltaTime);
 						out_YawRot += AdjustY;
@@ -617,7 +629,7 @@ function ApplyTargetAdhesion( float DeltaTime, UTWeapon W, out int out_YawRot, o
 		}
 	}
 
-`if(`notdefined(FINAL_RELEASE))
+
 	//debug
 	LastAdhesionAmtY = AdhesionAmtY;
 	LastAdhesionAmtZ = AdhesionAmtZ;
@@ -626,7 +638,7 @@ function ApplyTargetAdhesion( float DeltaTime, UTWeapon W, out int out_YawRot, o
 	LastDeltaRot = DeltaRot;
 	LastAdjustY = AdjustY;
 	LastAdjustZ = AdjustZ;
-`endif
+
 }
 
 
@@ -688,6 +700,7 @@ function ApplyTargetFriction( float DeltaTime, UTWeapon W )
 			DrawDebugCylinder(FrictionTarget.Location+vect(0,0,1)*TargetHeight, FrictionTarget.Location-vect(0,0,1)*TargetHeight, TargetRadius, 12, 255, 0, 0);
 		}
 
+
 		// Calculate the aim friction multiplier
 		// Y component
 		TargetLoc	 = RealTargetLoc;
@@ -726,6 +739,7 @@ function ApplyTargetFriction( float DeltaTime, UTWeapon W )
 			TargetHeight *= 1.f + (W.TargetFrictionPeakHeightScale * DistMultiplier);
 		}
 
+
 		// this is used to reduce the target radius so that moving pawns have a smaller radius so that when we are tracking
 		// them the reticle doesn't stop outside of their body mass making it either impossible to hit them or making it look bad when
 		// shots do actually hit them
@@ -735,6 +749,8 @@ function ApplyTargetFriction( float DeltaTime, UTWeapon W )
 		{
 			TargetRadius *= 0.05f;
 		}
+
+		//`log( " DistFromAimY: " $ DistFromAimY $ " TargetRadius: " $ TargetRadius $ " DistFromAimZ: " $ DistFromAimZ $ " TargetHeight: " $ TargetHeight );
 
 		// If we should apply friction - must be within friction collision box
 		if( DistFromAimY < TargetRadius
@@ -756,10 +772,12 @@ function ApplyTargetFriction( float DeltaTime, UTWeapon W )
 				LastFrictionTargetTime	= WorldInfo.TimeSeconds;
 				LastFrictionTarget		= FrictionTarget;
 			}
+
+			//`log( "FrictionMultiplier: " $ FrictionMultiplier $ " FrictionTarget: " $ FrictionTarget $ " aTurn: " $ aTurn $ " aLookUp: " $ aLookUp );
 		}
 	}
 
-`if(`notdefined(FINAL_RELEASE))
+
 	// debug
 	LastDistToTarget = DistToTarget;
 	LastDistMultiplier = DistMultiplier;
@@ -769,7 +787,10 @@ function ApplyTargetFriction( float DeltaTime, UTWeapon W )
 	LastTargetRadius = TargetRadius;
 	LastTargetHeight = TargetHeight;
 	LastCamLoc = CamLoc;
-`endif
+
+
+	//UNCLOCK_CYCLES(Time);
+	//`log("ViewFriction time"@Time);
 }
 
 /** Toggle debug display for view acceleration **/
@@ -802,10 +823,22 @@ exec function DebugTargetFriction()
 	}
 }
 
+
+
+simulated exec function Duck()
+{
+	// no input controlled crouching on console
+}
+
 exec function SmartJump()
 {
 	local UTPawn P;
+	local byte bOldDuck;
 
+	// ducking is automatic on console, so don't let jumping reset it
+	bOldDuck = bDuck;
+
+	//`log( "I am smart jumping!!!!" );
 	// jump cancels feign death
 	P = UTPawn(Pawn);
 	if (P != None && P.bFeigningDeath)
@@ -814,25 +847,36 @@ exec function SmartJump()
 	}
 	else
 	{
+		//`log( "   aForward+aBaseY: " $ aForward+aBaseY $
+		//	  " abs(aStrafe): " $ abs(aStrafe) $
+		//	  " abs(aForward+aBaseY)): " $ abs(aForward+aBaseY) $
+		//	  " (abs(aStrafe) > abs(aForward+aBaseY)): " $ (abs(aStrafe) > abs(aForward+aBaseY)) );
+
+
+		//`log( "   ( RawJoyUp < -DeadZoneThreshold ) : " $ ( RawJoyUp < -LeftThumbStickDeadZoneThreshold ) $
+		//	" ( RawJoyRight < -DeadZoneThreshold ): " $ ( RawJoyRight < -LeftThumbStickDeadZoneThreshold ) $
+		//	" ( RawJoyRight > DeadZoneThreshold ): " $ ( RawJoyRight > LeftThumbStickDeadZoneThreshold ) $
+		//	" ( RawJoyRight < -DeadZoneThreshold ) || ( RawJoyRight > LeftThumbStickDeadZoneThreshold ): " $ ( RawJoyRight < -LeftThumbStickDeadZoneThreshold ) || ( RawJoyRight > LeftThumbStickDeadZoneThreshold ) );
+
 		// determine is dodging or jumping backwards or just doing a normal jump
 		if( RawJoyRight < -Dodge_Threshold )
 		{
+			//`log( "   SmartJump left " $ RawJoyRight );
 			ForcedDoubleClick = DCLICK_Left;
 		}
 		else if( RawJoyRight > Dodge_Threshold )
 		{
+			//`log( "   SmartJump right " $ RawJoyRight );
 			ForcedDoubleClick = DCLICK_Right;
 		}
   		else
   		{
+			//`log( "jump jump" );
 			super.jump();
   		}
 	}
-}
 
-exec function Jump()
-{
-	SmartJump();
+	bDuck = bOldDuck;
 }
 
 // check for double click move
@@ -851,11 +895,34 @@ function Actor.EDoubleClickDir CheckForDoubleClickMove(float DeltaTime)
 	}
 }
 
-
 defaultproperties
 {
-	SensitivityMultiplier=1.0f
-	TurningAccelerationMultiplier=1.0f
-	bUsingGamepad=TRUE
+   TurningAccelerationMultiplier=1.000000
+   bAutoCenterPitch=True
+   bAutoCenterVehiclePitch=True
+   bViewAccelerationEnabled=True
+   bTargetFrictionEnabled=True
+   AutoCenterDelay=2.000000
+   AutoVehicleCenterSpeed=12000.000000
+   SlowTurnScaling=0.100000
+   ViewAccel_YawThreshold=0.990000
+   ViewAccel_DiagonalThreshold=0.990000
+   ViewAccel_BaseMultiplier=1.100000
+   ViewAccel_TimeToHoldBeforeFastAcceleration=0.210000
+   ViewAccel_Twitchy=0.980000
+   Dodge_Threshold=0.800000
+   MagicScaleForSensitivityMiddle=2.400000
+   MagicScaleForSensitivityEdge=1.500000
+   ViewAccel_RampSpeed=0.100000
+   ViewAccel_MaxTurnSpeed=3.000000
+   ViewAccel_PitchThreshold=0.660000
+   ViewAccel_LookingUpOrDownBoundary=12000.000000
+   ViewAccel_BackToCenterBoundary=3000.000000
+   ViewAccel_BackToCenterSpeed=2.800000
+   AutoPitchCenterSpeed=0.200000
+   AutoPitchStopAdjustingValue=5.000000
+   HoverBoardPitchMultiplier=0.500000
+   bUsingGamepad=True
+   Name="Default__UTConsolePlayerInput"
+   ObjectArchetype=UTPlayerInput'UTGame.Default__UTPlayerInput'
 }
-

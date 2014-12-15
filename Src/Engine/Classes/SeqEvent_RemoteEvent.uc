@@ -2,43 +2,19 @@
  * Activated by the ActivateRemoteEvent action.
  * Originator: current WorldInfo
  * Instigator: the actor that is assigned [in editor] as the ActivateRemoteEvent action's Instigator
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqEvent_RemoteEvent extends SequenceEvent
 	native(Sequence);
 
-cpptext
-{
-public:
-	virtual void UpdateStatus();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-#if WITH_EDITOR
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& BoxCenter);
-protected:
-	FString GetDisplayTitle() const;
-#endif
-};
-
 /** Name of this event for remote activation */
 var() Name EventName;
 
-/** For use in Kismet, to indicate if this variable is ok. Updated in UpdateStatus. */
-var transient bool bStatusIsOk;
-
-
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
-
-
-
 defaultproperties
 {
-	ObjName="Remote Event"
-	MaxTriggerCount=0
-
-	EventName=DefaultEvent
-	bPlayerOnly=FALSE
+   EventName="DefaultEvent"
+   bPlayerOnly=False
+   ObjName="Remote Event"
+   Name="Default__SeqEvent_RemoteEvent"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

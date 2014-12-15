@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTProj_LinkPlasma extends UTProjectile;
 
@@ -44,27 +44,27 @@ simulated function SetExplosionEffectParameters(ParticleSystemComponent ProjExpl
 
 defaultproperties
 {
-	ProjFlightTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
-	ProjExplosionTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Impact'
-	MaxEffectDistance=7000.0
-
-	Speed=1400
-	MaxSpeed=5000
-	AccelRate=3000.0
-
-	Damage=26
-	DamageRadius=0
-	MomentumTransfer=0
-	CheckRadius=26.0
-
-	MyDamageType=class'UTDmgType_LinkPlasma'
-	LifeSpan=3.0
-	NetCullDistanceSquared=+144000000.0
-
-	bCollideWorld=true
-	DrawScale=1.2
-
-	ExplosionSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_ImpactCue'
-	ColorLevel=(X=1,Y=1.3,Z=1)
-	ExplosionColor=(X=1,Y=1,Z=1);
+   ColorLevel=(X=1.000000,Y=1.300000,Z=1.000000)
+   ExplosionColor=(X=1.000000,Y=1.000000,Z=1.000000)
+   ExplosionSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_ImpactCue'
+   ProjFlightTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+   ProjExplosionTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Impact'
+   MaxEffectDistance=7000.000000
+   AccelRate=3000.000000
+   CheckRadius=24.000000
+   Speed=1400.000000
+   MaxSpeed=5000.000000
+   Damage=26.000000
+   MyDamageType=Class'UTGame.UTDmgType_LinkPlasma'
+   NetCullDistanceSquared=144000000.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTProjectile:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   LifeSpan=3.000000
+   DrawScale=1.200000
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTProj_LinkPlasma"
+   ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorComponent extends Component
 	native
@@ -36,11 +36,9 @@ native final function SetComponentRBFixed(bool bFixed);
  */
 native final function ForceUpdate(bool bTransformOnly);
 
-/** detaches the component from whatever it's attached to */
-native final function DetachFromAny();
-
 defaultproperties
 {
-	// All things now default to being ticked during async work
-	TickGroup=TG_DuringAsyncWork
+   TickGroup=TG_DuringAsyncWork
+   Name="Default__ActorComponent"
+   ObjectArchetype=Component'Core.Default__Component'
 }

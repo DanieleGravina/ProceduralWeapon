@@ -11,36 +11,34 @@
 *
 * Also, SeqVar_ObjectList objects are not persistent.  ObjectLists (for now) are
 * meant to be runtime list storage.
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class SeqVar_ObjectList extends SeqVar_Object
 	native(Sequence);
 
 
-cpptext
-{
-	virtual void OnCreated();
-
-	// we need to see how to export arrays here, let's look at inventory
-	virtual void OnExport();
-
-	virtual UObject** GetObjectRef( INT Idx );
-
-	virtual FString GetValueStr();
-
-#if WITH_EDITOR
-	// USequenceVariable interface
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& CircleCenter);
-#endif
-
-	virtual UBOOL SupportsProperty(UProperty *Property)
-	{
-		return FALSE;
-	}
-
-	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 /** this is our list of objects which this kismet variable holds **/
  var() array<Object>			ObjList;
 
@@ -56,7 +54,8 @@ function SetObjectValue(Object NewValue)
 
 defaultproperties
 {
-	ObjName="Object List"
-	ObjCategory="Object"
-	ObjColor=(R=102,G=0,B=102,A=255)		// dark purple
+   ObjName="Object List"
+   ObjColor=(B=102,G=0,R=102,A=255)
+   Name="Default__SeqVar_ObjectList"
+   ObjectArchetype=SeqVar_Object'Engine.Default__SeqVar_Object'
 }

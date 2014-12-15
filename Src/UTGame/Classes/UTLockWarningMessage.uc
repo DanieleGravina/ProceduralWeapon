@@ -1,10 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTLockWarningMessage extends UTLocalMessage;
 
 var(Message) localized string MissileLockOnString;
+var(Message) localized string AvrilLockOnString;
 var(Message) localized string RadarLockString;
+var(Message) localized string SPMAAcquiredString;
 
 var color RedColor;
 var color YellowColor;
@@ -27,6 +29,12 @@ static function string GetString(
 		case 1:
 			return Default.MissileLockOnString;
 			break;
+		case 2:
+			return default.AvrilLockOnString;
+			break;
+		case 3:
+			return default.SPMAAcquiredString;
+			break;
 		case 4:
 			return default.RadarLockString;
 			break;
@@ -44,15 +52,19 @@ static function color GetColor(
 	return Default.RedColor;
 }
 
-DefaultProperties
+defaultproperties
 {
-	RedColor=(R=255,G=0,B=0,A=255)
-	YellowColor=(R=255,G=255,B=0,A=255)
-	Lifetime=2.5
-	bIsUnique=false
-	bIsPartiallyUnique=true
-	bBeep=false
-	DrawColor=(R=0,G=160,B=255,A=255)
-	FontSize=1
-	MessageArea=3
+   MissileLockOnString="Sotto Tiro Missile!"
+   AvrilLockOnString="AVRiL in avvicinamento!"
+   RadarLockString="Sotto Tiro Radar Nemico!"
+   SPMAAcquiredString="Hellfire SPMA Acquisito"
+   RedColor=(B=0,G=0,R=255,A=255)
+   YellowColor=(B=0,G=255,R=255,A=255)
+   MessageArea=3
+   bIsPartiallyUnique=True
+   Lifetime=2.500000
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=1
+   Name="Default__UTLockWarningMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

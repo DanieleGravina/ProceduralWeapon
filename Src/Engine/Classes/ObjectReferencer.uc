@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Helper class to force object references for various reasons.
  */
@@ -8,3 +8,9 @@ class ObjectReferencer extends Object
 
 /** Array of objects being referenced. */
 var()	array<object>	ReferencedObjects;
+
+defaultproperties
+{
+   Name="Default__ObjectReferencer"
+   ObjectArchetype=Object'Core.Default__Object'
+}

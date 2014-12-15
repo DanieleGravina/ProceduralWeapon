@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionDepthBiasedBlend extends MaterialExpression
 	native(Material)
@@ -42,44 +42,47 @@ var ExpressionInput	Alpha;
  */
 var ExpressionInput	Bias;
 
-cpptext
-{
-	/**
-	 *	Compile the material expression
-	 *
-	 *	@param	Compiler	Pointer to the material compiler to use
-	 *
-	 *	@return	INT			The compiled code index
-	 */	
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-
-	/**
-	 */	
-	virtual INT GetWidth() const;
-
-	/**
-	 */	
-	virtual FString GetCaption() const;
-
-	/**
-	 */	
-	virtual INT GetLabelPadding() { return 8; }
-
-	/**
-	 * Replaces references to the passed in expression with references to a different expression or NULL.
-	 * @param	OldExpression		Expression to find reference to.
-	 * @param	NewExpression		Expression to replace reference with.
-	 */
-	virtual void SwapReferenceTo(UMaterialExpression* OldExpression,UMaterialExpression* NewExpression = NULL);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	BiasScale=1.0
-	MenuCategories(0)="Obsolete"
-	Outputs(0)=(OutputName="",Mask=1,MaskR=1,MaskG=1,MaskB=1,MaskA=0)
-	Outputs(1)=(OutputName="",Mask=1,MaskR=1,MaskG=0,MaskB=0,MaskA=0)
-	Outputs(2)=(OutputName="",Mask=1,MaskR=0,MaskG=1,MaskB=0,MaskA=0)
-	Outputs(3)=(OutputName="",Mask=1,MaskR=0,MaskG=0,MaskB=1,MaskA=0)
-	Outputs(4)=(OutputName="",Mask=1,MaskR=0,MaskG=0,MaskB=0,MaskA=1)
+   BiasScale=1.000000
+   Name="Default__MaterialExpressionDepthBiasedBlend"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

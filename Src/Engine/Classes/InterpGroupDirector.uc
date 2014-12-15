@@ -4,26 +4,26 @@ class InterpGroupDirector extends InterpGroup
 	hidecategories(Object);
 
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Group for controlling properties of a 'player' in the game. This includes switching the player view between different cameras etc.
  */
 
-cpptext
-{
-	// UInterpGroup interface
-	virtual void UpdateGroup(FLOAT NewPosition, class UInterpGroupInst* GrInst, UBOOL bPreview, UBOOL bJump);
-
-	// UInterpGroupDirector interface
-	class UInterpTrackDirector* GetDirectorTrack();
-	class UInterpTrackFade* GetFadeTrack();
-	class UInterpTrackSlomo* GetSlomoTrack();
-	class UInterpTrackColorScale* GetColorScaleTrack();
-	class UInterpTrackAudioMaster* GetAudioMasterTrack();
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	GroupName="DirGroup"
+   GroupName="DirGroup"
+   Name="Default__InterpGroupDirector"
+   ObjectArchetype=InterpGroup'Engine.Default__InterpGroup'
 }

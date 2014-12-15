@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 //-----------------------------------------------------------
 // Browser type for prefabs
@@ -7,13 +7,15 @@
 class GenericBrowserType_Prefab extends GenericBrowserType
 	native;
 
-cpptext
-{
-	virtual void Init();
-	virtual UBOOL ShowObjectEditor( UObject* InObject );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-DefaultProperties
+defaultproperties
 {
-	Description="Prefabs"
+   Description="Prefabs"
+   Name="Default__GenericBrowserType_Prefab"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

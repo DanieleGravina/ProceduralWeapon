@@ -1,19 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CoverSlipReachSpec extends ForcedReachSpec
 	native;
 
-cpptext
-{
-	virtual INT CostFor(APawn* P);
-	virtual FVector GetForcedPathSize( class ANavigationPoint* Start, class ANavigationPoint* End, class AScout* Scout );
-}
-
-// Value CoverLink.ECoverDirection for movement direction along this spec
-var() editconst Byte SpecDirection;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSkipPrune=TRUE
+   bSkipPrune=True
+   ForcedPathSizeName="Common"
+   Name="Default__CoverSlipReachSpec"
+   ObjectArchetype=ForcedReachSpec'Engine.Default__ForcedReachSpec'
 }

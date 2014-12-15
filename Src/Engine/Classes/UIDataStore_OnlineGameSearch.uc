@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -14,6 +14,7 @@
  */
 class UIDataStore_OnlineGameSearch extends UIDataStore_Remote
 	native(inherit)
+	implements(UIListElementProvider,UIListElementCellProvider)
 	abstract
 	dependson(OnlineGameSearch)
 	transient;
@@ -41,6 +42,8 @@ struct native GameSearchCfg
 	var class<UIDataProvider_Settings> SearchResultsProviderClass;
 	/** Publishes the desired settings from the game search object */
 	var UIDataProvider_Settings DesiredSettingsProvider;
+	/** Array of providers that handle the search results */
+	var array<UIDataProvider_Settings> SearchResults;
 	/** OnlineGameSearch object that will be exposed to the UI */
 	var OnlineGameSearch Search;
 	/** For finding via name */
@@ -56,17 +59,148 @@ var int SelectedIndex;
 /** the index into the set of providers/searches for the query that is currently active */
 var	int	ActiveSearchIndex;
 
-cpptext
-{
-protected:
-// UIDataStore interface
-
-	/**
-	 * Loads and creates an instance of the registered provider objects for each
-	 * registered OnlineGameSettings class
-	 */
-	virtual void InitializeDataStore(void);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Registers the delegate with the online subsystem
@@ -101,6 +235,9 @@ function bool InvalidateCurrentSearchResults()
 		// Free any previous results and tell the list to refresh
 		if ( GameInterface.FreeSearchResults(ActiveSearch) )
 		{
+			// BuildSearchResults will clear the list of SearchResults providers for the active search
+			BuildSearchResults();
+
 			// notify subscribers that the value has been invalidated.
 			RefreshSubscribers(SearchResultsName, true, GameSearchCfgList[SelectedIndex].DesiredSettingsProvider);
 			bResult = true;
@@ -140,18 +277,16 @@ event bool SubmitGameSearch(byte ControllerIndex, optional bool bInvalidateExist
 				return true;
 			}
 
-			// invalidate the results for this search
-			InvalidateCurrentSearchResults();
 			return GameInterface.FindOnlineGames(ControllerIndex,GameSearchCfgList[ActiveSearchIndex].Search);
 		}
 		else
 		{
-			`warn("OnlineSubsystem does not support the game interface. Can't search for games");
+			WarnInternal("OnlineSubsystem does not support the game interface. Can't search for games");
 		}
 	}
 	else
 	{
-		`warn("No OnlineSubsystem present. Can't search for games");
+		WarnInternal("No OnlineSubsystem present. Can't search for games");
 	}
 	return false;
 }
@@ -178,6 +313,12 @@ function OnSearchComplete(bool bWasSuccessful)
 {
 	if (bWasSuccessful == true)
 	{
+		// Build the array data from the search results
+		BuildSearchResults();
+
+		// Notify any providers or other data stores that we have new data
+		NotifyPropertyChanged(SearchResultsName);
+
 		// notify any subscribers that we have new data
 		RefreshSubscribers(SearchResultsName, false, GameSearchCfgList[ActiveSearchIndex].DesiredSettingsProvider);
 
@@ -187,7 +328,7 @@ function OnSearchComplete(bool bWasSuccessful)
 	}
 	else
 	{
-		`Log("Failed to search for online games");
+		LogInternal("Failed to search for online games");
 	}
 }
 
@@ -232,19 +373,35 @@ event bool ShowHostGamercard(byte ControllerIndex,int ListIndex)
 			}
 			else
 			{
-				`warn("OnlineSubsystem does not support the extended player interface. Can't show gamercard");
+				WarnInternal("OnlineSubsystem does not support the extended player interface. Can't show gamercard");
 			}
 		}
 		else
 		{
-			`warn("No OnlineSubsystem present. Can't show gamercard");
+			WarnInternal("No OnlineSubsystem present. Can't show gamercard");
 		}
 	}
 	else
 	{
-		`warn("Invalid index ("$ListIndex$") specified for online game to show the gamercard of");
+		WarnInternal("Invalid index ("$ListIndex$") specified for online game to show the gamercard of");
 	}
 }
+
+/** 
+* Adds an offline placeholder server to the list of results
+* Used to keep history and favorites in the list after a search comes back without them
+* @param OwningPlayerId the id of the player who created this server (last known)
+* @param ServerName the description of the server (last known)
+*/
+native function AddOfflineServer(const out string OwningPlayerId, const out string ServerName);
+
+/**
+ * As above, but allows you to provide an IP address for the server; which can be used to attempt a direct connect
+ */
+native function AddJoinableOfflineServer(const out string OwningPlayerId, const out string ServerName, const out string ServerIP);
+
+/** Tells this provider to rebuild it's array data */
+native function BuildSearchResults();
 
 /** Returns the game search object that is currently selected */
 event OnlineGameSearch GetCurrentGameSearch()
@@ -313,7 +470,7 @@ event SetCurrentByIndex(int NewIndex, optional bool bInvalidateExistingSearchRes
 	}
 	else
 	{
-		`Log("Invalid index ("$NewIndex$") specified to SetCurrentByIndex() on "$Self);
+		LogInternal("Invalid index ("$NewIndex$") specified to SetCurrentByIndex() on "$Self);
 	}
 }
 
@@ -342,7 +499,7 @@ event SetCurrentByName(name SearchName, optional bool bInvalidateExistingSearchR
 	}
 	else
 	{
-		`Log("Invalid name ("$SearchName$") specified to SetCurrentByName() on "$Self);
+		LogInternal("Invalid name ("$SearchName$") specified to SetCurrentByName() on "$Self);
 	}
 }
 
@@ -393,9 +550,14 @@ function ClearAllSearchResults()
 		for ( GameTypeIndex = 0; GameTypeIndex < GameSearchCfgList.Length; GameTypeIndex++ )
 		{
 			ActiveSearchIndex = GameTypeIndex;
-			if (!GameInterface.FreeSearchResults(GameSearchCfgList[GameTypeIndex].Search) )
+			if ( GameInterface.FreeSearchResults(GameSearchCfgList[GameTypeIndex].Search) )
 			{
-				`warn(Name $ ".ClearAllSearchResults: Failed to free search results for" @ GameSearchCfgList[GameTypeIndex].SearchName @ "(" $ GameTypeIndex $ ") - search is still in progress");
+				// this is const - can't clear it...call BuildSearchResults to clear the SearchResults array for this game search element
+				BuildSearchResults();
+			}
+			else
+			{
+				WarnInternal(Name $ ".ClearAllSearchResults: Failed to free search results for" @ GameSearchCfgList[GameTypeIndex].SearchName @ "(" $ GameTypeIndex $ ") - search is still in progress");
 			}
 		}
 	}
@@ -405,9 +567,10 @@ function ClearAllSearchResults()
 
 defaultproperties
 {
-	// Change this value in the derived class
-	Tag=OnlineGameSearch
-	SearchResultsName=SearchResults
-
-	ActiveSearchIndex=INDEX_NONE
+   SearchResultsName="SearchResults"
+   ActiveSearchIndex=-1
+   Tag="OnlineGameSearch"
+   WriteAccessType=ACCESS_WriteAll
+   Name="Default__UIDataStore_OnlineGameSearch"
+   ObjectArchetype=UIDataStore_Remote'Engine.Default__UIDataStore_Remote'
 }

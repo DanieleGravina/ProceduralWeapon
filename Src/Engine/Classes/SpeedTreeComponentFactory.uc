@@ -1,5 +1,5 @@
 /*=============================================================================
-	Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+	Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 =============================================================================*/
  
 class SpeedTreeComponentFactory extends PrimitiveComponentFactory
@@ -10,24 +10,27 @@ class SpeedTreeComponentFactory extends PrimitiveComponentFactory
 
 var() SpeedTreeComponent SpeedTreeComponent;
 
-cpptext
-{
-	virtual UBOOL FactoryIsValid( ) 
-	{ 
-		return SpeedTreeComponent != NULL && Super::FactoryIsValid( ); 
-	}
-	virtual UPrimitiveComponent* CreatePrimitiveComponent(UObject* InOuter);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Class=SpeedTreeComponent Name=SpeedTreeComponent0
-	End Object
-	SpeedTreeComponent = SpeedTreeComponent0;
-	
-	CollideActors		= TRUE
-	BlockActors			= TRUE
-	BlockZeroExtent		= TRUE
-	BlockNonZeroExtent	= TRUE
-	BlockRigidBody		= TRUE
+   Begin Object Class=SpeedTreeComponent Name=SpeedTreeComponent0 ObjName=SpeedTreeComponent0 Archetype=SpeedTreeComponent'Engine.Default__SpeedTreeComponent'
+      Name="SpeedTreeComponent0"
+      ObjectArchetype=SpeedTreeComponent'Engine.Default__SpeedTreeComponent'
+   End Object
+   SpeedTreeComponent=SpeedTreeComponent0
+   CollideActors=True
+   BlockActors=True
+   BlockZeroExtent=True
+   BlockNonZeroExtent=True
+   BlockRigidBody=True
+   Name="Default__SpeedTreeComponentFactory"
+   ObjectArchetype=PrimitiveComponentFactory'Engine.Default__PrimitiveComponentFactory'
 }

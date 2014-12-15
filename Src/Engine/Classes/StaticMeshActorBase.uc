@@ -1,31 +1,32 @@
 /**
  * Base class for static actors which contain StaticMeshComponents.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved
  */
 class StaticMeshActorBase extends Actor
-	ClassGroup(StaticMeshes)
 	native
 	abstract;
 
-cpptext
-{
-	/**
-	 * Initializes this actor when play begins.  This version marks the actor as ready to execute script, but skips
-	 * the rest of the stuff that actors normally do in PostBeginPlay().
-	 */
-	virtual void PostBeginPlay();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-DefaultProperties
+defaultproperties
 {
-	bEdShouldSnap=true
-	bStatic=true
-	bMovable=false
-	bCollideActors=true
-	bBlockActors=true
-	bWorldGeometry=true
-	bGameRelevant=true
-	bRouteBeginPlayEvenIfStatic=false
-	bCollideWhenPlacing=false
+   bStatic=True
+   bWorldGeometry=True
+   bRouteBeginPlayEvenIfStatic=False
+   bGameRelevant=True
+   bMovable=False
+   bCollideActors=True
+   bBlockActors=True
+   bEdShouldSnap=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__StaticMeshActorBase"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

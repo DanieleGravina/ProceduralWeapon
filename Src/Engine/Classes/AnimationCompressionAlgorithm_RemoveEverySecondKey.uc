@@ -1,7 +1,7 @@
 /**
  * Keyframe reduction algorithm that simply removes every second key.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class AnimationCompressionAlgorithm_RemoveEverySecondKey extends AnimationCompressionAlgorithm
@@ -16,19 +16,21 @@ var()	int			MinKeys;
  */
 var()	bool		bStartAtSecondKey;
 
-cpptext
-{
-protected:
-	/**
-	 * Keyframe reduction algorithm that simply removes every second key.
-	 *
-	 * @return		TRUE if the keyframe reduction was successful.
-	 */
-	virtual void DoReduction(class UAnimSequence* AnimSeq, class USkeletalMesh* SkelMesh, const TArray<class FBoneData>& BoneData);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Description="Remove Every Second Key"
-	MinKeys=10
+   MinKeys=10
+   Description="Remove Every Second Key"
+   Name="Default__AnimationCompressionAlgorithm_RemoveEverySecondKey"
+   ObjectArchetype=AnimationCompressionAlgorithm'Engine.Default__AnimationCompressionAlgorithm'
 }

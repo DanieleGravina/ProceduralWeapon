@@ -1,0 +1,53 @@
+/**
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
+ */
+class UTVoice_Reaper extends UTVoice
+	abstract;
+
+defaultproperties
+{
+   TauntSounds(0)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_Damn'
+   TauntSounds(1)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_BooYa'
+   TauntSounds(2)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_AndStayDown'
+   TauntSounds(3)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_BringingItHome'
+   TauntSounds(4)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_DoNotPushMe'
+   TauntSounds(5)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_FeelImpact'
+   TauntSounds(6)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_ForTheFallen'
+   TauntSounds(7)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_GetOffMe'
+   TauntSounds(8)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_GotEm'
+   TauntSounds(9)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_KilledIt'
+   TauntSounds(10)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_LineEmUpAndKnockThemDown'
+   TauntSounds(11)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_NeverSawItComing'
+   TauntSounds(12)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_OhSmack'
+   TauntSounds(13)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_OutOfMyWay'
+   TauntSounds(14)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_RookieMistake_alt'
+   TauntSounds(15)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_ThatsGottaHurt'
+   TauntSounds(16)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_TheresMoreWhereThatCameFrom'
+   TauntSounds(17)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_YouveGotToBeKiddingMe'
+   WeaponTauntSounds(0)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_BioHazard'
+   WeaponTauntSounds(1)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_GreenIsYourColor'
+   WeaponTauntSounds(2)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_OneShotOneKill'
+   WeaponTauntSounds(4)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_Shocking'
+   WeaponTauntSounds(5)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_ThatWasMessy'
+   WeaponTauntSounds(6)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_FlakAttack'
+   WeaponTauntSounds(9)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_MadeMyPoint'
+   WeaponTauntSounds(10)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_DeathWarrant'
+   WeaponTauntSounds(11)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_PackageDelivered'
+   EncouragementSounds(0)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_Damn'
+   EncouragementSounds(1)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_KeepItUp'
+   EncouragementSounds(2)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_BooYa'
+   ManDownSounds(0)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_OhThisSucks'
+   ManDownSounds(1)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_WhatTheHell'
+   ManDownSounds(2)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_NowImPissed'
+   ManDownSounds(3)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_AnyoneOutThere'
+   ManDownSounds(4)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_LosingBlood'
+   FlagKillSounds(0)=SoundNodeWave'A_Character_Reaper.Taunts.A_Taunt_Reaper_NailedTheFlagCarrier'
+   TauntAnimSoundMap(0)=(EmoteTag="TauntA",TauntSoundIndex=(0,10,14))
+   TauntAnimSoundMap(1)=(EmoteTag="TauntB",TauntSoundIndex=(3,11,17))
+   TauntAnimSoundMap(2)=(EmoteTag="TauntC",TauntSoundIndex=(4,5,12))
+   TauntAnimSoundMap(3)=(EmoteTag="TauntD",TauntSoundIndex=(1,8,13))
+   TauntAnimSoundMap(4)=(EmoteTag="TauntE",TauntSoundIndex=(6,16))
+   TauntAnimSoundMap(5)=(EmoteTag="TauntF",TauntSoundIndex=(2,7,9))
+   Name="Default__UTVoice_Reaper"
+   ObjectArchetype=UTVoice'UTGame.Default__UTVoice'
+}

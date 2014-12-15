@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class FailedConnect extends LocalMessage
 	abstract;
@@ -31,11 +31,16 @@ static function string GetString(
 	return Default.FailMessage[Clamp(Switch,0,3)];
 }
 	
+
 defaultproperties
 {
-	bBeep=false
-	bIsUnique=True
-
-	DrawColor=(R=255,G=0,B=128,A=255)
-	FontSize=1
+   FailMessage(0)="FAILED TO JOIN GAME.  NEED PASSWORD."
+   FailMessage(1)="FAILED TO JOIN GAME.  WRONG PASSWORD."
+   FailMessage(2)="FAILED TO JOIN GAME.  GAME HAS STARTED."
+   FailMessage(3)="FAILED TO JOIN GAME."
+   bIsUnique=True
+   DrawColor=(B=128,G=0,R=255,A=255)
+   FontSize=1
+   Name="Default__FailedConnect"
+   ObjectArchetype=LocalMessage'Engine.Default__LocalMessage'
 }

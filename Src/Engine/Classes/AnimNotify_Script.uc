@@ -1,25 +1,19 @@
 /**
- * The implmenting class (usually a pawn) needs to have a function named the same as the <NotifyName> that is specified in the AnimNotify.
- *
- *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNotify_Script extends AnimNotify
 	native(Anim);
 
 var() name NotifyName;
 
-/** If this notify has a duration, name of the function to call each update */
-var() Name NotifyTickName;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-/** If this notify has a duration, name of the function to call at the end */
-var() Name NotifyEndName;
-
-cpptext
+defaultproperties
 {
-	// AnimNotify interface.
-	virtual void Notify( class UAnimNodeSequence* NodeSeq );
-	virtual void NotifyTick( class UAnimNodeSequence* NodeSeq, FLOAT AnimCurrentTime, FLOAT AnimTimeStep, FLOAT InTotalDuration );
-	virtual void NotifyEnd( class UAnimNodeSequence* NodeSeq, FLOAT AnimCurrentTime );
-	virtual FString GetEditorComment() { return (NotifyName == NAME_None) ? TEXT("Script") : NotifyName.ToString(); }
+   Name="Default__AnimNotify_Script"
+   ObjectArchetype=AnimNotify'Engine.Default__AnimNotify'
 }

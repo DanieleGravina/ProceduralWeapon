@@ -1,19 +1,19 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNotify_Footstep extends AnimNotify
 	native(Anim);
 
 var() int FootDown;  // 0=left 1=right.
 
-cpptext
-{
-	// AnimNotify interface.
-	virtual void Notify( class UAnimNodeSequence* NodeSeq );
-	virtual FString GetEditorComment() { return (FootDown == 0) ? TEXT("Left Footstep") : TEXT("Right Footstep"); }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	 FootDown=0
+   Name="Default__AnimNotify_Footstep"
+   ObjectArchetype=AnimNotify'Engine.Default__AnimNotify'
 }

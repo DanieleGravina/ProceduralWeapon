@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTTeamGameMessage extends UTLocalMessage;
 
@@ -49,7 +49,7 @@ static function string GetString(
 	switch (Switch)
 	{
 		case 0:
-			return Default.RequestTeamSwapPrefix@RelatedPRI_1.PlayerName@Default.RequestTeamSwapPostfix;
+			return Default.RequestTeamSwapPrefix@RelatedPRI_1.GetPlayerAlias()@Default.RequestTeamSwapPostfix;
 			break;
 		case 1:
 			return Default.YouAreOnRedMessage;
@@ -122,13 +122,16 @@ static function color GetColor(
 
 defaultproperties
 {
-	bIsConsoleMessage=true
-
-	RedDrawColor=(R=255,G=32,B=10,A=255)
-	BlueDrawColor=(R=10,G=32,B=255,A=255)
-
-	AnnouncerSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouAreOnRed'
-	AnnouncerSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouAreOnBlue'
-	MessageArea=2
-	AnnouncementPriority=19
+   RequestTeamSwapPostfix="sta richiedendo un cambio di squadra."
+   YouAreOnRedMessage="Sei nella Squadra ROSSA"
+   YouAreOnBlueMessage="Sei nella Squadra BLU"
+   RedDrawColor=(B=10,G=32,R=255,A=255)
+   BlueDrawColor=(B=255,G=32,R=10,A=255)
+   AnnouncerSounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouAreOnRed'
+   AnnouncerSounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouAreOnBlue'
+   MessageArea=2
+   AnnouncementPriority=19
+   bIsConsoleMessage=True
+   Name="Default__UTTeamGameMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

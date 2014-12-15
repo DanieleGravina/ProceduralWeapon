@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DistributionFloatSoundParameter extends DistributionFloatParameterBase
 	native(Sound)
@@ -7,7 +7,13 @@ class DistributionFloatSoundParameter extends DistributionFloatParameterBase
 	hidecategories(Object)
 	editinlinenew;
 	
-cpptext
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+defaultproperties
 {
-	virtual UBOOL GetParamValue(UObject* Data, FName ParamName, FLOAT& OutFloat);
+   Name="Default__DistributionFloatSoundParameter"
+   ObjectArchetype=DistributionFloatParameterBase'Engine.Default__DistributionFloatParameterBase'
 }

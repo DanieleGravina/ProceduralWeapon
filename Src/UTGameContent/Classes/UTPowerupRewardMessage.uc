@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTPowerupRewardMessage extends UTLocalMessage;
 
@@ -37,9 +37,11 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	MessageArea=3
-	Fontsize=2
-	bBeep=False
-	DrawColor=(R=255,G=0,B=0)
-	AnnouncementPriority=5
+   JuggernautString="JUGGERNAUT"
+   MessageArea=3
+   AnnouncementPriority=5
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=2
+   Name="Default__UTPowerupRewardMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

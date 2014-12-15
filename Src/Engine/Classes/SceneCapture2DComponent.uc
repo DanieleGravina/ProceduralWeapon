@@ -3,7 +3,7 @@
  *
  * Allows a scene capture to a 2D texture render target
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SceneCapture2DComponent extends SceneCaptureComponent
 	native;
@@ -25,45 +25,45 @@ var const transient matrix ViewMatrix;
 /** projection matrix used for rendering */
 var const transient matrix ProjMatrix;
 
-cpptext
-{
-protected:
-
-	// UActorComponent interface
-
-	/**
-	* Attach a new 2d capture component
-	*/
-	virtual void Attach();
-
-	/**
-	 * Sets the ParentToWorld transform the component is attached to.
-	 * @param ParentToWorld - The ParentToWorld transform the component is attached to.
-	 */
-	virtual void SetParentToWorld(const FMatrix& ParentToWorld);
-
-public:
-
-	/**
-	* Constructor
-	*/
-	USceneCapture2DComponent() :
-		ViewMatrix(FMatrix::Identity),
-		ProjMatrix(FMatrix::Identity)
-		{}
-
-	/**
-	* Update the projection matrix using the fov,near,far,aspect
-	*/
-	void UpdateProjMatrix();
-
-	// SceneCaptureComponent interface
-
-	/**
-	* Create a new probe with info needed to render the scene
-	*/
-	virtual class FSceneCaptureProbe* CreateSceneCaptureProbe();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** interface for changing TextureTarget, FOV, and clip planes */
 native noexport final function SetCaptureParameters( optional TextureRenderTarget2D NewTextureTarget = TextureTarget,
@@ -77,8 +77,10 @@ native final function SetView(vector NewLocation, rotator NewRotation);
 
 defaultproperties
 {
-	NearPlane=20
-	FarPlane=500
-	FieldOfView=80
-	bUpdateMatrices=true
+   FieldOfView=80.000000
+   NearPlane=20.000000
+   FarPlane=500.000000
+   bUpdateMatrices=True
+   Name="Default__SceneCapture2DComponent"
+   ObjectArchetype=SceneCaptureComponent'Engine.Default__SceneCaptureComponent'
 }

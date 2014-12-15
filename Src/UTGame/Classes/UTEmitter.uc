@@ -1,9 +1,20 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTEmitter extends Emitter
-	dependsOn(UTPawn)
+	native
 	notplaceable;
+
+/** this is used for a few special cases where we wanted a completely new particle system at certain distances
+ * instead of just turning off an emitter or two inside a single one
+ */
+struct native DistanceBasedParticleTemplate
+{
+	/** the template to use */
+	var ParticleSystem Template;
+	/** the minimum distance all local players must be from the spawn location for this template to be used */
+	var float MinDistance;
+};
 
 /** utility function to select the best template from the passed in list
  * the list is assumed to be in order from greatest distance to shortest distance
@@ -76,19 +87,21 @@ function SetLightEnvironment(LightEnvironmentComponent Light)
 		ParticleSystemComponent.SetLightEnvironment(Light);
 	}
 }
+
 defaultproperties
 {
-	Components.Remove(ArrowComponent0)
-	Components.Remove(Sprite)
-
-	Begin Object Name=ParticleSystemComponent0
-		bAcceptsLights=false
-		SecondsBeforeInactive=0
-		bOverrideLODMethod=true
-		LODMethod=PARTICLESYSTEMLODMETHOD_DirectSet
-	End Object
-
-	LifeSpan=7.0
-	bDestroyOnSystemFinish=true
-	bNoDelete=false
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'Engine.Default__Emitter:ParticleSystemComponent0'
+      bOverrideLODMethod=True
+      SecondsBeforeInactive=0.000000
+      LODMethod=PARTICLESYSTEMLODMETHOD_DirectSet
+      ObjectArchetype=ParticleSystemComponent'Engine.Default__Emitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   bDestroyOnSystemFinish=True
+   Components(0)=ParticleSystemComponent0
+   bNoDelete=False
+   LifeSpan=7.000000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTEmitter"
+   ObjectArchetype=Emitter'Engine.Default__Emitter'
 }

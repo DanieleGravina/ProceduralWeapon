@@ -1,13 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_SetMatInstScalarParam extends SequenceAction
 	native(Sequence);
 
-cpptext
-{
-	void Activated();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() MaterialInstanceConstant	MatInst;
 var() Name						ParamName;
@@ -16,8 +16,9 @@ var() float ScalarValue;
 
 defaultproperties
 {
-	ObjName="Set ScalarParam"
-	ObjCategory="Material Instance"
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Float',LinkDesc="ScalarValue",PropertyName=ScalarValue)
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="ScalarValue",PropertyName="ScalarValue")
+   ObjName="Set ScalarParam"
+   ObjCategory="Material Instance"
+   Name="Default__SeqAct_SetMatInstScalarParam"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

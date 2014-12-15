@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqAct_AddNamedBot extends SequenceAction;
@@ -24,7 +24,21 @@ event Activated()
 	if (Game != None)
 	{
 		Game.ScriptedStartSpot = StartSpot;
-		SpawnedBot = Game.AddBot(BotName, bForceTeam, TeamIndex);
+		if (Game.SinglePlayerMissionID != INDEX_NONE)
+		{
+			if (Game.NumDivertedOpponents > 0 && bForceTeam && TeamIndex != 0)
+			{
+				Game.NumDivertedOpponents--;
+			}
+			else
+			{
+				SpawnedBot = Game.SinglePlayerAddBot(BotName, bForceTeam, TeamIndex);
+			}
+		}
+		else
+		{
+			SpawnedBot = Game.AddBot(BotName, bForceTeam, TeamIndex);
+		}
 		if (SpawnedBot != None && SpawnedBot.Pawn == None)
 		{
 			Game.RestartPlayer(SpawnedBot);
@@ -33,23 +47,13 @@ event Activated()
 	}
 }
 
-/**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
- *
- * @return	the version number for this specific class.
- */
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 1;
-}
-
 defaultproperties
 {
-	ObjCategory="AI"
-	ObjName="Add Named Bot"
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Bot",bWriteable=true,PropertyName=SpawnedBot)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Object',LinkDesc="Spawn Point",PropertyName=StartSpot,MaxVars=1)
+   VariableLinks(0)=(LinkDesc="Bot",PropertyName="SpawnedBot",bWriteable=True)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Spawn Point",PropertyName="StartSpot",MinVars=1,MaxVars=1)
+   ObjClassVersion=2
+   ObjName="Add Named Bot"
+   ObjCategory="AI"
+   Name="Default__UTSeqAct_AddNamedBot"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -1,33 +1,40 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SkyLightToggleable extends SkyLight
-	native(Light)
-	ClassGroup(Lights,SkyLights)
+	native
 	placeable;
 
-cpptext
-{
-public:
-	/**
-	 * Returns true if the light supports being toggled off and on on-the-fly
-	 *
-	 * @return For 'toggleable' lights, returns true
-	 **/
-	virtual UBOOL IsToggleable() const
-	{
-		// SkyLightToggleable supports being toggled on the fly!
-		return TRUE;
-	}
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// Visual things should be ticked in parallel with physics
-	TickGroup=TG_DuringAsyncWork
-
-	bMovable=FALSE
-	bStatic=FALSE
-	bHardAttach=TRUE
+   Begin Object Class=SkyLightComponent Name=SkyLightComponent0 ObjName=SkyLightComponent0 Archetype=SkyLightComponent'Engine.Default__SkyLight:SkyLightComponent0'
+      ObjectArchetype=SkyLightComponent'Engine.Default__SkyLight:SkyLightComponent0'
+   End Object
+   LightComponent=SkyLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SkyLight:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__SkyLight:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=SkyLightComponent0
+   TickGroup=TG_DuringAsyncWork
+   bStatic=False
+   bHardAttach=True
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__SkyLightToggleable"
+   ObjectArchetype=SkyLight'Engine.Default__SkyLight'
 }

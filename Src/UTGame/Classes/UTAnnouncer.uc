@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTAnnouncer extends Info
 	config(Game);
@@ -63,13 +63,13 @@ function PostBeginPlay()
 	if (CustomAnnouncerSoundCue != "")
 	{
 		AnnouncerSoundCue = SoundCue(DynamicLoadObject(CustomAnnouncerSoundCue, class'SoundCue')); // this will not work on consoles as there is no hard ref to this CustomAnnounceSoundCue unless it was put into the map
-		AnnouncerSoundCue.SoundClass = 'Announcer';
+		AnnouncerSoundCue.SoundGroup = 'Announcer';
 	}
 
 	if (UTVoiceSoundCueSoundCue != "")
 	{
 		UTVoiceSoundCue = SoundCue(DynamicLoadObject(UTVoiceSoundCueSoundCue, class'SoundCue')); // this will not work on consoles as there is no hard ref to this CustomAnnounceSoundCue unless it was put into the map
-		UTVoiceSoundCue.SoundClass = 'SFX';
+		UTVoiceSoundCue.SoundGroup = 'SFX';
 	}
 }
 
@@ -94,6 +94,7 @@ function PlayAnnouncementNow(class<UTLocalMessage> InMessageClass, int MessageIn
 {
 	local SoundNodeWave ASound;
 	local bool bUsingVoiceCue;
+	local UTHUD HUD;
 
 	ASound = InMessageClass.Static.AnnouncementSound(MessageIndex, OptionalObject, PlayerOwner);
 
@@ -109,8 +110,13 @@ function PlayAnnouncementNow(class<UTLocalMessage> InMessageClass, int MessageIn
 		}
 
 		//@FIXME: part of playsound pool?
-		// if we are a UTVoice when we want to use the special UTVoiceSoundCue which is in the correct SoundClass (i.e. effects)
-		if ( ClassIsChildOf( InMessageClass, class'UTVoice' ) || ClassIsChildOf( InMessageClass, class'UTScriptedVoiceMessage' ) )
+		// if we are a UTVoice when we want to use the special UTVoiceSoundCue which is in the correct SoundGroup (i.e. effects)
+		HUD = UTHUD(PlayerOwner.myHUD);
+		if ( (HUD != None) && HUD.bIsSplitScreen && !HUD.bIsFirstPlayer && ClassIsChildOf( InMessageClass, class'UTScriptedVoiceMessage' ) )
+		{
+			CurrentAnnouncementComponent = None;
+		}
+		else if ( ClassIsChildOf( InMessageClass, class'UTVoice' ) || ClassIsChildOf( InMessageClass, class'UTScriptedVoiceMessage' ) )
 		{
 			CurrentAnnouncementComponent = PlayerOwner.CreateAudioComponent(UTVoiceSoundCue, false, false);
 			bUsingVoiceCue = TRUE;
@@ -148,11 +154,11 @@ function PlayAnnouncementNow(class<UTLocalMessage> InMessageClass, int MessageIn
 		SetTimer(ASound.Duration * WorldInfo.TimeDilation + 0.05, false,'AnnouncementFinished');
 
 		if ( InMessageClass.default.bShowPortrait 
-			&& (UTHUD(PlayerOwner.MyHUD) != None) 
+			&& (HUD != None) 
 			&& (UTPlayerReplicationInfo(PRI) != None) 
 			&& (PRI != PlayerOwner.PlayerReplicationInfo) )
 		{
-			UTHUD(PlayerOwner.MyHUD).ShowPortrait(UTPlayerReplicationInfo(PRI), ASound.Duration+0.5, ClassIsChildOf(InMessageClass, class'UTScriptedVoiceMessage'));
+			HUD.ShowPortrait(UTPlayerReplicationInfo(PRI), ASound.Duration+0.5, ClassIsChildOf(InMessageClass, class'UTScriptedVoiceMessage'));
 		}
 	}
 	else
@@ -218,6 +224,14 @@ function PlayAnnouncement(class<UTLocalMessage> InMessageClass, int MessageIndex
 
 defaultproperties
 {
-	AnnouncerSoundCue=SoundCue'A_Announcer_Reward_Cue.SoundCues.AnnouncerCue'
-	UTVoiceSoundCue=SoundCue'A_Announcer_Reward_Cue.SoundCues.UTVoiceSoundCue'
+   AnnouncerLevel=2
+   AnnouncerSoundCue=SoundCue'A_Announcer_Reward_Cue.SoundCues.AnnouncerCue'
+   UTVoiceSoundCue=SoundCue'A_Announcer_Reward_Cue.SoundCues.UTVoiceSoundCue'
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTAnnouncer"
+   ObjectArchetype=Info'Engine.Default__Info'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 // Used to provide an extended PSysComponent to allow collision to function in the preview window.
@@ -12,11 +12,14 @@ class CascadeParticleSystemComponent extends ParticleSystemComponent
 
 var		native		const	pointer									CascadePreviewViewportPtr{class FCascadePreviewViewportClient};
 
-cpptext
-{
-	// Collision Handling...
-	virtual UBOOL SingleLineCheck(FCheckResult& Hit, AActor* SourceActor, const FVector& End, const FVector& Start, DWORD TraceFlags, const FVector& Extent);
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-protected:
-	virtual void UpdateLODInformation();
+defaultproperties
+{
+   Name="Default__CascadeParticleSystemComponent"
+   ObjectArchetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
 }

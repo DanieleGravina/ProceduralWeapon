@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class Admin extends PlayerController
 	config(Game);
@@ -45,13 +45,20 @@ reliable server function ServerKick( string S )
 	WorldInfo.Game.Kick(S);
 }
 
+exec function SessionBan(string S)
+{
+	ServerSessionBan(S);
+}
+
+
+
 exec function PlayerList()
 {
 	local PlayerReplicationInfo PRI;
 
-	`log("Player List:");
+	LogInternal("Player List:");
 	ForEach DynamicActors(class'PlayerReplicationInfo', PRI)
-		`log(PRI.PlayerName@"( ping"@PRI.Ping$")");
+		LogInternal(PRI.GetPlayerAlias()$"("$PRI.PlayerName$")"@"( ping"@PRI.Ping$")");
 }
 
 exec function RestartMap()
@@ -74,6 +81,23 @@ reliable server function ServerSwitch(string URL)
 	WorldInfo.ServerTravel(URL);
 }
 
+reliable server function ServerSessionBan(string S)
+{
+	WorldInfo.Game.SessionBan(S);
+}
+
 defaultproperties
 {
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__PlayerController:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__PlayerController:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__PlayerController:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__PlayerController:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=CollisionCylinder
+   CollisionComponent=CollisionCylinder
+   Name="Default__Admin"
+   ObjectArchetype=PlayerController'Engine.Default__PlayerController'
 }

@@ -1,12 +1,11 @@
 /*
 	CameraActor
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class CameraActor extends Actor
-	native(Camera)
-	ClassGroup(Common)
+	native
 	placeable;
 
 var()			bool			bConstrainAspectRatio;
@@ -15,33 +14,26 @@ var()	interp	float			AspectRatio;
 
 var()	interp	float			FOVAngle;
 
-var deprecated	bool					bCamOverridePostProcess;
-/** Blend value for CamOverridePostProcess.  0.f means it's ignored, 1.f means use it exclusively.  */
-var()	interp	float					CamOverridePostProcessAlpha<ClampMin=0.0 | ClampMax=1.0>;
+var()			bool					bCamOverridePostProcess;
 var()	interp	PostProcessSettings		CamOverridePostProcess;
 
 var		DrawFrustumComponent	DrawFrustum;
 var		StaticMeshComponent		MeshComp;
 
-cpptext
-{
-	// UObject interface
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void PostLoad();
-
-	// AActor interface
-	virtual void Spawned();
-protected:
-	virtual void UpdateComponentsInternal(UBOOL bCollisionUpdate = FALSE);
-public:
-
-	// ACameraActor interface
-	void UpdateDrawFrustum();
-
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 replication
 {
@@ -86,34 +78,31 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 
 defaultproperties
 {
-	Physics=PHYS_Interpolating
-
-	FOVAngle=90.0
-	bConstrainAspectRatio=TRUE
-	AspectRatio=AspectRatio16x9
-
-	Begin Object Class=StaticMeshComponent Name=CamMesh0
-		HiddenGame=TRUE
-		CollideActors=FALSE
-		BlockRigidBody=FALSE
-		CastShadow=FALSE
-		AlwaysLoadOnClient=FALSE
-		AlwaysLoadOnServer=FALSE
-	End Object
-	MeshComp=CamMesh0
-	Components.Add(CamMesh0)
-
-	Begin Object Class=DrawFrustumComponent Name=DrawFrust0
-		AlwaysLoadOnClient=FALSE
-		AlwaysLoadOnServer=FALSE
-	End Object
-	DrawFrustum=DrawFrust0
-	Components.Add(DrawFrust0)
-
-	
-	RemoteRole=ROLE_None
-	NetUpdateFrequency=1.f
-	bNoDelete=TRUE
-
-	bEdShouldSnap=TRUE
+   bConstrainAspectRatio=True
+   AspectRatio=1.777778
+   FOVAngle=90.000000
+   CamOverridePostProcess=(bEnableBloom=True,bEnableSceneEffect=True,Bloom_Scale=1.000000,Bloom_InterpolationDuration=1.000000,DOF_FalloffExponent=4.000000,DOF_BlurKernelSize=16.000000,DOF_MaxNearBlurAmount=1.000000,DOF_MaxFarBlurAmount=1.000000,DOF_ModulateBlurColor=(B=255,G=255,R=255,A=255),DOF_FocusInnerRadius=2000.000000,DOF_InterpolationDuration=1.000000,MotionBlur_MaxVelocity=1.000000,MotionBlur_Amount=0.500000,MotionBlur_FullMotionBlur=True,MotionBlur_CameraRotationThreshold=45.000000,MotionBlur_CameraTranslationThreshold=10000.000000,MotionBlur_InterpolationDuration=1.000000,Scene_HighLights=(X=1.000000,Y=1.000000,Z=1.000000),Scene_MidTones=(X=1.000000,Y=1.000000,Z=1.000000),Scene_InterpolationDuration=1.000000)
+   Begin Object Class=DrawFrustumComponent Name=DrawFrust0 ObjName=DrawFrust0 Archetype=DrawFrustumComponent'Engine.Default__DrawFrustumComponent'
+      Name="DrawFrust0"
+      ObjectArchetype=DrawFrustumComponent'Engine.Default__DrawFrustumComponent'
+   End Object
+   DrawFrustum=DrawFrust0
+   Begin Object Class=StaticMeshComponent Name=CamMesh0 ObjName=CamMesh0 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      HiddenGame=True
+      CastShadow=False
+      CollideActors=False
+      BlockRigidBody=False
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="CamMesh0"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   MeshComp=CamMesh0
+   Components(0)=CamMesh0
+   Components(1)=DrawFrust0
+   Physics=PHYS_Interpolating
+   bNoDelete=True
+   NetUpdateFrequency=1.000000
+   Name="Default__CameraActor"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

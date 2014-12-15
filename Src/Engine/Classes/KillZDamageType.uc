@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class KillZDamageType extends DamageType
 	abstract
@@ -7,5 +7,7 @@ class KillZDamageType extends DamageType
 
 defaultproperties
 {
-	bCausedByWorld=true
+   bCausedByWorld=True
+   Name="Default__KillZDamageType"
+   ObjectArchetype=DamageType'Engine.Default__DamageType'
 }

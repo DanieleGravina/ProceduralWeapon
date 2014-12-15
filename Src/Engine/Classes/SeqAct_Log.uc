@@ -1,15 +1,13 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_Log extends SequenceAction
 	native(Sequence);
 
-cpptext
-{
-	void Activated();
-	virtual void PostLoad();
-	void OutputLog();
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Should this message be drawn on the screen as well as placed in the log? */
 var() bool bOutputToScreen;
@@ -23,36 +21,32 @@ var() float TargetDuration;
 /** Offset to apply to the Target actor location when positioning debug text */
 var() vector TargetOffset;
 
-/** Cached log message to display */
-var string LogMessage;
-
-
 /**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
+ * Determines whether this class should be displayed in the list of available ops in the UI's kismet editor.
  *
- * @return	the version number for this specific class.
+ * @param	TargetObject	the widget that this SequenceObject would be attached to.
+ *
+ * @return	TRUE if this sequence object should be available for use in the UI kismet editor
  */
-static event int GetObjClassVersion()
+event bool IsValidUISequenceObject( optional UIScreenObject TargetObject )
 {
-	return Super.GetObjClassVersion() + 2;
+	return true;
 }
 
 defaultproperties
 {
-	ObjName="Log"
-	ObjCategory="Misc"
-	bOutputToScreen=TRUE
-	bIncludeObjComment=TRUE
-	VariableLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_String',LinkDesc="String",MinVars=0,bHidden=TRUE)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Float',LinkDesc="Float",MinVars=0,bHidden=TRUE)
-	VariableLinks(2)=(ExpectedType=class'SeqVar_Bool',LinkDesc="Bool",MinVars=0,bHidden=TRUE)
-	VariableLinks(3)=(ExpectedType=class'SeqVar_Object',LinkDesc="Object",MinVars=0,bHidden=TRUE)
-	VariableLinks(4)=(ExpectedType=class'SeqVar_Int',LinkDesc="Int",MinVars=0,bHidden=TRUE)
-	VariableLinks(5)=(ExpectedType=class'SeqVar_Object',LinkDesc="Target",PropertyName=Targets)
-	VariableLinks(6)=(ExpectedType=class'SeqVar_ObjectList',LinkDesc="Obj List",MinVars=0,bHidden=TRUE)
-	TargetDuration=-1.f
+   bOutputToScreen=True
+   bIncludeObjComment=True
+   TargetDuration=-1.000000
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_String',LinkDesc="String",PropertyName=,bHidden=True,MinVars=0)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="Float",bHidden=True,MaxVars=255)
+   VariableLinks(2)=(ExpectedType=Class'Engine.SeqVar_Bool',LinkDesc="Bool",bHidden=True,MaxVars=255)
+   VariableLinks(3)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Object",bHidden=True,MaxVars=255)
+   VariableLinks(4)=(ExpectedType=Class'Engine.SeqVar_Int',LinkDesc="Int",bHidden=True,MaxVars=255)
+   VariableLinks(5)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Target",PropertyName="Targets",MinVars=1,MaxVars=255)
+   ObjClassVersion=2
+   ObjName="Log"
+   ObjCategory="Misc"
+   Name="Default__SeqAct_Log"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

@@ -2,14 +2,13 @@
  * TextureFlipBook
  * FlipBook texture support base class.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class TextureFlipBook extends Texture2D
-	native(Texture)
+	native
 	hidecategories(Object)
-	inherits(FTickableObject)
-	forcescriptorder( TRUE );
+	inherits(FTickableObject);
 
 // TextureFlipBook
 
@@ -97,133 +96,132 @@ native function Stop();
 /** Sets the current frame of the 'movie'.														*/
 native function SetCurrentFrame(int Row, int Col);
 
-cpptext
-{
-	// FTickableObject interface
-
-	/**
-	 * Updates the movie texture if necessary by requesting a new frame from the decoder taking into account both
-	 * game and movie framerate.
-	 *
-	 * @param DeltaTime		Time (in seconds) that has passed since the last time this function has been called.
-	 */
-	virtual void Tick( FLOAT DeltaTime );
-
-	/**
-	 * Returns whether it is okay to tick this object. E.g. objects being loaded in the background shouldn't be ticked
-	 * till they are finalized and unreachable objects cannot be ticked either.
-	 *
-	 * @return	TRUE if tickable, FALSE otherwise
-	 */
-	virtual UBOOL IsTickable() const
-	{
-		// We cannot tick objects that are unreachable or are in the process of being loaded in the background.
-		return !HasAnyFlags( RF_Unreachable | RF_AsyncLoading );
-	}
-	
-	// UObject interface.
-	/**
-	 * Initializes property values for intrinsic classes.  It is called immediately after the class default object
-	 * is initialized against its archetype, but before any objects of this class are created.
-	 */
-	void InitializeIntrinsicPropertyValues();
-	/**
-	 * Serializes the compressed movie data.
-	 *
-	 * @param Ar	FArchive to serialize RawData with.
-	 */
-	virtual void Serialize(FArchive& Ar);
-	
-	/**
-	 * Postload initialization of movie texture. Creates decoder object and retriever first frame.
-	 */
-	virtual void PostLoad();
-	/**
-	 * PostEditChange - gets called whenever a property is either edited via the Editor or the "set" console command.
-	 *
-	 * @param PropertyThatChanged	Property that changed
-	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& /*PropertyChangedEvent*/);
-
-	/**
-	 * Called after the garbage collection mark phase on unreachable objects.
-	 */
-	virtual void BeginDestroy();
-	/**
-	 * Called to check if the object is ready for FinishDestroy.  This is called after BeginDestroy to check the completion of the
-	 * potentially asynchronous object cleanup.
-	 * @return True if the object's asynchronous cleanup has completed and it is ready for FinishDestroy to be called.
-	 */
-	virtual UBOOL IsReadyForFinishDestroy();
-	/**
-	 * We need to ensure that the decoder doesn't have any references to RawData before destructing it.
-	 */
-	virtual void FinishDestroy();
-
-	// Thumbnail interface.
-
-	/** 
-	 * Returns a one line description of an object for viewing in the thumbnail view of the generic browser
-	 */
-	virtual FString GetDesc();
-
-	/** 
-	 * Returns detailed info to populate listview columns
-	 */
-	virtual FString GetDetailedDescription( INT InIndex );
-
-	// FlipBook texture interface...
-	void			SetStartFrame();
-	virtual UBOOL	IsAFlipBook()	{ return true;	}
-	virtual void	GetFlipBookOffset(FVector& Offset)
-	{
-		Offset.X = CurrentColumn	* HorizontalScale;
-		Offset.Y = CurrentRow		* VerticalScale;
-	}
-	virtual void	GetFlipBookScale(FVector& Scale)
-	{
-		Scale.X	= HorizontalScale;
-		Scale.Y = VerticalScale;
-	}
-
-	/**
-	 *	Retrieve the UV offset
-	 *
-	 *	@param	UVOffset	FVector2D to fill in with the offset
-	 */
-	void GetTextureOffset(FVector2D& UVOffset);
-	/**
-	 *	Retrieve the UV offset
-	 *
-	 *	@param	UVOffset	FLinearColor to fill in with the offset
-	 */
-	virtual void GetTextureOffset_RenderThread(FLinearColor& UVOffset) const;
-
-	/**	
-	 *	Set the texture offset (pass it to the render thread)
-	 */
-	void SetTextureOffset();
-	/**
-	 *	Set the texture offset in the render thread
-	 *
-	 *	@param	UOffset		The value to set for the U offset
-	 *	@param	VOffset		The value to set for the V offset
-	 */
-	void SetTextureOffset_RenderThread(FLOAT UOffset, FLOAT VOffset);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bStopped=false
-	bLooping=true
-	bAutoPlay=true
-	FrameRate=4
-	FrameTime=0.25
-	CurrentRow=0
-	CurrentColumn=0
-	HorizontalImages=1
-	VerticalImages=1
-	FBMethod=TFBM_UL_ROW
-	AddressX=TA_Clamp
-	AddressY=TA_Clamp
+   bLooping=True
+   bAutoPlay=True
+   HorizontalImages=1
+   VerticalImages=1
+   FrameRate=4.000000
+   FrameTime=0.250000
+   AddressX=TA_Clamp
+   AddressY=TA_Clamp
+   Name="Default__TextureFlipBook"
+   ObjectArchetype=Texture2D'Engine.Default__Texture2D'
 }

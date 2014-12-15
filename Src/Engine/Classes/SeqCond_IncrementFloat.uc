@@ -1,38 +1,38 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqCond_IncrementFloat extends SequenceCondition
 	native(Sequence);
 
-cpptext
-{
-	void Activated()
-	{
-		// first increment the value
-		ValueA += IncrementAmount;
-		// compare the values and set appropriate output impulse
-		if (ValueA <= ValueB)
-		{
-			OutputLinks(0).bHasImpulse = TRUE;
-		}
-		if (ValueA > ValueB)
-		{
-			OutputLinks(1).bHasImpulse = TRUE;
-		}
-		if (ValueA == ValueB)
-		{
-			OutputLinks(2).bHasImpulse = TRUE;
-		}
-		if (ValueA < ValueB)
-		{
-			OutputLinks(3).bHasImpulse = TRUE;
-		}
-		if (ValueA >= ValueB)
-		{
-			OutputLinks(4).bHasImpulse = TRUE;
-		}
-	}
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 var() float			IncrementAmount;
 
@@ -44,17 +44,16 @@ var() float			ValueB;
 
 defaultproperties
 {
-	ObjName="Float Counter"
-	ObjCategory="Counter"
-	IncrementAmount=1
-
-	InputLinks(0)=(LinkDesc="In")
-	OutputLinks(0)=(LinkDesc="A <= B")
-	OutputLinks(1)=(LinkDesc="A > B")
-	OutputLinks(2)=(LinkDesc="A == B")
-	OutputLinks(3)=(LinkDesc="A < B")
-	OutputLinks(4)=(LinkDesc="A >= B")
-
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Float',LinkDesc="A",PropertyName=ValueA)
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Float',LinkDesc="B",PropertyName=ValueB)
+   IncrementAmount=1.000000
+   OutputLinks(0)=(LinkDesc="A <= B")
+   OutputLinks(1)=(LinkDesc="A > B")
+   OutputLinks(2)=(LinkDesc="A == B")
+   OutputLinks(3)=(LinkDesc="A < B")
+   OutputLinks(4)=(LinkDesc="A >= B")
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="A",PropertyName="ValueA",MinVars=1,MaxVars=255)
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="B",PropertyName="ValueB",MinVars=1,MaxVars=255)
+   ObjName="Float Counter"
+   ObjCategory="Counter"
+   Name="Default__SeqCond_IncrementFloat"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }

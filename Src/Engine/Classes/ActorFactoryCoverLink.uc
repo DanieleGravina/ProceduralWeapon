@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactoryCoverLink extends ActorFactory
 	config(Editor)
@@ -9,7 +9,9 @@ class ActorFactoryCoverLink extends ActorFactory
 
 defaultproperties
 {
-	MenuName="Add CoverLink"
-	NewActorClass=class'Engine.CoverLink'
-	bShowInEditorQuickMenu=true
+   MenuName="Add CoverLink"
+   NewActorClass=Class'Engine.CoverLink'
+   SpecificGameName="War"
+   Name="Default__ActorFactoryCoverLink"
+   ObjectArchetype=ActorFactory'Engine.Default__ActorFactory'
 }

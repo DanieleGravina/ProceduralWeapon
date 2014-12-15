@@ -1,59 +1,35 @@
 //=============================================================================
 // BlockingVolume:  a bounding volume
 // used to block certain classes of actors
-// primary use is to provide collision for non-zero extent traces around static meshes
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// primary use is to provide collision for non-zero extent traces around static meshes 
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class BlockingVolume extends Volume
 	native
 	placeable;
 
-/** GameCameras ignore BlockingVolumes with bBlockCamera=false */
-var() bool bBlockCamera;
+var() bool bClampFluid;
 
-cpptext
-{
-	UBOOL IgnoreBlockingBy( const AActor *Other ) const;
-}
-
-/**	Handling Toggle event from Kismet. */
-simulated function OnToggle(SeqAct_Toggle Action)
-{
-	// Turn ON
-	if (Action.InputLinks[0].bHasImpulse)
-	{
-		CollisionComponent.SetBlockRigidBody( TRUE );
-	}
-	// Turn OFF
-	else if (Action.InputLinks[1].bHasImpulse)
-	{
-		CollisionComponent.SetBlockRigidBody( FALSE );
-	}
-	// Toggle
-	else if (Action.InputLinks[2].bHasImpulse)
-	{
-		CollisionComponent.SetBlockRigidBody( !CollisionComponent.BlockRigidBody );
-	}
-
-	Super.OnToggle( Action );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=BrushComponent0
-		CollideActors=true
-		BlockActors=true
-		BlockZeroExtent=false
-		BlockNonZeroExtent=true
-		BlockRigidBody=true
-		bDisableAllRigidBody=false
-		RBChannel=RBCC_BlockingVolume
-	End Object
-
-	bWorldGeometry=true
-	bCollideActors=True
-	bBlockActors=True
-	bBlockCamera=true
-	bMovable=false
+   bClampFluid=True
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      BlockActors=True
+      BlockRigidBody=True
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bWorldGeometry=True
+   bBlockActors=True
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__BlockingVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

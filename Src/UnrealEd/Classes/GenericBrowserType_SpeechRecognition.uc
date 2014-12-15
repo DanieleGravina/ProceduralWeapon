@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 2007 Epic Games, Inc. All Rights Reserved.
  */
 //=============================================================================
 // GenericBrowserType_SoundWave: SoundWaves
@@ -9,12 +9,16 @@ class GenericBrowserType_SpeechRecognition
 	extends GenericBrowserType
 	native;
 
-cpptext
-{
-	virtual void Init();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
+
 defaultproperties
 {
-	Description="Speech Recognition"
+   Description="Speech Recognition"
+   Name="Default__GenericBrowserType_SpeechRecognition"
+   ObjectArchetype=GenericBrowserType'UnrealEd.Default__GenericBrowserType'
 }

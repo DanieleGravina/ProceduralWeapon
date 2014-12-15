@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2007 Epic Games, Inc. All Rights Reserved.
  */
 class UTPickupFactory_SuperHealth extends UTHealthPickupFactory;
 
@@ -26,46 +26,65 @@ simulated function SetPickupVisible()
 
 defaultproperties
 {
-	bSuperHeal=true
-	bPredictRespawns=true
-	bIsSuperItem=true
-	RespawnTime=60.000000
-	MaxDesireability=2.000000
-	HealingAmount=100
-	PickupSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Super_Cue'
-
-	Begin Object Name=BaseMeshComp
-		StaticMesh=StaticMesh'Pickups.Health_Large.Mesh.S_Pickups_Base_Health_Large'
-		Translation=(Z=-44)
-		Rotation=(Yaw=16384)
-		Scale=0.8
-	End Object
-
-	Begin Object Name=HealthPickUpMesh
-		StaticMesh=StaticMesh'Pickups.Health_Large.Mesh.S_Pickups_Health_Large_Keg'
-		MaxDrawDistance=7000
-		Materials(0)=Material'Pickups.Health_Large.Materials.M_Pickups_Health_Large_Keg'
-	End Object
-
-	Begin Object Class=UTParticleSystemComponent Name=ParticleGlow
-		Template=ParticleSystem'Pickups.Health_Large.Effects.P_Pickups_Base_Health_Glow'
-		Translation=(Z=-50.0)
-		SecondsBeforeInactive=1.0f
-	End Object
-	Components.Add(ParticleGlow)
-	Glow=ParticleGlow
-
-	Begin Object Class=UTParticleSystemComponent Name=ParticleCrackle
-		Template=ParticleSystem'Pickups.Health_Large.Effects.P_Pickups_Base_Health_Spawn'
-		Translation=(Z=-50.0)
-		SecondsBeforeInactive=1.0f
-	End Object
-	Components.Add(ParticleCrackle)
-	Crackle=ParticleCrackle
-
-	YawRotationRate=16384
-	bRotatingPickup=true
-
-	bHasLocationSpeech=true
-	LocationSpeech(0)=SoundNodeWave'A_Character_IGMale.BotStatus.A_BotStatus_IGMale_HeadingForTheSuperHealth'
+   Begin Object Class=UTParticleSystemComponent Name=ParticleCrackle ObjName=ParticleCrackle Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      Template=ParticleSystem'PICKUPS.Health_Large.Effects.P_Pickups_Base_Health_Spawn'
+      Translation=(X=0.000000,Y=0.000000,Z=-50.000000)
+      Name="ParticleCrackle"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   Crackle=ParticleCrackle
+   HealingAmount=100
+   bSuperHeal=True
+   PickupSound=SoundCue'A_Pickups.Health.Cue.A_Pickups_Health_Super_Cue'
+   RespawnTime=60.000000
+   bRotatingPickup=True
+   bHasLocationSpeech=True
+   YawRotationRate=16384.000000
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHealthPickupFactory:PickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTHealthPickupFactory:PickupLightEnvironment'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   Begin Object Class=UTParticleSystemComponent Name=ParticleGlow ObjName=ParticleGlow Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      Template=ParticleSystem'PICKUPS.Health_Large.Effects.P_Pickups_Base_Health_Glow'
+      Translation=(X=0.000000,Y=0.000000,Z=-50.000000)
+      Name="ParticleGlow"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   Glow=ParticleGlow
+   LocationSpeech(0)=SoundNodeWave'A_Character_IGMale.BotStatus.A_BotStatus_IGMale_HeadingForTheSuperhealth'
+   LocationSpeech(1)=SoundNodeWave'A_Character_Jester.BotStatus.A_BotStatus_Jester_HeadingForTheSuperhealth'
+   LocationSpeech(2)=SoundNodeWave'A_Character_Othello.BotStatus.A_BotStatus_Othello_HeadingForTheSuperHealth'
+   bPredictRespawns=True
+   bIsSuperItem=True
+   MaxDesireability=2.000000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTHealthPickupFactory:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTHealthPickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTHealthPickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTHealthPickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:BaseMeshComp'
+      StaticMesh=StaticMesh'PICKUPS.Health_Large.Mesh.S_Pickups_Base_Health_Large'
+      Translation=(X=0.000000,Y=0.000000,Z=-44.000000)
+      Rotation=(Pitch=0,Yaw=16384,Roll=0)
+      Scale=0.800000
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:BaseMeshComp'
+   End Object
+   Components(3)=BaseMeshComp
+   Begin Object Class=StaticMeshComponent Name=HealthPickUpMesh ObjName=HealthPickUpMesh Archetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:HealthPickUpMesh'
+      StaticMesh=StaticMesh'PICKUPS.Health_Large.Mesh.S_Pickups_Health_Large_Keg'
+      Materials(0)=Material'PICKUPS.Health_Large.Materials.M_Pickups_Health_Large_Keg'
+      CullDistance=7000.000000
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTHealthPickupFactory:HealthPickUpMesh'
+   End Object
+   Components(4)=HealthPickUpMesh
+   Components(5)=ParticleGlow
+   Components(6)=ParticleCrackle
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTPickupFactory_SuperHealth"
+   ObjectArchetype=UTHealthPickupFactory'UTGame.Default__UTHealthPickupFactory'
 }

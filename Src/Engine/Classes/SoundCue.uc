@@ -1,9 +1,8 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SoundCue extends Object
-	dependson( AudioDevice )
-	hidecategories( object )
+	hidecategories(object)
 	native;
 
 struct native export SoundNodeEditorData
@@ -13,21 +12,15 @@ struct native export SoundNodeEditorData
 };
 
 /** Sound group this sound cue belongs to */
-var()						Name									SoundClass;
-var							ESoundClassName							SoundClassName;
-
-/** For debugging purpose only . */
-var()						bool									bDebug;							
-
+var							Name									SoundGroup;
 var							SoundNode								FirstNode;
-var		native		  		const Map{USoundNode*,FSoundNodeEditorData}	EditorData;
+var		const native		Map{USoundNode*,FSoundNodeEditorData}	EditorData;
 var		transient			float									MaxAudibleDistance;
 var()						float									VolumeMultiplier;
 var()						float									PitchMultiplier;
 var							float									Duration;
 
 /** Reference to FaceFX AnimSet package the animation is in */
-//var() editoronly notforconsole FaceFXAnimSet						FaceFXAnimSetRef;
 var()						FaceFXAnimSet							FaceFXAnimSetRef;
 /** Name of the FaceFX Group the animation is in */
 var()						string									FaceFXGroupName;
@@ -39,13 +32,79 @@ var()						int										MaxConcurrentPlayCount;
 /** Number of times this cue is currently being played. */
 var	const transient duplicatetransient int							CurrentPlayCount;
 
-var	 deprecated	Name												SoundGroup;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-native final function float GetCueDuration();
+native function float GetCueDuration();
 
 defaultproperties
 {
-	VolumeMultiplier=0.75
-	PitchMultiplier=1
-	MaxConcurrentPlayCount=16
+   VolumeMultiplier=0.750000
+   PitchMultiplier=1.000000
+   MaxConcurrentPlayCount=16
+   Name="Default__SoundCue"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTLastSecondMessage extends UTLocalMessage;
 
@@ -49,10 +49,13 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	bBeep=false
-	bIsUnique=True
-	FontSize=2
-	MessageArea=2
-	DrawColor=(R=0,G=160,B=255,A=255)
-	AnnouncementPriority=12
+   LastSecondRed="Salvataggio dell'ultimo momento dei Rossi!"
+   LastSecondBlue="Salvataggio dell'ultimo momento dei Blu!"
+   MessageArea=2
+   AnnouncementPriority=12
+   bIsUnique=True
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=2
+   Name="Default__UTLastSecondMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

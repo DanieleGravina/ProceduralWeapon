@@ -7,7 +7,7 @@
 // PickupClass).  When tossed out (using the DropFrom() function), inventory items
 // spawn a DroppedPickup actor to hold them.
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class Inventory extends Actor
@@ -19,8 +19,10 @@ class Inventory extends Actor
 
 var	Inventory			Inventory;				// Next Inventory in Linked List
 var InventoryManager	InvManager;
-var	localized string	ItemName;
+var	databinding	localized string	ItemName;
 
+var	bool				bRenderOverlays;		// If true, this inventory item will be given access to HUD Canvas. RenderOverlays() is called.
+var bool				bReceiveOwnerEvents;	// If true, receive Owner events. OwnerEvent() is called.
 /** if true, this inventory item should be dropped if the owner dies */
 var bool bDropOnDeath;
 
@@ -30,7 +32,7 @@ var bool bDelayedSpawn;
 var		bool								bPredictRespawns;		// high skill bots may predict respawns for this item
 var()	float								RespawnTime;			// Respawn after this time, 0 for instant.
 var  float									MaxDesireability;		// Maximum desireability this item will ever have.
-var() localized string						PickupMessage;			// Human readable description when picked up.
+var() databinding	localized string						PickupMessage;			// Human readable description when picked up.
 var() SoundCue PickupSound;
 var() string PickupForce;
 var			class<DroppedPickup>			DroppedPickupClass;
@@ -38,11 +40,11 @@ var			PrimitiveComponent				DroppedPickupMesh;
 var			PrimitiveComponent				PickupFactoryMesh;
 var			ParticleSystemComponent			DroppedPickupParticles;
 
-cpptext
-{
-	// AActor interface.
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 // Network replication.
 replication
@@ -51,6 +53,24 @@ replication
 	if ( (Role==ROLE_Authority) && bNetDirty && bNetOwner )
 		Inventory, InvManager;
 }
+
+
+/**
+ * Access to HUD and Canvas. Set bRenderOverlays=true to receive event.
+ * Event called every frame when the item is in the InventoryManager
+ *
+ * @param	HUD H
+ */
+simulated function RenderOverlays( HUD H );
+
+/**
+ * Access to HUD and Canvas.
+ * Event always called when the InventoryManager considers this Inventory Item currently "Active"
+ * (for example active weapon)
+ *
+ * @param	HUD H
+ */
+simulated function ActiveRenderOverlays( HUD H );
 
 simulated function String GetHumanReadableName()
 {
@@ -136,7 +156,6 @@ function AnnouncePickup(Pawn Other)
  */
 function GivenTo( Pawn thisPawn, optional bool bDoNotActivate )
 {
-	`LogInv(thisPawn @ "Weapon:" @ Self);
 	Instigator = ThisPawn;
 	ClientGivenTo(thisPawn, bDoNotActivate);
 }
@@ -153,12 +172,9 @@ reliable client function ClientGivenTo(Pawn NewOwner, bool bDoNotActivate)
 	// make sure Owner is set - if Inventory item fluctuates Owners there is a chance this might not get updated normally
 	SetOwner(NewOwner);
 	Instigator = NewOwner;
-
-	`LogInv(NewOwner @ "Weapon:" @ Self);
-
-	if( NewOwner != None && NewOwner.Controller != None )
+	if (NewOwner != None && NewOwner.Controller != None)
 	{
-		NewOwner.Controller.NotifyAddInventory(Self);
+		NewOwner.Controller.NotifyAddInventory(self);
 	}
 }
 
@@ -229,6 +245,7 @@ function DropFrom(vector StartLocation, vector StartVelocity)
 	GotoState('');
 }
 
+
 static function string GetLocalString(
 	optional int Switch,
 	optional PlayerReplicationInfo RelatedPRI_1,
@@ -238,24 +255,32 @@ static function string GetLocalString(
 	return Default.PickupMessage;
 }
 
+/* OwnerEvent:
+	Used to inform inventory when owner event occurs (for example jumping or weapon change)
+	set bReceiveOwnerEvents=true to receive events.
+*/
+function OwnerEvent(name EventName);
+
 defaultproperties
 {
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Actor'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Inventory"
-	End Object
-	Components.Add(Sprite)
-
-	bOnlyDirtyReplication=true
-	bOnlyRelevantToOwner=true
-	NetPriority=1.4
-	bHidden=true
-	Physics=PHYS_None
-	bReplicateMovement=false
-	RemoteRole=ROLE_SimulatedProxy
-	DroppedPickupClass=class'DroppedPickup'
-	MaxDesireability=0.1000
+   MaxDesireability=0.100000
+   PickupMessage="Snagged an item."
+   DroppedPickupClass=Class'Engine.DroppedPickup'
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   RemoteRole=ROLE_SimulatedProxy
+   bHidden=True
+   bOnlyRelevantToOwner=True
+   bReplicateMovement=False
+   bOnlyDirtyReplication=True
+   NetPriority=1.400000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Inventory"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

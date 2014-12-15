@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTJumpLiftExit extends LiftExit;
 
@@ -41,7 +41,7 @@ function bool CanBeReachedFromLiftBy(Pawn Other)
 		Other.Velocity = NewVelocity;
 		Other.bWantsToCrouch = false;
 		Other.Controller.MoveTarget = self;
-		Other.Controller.SetDestinationPosition( Location );
+		Other.Controller.Destination = Location;
 		Other.Acceleration = vect(0,0,0);
 		if ( UTPawn(Other) != None )
 		{
@@ -64,6 +64,32 @@ function bool CanBeReachedFromLiftBy(Pawn Other)
 
 defaultproperties
 {
-	bExitOnly=true
-	ExtraCost=500
+   bExitOnly=True
+   ExtraCost=500
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__LiftExit:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__LiftExit:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__LiftExit:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__LiftExit:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__LiftExit:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__LiftExit:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__LiftExit:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__LiftExit:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__LiftExit:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__LiftExit:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTJumpLiftExit"
+   ObjectArchetype=LiftExit'Engine.Default__LiftExit'
 }

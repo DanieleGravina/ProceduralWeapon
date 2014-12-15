@@ -1,32 +1,59 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
- 
-/** 
- * Defines how a sound loops; either indefinitely, or for a set number of times
- */
-  
 class SoundNodeLooping extends SoundNode
-	native( Sound )
-	hidecategories( Object )
+	native(Sound)
+	collapsecategories
+	hidecategories(Object)
 	editinlinenew;
 
-var( Looping )			bool					bLoopIndefinitely;
-var( Looping )			float					LoopCountMin<ToolTip=The lower bound of number of times to loop>;
-var( Looping )			float					LoopCountMax<ToolTip=The upper bound of number of times to loop>;
+var()	bool					bLoopIndefinitely;
+var()	rawdistributionfloat	LoopCount;
 
-var			deprecated	rawdistributionfloat	LoopCount;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bLoopIndefinitely=TRUE
-	LoopCountMin=1000000
-	LoopCountMax=1000000
-	
-	// deprecated defaults
-	Begin Object Class=DistributionFloatUniform Name=DistributionLoopCount
-		Min=1000000
-		Max=1000000
-	End Object
-	LoopCount=(Distribution=DistributionLoopCount)
+   bLoopIndefinitely=True
+   LoopCount=(Distribution=DistributionLoopCount,Op=2,LookupTableNumElements=2,LookupTableChunkSize=2,LookupTable=(1000000.000000,1000000.000000,1000000.000000,1000000.000000,1000000.000000,1000000.000000))
+   Name="Default__SoundNodeLooping"
+   ObjectArchetype=SoundNode'Engine.Default__SoundNode'
 }

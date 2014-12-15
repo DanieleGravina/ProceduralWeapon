@@ -1,7 +1,7 @@
 /**
  * base class for gibs
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTGib extends Actor
 	config(Game)
@@ -48,13 +48,11 @@ var protected name GibMeshDissolveParamName;
 /** How long before the GibMesh should start dissolving **/
 var protected float GibMeshWaitTimeBeforeDissolve;
 
+
 /** PSC for the GibEffect (e.g. for the link gun we play a little lightning) **/
 var ParticleSystemComponent PSC_GibEffect;
-
 /** The ParticleSystem or the Custom Gib Effect (if any) **/
 var ParticleSystem PS_CustomEffect;
-
-var globalconfig bool bUseUnrealPhysics;
 
 struct StaticMeshDatum
 {
@@ -83,7 +81,6 @@ var vector OldCamLoc;
 var rotator OldCamRot;
 var bool bStopMovingCamera;
 
-var int BounceCount;
 
 simulated event PreBeginPlay()
 {
@@ -97,15 +94,23 @@ simulated event PreBeginPlay()
  * This will force the gib material to stay streamed in and not be affected by distance based streaming
  * which often seems to be causing pops.
  *
- * @paran TimeToBeResident num seconds to be resident
+ * @paran TimeToBeResisent num seconds to be resident
  **/
-simulated function SetTexturesToBeResident( float TimeToBeResident )
+simulated function SetTexturesToBeResident( float TimeToBeResisent )
 {
 	local int MatIdx;
+	local array<texture> Textures;
+	local int TexIdx;
 
 	for( MatIdx = 0; MatIdx < GibMeshComp.Materials.Length; ++MatIdx )
 	{
-		GibMeshComp.Materials[MatIdx].SetForceMipLevelsToBeResident( false, false, TimeToBeResident );
+		Textures = GibMeshComp.Materials[MatIdx].GetMaterial().GetTextures();
+
+		for( TexIdx = 0; TexIdx < Textures.Length; ++TexIdx )
+		{
+			//`log( "Texture setting bForceMiplevelsToBeResident: " $ TimeToBeResisent @ GibMeshComp.Materials[MatIdx] @ Textures[TexIdx] );
+			Texture2D(Textures[TexIdx]).TimeToForceMipLevelsToBeResident = TimeToBeResisent;
+		}
 	}
 }
 
@@ -153,13 +158,12 @@ simulated function ChooseGib()
 	local SkeletalMeshComponent SKMC;
 	local int StartIndex, Index;
 	local MaterialInstanceTimeVarying GibMaterialInstance;
-	local CylinderComponent MyCylinder;
 
 	if (GibMeshesData.length > 0)
 	{
 		Index = Rand(GibMeshesData.length);
 		// don't allow skeletal gibs if low detail
-		if ( bUseUnrealPhysics || WorldInfo.bDropDetail || WorldInfo.GetDetailMode() == DM_Low || class'Engine'.static.IsSplitScreen() )
+		if ( WorldInfo.bDropDetail || WorldInfo.GetDetailMode() == DM_Low || class'Engine'.static.IsSplitScreen() )
 		{
 			StartIndex = Index;
 			while (GibMeshesData[Index].ThePhysAsset != None)
@@ -182,23 +186,7 @@ simulated function ChooseGib()
 		if( SMD.ThePhysAsset == NONE )
 		{
 			GibMeshComp = new(self) class'UTGibStaticMeshComponent';
-
-			if ( bUseUnrealPhysics )
-			{
-				MyCylinder = new(self) class'CylinderComponent';
-				CollisionComponent = MyCylinder;
-				MyCylinder.SetCylinderSize(5.0, 5.0);
-				MyCylinder.SetTraceBlocking(true, false);
-				MyCylinder.SetActorCollision(true, false, false);
-				SetPhysics(PHYS_Falling);
-				bCollideWorld = true;
-				bBounce = true;
-				AttachComponent(MyCylinder);
-			}
-			else
-			{
-				CollisionComponent = GibMeshComp;
-			}
+			CollisionComponent = GibMeshComp;
 
 			SMC = StaticMeshComponent(GibMeshComp);
 			SMC.SetScale(SMD.DrawScale);
@@ -224,23 +212,21 @@ simulated function ChooseGib()
 
 		DoCustomGibEffects();
 
-		if (!WorldInfo.IsConsoleBuild(CONSOLE_Mobile))
+		// this is going to set up the MITV so we can have the gibs burn out nicely
+		GibMaterialInstance = new(self) class'MaterialInstanceTimeVarying';
+		if( SMD.bUseSecondaryGibMeshMITV == FALSE )
 		{
-			// this is going to set up the MITV so we can have the gibs burn out nicely
-			GibMaterialInstance = new(self) class'MaterialInstanceTimeVarying';
-			if( SMD.bUseSecondaryGibMeshMITV == FALSE )
-			{
-				GibMaterialInstance.SetParent( MITV_GibMeshTemplate );
-			}
-			else
-			{
-				GibMaterialInstance.SetParent( MITV_GibMeshTemplateSecondary );
-			}
-
-			GibMeshComp.SetMaterial( 0, GibMaterialInstance );
-
-			GibMaterialInstance.SetScalarStartTime( GibMeshDissolveParamName, (GibMeshWaitTimeBeforeDissolve-(FRand()*1.0f)));
+			GibMaterialInstance.SetParent( MITV_GibMeshTemplate );
 		}
+		else
+		{
+			GibMaterialInstance.SetParent( MITV_GibMeshTemplateSecondary );
+		}
+
+		GibMeshComp.SetMaterial( 0, GibMaterialInstance );
+
+		GibMaterialInstance.SetScalarStartTime( GibMeshDissolveParamName, (GibMeshWaitTimeBeforeDissolve-(FRand()*1.0f)));
+		
 	}
 	else
 	{
@@ -342,6 +328,8 @@ simulated event RigidBodyCollision( PrimitiveComponent HitComponent, PrimitiveCo
 	// don't spawn a decal unless we have more than likely hit something other than the orig pawn or other Gibs
 	if( (WorldInfo.TimeSeconds - CreationTime ) > 0.4 )
 	{
+		//`log( "RBC: " $ self $ " against " $ HitComponent );
+
 		// once we hit one thing don't fire off anymore hits
 		if( GibMeshComp != none )
 		{
@@ -355,6 +343,7 @@ simulated event RigidBodyCollision( PrimitiveComponent HitComponent, PrimitiveCo
 		}
 	}
 }
+
 
 /** Data provided by the derived classes to do their specific form of decal leaving (e.g. blood for bodies, green goop for aliens, etc.) **/
 simulated function LeaveADecal( vector HitLoc, vector HitNorm )
@@ -390,6 +379,7 @@ simulated function LeaveADecal( vector HitLoc, vector HitNorm )
 	}
 }
 
+
 simulated function TurnOnCollision()
 {
 	//`log( "COLLIDING ON: " $ self );
@@ -409,79 +399,30 @@ simulated function TurnOnCollision()
 	GibMeshComp.WakeRigidBody();
 }
 
-//===================================================
-// SUPPORT FOR GIBS USING UNREAL PHYSICS
-
-event Landed(vector HitNormal, Actor FloorActor)
-{
-	HitWall(HitNormal, FloorActor, None);
-}
-
-event HitWall(vector HitNormal, Actor Wall, PrimitiveComponent WallComp)
-{
-	local float Speed;
-
-	Velocity = Velocity - 2 * (Velocity dot HitNormal) * HitNormal;
-	if ( LifeSpan < Default.LifeSpan - 0.3 )
-	{
-		Velocity *= 0.5;
-	}
-
-	Speed = VSize(Velocity);
-	BounceCount++;
-
-	if( (WorldInfo.TimeSeconds - CreationTime ) > 0.4 )
-	{
-		if ( EffectIsRelevant(Location, false, 4000.0) )
-		{
-			PlaySound( HitSound, TRUE );
-			LeaveADecal( Location, Normal(Velocity) );
-		}
-	}
-
-	if ( (HitNormal.Z > 0.7) && ((BounceCount > 4) || (Speed < 50)) )
-	{
-		bBounce = false;
-		SetPhysics(PHYS_None);
-	}
-	else
-	{
-		RotationRate.Yaw = Rand(100000);
-		RotationRate.Pitch = Rand(100000);
-		RotationRate.Roll = Rand(100000);
-	}
-}
-
 defaultproperties
 {
-	// each gib has their own LightEnvironment as they can travel pretty far through disparate lighting variations
- 	Begin Object Class=DynamicLightEnvironmentComponent Name=GibLightEnvironmentComp
- 		bCastShadows=FALSE
-		bDynamic=TRUE // we might want to change this to FALSE as it should be good to grab the light where the spawning occurs
-		AmbientGlow=(R=0.5,G=0.5,B=0.5)
-		AmbientShadowColor=(R=0.3,G=0.3,B=0.3)
- 	End Object
- 	GibLightEnvironment=GibLightEnvironmentComp
- 	Components.Add(GibLightEnvironmentComp)
-
-	TickGroup=TG_PostAsyncWork
-	RemoteRole=ROLE_None
-	Physics=PHYS_RigidBody
-
-	bNoEncroachCheck=true
-	bDestroyedByInterpActor=TRUE
-	bCollideActors=true
-	bBlockActors=false
-	bWorldGeometry=false
-	bCollideWorld=FALSE  // we want the gib to use the rigidbody collision.  Setting this to TRUE means that unreal physics will try to control
-	bProjTarget=true
-	LifeSpan=10.0
-	bGameRelevant=true
-
-	DecalDissolveParamName="DissolveAmount"
-	DecalWaitTimeBeforeDissolve=20.0f
-
-	//Which ramps from 0 (fully opaque) to 9.9 (fully burnt out) over the time we want the gib to fade out.
-	GibMeshDissolveParamName="BurnTime"
-	GibMeshWaitTimeBeforeDissolve=8.0f
+   Begin Object Class=DynamicLightEnvironmentComponent Name=GibLightEnvironmentComp ObjName=GibLightEnvironmentComp Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+      AmbientShadowColor=(R=0.300000,G=0.300000,B=0.300000,A=1.000000)
+      AmbientGlow=(R=0.500000,G=0.500000,B=0.500000,A=1.000000)
+      bCastShadows=False
+      Name="GibLightEnvironmentComp"
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+   End Object
+   GibLightEnvironment=GibLightEnvironmentComp
+   DecalDissolveParamName="DissolveAmount"
+   DecalWaitTimeBeforeDissolve=20.000000
+   GibMeshDissolveParamName="BurnTime"
+   GibMeshWaitTimeBeforeDissolve=8.000000
+   Components(0)=GibLightEnvironmentComp
+   Physics=PHYS_RigidBody
+   TickGroup=TG_PostAsyncWork
+   bDestroyedByInterpActor=True
+   bGameRelevant=True
+   bCollideActors=True
+   bProjTarget=True
+   bNoEncroachCheck=True
+   LifeSpan=10.000000
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTGib"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTGib_Robot extends UTGib
@@ -30,14 +30,17 @@ simulated function DoCustomGibEffects()
 	}
 }
 
-
-
 defaultproperties
 {
-	HitSound=SoundCue'A_Character_BodyImpacts.BodyImpacts.A_Character_RobotImpact_GibMedium_Cue'
-
-	CustomGibSocketName="Spark"
-	PS_CustomEffect=ParticleSystem'Envy_Effects2.Particles.P_Robot_Gib_Spark'
-
-	MITV_GibMeshTemplate=MaterialInstanceTimeVarying'CH_Gibs.Materials.MITV_CH_Gibs_Corrupt01'
+   CustomGibSocketName="Spark"
+   Begin Object Class=DynamicLightEnvironmentComponent Name=GibLightEnvironmentComp ObjName=GibLightEnvironmentComp Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTGib:GibLightEnvironmentComp'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTGib:GibLightEnvironmentComp'
+   End Object
+   GibLightEnvironment=GibLightEnvironmentComp
+   HitSound=SoundCue'A_Character_BodyImpacts.BodyImpacts.A_Character_RobotImpact_GibMedium_Cue'
+   MITV_GibMeshTemplate=MaterialInstanceTimeVarying'CH_Gibs.Materials.MITV_CH_Gibs_Corrupt01'
+   PS_CustomEffect=ParticleSystem'Envy_Effects2.Particles.P_Robot_Gib_Spark'
+   Components(0)=GibLightEnvironmentComp
+   Name="Default__UTGib_Robot"
+   ObjectArchetype=UTGib'UTGame.Default__UTGib'
 }

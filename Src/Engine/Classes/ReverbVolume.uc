@@ -1,13 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Used to affect reverb settings in the game and editor.
  */
 class ReverbVolume extends Volume
 	native
 	placeable
-	dontsortcategories(ReverbVolume)
-	hidecategories(Advanced, Attachment, Collision, Volume, Toggle);
+	hidecategories(Advanced,Attachment,Collision,Volume);
 
 /**
  * Indicates a reverb preset to use.
@@ -42,8 +41,6 @@ enum ReverbPreset
 /** Struct encapsulating settings for reverb effects. */
 struct native ReverbSettings
 {
-	var() bool			bApplyReverb<ToolTip=Whether to apply the reverb settings below>;
-
 	/** The reverb preset to employ. */
 	var() ReverbPreset	ReverbType;
 
@@ -55,42 +52,9 @@ struct native ReverbSettings
 
 	structdefaultproperties
 	{
-		bApplyReverb=true
 		ReverbType=REVERB_Default
 		Volume=0.5
 		FadeTime=2.0
-	}
-};
-
-/** Struct encapsulating settings for interior areas. */
-//@warning: manually mirrored in UnActorComponent.h
-struct InteriorSettings
-{
-	var	  bool			bIsWorldInfo;
-
-	var() float			ExteriorVolume;
-	var() float			ExteriorTime;
-
-	var() float			ExteriorLPF;
-	var() float			ExteriorLPFTime;
-
-	var() float			InteriorVolume;
-	var() float			InteriorTime;
-
-	var() float			InteriorLPF;
-	var() float			InteriorLPFTime;
-
-	structdefaultproperties
-	{
-		bIsWorldInfo=false
-		ExteriorVolume=1.0f
-		ExteriorTime=0.5f
-		InteriorVolume=1.0f
-		InteriorTime=0.5f
-		ExteriorLPF=1.0f
-		ExteriorLPFTime=0.5f
-		InteriorLPF=1.0f
-		InteriorLPFTime=0.5f
 	}
 };
 
@@ -98,61 +62,47 @@ struct InteriorSettings
  * Priority of this volume. In the case of overlapping volumes the one with the highest priority
  * is chosen. The order is undefined if two or more overlapping volumes have the same priority.
  */
-var() float Priority;
-/** whether this volume is currently enabled and able to affect sounds */
-var(Toggle) bool bEnabled;
+var()							float				Priority;
 
 /** Reverb settings to use for this volume. */
-var() ReverbSettings Settings;
-/** Interior settings used for this volume */
-var() InteriorSettings AmbientZoneSettings;
+var()							ReverbSettings		Settings;
 
 /** Next volume in linked listed, sorted by priority in descending order. */
-var const noimport transient ReverbVolume NextLowerPriorityVolume;
+var const noimport transient	ReverbVolume		NextLowerPriorityVolume;
 
-cpptext
-{
-	/**
-	 * Removes the reverb volume to world info's list of reverb volumes.
-	 */
-	virtual void ClearComponents();
-
-	/**
-	 * callback for changed property
-	 */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-protected:
-	/**
-	 * Adds the reverb volume to world info's list of reverb volumes.
-	 */
-	virtual void UpdateComponentsInternal( UBOOL bCollisionUpdate = FALSE );
-public:
-}
-
-replication
-{
-	if (bNetDirty)
-		bEnabled;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=BrushComponent0
-		CollideActors=False
-		BlockActors=False
-		BlockZeroExtent=False
-		BlockNonZeroExtent=False
-		BlockRigidBody=False
-	End Object
-
-	bColored=True
-	BrushColor=(R=255,G=255,B=0,A=255)
-
-	bEnabled=true
-	bCollideActors=False
-	bBlockActors=False
-	bProjTarget=False
-	SupportedEvents.Empty
-	SupportedEvents(0)=class'SeqEvent_Touch'
+   Settings=(Volume=0.500000,FadeTime=2.000000)
+   Begin Object Class=BrushComponent Name=BrushComponent0 ObjName=BrushComponent0 Archetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+      CollideActors=False
+      BlockNonZeroExtent=False
+      ObjectArchetype=BrushComponent'Engine.Default__Volume:BrushComponent0'
+   End Object
+   BrushComponent=BrushComponent0
+   Components(0)=BrushComponent0
+   bCollideActors=False
+   CollisionComponent=BrushComponent0
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__ReverbVolume"
+   ObjectArchetype=Volume'Engine.Default__Volume'
 }

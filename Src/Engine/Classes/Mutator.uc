@@ -7,43 +7,30 @@
 // or replace all other actors when they are spawned with CheckRelevance(), which
 // is called from the PreBeginPlay() function of all actors except those (Decals,
 // Effects and Projectiles for performance reasons) which have bGameRelevant==true.
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class Mutator extends Info
 	native
 	abstract;
 
-/** Next in list of mutators linked from GameInfo.BaseMutator */
 var Mutator NextMutator;
-
 /** list of groups this mutator is in. Mutators that share any group cannot be activated simultaneously */
 var() array<string> GroupNames;
-
-/** Meant to verify if this mutator was from Command Line parameters or added from other Actors */
 var bool bUserAdded;
 
-/** 
-  * Make sure mutator is allowed in this session.
-  * Don't call Actor.PreBeginPlay() for Mutator.
- */
+/* Don't call Actor PreBeginPlay() for Mutator
+*/
 event PreBeginPlay()
 {
 	if ( !MutatorIsAllowed() )
 		Destroy();
 }
 
-/**
-  *  Returns whether mutator is allowed in this session.
-  */
 function bool MutatorIsAllowed()
 {
-	// by default, disallow mutators in demo builds
 	return !WorldInfo.IsDemoBuild();
 }
 
-/** 
-  *  Make sure this is removed from the game's mutator list
-  */
 event Destroyed()
 {
 	WorldInfo.Game.RemoveMutator(self);
@@ -71,9 +58,6 @@ function ModifyPlayer(Pawn Other)
 		NextMutator.ModifyPlayer(Other);
 }
 
-/** 
-  *  Add Mutator M to the mutator list.
-  */
 function AddMutator(Mutator M)
 {
 	if ( NextMutator == None )
@@ -82,9 +66,8 @@ function AddMutator(Mutator M)
 		NextMutator.AddMutator(M);
 }
 
-/**
-  * Force game to always keep this actor, even if other mutators want to get rid of it
-  */
+/* Force game to always keep this actor, even if other mutators want to get rid of it
+*/
 function bool AlwaysKeep(Actor Other)
 {
 	if ( NextMutator != None )
@@ -92,9 +75,6 @@ function bool AlwaysKeep(Actor Other)
 	return false;
 }
 
-/**
-  * Returns whether Other (being spawned) is relevant (should be allowed to exist)
-  */
 function bool IsRelevant(Actor Other)
 {
 	local bool bResult;
@@ -106,9 +86,6 @@ function bool IsRelevant(Actor Other)
 	return bResult;
 }
 
-/** 
-  *  Check whether Other (being spawned) should be allowed to exist
-  */
 function bool CheckRelevance(Actor Other)
 {
 	local bool bResult;
@@ -117,6 +94,7 @@ function bool CheckRelevance(Actor Other)
 		return true;
 
 	// allow mutators to remove actors
+
 	bResult = IsRelevant(Other);
 
 	return bResult;
@@ -125,9 +103,37 @@ function bool CheckRelevance(Actor Other)
 /**
  * Returns true to keep this actor
  */
+
 function bool CheckReplacement(Actor Other)
 {
 	return true;
+}
+
+//
+// server querying
+//
+function GetServerDetails( out GameInfo.ServerResponseLine ServerState )
+{
+	// append the mutator name.
+	local int i;
+	i = ServerState.ServerInfo.Length;
+	ServerState.ServerInfo.Length = i+1;
+	ServerState.ServerInfo[i].Key = "Mutator";
+	ServerState.ServerInfo[i].Value = GetHumanReadableName();
+}
+
+function GetServerPlayers( out GameInfo.ServerResponseLine ServerState )
+{
+}
+
+// jmw - Allow mod authors to hook in to the %X var parsing
+
+function string ParseChatPercVar(Controller Who, string Cmd)
+{
+	if (NextMutator !=None)
+		Cmd = NextMutator.ParseChatPercVar(Who,Cmd);
+
+	return Cmd;
 }
 
 function NotifyLogout(Controller Exiting)
@@ -140,6 +146,48 @@ function NotifyLogin(Controller NewPlayer)
 {
 	if ( NextMutator != None )
 		NextMutator.NotifyLogin(NewPlayer);
+}
+
+function bool AllowChangeTeam(Controller Other, out int num, bool bNewTeam)
+{
+	if (NextMutator != none)
+		return NextMutator.AllowChangeTeam(Other, num, bNewTeam);
+
+	return True;
+}
+
+function NotifySetTeam(Controller Other, TeamInfo OldTeam, TeamInfo NewTeam, bool bNewTeam)
+{
+	if (NextMutator != None)
+		NextMutator.NotifySetTeam(Other, OldTeam, NewTeam, bNewTeam);
+}
+
+function bool AllowBecomeActivePlayer(PlayerController P)
+{
+	if (NextMutator != None)
+		return NextMutator.AllowBecomeActivePlayer(P);
+
+	return True;
+}
+
+function bool AllowBecomeSpectator(PlayerController P)
+{
+	if (NextMutator != None)
+		return NextMutator.AllowBecomeSpectator(P);
+
+	return True;
+}
+
+function NotifyBecomeActivePlayer(PlayerController Player)
+{
+	if (NextMutator != none)
+		NextMutator.NotifyBecomeActivePlayer(Player);
+}
+
+function NotifyBecomeSpectator(PlayerController Player)
+{
+	if (NextMutator != none)
+		NextMutator.NotifyBecomeSpectator(Player);
 }
 
 function DriverEnteredVehicle(Vehicle V, Pawn P)
@@ -165,6 +213,7 @@ function DriverLeftVehicle(Vehicle V, Pawn P)
  * This function can be used to parse the command line parameters when a server
  * starts up
  */
+
 function InitMutator(string Options, out string ErrorMessage)
 {
 	if (NextMutator != None)
@@ -196,81 +245,13 @@ function GetSeamlessTravelActorList(bool bToEntry, out array<Actor> ActorList)
 	}
 }
 
-/* Override GameInfo FindPlayerStart() - called by GameInfo.FindPlayerStart()
-if a NavigationPoint is returned, it will be used as the playerstart
-*/
-function NavigationPoint FindPlayerStart(Controller Player, optional byte InTeam, optional string incomingName)
-{
-	if (NextMutator != None)
-	{
-		return NextMutator.FindPlayerStart(Player, InTeam, incomingName);
-	}
-	else
-	{
-		return None;
-	}
-}
-
-//
-// Restart the game.
-//
-function bool HandleRestartGame()
-{
-	return (NextMutator != None && NextMutator.HandleRestartGame());
-}
-
-/* CheckEndGame()
-Allows modification of game ending conditions.  Return false to prevent game from ending
-*/
-function bool CheckEndGame(PlayerReplicationInfo Winner, string Reason)
-{
-	return (NextMutator == None || NextMutator.CheckEndGame(Winner, Reason));
-}
-
-/** OverridePickupQuery()
- * when pawn wants to pickup something, mutators are given a chance to modify it.  If this function
- * returns true, bAllowPickup will determine if the object can be picked up.
- * @param Other the Pawn that wants the item
- * @param ItemClass the Inventory class the Pawn can pick up
- * @param Pickup the Actor containing that item (this may be a PickupFactory or it may be a DroppedPickup)
- * @param bAllowPickup (out) whether or not the Pickup actor should give its item to Other (0 == false, anything else == true)
- * @return whether or not to override the default behavior with the value of
- */
-function bool OverridePickupQuery(Pawn Other, class<Inventory> ItemClass, Actor Pickup, out byte bAllowPickup)
-{
-	return (NextMutator != None && NextMutator.OverridePickupQuery(Other, ItemClass, Pickup, bAllowPickup));
-}
-
-function bool PreventDeath(Pawn Killed, Controller Killer, class<DamageType> damageType, vector HitLocation)
-{
-	return (NextMutator != None && NextMutator.PreventDeath(Killed, Killer, damageType, HitLocation));
-}
-
-function ScoreObjective(PlayerReplicationInfo Scorer, int Score)
-{
-	if (NextMutator != None)
-	{
-		NextMutator.ScoreObjective(Scorer, Score);
-	}
-}
-
-function ScoreKill(Controller Killer, Controller Killed)
-{
-	if (NextMutator != None)
-	{
-		NextMutator.ScoreKill(Killer, Killed);
-	}
-}
-
-function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
-{
-	if (NextMutator != None)
-	{
-		NextMutator.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
-	}
-}
-
 defaultproperties
 {
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Info:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__Info:Sprite'
+   End Object
+   Components(0)=Sprite
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__Mutator"
+   ObjectArchetype=Info'Engine.Default__Info'
 }
-

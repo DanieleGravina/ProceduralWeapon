@@ -1,6 +1,6 @@
 //=============================================================================
 // SVehicle
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 
 class SVehicle extends Vehicle
@@ -8,38 +8,41 @@ class SVehicle extends Vehicle
 	nativereplication
 	abstract;
 
-cpptext
-{
-	// UObject interface
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// Actor interface.
-	virtual void physRigidBody(FLOAT DeltaTime);
-	virtual void TickSimulated( FLOAT DeltaSeconds );
-	virtual void TickAuthoritative( FLOAT DeltaSeconds );
-	virtual void setPhysics(BYTE NewPhysics, AActor *NewFloor, FVector NewFloorV);
-	virtual void PostNetReceiveLocation();
-	INT* GetOptimizedRepList( BYTE* InDefault, FPropertyRetirement* Retire, INT* Ptr, UPackageMap* Map, UActorChannel* Channel );
-
-	// SVehicle interface.
-	virtual void VehiclePackRBState();
-	virtual void VehicleUnpackRBState();
-	virtual FVector GetDampingForce(const FVector& InForce);
-
-#if WITH_NOVODEX
-
-    virtual void OnRigidBodyCollision(const FRigidBodyCollisionInfo& MyInfo, const FRigidBodyCollisionInfo& OtherInfo, const FCollisionImpactData& RigidCollisionData);
-	virtual void ModifyNxActorDesc(NxActorDesc& ActorDesc,UPrimitiveComponent* PrimComp, const class NxGroupsMask& GroupsMask, UINT MatIndex);
-	virtual void PostInitRigidBody(NxActor* nActor, NxActorDesc& ActorDesc, UPrimitiveComponent* PrimComp);
-	virtual void PreTermRigidBody(NxActor* nActor);
-	virtual void TermRBPhys(FRBPhysScene* Scene);
-#endif
-
-	virtual void UpdateVehicle(ASVehicle* Vehicle, FLOAT DeltaTime) {}
-
-	/** Set any params on wheel particle effect */
-	virtual void SetWheelEffectParams(USVehicleWheel* VW, FLOAT SlipVel);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Object containing the actual vehicle simulation paramters and code. Allows you to 'plug' different vehicle types in. */
 var() noclear const			SVehicleSimBase			SimObj;
@@ -203,14 +206,8 @@ var float RadialImpulseScaling;
 replication
 {
 	if (Physics == PHYS_RigidBody)
-		VState, MaxSpeed;
+		VState;
 }
-
-// Physics interface
-native function AddForce(Vector Force);
-native function AddImpulse(Vector Impulse);
-native function AddTorque(Vector Torque);
-native function bool IsSleeping();
 
 /** turns on or off a wheel's collision
  * @param WheelNum the index of the wheel in the Wheels array to change
@@ -305,8 +302,7 @@ simulated function TakeRadiusDamage
 	float				Momentum,
 	vector				HurtOrigin,
 	bool				bFullDamage,
-	Actor               DamageCauser,
-	optional float      DamageFalloffExponent=1.f
+	Actor DamageCauser
 )
 {
 	local vector HitLocation, Dir, NewDir;
@@ -326,21 +322,19 @@ simulated function TakeRadiusDamage
 
 	if ( bFullDamage )
 	{
-		DamageScale = 1.f;
+		DamageScale = 1;
 	}
 	else if ( dist > DamageRadius )
 		return;
 	else
 	{
 		DamageScale = FMax(0,1 - Dist/DamageRadius);
-		DamageScale = DamageScale ** DamageFalloffExponent;
 	}
 
 	RadialImpulseScaling = DamageScale;
-
 	TakeDamage
 	(
-		BaseDamage * DamageScale,
+		DamageScale * BaseDamage,
 		InstigatedBy,
 		HitLocation,
 		(DamageScale * Momentum * Normal(dir)),
@@ -359,7 +353,7 @@ simulated function TakeRadiusDamage
  *	Utility for switching the vehicle from a single body to an articulated ragdoll-like one given a new mesh and physics asset.
  *	ActorMove is an extra translation applied to Actor during the transition, which can be useful to avoid ragdoll mesh penetrating into the ground.
  */
-native function InitVehicleRagdoll( SkeletalMesh RagdollMesh, PhysicsAsset RagdollPhysAsset, vector ActorMove, bool bClearAnimTree );
+native function InitVehicleRagdoll( SkeletalMesh RagdollMesh, PhysicsAsset RagdollPhysAsset, vector ActorMove );
 
 function AddVelocity( vector NewVelocity, vector HitLocation,class<DamageType> DamageType, optional TraceHitInfo HitInfo )
 {
@@ -467,7 +461,7 @@ simulated function StartEngineSoundTimed()
 	if (EngineStartOffsetSecs > 0.f)
 	{
 		ClearTimer('StopEngineSound');
-		SetTimer( EngineStartOffsetSecs, false, nameof(StartEngineSound) );
+		SetTimer(EngineStartOffsetSecs, false, 'StartEngineSound');
 	}
 	else
 	{
@@ -492,7 +486,7 @@ simulated function StopEngineSoundTimed()
 	if (EngineStopOffsetSecs > 0.f)
 	{
 		ClearTimer('StartEngineSound');
-		SetTimer( EngineStopOffsetSecs, false, nameof(StopEngineSound) );
+		SetTimer(EngineStopOffsetSecs, false, 'StopEngineSound');
 	}
 	else
 	{
@@ -504,6 +498,12 @@ simulated function VehiclePlayEnterSound()
 {
 	// For efficiency we're removing this fix and replacing the sounds with cues instead of components.
 	// Deactivate any engine stopping sounds that were happening.
+	/*
+	if (ExitVehicleSound != None)
+	{
+		ExitVehicleSound.Stop();
+	}
+	*/
 
 	// Trigger the engine starting sound.
 	if (EnterVehicleSound != None)
@@ -518,13 +518,18 @@ simulated function VehiclePlayExitSound()
 {
 	// For efficiency we're removing this fix and replacing the sounds with cues instead of components.
 	// Deactivate any engine starting sounds that were happening.
+	/*
+	if (EnterVehicleSound != None)
+	{
+		EnterVehicleSound.Stop();
+	}*/
 
 	// Trigger the engine stopping sound.
 	if (ExitVehicleSound != None)
 	{
 		PlaySound(ExitVehicleSound);
 	}
-	StopEngineSoundTimed(); 
+	StopEngineSoundTimed();
 }
 
 simulated function DrivingStatusChanged()
@@ -545,7 +550,7 @@ simulated function DrivingStatusChanged()
 simulated event RigidBodyCollision( PrimitiveComponent HitComponent, PrimitiveComponent OtherComponent,
 					const out CollisionImpactData RigidCollisionData, int ContactIndex )
 {
-	if( CollisionSound != None && WorldInfo.TimeSeconds - LastCollisionSoundTime > CollisionIntervalSecs )
+	if (WorldInfo.TimeSeconds - LastCollisionSoundTime > CollisionIntervalSecs)
 	{
 		PlaySound(CollisionSound, true);
 		LastCollisionSoundTime = WorldInfo.TimeSeconds;
@@ -578,16 +583,18 @@ simulated function DisplayDebug(HUD HUD, out float out_YL, out float out_YPos)
 	}
 
     // Uncomment to see detailed per-wheel debug info
-	DisplayWheelsDebug(HUD, out_YL);
+	//DisplayWheelsDebug(HUD, out_YL);
 }
 
 /**
  * Special debug information for the wheels that is displayed at each wheel's location
  */
+
+
 simulated function DisplayWheelsDebug(HUD HUD, float YL)
 {
     local int i, j;
-    local vector WorldLoc, ScreenLoc, X, Y, Z, EndPoint, ScreenEndPoint;
+    local vector WorldLoc, ScreenLoc, X, Y, Z;//, EndPoint, ScreenEndPoint;
     local Color SaveColor;
     local float LastForceValue;
     local float GraphScale;
@@ -595,9 +602,7 @@ simulated function DisplayWheelsDebug(HUD HUD, float YL)
     local vector ForceValueLoc;
 
     if (SimObj == None)
-	{
-		return;
-	}
+	return;
 
     GraphScale = 100.0f;
     SaveColor = HUD.Canvas.DrawColor;
@@ -607,70 +612,70 @@ simulated function DisplayWheelsDebug(HUD HUD, float YL)
     	GetAxes(Rotation, X, Y, Z);
     	WorldLoc =  Location + (Wheels[i].WheelPosition >> Rotation);
     	ScreenLoc = HUD.Canvas.Project(WorldLoc);
-    	
-		if( ScreenLoc.X >= 0 &&	ScreenLoc.X < HUD.Canvas.ClipX && ScreenLoc.Y >= 0 && ScreenLoc.Y < HUD.Canvas.ClipY )
-		{
-			// Draw Text
-			HUD.Canvas.DrawColor = MakeColor(255,255,0,255);
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y);
-			HUD.Canvas.DrawText("Force "$Wheels[i].ContactForce);
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (1 * YL));
-			HUD.Canvas.DrawText("SR "$Wheels[i].LongSlipRatio);
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (2 * YL));
-			HUD.Canvas.DrawText("SA "$Wheels[i].LatSlipAngle * RadToDeg$" ("$Wheels[i].LatSlipAngle$")");
-   			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (3 * YL));
-  			HUD.Canvas.DrawText("Torque "$Wheels[i].MotorTorque);
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (4 * YL));
-			HUD.Canvas.DrawText("SpinVel "$Wheels[i].SpinVel);
+    	if (ScreenLoc.X >= 0 &&	ScreenLoc.X < HUD.Canvas.ClipX &&
+    		ScreenLoc.Y >= 0 && ScreenLoc.Y < HUD.Canvas.ClipY)
+	{
+    	    // Draw Text
+//            HUD.Canvas.DrawColor = MakeColor(255,255,0,255);
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y);
+//    	    HUD.Canvas.DrawText("Force "$Wheels[i].ContactForce);
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (1 * YL));
+//    	    HUD.Canvas.DrawText("SR "$Wheels[i].LongSlipRatio);
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (2 * YL));
+//    	    HUD.Canvas.DrawText("SA "$Wheels[i].LatSlipAngle * RadToDeg$" ("$Wheels[i].LatSlipAngle$")");
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (3 * YL));
+//    	    HUD.Canvas.DrawText("Torque "$Wheels[i].MotorTorque);
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - (4 * YL));
+//    	    HUD.Canvas.DrawText("SpinVel "$Wheels[i].SpinVel);
+//
+//    	    // Draw Lines
+//    	    HUD.Canvas.DrawColor = HUD.RedColor;
+//    	    EndPoint = WorldLoc + (Wheels[i].LongImpulse * 100 * Wheels[i].LongDirection) - (Wheels[i].WheelRadius * Z);
+//    	    ScreenEndPoint = HUD.Canvas.Project(EndPoint);
+//    	    DrawDebugLine(WorldLoc - (Wheels[i].WheelRadius * Z), EndPoint, 255, 0, 0);
+//    	    HUD.Canvas.SetPos(ScreenEndPoint.X, ScreenEndPoint.Y);
+//    	    HUD.Canvas.DrawText(Wheels[i].LongImpulse);
+//
+//    	    HUD.Canvas.DrawColor = HUD.GreenColor;
+//    	    EndPoint = WorldLoc + (Wheels[i].LatImpulse * 100 * Wheels[i].LatDirection) - (Wheels[i].WheelRadius * Z);
+//    	    ScreenEndPoint = HUD.Canvas.Project(EndPoint);
+//    	    DrawDebugLine(WorldLoc - (Wheels[i].WheelRadius * Z), EndPoint, 0, 255, 0);
+//    	    HUD.Canvas.SetPos(ScreenEndPoint.X, ScreenEndPoint.Y);
+//    	    HUD.Canvas.DrawText(Wheels[i].LatImpulse);
+//    	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y + YL);
+//    	    HUD.Canvas.DrawText(Wheels[i].LatImpulse);
 
-			// Draw Lines
-			HUD.Canvas.DrawColor = HUD.RedColor;
-			EndPoint = WorldLoc + (Wheels[i].LongImpulse * 100 * Wheels[i].LongDirection) - (Wheels[i].WheelRadius * Z);
-			ScreenEndPoint = HUD.Canvas.Project(EndPoint);
-			DrawDebugLine(WorldLoc - (Wheels[i].WheelRadius * Z), EndPoint, 255, 0, 0);
-			HUD.Canvas.SetPos(ScreenEndPoint.X, ScreenEndPoint.Y);
-			HUD.Canvas.DrawText(Wheels[i].LongImpulse);
+	    // Draw Axes
+	    HUD.Canvas.DrawColor = MakeColor(255,255,255,255);
+	    HUD.Draw2DLine(ScreenLoc.X, ScreenLoc.Y, ScreenLoc.X + GraphScale, ScreenLoc.Y, MakeColor(0,0,255,255));
+    	    HUD.Canvas.SetPos(ScreenLoc.X + GraphScale, ScreenLoc.Y);
+    	    HUD.Canvas.DrawText(PI * 0.5f);
+	    HUD.Draw2DLine(ScreenLoc.X, ScreenLoc.Y, ScreenLoc.X, ScreenLoc.Y - GraphScale, MakeColor(0,0,255,255));
+	    HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - GraphScale);
+    	    HUD.Canvas.DrawText(SimObj.WheelLatExtremumValue);
 
-			HUD.Canvas.DrawColor = HUD.GreenColor;
-			EndPoint = WorldLoc + (Wheels[i].LatImpulse * 100 * Wheels[i].LatDirection) - (Wheels[i].WheelRadius * Z);
-			ScreenEndPoint = HUD.Canvas.Project(EndPoint);
-			DrawDebugLine(WorldLoc - (Wheels[i].WheelRadius * Z), EndPoint, 0, 255, 0);
-			HUD.Canvas.SetPos(ScreenEndPoint.X, ScreenEndPoint.Y);
-			HUD.Canvas.DrawText(Wheels[i].LatImpulse);
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y + YL);
-			HUD.Canvas.DrawText(Wheels[i].LatImpulse);
+	    // Draw Graph
+	    LastForceValue = 0.0f;
+	    for (j=0; j<=GraphScale; j++)
+	    {
+		ForceValue = HermiteEval(j * ((PI * 0.5f) / GraphScale));
+		ForceValue = (ForceValue / SimObj.WheelLatExtremumValue) * GraphScale;
+		HUD.Draw2DLine(ScreenLoc.X + (j - 1), ScreenLoc.Y - LastForceValue, ScreenLoc.X + j, ScreenLoc.Y - ForceValue, MakeColor(0,255,0,255));
+		LastForceValue = ForceValue;
+	    }
 
-			// Draw Axes
-			HUD.Canvas.DrawColor = MakeColor(255,255,255,255);
-			HUD.Draw2DLine(ScreenLoc.X, ScreenLoc.Y, ScreenLoc.X + GraphScale, ScreenLoc.Y, MakeColor(0,0,255,255));
-			HUD.Canvas.SetPos(ScreenLoc.X + GraphScale, ScreenLoc.Y);
-			HUD.Canvas.DrawText(PI * 0.5f);
-			HUD.Draw2DLine(ScreenLoc.X, ScreenLoc.Y, ScreenLoc.X, ScreenLoc.Y - GraphScale, MakeColor(0,0,255,255));
-			HUD.Canvas.SetPos(ScreenLoc.X, ScreenLoc.Y - GraphScale);
-			HUD.Canvas.DrawText(SimObj.WheelLatExtremumValue);
-
-			// Draw Graph
-			LastForceValue = 0.0f;
-			for (j=0; j<=GraphScale; j++)
-			{
-				ForceValue = HermiteEval(j * ((PI * 0.5f) / GraphScale));
-				ForceValue = (ForceValue / SimObj.WheelLatExtremumValue) * GraphScale;
-				HUD.Draw2DLine(ScreenLoc.X + (j - 1), ScreenLoc.Y - LastForceValue, ScreenLoc.X + j, ScreenLoc.Y - ForceValue, MakeColor(0,255,0,255));
-				LastForceValue = ForceValue;
-			}
-
-			// Draw Force Value
-			ForceValue = HermiteEval(Abs(Wheels[i].LatSlipAngle));
-			ForceValueLoc.X = ScreenLoc.X + (Abs(Wheels[i].LatSlipAngle) / (PI * 0.5f)) * GraphScale;
-			ForceValueLoc.Y = ScreenLoc.Y - (ForceValue / SimObj.WheelLatExtremumValue) * GraphScale;
-			HUD.Draw2DLine(ForceValueLoc.X - 5, ForceValueLoc.Y, ForceValueLoc.X + 5, ForceValueLoc.Y, MakeColor(255,0,0,255));
-			HUD.Draw2DLine(ForceValueLoc.X, ForceValueLoc.Y - 5, ForceValueLoc.X, ForceValueLoc.Y + 5, MakeColor(255,0,0,255));
-			HUD.Canvas.SetPos(ScreenLoc.X, ForceValueLoc.Y);
-			HUD.Canvas.DrawText(ForceValue);
-			HUD.Canvas.SetPos(ForceValueLoc.X, ScreenLoc.Y + YL);
-			HUD.Canvas.DrawText(Wheels[i].LatSlipAngle);
-		}
-	}
+	    // Draw Force Value
+	    ForceValue = HermiteEval(Abs(Wheels[i].LatSlipAngle));
+	    ForceValueLoc.X = ScreenLoc.X + (Abs(Wheels[i].LatSlipAngle) / (PI * 0.5f)) * GraphScale;
+	    ForceValueLoc.Y = ScreenLoc.Y - (ForceValue / SimObj.WheelLatExtremumValue) * GraphScale;
+	    HUD.Draw2DLine(ForceValueLoc.X - 5, ForceValueLoc.Y, ForceValueLoc.X + 5, ForceValueLoc.Y, MakeColor(255,0,0,255));
+	    HUD.Draw2DLine(ForceValueLoc.X, ForceValueLoc.Y - 5, ForceValueLoc.X, ForceValueLoc.Y + 5, MakeColor(255,0,0,255));
+	    HUD.Canvas.SetPos(ScreenLoc.X, ForceValueLoc.Y);
+    	    HUD.Canvas.DrawText(ForceValue);
+	    HUD.Canvas.SetPos(ForceValueLoc.X, ScreenLoc.Y + YL);
+    	    HUD.Canvas.DrawText(Wheels[i].LatSlipAngle);
+    	}
+    }
 
     HUD.Canvas.DrawColor = SaveColor;
 }
@@ -678,6 +683,7 @@ simulated function DisplayWheelsDebug(HUD HUD, float YL)
 /**
  *  Hermite spline evaluation for use with the slip curve debug display
  */
+
 simulated function float HermiteEval(float Slip)
 {
     local float LatExtremumSlip;
@@ -734,74 +740,60 @@ simulated function GetSVehicleDebug( out Array<String> DebugInfo )
 
 defaultproperties
 {
-	TickGroup=TG_PostAsyncWork
-
-	Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh
-		RBChannel=RBCC_Vehicle
-		RBCollideWithChannels=(Default=TRUE,BlockingVolume=TRUE,GameplayPhysics=TRUE,EffectPhysics=TRUE,Vehicle=TRUE)
-		BlockActors=true
-		BlockZeroExtent=true
-		BlockRigidBody=true
-		BlockNonzeroExtent=true
-		CollideActors=true
-		bForceDiscardRootMotion=true
-		bUseSingleBodyPhysics=1
-		bNotifyRigidBodyCollision=true
-		ScriptRigidBodyCollisionThreshold=250.0
-	End Object
-	CollisionComponent=SVehicleMesh
-	Mesh=SVehicleMesh
-	Components.Add(SVehicleMesh)
-
-	BaseOffset=(Z=128)
-	CamDist=512
-
-	Physics=PHYS_RigidBody
-	bEdShouldSnap=true
-	bStatic=false
-	bCollideActors=true
-	bCollideWorld=true
-	bProjTarget=true
-	bBlockActors=true
-	bWorldGeometry=false
-	bCanBeBaseForPawns=true
-	bAlwaysRelevant=false
-	RemoteRole=ROLE_SimulatedProxy
-	bNetInitialRotation=true
-	bBlocksTeleport=TRUE
-
-	// Stay-upright constraint
-	Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup
-	End Object
-	StayUprightConstraintSetup=MyStayUprightSetup
-
-	Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance
-	End Object
-	StayUprightConstraintInstance=MyStayUprightConstraintInstance
-
-	// Absolute max physics speed
-	MaxSpeed=2500
-
-	// Absolute max physics angular velocity (Unreal angular units)
-	MaxAngularVelocity=75000.0
-
-	// Inertia Tensor
-	InertiaTensorMultiplier=(x=1.0,y=1.0,z=1.0)
-
-	// Initialize uprighting parameters.
-	bCanFlip=true
-	UprightLiftStrength = 225.0;
-	UprightTorqueStrength = 50.0;
-	UprightTime = 1.5;
-	bIsUprighting = false;
-
-	// Initialize sound members.
-	SquealThreshold = 250.0;
-	SquealLatThreshold=250.0f;
-	LatAngleVolumeMult=1.0f;
-	EngineStartOffsetSecs = 2.0;
-	EngineStopOffsetSecs = 1.0;
-	HeavySuspensionShiftPercent=0.5f;
-
-	RadialImpulseScaling=1.0
+   InertiaTensorMultiplier=(X=1.000000,Y=1.000000,Z=1.000000)
+   bCanFlip=True
+   Begin Object Class=RB_StayUprightSetup Name=MyStayUprightSetup ObjName=MyStayUprightSetup Archetype=RB_StayUprightSetup'Engine.Default__RB_StayUprightSetup'
+      Name="MyStayUprightSetup"
+      ObjectArchetype=RB_StayUprightSetup'Engine.Default__RB_StayUprightSetup'
+   End Object
+   StayUprightConstraintSetup=RB_StayUprightSetup'Engine.Default__SVehicle:MyStayUprightSetup'
+   Begin Object Class=RB_ConstraintInstance Name=MyStayUprightConstraintInstance ObjName=MyStayUprightConstraintInstance Archetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+      Name="MyStayUprightConstraintInstance"
+      ObjectArchetype=RB_ConstraintInstance'Engine.Default__RB_ConstraintInstance'
+   End Object
+   StayUprightConstraintInstance=RB_ConstraintInstance'Engine.Default__SVehicle:MyStayUprightConstraintInstance'
+   HeavySuspensionShiftPercent=0.500000
+   MaxSpeed=2500.000000
+   MaxAngularVelocity=75000.000000
+   UprightLiftStrength=225.000000
+   UprightTorqueStrength=50.000000
+   UprightTime=1.500000
+   SquealThreshold=250.000000
+   SquealLatThreshold=250.000000
+   LatAngleVolumeMult=1.000000
+   EngineStartOffsetSecs=2.000000
+   EngineStopOffsetSecs=1.000000
+   BaseOffset=(X=0.000000,Y=0.000000,Z=128.000000)
+   CamDist=512.000000
+   RadialImpulseScaling=1.000000
+   Begin Object Class=SkeletalMeshComponent Name=SVehicleMesh ObjName=SVehicleMesh Archetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+      bUseSingleBodyPhysics=1
+      bForceDiscardRootMotion=True
+      CollideActors=True
+      BlockActors=True
+      BlockZeroExtent=True
+      BlockNonZeroExtent=True
+      BlockRigidBody=True
+      RBChannel=RBCC_Vehicle
+      RBCollideWithChannels=(Default=True,Vehicle=True,GameplayPhysics=True,EffectPhysics=True)
+      bNotifyRigidBodyCollision=True
+      ScriptRigidBodyCollisionThreshold=250.000000
+      Name="SVehicleMesh"
+      ObjectArchetype=SkeletalMeshComponent'Engine.Default__SkeletalMeshComponent'
+   End Object
+   Mesh=SVehicleMesh
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__Vehicle:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__Vehicle:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Components(1)=SVehicleMesh
+   Physics=PHYS_RigidBody
+   TickGroup=TG_PostAsyncWork
+   bNetInitialRotation=True
+   bBlocksTeleport=True
+   bEdShouldSnap=True
+   CollisionComponent=SVehicleMesh
+   Name="Default__SVehicle"
+   ObjectArchetype=Vehicle'Engine.Default__Vehicle'
 }

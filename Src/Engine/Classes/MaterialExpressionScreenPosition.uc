@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionScreenPosition extends MaterialExpression
 	native(Material)
@@ -9,13 +9,14 @@ class MaterialExpressionScreenPosition extends MaterialExpression
 /** applies the divide by w as well as [-1,1]->[1,1] mapping for screen alignment */
 var() bool ScreenAlign;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Coordinates"
+   Name="Default__MaterialExpressionScreenPosition"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

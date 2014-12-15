@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class RB_BodySetup extends KMeshProps
 	hidecategories(Object)
@@ -39,16 +39,10 @@ var()	bool					bBlockNonZeroExtent;
 var()	bool					bEnableContinuousCollisionDetection;
 
 /** 
- *	If true (and bEnableFullAnimWeightBodies in SkelMeshComp is true), the physics of this bone will always be blended into the skeletal mesh, regardless of what PhysicsWeight of the SkelMeshComp is. 
+ *	If true (and bEnableFullAnimWeightBones in SkelMeshComp is true), the physics of this bone will always be blended into the skeletal mesh, regardless of what PhysicsWeight of the SkelMeshComp is. 
  *	This is useful for bones that should always be physics, even when blending physics in and out for hit reactions (eg cloth or pony-tails).
  */
 var()	bool					bAlwaysFullAnimWeight;
-
-/** 
- *	Should this BodySetup be considered for the bounding box of the PhysicsAsset (and hence SkeletalMeshComponent).
- *	There is a speed improvement from having less BodySetups processed each frame when updating the bounds.
- */
-var()	bool					bConsiderForBounds;
 
 /** Physical material to use for this body. Encodes information about density, friction etc. */
 var()   PhysicalMaterial		PhysMaterial;
@@ -89,40 +83,29 @@ var		const native array<KCachedConvexData>	PreCachedPhysData;
 /** Version of cached physics data. */
 var		const int								PreCachedPhysDataVersion;
 
-cpptext
-{
-	// UObject interface.
-	virtual void PreSave();
-	virtual void Serialize(FArchive& Ar);
-	virtual void BeginDestroy();
-	virtual void FinishDestroy();
-	virtual void PostLoad();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// URB_BodySetup interface.
-	void	CopyBodyPropertiesFrom(class URB_BodySetup* fromSetup);
-	void	ClearShapeCache();
-
-	/** Pre-cache this mesh at all desired scales. */
-	void PreCachePhysicsData();
-
-	/*
-	* Create and add a new physics collision representation to this body setup
-	* @param Scale3D    - Scale at which this geometry should be created at
-	* @param CachedData - Unreal description of the collision geometry to create
-	* @param DebugName  - debug name to output
-	* returns TRUE if successful
-	*/
-	UBOOL AddCollisionFromCachedData(const FVector& Scale3D, FKCachedConvexData* CachedData, const FString& DebugName);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	SleepFamily=SF_Normal
-	bBlockZeroExtent=true
-	bBlockNonZeroExtent=true
-
-	bConsiderForBounds=TRUE
-
-	MassScale=1.0
+   bBlockZeroExtent=True
+   bBlockNonZeroExtent=True
+   MassScale=1.000000
+   Name="Default__RB_BodySetup"
+   ObjectArchetype=KMeshProps'Engine.Default__KMeshProps'
 }

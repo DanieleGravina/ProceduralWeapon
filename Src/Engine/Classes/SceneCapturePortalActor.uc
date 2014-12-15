@@ -4,61 +4,73 @@
  * Place this actor in a level to capture the scene
  * to a texture target using a SceneCapturePortalComponent
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SceneCapturePortalActor extends SceneCaptureReflectActor
 	native
 	placeable;
 
+// so we do not load this Mesh on the console (some how it is being loaded even tho the correct flags are set)
+var notforconsole StaticMesh CameraMesh;
+var StaticMeshComponent CameraComp;
 
-cpptext
+// so we do not load this Mesh on the console (some how it is being loaded even tho the correct flags are set)
+var notforconsole StaticMesh TexPropPlaneMesh;
+
+
+event PreBeginPlay()
 {
-	// SceneCaptureActor interface
+	Super.PreBeginPlay();
 
-	/** 
-	* Update any components used by this actor
-	*/
-	virtual void SyncComponents();
+	CameraComp.SetStaticMesh( CameraMesh );
+	StaticMesh.SetStaticMesh( TexPropPlaneMesh );
 }
+
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// actor's facing direction is the portal capture direction
-	Rotation=(Pitch=0,Roll=0,Yaw=0)
-
-	Components.Remove(SceneCaptureReflectComponent0)
-	Components.Remove(Sprite)
-	Components.Remove(StaticMeshComponent0)
-
-	// uses portal scene capture component
-	// this is needed to actually capture the scene to a texture
-	Begin Object Class=SceneCapturePortalComponent Name=SceneCapturePortalComponent0
-	End Object
-	SceneCapture=SceneCapturePortalComponent0
-	Components.Add(SceneCapturePortalComponent0)
-
-	// used to visualize facing direction 
-	// note that capture direction is opposite of actor facing direction (-x)
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent1
-		HiddenGame=true
-		CastShadow=false
-		CollideActors=false
-		AlwaysLoadOnServer=FALSE
-		AlwaysLoadOnClient=FALSE
-		Scale3D=(X=-1,Y=1,Z=1)
-		StaticMesh=StaticMesh'EditorMeshes.MatineeCam_SM'
-	End Object
-	Components.Add(StaticMeshComponent1)
-
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent2
-		HiddenGame=true
-		CastShadow=false
-		CollideActors=false
-		AlwaysLoadOnServer=FALSE
-		AlwaysLoadOnClient=FALSE
-		Scale3D=(X=1.0,Y=1.0,Z=1.0)
-		StaticMesh=StaticMesh'EditorMeshes.TexPropPlane'
-	End Object
-	StaticMesh=StaticMeshComponent2
-	Components.Add(StaticMeshComponent2)
+   CameraMesh=StaticMesh'EditorMeshes.MatineeCam_SM'
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent1 ObjName=StaticMeshComponent1 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      HiddenGame=True
+      CastShadow=False
+      CollideActors=False
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Scale3D=(X=-1.000000,Y=1.000000,Z=1.000000)
+      Name="StaticMeshComponent1"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   CameraComp=StaticMeshComponent1
+   TexPropPlaneMesh=StaticMesh'EditorMeshes.TexPropPlane'
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent2 ObjName=StaticMeshComponent2 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      HiddenGame=True
+      CastShadow=False
+      CollideActors=False
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="StaticMeshComponent2"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   StaticMesh=StaticMeshComponent2
+   Begin Object Class=SceneCapturePortalComponent Name=SceneCapturePortalComponent0 ObjName=SceneCapturePortalComponent0 Archetype=SceneCapturePortalComponent'Engine.Default__SceneCapturePortalComponent'
+      Name="SceneCapturePortalComponent0"
+      ObjectArchetype=SceneCapturePortalComponent'Engine.Default__SceneCapturePortalComponent'
+   End Object
+   SceneCapture=SceneCapturePortalComponent0
+   Components(0)=SceneCapturePortalComponent0
+   Components(1)=StaticMeshComponent1
+   Components(2)=StaticMeshComponent2
+   Rotation=(Pitch=0,Yaw=0,Roll=0)
+   Name="Default__SceneCapturePortalActor"
+   ObjectArchetype=SceneCaptureReflectActor'Engine.Default__SceneCaptureReflectActor'
 }

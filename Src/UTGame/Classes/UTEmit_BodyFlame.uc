@@ -1,16 +1,18 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTEmit_BodyFlame extends UTEmit_HitEffect;
 
-
 defaultproperties
 {
-	Begin Object Name=ParticleSystemComponent0
-		bOwnerNoSee=true
-		Template=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
-	End Object
-	ParticleSystemComponent=ParticleSystemComponent0
-
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTEmit_HitEffect:ParticleSystemComponent0'
+      Template=ParticleSystem'Envy_Effects.Tests.Effects.P_Vehicle_Damage_1'
+      bOwnerNoSee=True
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTEmit_HitEffect:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   Name="Default__UTEmit_BodyFlame"
+   ObjectArchetype=UTEmit_HitEffect'UTGame.Default__UTEmit_HitEffect'
 }

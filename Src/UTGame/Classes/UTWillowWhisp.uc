@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -132,13 +132,13 @@ simulated function StartNextPath()
 	else
 	{
 		OwnerPawn = (PlayerController(Owner) != None) ? PlayerController(Owner).Pawn : None;
+		DesiredRotation = rotator(WayPoints[Position] - Location);
 		if (Position == 0 && OwnerPawn != None)
 		{
 			SetRotation(OwnerPawn.Rotation);
 			SetLocation(OwnerPawn.Location + vector(OwnerPawn.Rotation) * 60.0);
 		}
-		
-		SetRotation (rotator(WayPoints[Position] - Location));
+
 		GotoState('Pathing');
 	}
 }
@@ -156,7 +156,7 @@ state Pathing
 			return;
 		}
 
-		SetRotation (rotator(WayPoints[Position] - Location));
+		DesiredRotation = rotator(WayPoints[Position] - Location);
 
 		OwnerPawn = (PlayerController(Owner) != None) ? PlayerController(Owner).Pawn : None;
 		if (OwnerPawn != None)
@@ -192,11 +192,18 @@ state Pathing
 
 defaultproperties
 {
-	EmitterTemplate=ParticleSystem'GamePlaceholders.Effects.P_WillowWhisp'
-	LifeSpan=24.0
-	Physics=PHYS_Projectile
-	bOnlyRelevantToOwner=true
-	bOnlyOwnerSee=false
-	Position=-1
-	bReplicateMovement=false
+   Position=-1
+   EmitterTemplate=ParticleSystem'GamePlaceholders.Effects.WillowWhisp'
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   Physics=PHYS_Projectile
+   bOnlyRelevantToOwner=True
+   bReplicateMovement=False
+   LifeSpan=24.000000
+   RotationRate=(Pitch=65535,Yaw=65535,Roll=0)
+   Name="Default__UTWillowWhisp"
+   ObjectArchetype=UTReplicatedEmitter'UTGame.Default__UTReplicatedEmitter'
 }

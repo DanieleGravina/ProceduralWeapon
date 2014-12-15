@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * This class handles the registration, creation, and destruction of browser
  * panes. All of the browser panes are registered in an INI file so that they
@@ -32,10 +32,6 @@ struct native BrowserPaneInfo
 	 */
 	var String FriendlyName;
 	/**
-	 * True if the browser pane should be hidden at first-time startup
-	 */
-	var const bool bInitiallyHidden;
-	/**
 	 * Used to indicate that this pane is a clone of a "canonical" pane. This
 	 * is used to allow the removal of a clone, but hiding of a "canonical"
 	 * pane. This prevents the user from permanently deleting a pane from
@@ -61,26 +57,11 @@ var config array<BrowserPaneInfo> BrowserPanes;
  * Whether the browser panes have been created or not
  */
 var bool bHasCreatedPanes;
-/**
- * Whether the browser panes have been restored to their state from last frame
- */
-var bool bHasStateBeenRestored;
-
-/**
- * Whether a browser window is being created/remove, or selection changing, interactively by the user.  We use
- * this state to prevent the Ctrl+Tab dialog from showing in some cases.
- */
-var bool bIsBrowserLayoutChanging;
 
 /**
  * The last selected browser pane
  */
 var config int LastSelectedPaneID;
-
-/**
- * Holds references to browser panes that were created
- */
-var const transient pointer CreatedPanesPtr;
 
 /**
  * This is the docking container instance
@@ -98,7 +79,24 @@ var const transient pointer FloatingWindowsArrayPtr;
  */
 var const transient pointer BrowserMenuPtr;
 
+/**
+ * The UI editor manager. Handles creating and managing UI scenes that are being edited.
+ * Stored here instead of in the UIScene browser type because there should be only one of these guys around.
+ */
+var const transient UISceneManager	UISceneManager;
+
 defaultproperties
 {
-	bIsBrowserLayoutChanging = false;
+   BrowserPanes(0)=(WxWindowClassName="WxGenericBrowser",FriendlyName="GenericBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(1)=(PaneID=1,WxWindowClassName="WxActorBrowser",FriendlyName="ActorBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(2)=(PaneID=2,WxWindowClassName="WxGroupBrowser",FriendlyName="GroupBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(3)=(PaneID=3,WxWindowClassName="WxLevelBrowser",FriendlyName="LevelBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(4)=(PaneID=4,WxWindowClassName="WxReferencedAssetsBrowser",FriendlyName="ReferencedAssetsBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(5)=(PaneID=5,WxWindowClassName="WxTerrainBrowser",FriendlyName="TerrainBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(6)=(PaneID=6,WxWindowClassName="WxPrimitiveStatsBrowser",FriendlyName="Primitive Stats",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(7)=(PaneID=7,WxWindowClassName="WxDynamicShadowStatsBrowser",FriendlyName="Dynamic Shadow Stats",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(8)=(PaneID=8,WxWindowClassName="WxSceneManager",FriendlyName="SceneManager",CloneOfPaneID=-1,CloneNumber=-1)
+   BrowserPanes(9)=(PaneID=30,WxWindowClassName="WxLogBrowser",FriendlyName="LogBrowser",CloneOfPaneID=-1,CloneNumber=-1)
+   Name="Default__BrowserManager"
+   ObjectArchetype=Object'Core.Default__Object'
 }

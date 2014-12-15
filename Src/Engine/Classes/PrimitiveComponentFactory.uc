@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PrimitiveComponentFactory extends Object
 	native
@@ -19,12 +19,14 @@ var(Rendering) bool	HiddenGame,
 					HiddenEditor,
 					CastShadow;
 
-cpptext
-{
-	virtual UBOOL FactoryIsValid() { return 1; }
-	virtual UPrimitiveComponent* CreatePrimitiveComponent(UObject* InOuter) { return NULL; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__PrimitiveComponentFactory"
+   ObjectArchetype=Object'Core.Default__Object'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 // DMRoster
 // Holds list of pawns to use in this DM battle
@@ -24,6 +24,8 @@ function bool AddToTeam(Controller Other)
 
 defaultproperties
 {
-    DMSquadClass=class'UTGame.UTDMSquad'
-	TeamIndex=255
+   DMSquadClass=Class'UTGame.UTDMSquad'
+   TeamIndex=255
+   Name="Default__UTDMRoster"
+   ObjectArchetype=UTTeamInfo'UTGame.Default__UTTeamInfo'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class PostProcessChain extends Object
 	native;
@@ -24,3 +24,8 @@ final function PostProcessEffect FindPostProcessEffect(name EffectName)
 	return None;
 }
 
+defaultproperties
+{
+   Name="Default__PostProcessChain"
+   ObjectArchetype=Object'Core.Default__Object'
+}

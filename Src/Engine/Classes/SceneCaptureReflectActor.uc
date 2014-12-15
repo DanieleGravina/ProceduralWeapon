@@ -4,7 +4,7 @@
  * Place this actor in a level to capture the reflected/clipped scene
  * to a texture target using a SceneCaptureReflectComponent
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SceneCaptureReflectActor extends SceneCaptureActor
 	native
@@ -16,56 +16,57 @@ var() const StaticMeshComponent StaticMesh;
 /** material instance used to apply the target texture to the static mesh */
 var transient MaterialInstanceConstant ReflectMaterialInst;
 
-cpptext
-{
-	// SceneCaptureActor interface
-
-	/**
-	* Update any components used by this actor
-	*/
-	virtual void SyncComponents();
-
-	// AActor interface
-
-	virtual void Spawned();
-
-	// UObject interface
-
-	virtual void FinishDestroy();
-	virtual void PostLoad();
-
-private:
-
-	/**
-	* Init the helper components
-	*/
-	virtual void Init();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// reflection is based on actor rotation
-	// default to reflect about z-axis so do 90 degree rot
-	Rotation=(Pitch=16384,Roll=0,Yaw=0)
-
-	// uses reflection scene capture component
-	// this is needed to actually capture the scene to a texture
-	Begin Object Class=SceneCaptureReflectComponent Name=SceneCaptureReflectComponent0
-		bSkipUpdateIfTextureUsersOccluded=true
-	End Object
-	SceneCapture=SceneCaptureReflectComponent0
-	Components.Add(SceneCaptureReflectComponent0)
-
-	// used to apply the reflection material for visualization
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
-		HiddenGame=true
-		CastShadow=false
-		bAcceptsLights=false
-		CollideActors=false
-		Scale3D=(X=4.0,Y=4.0,Z=4.0)
-		StaticMesh=StaticMesh'EditorMeshes.TexPropPlane'
-	End Object
-	StaticMesh=StaticMeshComponent0
-	Components.Add(StaticMeshComponent0)
-
+   Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0 ObjName=StaticMeshComponent0 Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      StaticMesh=StaticMesh'EditorMeshes.TexPropPlane'
+      HiddenGame=True
+      CastShadow=False
+      bAcceptsLights=False
+      CollideActors=False
+      Scale3D=(X=4.000000,Y=4.000000,Z=4.000000)
+      Name="StaticMeshComponent0"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   StaticMesh=StaticMeshComponent0
+   Begin Object Class=SceneCaptureReflectComponent Name=SceneCaptureReflectComponent0 ObjName=SceneCaptureReflectComponent0 Archetype=SceneCaptureReflectComponent'Engine.Default__SceneCaptureReflectComponent'
+      Name="SceneCaptureReflectComponent0"
+      ObjectArchetype=SceneCaptureReflectComponent'Engine.Default__SceneCaptureReflectComponent'
+   End Object
+   SceneCapture=SceneCaptureReflectComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SceneCaptureActor:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__SceneCaptureActor:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=SceneCaptureReflectComponent0
+   Components(2)=StaticMeshComponent0
+   Rotation=(Pitch=16384,Yaw=0,Roll=0)
+   Name="Default__SceneCaptureReflectActor"
+   ObjectArchetype=SceneCaptureActor'Engine.Default__SceneCaptureActor'
 }

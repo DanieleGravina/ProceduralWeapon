@@ -1,16 +1,37 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTArmorPickupFactory extends UTItemPickupFactory
-	ClassGroup(Pickups,Armor)
-	abstract;
+	abstract
+	native;
 
 var int		ShieldAmount;
+var UTParticleSystemComponent ParticleEffects;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 simulated static function UpdateHUD(UTHUD H)
 {
 	Super.UpdateHUD(H);
 	H.LastArmorPickupTime = H.LastPickupTime;
+}
+
+simulated function SetPickupVisible()
+{
+	if(ParticleEffects != none)
+	{
+		ParticleEffects.SetActive(true);
+	}
+	super.SetPickupVisible();
+}
+simulated function SetPickupHidden()
+{
+	if(ParticleEffects != none)
+		ParticleEffects.DeactivateSystem();
+	super.SetPickupHidden();
 }
 
 simulated function PostBeginPlay()
@@ -68,7 +89,7 @@ auto state Pickup
 		if ( Other == None )
 			return 0;
 		Need = CanUseShield(Other);
-		if ( UTBot(Other.Controller).PriorityObjective() && (Need < 0.4 * ShieldAmount) )
+		if ( AIController(Other.Controller).PriorityObjective() && (Need < 0.4 * ShieldAmount) )
 			return (0.005 * MaxDesireability * Need)/PathWeight;
 		if ( Need <= 0 )
 		{
@@ -116,33 +137,60 @@ function float BotDesireability(Pawn Bot, Controller C)
 
 defaultproperties
 {
-	bMovable=FALSE
-	bStatic=FALSE
-
-    PickupStatName=PICKUPS_ARMOR
-    MaxDesireability=1.500000
-	YawRotationRate=24000
-	bRotatingPickup=true
-	bPredictRespawns=true
-
-    ShieldAmount=20
-
-	BaseBrightEmissive=(R=25.0,G=25.0,B=1.0)
-	BaseDimEmissive=(R=1.0,G=1.0,B=0.01)
-
-	Begin Object Class=StaticMeshComponent Name=ArmorPickUpComp
-		AlwaysLoadOnClient=true
-		AlwaysLoadOnServer=true
-
-		CastShadow=FALSE
-		bAcceptsLights=TRUE
-		bForceDirectLightMap=TRUE
-		bCastDynamicShadow=FALSE
-		LightEnvironment=PickupLightEnvironment
-
-		CollideActors=false
-		MaxDrawDistance=8000
-	End Object
-	PickupMesh=ArmorPickUpComp
-	Components.Add(ArmorPickUpComp)
+   ShieldAmount=20
+   Begin Object Class=UTParticleSystemComponent Name=ArmorParticles ObjName=ArmorParticles Archetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+      Template=ParticleSystem'PICKUPS.Base_Armor.Effects.P_Pickups_Base_Armor_Glow'
+      SecondsBeforeInactive=2.000000
+      Translation=(X=0.000000,Y=0.000000,Z=-25.000000)
+      Name="ArmorParticles"
+      ObjectArchetype=UTParticleSystemComponent'UTGame.Default__UTParticleSystemComponent'
+   End Object
+   ParticleEffects=ArmorParticles
+   PickupMessage="Armatura"
+   bRotatingPickup=True
+   bTrackPickup=True
+   YawRotationRate=24000.000000
+   BaseBrightEmissive=(R=25.000000,G=25.000000,B=1.000000,A=1.000000)
+   BaseDimEmissive=(R=1.000000,G=1.000000,B=0.010000,A=1.000000)
+   RespawnSound=SoundCue'A_Pickups.Armor.Cue.A_Pickups_Armor_Respawn_Cue'
+   Begin Object Class=DynamicLightEnvironmentComponent Name=PickupLightEnvironment ObjName=PickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'UTGame.Default__UTItemPickupFactory:PickupLightEnvironment'
+      ObjectArchetype=DynamicLightEnvironmentComponent'UTGame.Default__UTItemPickupFactory:PickupLightEnvironment'
+   End Object
+   LightEnvironment=PickupLightEnvironment
+   PickupStatName="PICKUPS_ARMOR"
+   bPredictRespawns=True
+   MaxDesireability=1.500000
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'UTGame.Default__UTItemPickupFactory:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'UTGame.Default__UTItemPickupFactory:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Components(0)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'UTGame.Default__UTItemPickupFactory:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'UTGame.Default__UTItemPickupFactory:PathRenderer'
+   End Object
+   Components(1)=PathRenderer
+   Components(2)=PickupLightEnvironment
+   Begin Object Class=StaticMeshComponent Name=BaseMeshComp ObjName=BaseMeshComp Archetype=StaticMeshComponent'UTGame.Default__UTItemPickupFactory:BaseMeshComp'
+      StaticMesh=StaticMesh'PICKUPS.Base_Armor.Mesh.S_Pickups_Base_Armor'
+      Translation=(X=0.000000,Y=0.000000,Z=-44.000000)
+      ObjectArchetype=StaticMeshComponent'UTGame.Default__UTItemPickupFactory:BaseMeshComp'
+   End Object
+   Components(3)=BaseMeshComp
+   Components(4)=ArmorParticles
+   Begin Object Class=StaticMeshComponent Name=ArmorPickUpComp ObjName=ArmorPickUpComp Archetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+      LightEnvironment=DynamicLightEnvironmentComponent'UTGame.Default__UTArmorPickupFactory:PickupLightEnvironment'
+      CullDistance=8000.000000
+      CachedCullDistance=8000.000000
+      bUseAsOccluder=False
+      CastShadow=False
+      bForceDirectLightMap=True
+      bCastDynamicShadow=False
+      CollideActors=False
+      Name="ArmorPickUpComp"
+      ObjectArchetype=StaticMeshComponent'Engine.Default__StaticMeshComponent'
+   End Object
+   Components(5)=ArmorPickUpComp
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTArmorPickupFactory"
+   ObjectArchetype=UTItemPickupFactory'UTGame.Default__UTItemPickupFactory'
 }

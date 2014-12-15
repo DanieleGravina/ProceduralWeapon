@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVictoryMessage extends UTLocalMessage;
 
@@ -55,12 +55,14 @@ static function bool AddAnnouncement(UTAnnouncer Announcer, int MessageIndex, op
 
 defaultproperties
 {
-	bIsConsoleMessage=true
-	VictorySounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_FlawlessVictory'
-	VictorySounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_HumiliatingDefeat'
-	VictorySounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouHaveWonTheMatch'
-	VictorySounds(3)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouHaveLostTheMatch'
-	VictorySounds(4)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamWinsTheMatch'
-	VictorySounds(5)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamWinsTheMatch'
-	MessageArea=2
+   VictorySounds(0)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_FlawlessVictory'
+   VictorySounds(1)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_HumiliatingDefeat'
+   VictorySounds(2)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouHaveWonTheMatch'
+   VictorySounds(3)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_YouHaveLostTheMatch'
+   VictorySounds(4)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_RedTeamWinsTheMatch'
+   VictorySounds(5)=SoundNodeWave'A_Announcer_Status.Status.A_StatusAnnouncer_BlueTeamWinsTheMatch'
+   MessageArea=2
+   bIsConsoleMessage=True
+   Name="Default__UTVictoryMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

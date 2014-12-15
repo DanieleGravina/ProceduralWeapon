@@ -2,17 +2,17 @@ class SkelControlSpline extends SkelControlBase
 	native(Anim);
 	
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  *	Controller that configures the bones above the controlled one in the hierarchy into a smooth curve.
  */
  
-cpptext
-{
-	// USkelControlBase interface
-	virtual void GetAffectedBones(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<INT>& OutBoneIndices);
-	virtual void CalculateNewBoneTransforms(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<FBoneAtom>& OutBoneTransforms);	
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Number of bones above the active one in the hierarchy to modify to make into a smooth curve. */
 var(Spline)		int		SplineLength;
@@ -46,9 +46,10 @@ var(Spline)		ESplineControlRotMode	BoneRotMode;
 
 defaultproperties
 {
-	SplineLength=2
-	
-	SplineBoneAxis=AXIS_X
-	EndSplineTension=10.0
-	StartSplineTension=10.0
+   SplineLength=2
+   SplineBoneAxis=AXIS_X
+   EndSplineTension=10.000000
+   StartSplineTension=10.000000
+   Name="Default__SkelControlSpline"
+   ObjectArchetype=SkelControlBase'Engine.Default__SkelControlBase'
 }

@@ -1,8 +1,11 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
+
+
 class UTSkelControl_Oscillate extends SkelControlSingleBone
+	native(Animation)
 	hidecategories(Rotation);
 
 /** maximum amount to move the bone */
@@ -14,36 +17,17 @@ var() float CurrentTime;
 /** indicates which direction we're oscillating in */
 var bool bReverseDirection;
 
-event TickSkelControl(float DeltaTime, SkeletalMeshComponent SkelComp)
-{
-	if (bReverseDirection)
-	{
-		CurrentTime -= DeltaTime;
-		if (CurrentTime <= -Period)
-		{
-			CurrentTime = -Period - (CurrentTime + Period);
-			bReverseDirection = FALSE;
-		}
-	}
-	else
-	{
-		CurrentTime += DeltaTime;
-		if (CurrentTime >= Period)
-		{
-			CurrentTime = Period - (CurrentTime - Period);
-			bReverseDirection = TRUE;
-		}
-	}
-
-	BoneTranslation = MaxDelta * (CurrentTime / Period);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bShouldTickInScript=true
-	bApplyTranslation=true
-	bAddTranslation=true
-	bIgnoreWhenNotRendered=true
-
-	Period=0.5
+   Period=0.500000
+   bApplyTranslation=True
+   bAddTranslation=True
+   bIgnoreWhenNotRendered=True
+   Name="Default__UTSkelControl_Oscillate"
+   ObjectArchetype=SkelControlSingleBone'Engine.Default__SkelControlSingleBone'
 }

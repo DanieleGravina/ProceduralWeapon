@@ -1,96 +1,242 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
  * This class is responsible for mapping properties in an OnlineGameSettings
  * object to something that the UI system can consume.
  */
-class UIDataProvider_OnlineProfileSettings extends UIDataProvider_OnlinePlayerStorage
-	config(Game)
+class UIDataProvider_OnlineProfileSettings extends UIDataProvider_OnlinePlayerDataBase
 	native(inherit)
 	dependson(OnlineSubsystem)
 	transient;
 
- /**
-  * Reads the data
-  *
-  * @param PlayerInterface is the OnlinePlayerInterface used
-  * @param LocalUserNum the user that we are reading the data for
-  * @param DeviceId device for local read of player data (-1 for no device)
-  * @param PlayerStorage the object to copy the results to and contains the list of items to read
-  *
-  * @return true if the call succeeds, false otherwise
-  */
- function bool ReadData(OnlinePlayerInterface PlayerInterface, byte LocalUserNum, int DeviceId, OnlinePlayerStorage PlayerStorage)
- {
- 	return PlayerInterface.ReadProfileSettings(LocalUserNum, OnlineProfileSettings(PlayerStorage));
- }
- 
- /**
-  * Writes the online  data for a given local user to the online data store
-  *
-  * @param PlayerInterface is the OnlinePlayerInterface used
-  * @param LocalUserNum the user that we are writing the data for
-  * @param DeviceId device for local write of player data (-1 for no device)
-  * @param PlayerStorage the object that contains the list of items to write
-  *
-  * @return true if the call succeeds, false otherwise
-  */
- function bool WriteData(OnlinePlayerInterface PlayerInterface, byte LocalUserNum, int DeviceId, OnlinePlayerStorage PlayerStorage)
- {
- 	return PlayerInterface.WriteProfileSettings(LocalUserNum,OnlineProfileSettings(PlayerStorage));
- }
- 
-/**
- * Fetches the requested object from the online layer's cache
- *
- * @param PlayerInterface is the OnlinePlayerInterface used
- * @param LocalUserNum the user that we are writing the data for
- * @param PlayerStorage the object that contains the list of items to write
- *
- * @return true if the call succeeds, false otherwise
- */
-function bool GetData(OnlinePlayerInterface PlayerInterface, byte LocalUserNum)
-{
-	local OnlineProfileSettings CachedProfile;
+/** The profile settings that are used to load/save with the online subsystem */
+var OnlineProfileSettings Profile;
 
-	CachedProfile = PlayerInterface.GetProfileSettings(LocalUserNum);
-	if (CachedProfile != None)
+/** For displaying in the provider tree */
+var const name ProviderName;
+
+/**
+ * If there was an error, it was possible the read was already in progress. This
+ * indicates to re-read upon a good completion
+ */
+var bool bWasErrorLastRead;
+
+/** Keeps a list of providers for each profile settings id */
+struct native ProfileSettingsArrayProvider
+{
+	/** The profile settings id that this provider is for */
+	var int ProfileSettingsId;
+	/** Cached to avoid extra look ups */
+	var name ProfileSettingsName;
+	/** The provider object to expose the data with */
+	var UIDataProvider_OnlineProfileSettingsArray Provider;
+};
+
+/** The list of mappings from settings id to their provider */
+var array<ProfileSettingsArrayProvider> ProfileSettingsArrayProviders;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
+/**
+ * Binds the player to this provider. Starts the async friends list gathering
+ *
+ * @param InPlayer the player that we are retrieving friends for
+ */
+event OnRegister(LocalPlayer InPlayer)
+{
+	local OnlineSubsystem OnlineSub;
+	local OnlinePlayerInterface PlayerInterface;
+
+	Super.OnRegister(InPlayer);
+	// If the player is None, we are in the editor
+	if (Player != None)
 	{
-		Profile = CachedProfile;
-		// If there is one in the cache, the read will return immediately
-		return PlayerInterface.ReadProfileSettings(LocalUserNum,OnlineProfileSettings(Profile));
+		// Figure out if we have an online subsystem registered
+		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+		if (OnlineSub != None)
+		{
+			// Grab the player interface to verify the subsystem supports it
+			PlayerInterface = OnlineSub.PlayerInterface;
+			if (PlayerInterface != None)
+			{
+				// Register that we are interested in any sign in change for this player
+				PlayerInterface.AddLoginChangeDelegate(OnLoginChange,Player.ControllerId);
+				// Set our callback function per player
+				PlayerInterface.AddReadProfileSettingsCompleteDelegate(Player.ControllerId,OnReadProfileComplete);
+				// Start the async task
+				if (PlayerInterface.ReadProfileSettings(Player.ControllerId,Profile) == false)
+				{
+					bWasErrorLastRead = true;
+					WarnInternal("Can't retrieve profile for player ("$Player.ControllerId$")");
+				}
+			}
+			else
+			{
+				WarnInternal("OnlineSubsystem does not support the player interface. Can't retrieve profile for player ("$
+					Player.ControllerId$")");
+			}
+		}
+		else
+		{
+			WarnInternal("No OnlineSubsystem present. Can't retrieve profile for player ("$
+				Player.ControllerId$")");
+		}
 	}
-	return false;
 }
 
 /**
- * Sets the delegate used to notify the gameplay code that the last read request has completed 
- *
- * @param PlayerInterface is the OnlinePlayerInterface used
- * @param LocalUserNum which user to watch for read complete notifications
+ * Clears our delegate for getting login change notifications
  */
-function AddReadCompleteDelegate(OnlinePlayerInterface PlayerInterface, byte LocalUserNum)
+event OnUnregister()
 {
-	PlayerInterface.AddReadProfileSettingsCompleteDelegate(LocalUserNum,OnReadStorageComplete);
+	local OnlineSubsystem OnlineSub;
+	local OnlinePlayerInterface PlayerInterface;
+
+	// Figure out if we have an online subsystem registered
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None)
+	{
+		// Grab the player interface to verify the subsystem supports it
+		PlayerInterface = OnlineSub.PlayerInterface;
+		if (PlayerInterface != None)
+		{
+			// Clear our delegate
+			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange,Player.ControllerId);
+			// Clear our callback function per player
+			PlayerInterface.ClearReadProfileSettingsCompleteDelegate(Player.ControllerId,OnReadProfileComplete);
+		}
+	}
+	Super.OnUnregister();
 }
- 
+
 /**
- * Clears the delegate used to notify the gameplay code that the last read request has completed 
+ * Handles the notification that the async read of the profile data is done
  *
- * @param PlayerInterface is the OnlinePlayerInterface used
- * @param LocalUserNum which user to stop watching for read complete notifications
+ * @param bWasSuccessful whether the call succeeded or not
  */
-function ClearReadCompleteDelegate(OnlinePlayerInterface PlayerInterface, byte LocalUserNum)
+function OnReadProfileComplete(bool bWasSuccessful)
 {
-	PlayerInterface.ClearReadProfileSettingsCompleteDelegate(LocalUserNum,OnReadStorageComplete);
+	local OnlineSubsystem OnlineSub;
+	local OnlinePlayerInterface PlayerInterface;
+
+	if (bWasSuccessful == true)
+	{
+		if (!bWasErrorLastRead)
+		{
+			// Notify any subscribers that we have new data
+			NotifyPropertyChanged();
+		}
+		else
+		{
+			// Figure out if we have an online subsystem registered
+			OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+			if (OnlineSub != None)
+			{
+				// Grab the player interface to verify the subsystem supports it
+				PlayerInterface = OnlineSub.PlayerInterface;
+				if (PlayerInterface != None)
+				{
+					bWasErrorLastRead = false;
+					// Read again to copy any data from a read in progress
+					if (PlayerInterface.ReadProfileSettings(Player.ControllerId,Profile) == false)
+					{
+						bWasErrorLastRead = true;
+						WarnInternal("Can't retrieve profile for player ("$Player.ControllerId$")");
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		bWasErrorLastRead = true;
+		LogInternal("Failed to read online profile data");
+	}
 }
- 
+
 /**
- * Reads this user's storage data from the online subsystem.
+ * Executes a refetching of the profile data when the login for this player
+ * changes
  */
-function RefreshStorageData()
+function OnLoginChange()
+{
+	local OnlineSubsystem OnlineSub;
+	local OnlinePlayerInterface PlayerInterface;
+
+	// Figure out if we have an online subsystem registered
+	OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
+	if (OnlineSub != None)
+	{
+		// Grab the player interface to verify the subsystem supports it
+		PlayerInterface = OnlineSub.PlayerInterface;
+		if (PlayerInterface != None)
+		{
+			LogInternal("Login change...requerying profile data");
+			// Start the async task
+			if (PlayerInterface.ReadProfileSettings(Player.ControllerId,Profile) == false)
+			{
+				WarnInternal("Can't retrieve profile data for player ("$Player.ControllerId$")");
+				// Notify any owner data stores that we have changed data
+				NotifyPropertyChanged();
+			}
+		}
+	}
+}
+
+/**
+ * Writes the profile data to the online subsystem for this user
+ */
+event bool SaveProfileData()
 {
 	local OnlineSubsystem OnlineSub;
 	local OnlinePlayerInterface PlayerInterface;
@@ -104,21 +250,16 @@ function RefreshStorageData()
 		if (PlayerInterface != None)
 		{
 			// Start the async task
-			if (!ReadData(PlayerInterface,PlayerControllerId,Profile.DeviceId,Profile))
-			{
-			}
+			return PlayerInterface.WriteProfileSettings(Player.ControllerId,Profile);
 		}
 	}
-}
-
-/**
- * Profile doesn't care, so ignores it
- */
-function OnStorageDeviceChange()
-{
+	return false;
 }
 
 defaultproperties
 {
-	ProviderName=ProfileData
+   ProviderName="ProfileData"
+   WriteAccessType=ACCESS_WriteAll
+   Name="Default__UIDataProvider_OnlineProfileSettings"
+   ObjectArchetype=UIDataProvider_OnlinePlayerDataBase'Engine.Default__UIDataProvider_OnlinePlayerDataBase'
 }

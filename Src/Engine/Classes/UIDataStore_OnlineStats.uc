@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -14,6 +14,7 @@
  */
 class UIDataStore_OnlineStats extends UIDataStore_Remote
 	native(inherit)
+	implements(UIListElementProvider,UIListElementCellProvider)
 	abstract
 	transient;
 
@@ -81,16 +82,164 @@ var OnlineStatsInterface StatsInterface;
 /** The player interface to use for performing player specific functions */
 var OnlinePlayerInterface PlayerInterface;
 
-cpptext
-{
-protected:
-// UIDataStore interface
-
-	/**
-	 * Loads and creates an instance of the registered stats read object
-	 */
-	virtual void InitializeDataStore(void);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Grabs the interface pointers and sets the read delegate
@@ -145,7 +294,7 @@ event bool RefreshStats(byte ControllerIndex)
 			if (StatsInterface.ReadOnlineStats(Players, StatsRead) == false)
 			{
 				// Clear the delegate that tells the UI to refresh
-				`warn("Querying Player failed.");
+				WarnInternal("Querying Player failed.");
 				return false;
 			}
 			return true;
@@ -154,7 +303,7 @@ event bool RefreshStats(byte ControllerIndex)
 			if (StatsInterface.ReadOnlineStatsByRankAroundPlayer(ControllerIndex, StatsRead, 10) == false)
 			{
 				// Clear the delegate that tells the UI to refresh
-				`warn("Querying CenteredOnPlayer failed.");
+				WarnInternal("Querying CenteredOnPlayer failed.");
 				return false;
 			}
 			return true;
@@ -163,7 +312,7 @@ event bool RefreshStats(byte ControllerIndex)
 			if (StatsInterface.ReadOnlineStatsForFriends(ControllerIndex, StatsRead) == false)
 			{
 				// Clear the delegate that tells the UI to refresh
-				`warn("Querying Friends failed.");
+				WarnInternal("Querying Friends failed.");
 				return false;
 			}
 			return true;
@@ -173,7 +322,7 @@ event bool RefreshStats(byte ControllerIndex)
 			if (StatsInterface.ReadOnlineStatsByRank(StatsRead) == false)
 			{
 				// Clear the delegate that tells the UI to refresh
-				`log("Querying Top Rankings failed.");
+				LogInternal("Querying Top Rankings failed.");
 				return false;
 			}
 			return true;
@@ -208,17 +357,17 @@ event bool ShowGamercard(byte ConrollerIndex,int ListIndex)
 			}
 			else
 			{
-				`warn("OnlineSubsystem does not support the extended player interface. Can't show gamercard");
+				WarnInternal("OnlineSubsystem does not support the extended player interface. Can't show gamercard");
 			}
 		}
 		else
 		{
-			`warn("No OnlineSubsystem present. Can't show gamercard");
+			WarnInternal("No OnlineSubsystem present. Can't show gamercard");
 		}
 	}
 	else
 	{
-		`warn("Invalid index ("$ListIndex$") specified for online game to show the gamercard of");
+		WarnInternal("Invalid index ("$ListIndex$") specified for online game to show the gamercard of");
 	}
 }
 
@@ -232,24 +381,26 @@ function OnReadComplete(bool bWasSuccessful)
 	// If the call worked, sort the items before telling the list to refresh
 	if (bWasSuccessful)
 	{
-		SortResultsByRank(StatsRead);
+		SortResultsByRank();
 	}
 //@todo - display a message box upon error?
 	// Notify any subscribers that we have new data
+	NotifyPropertyChanged();
 	RefreshSubscribers();
 }
 
 /**
  * Sorts the returned results by their rank (lowest to highest)
  */
-native static function SortResultsByRank(OnlineStatsRead StatsToSort);
+native function SortResultsByRank();
 
 defaultproperties
 {
-	// Change this value in the derived class
-	Tag=OnlineStats
-	StatsReadName=StatsReadResults
-	PlayerNickData=(PlayerNickName="Player Nick")
-	RankNameMetaData=(RankName="Rank")
-	TotalRowsName="TotalRows"
+   StatsReadName="StatsReadResults"
+   PlayerNickData=(PlayerNickName="Player Nick",PlayerNickColumnName="Nome Giocatore")
+   RankNameMetaData=(RankName="Rank",RankColumnName="Grado")
+   TotalRowsName="TotalRows"
+   Tag="OnlineStats"
+   Name="Default__UIDataStore_OnlineStats"
+   ObjectArchetype=UIDataStore_Remote'Engine.Default__UIDataStore_Remote'
 }

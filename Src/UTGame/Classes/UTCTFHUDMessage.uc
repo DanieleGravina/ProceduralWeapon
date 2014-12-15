@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTCTFHUDMessage extends UTLocalMessage;
 
@@ -47,14 +47,16 @@ static function bool AddAnnouncement(UTAnnouncer Announcer, int MessageIndex, op
 
 defaultproperties
 {
-	bIsUnique=true
-	bIsConsoleMessage=False
-	Lifetime=1
-
-	RedColor=(R=255,G=0,B=0,A=255)
-	YellowColor=(R=255,G=255,B=0,A=255)
-	DrawColor=(R=0,G=160,B=255,A=255)
-	FontSize=1
-
-	MessageArea=0
+   YouHaveFlagString="Hai la bandiera, torna alla base!"
+   EnemyHasFlagString="Il nemico ha la tua bandiera, riprenditela!"
+   BothFlagsString="Tieni la bandiera nemica fino al ritorno della tua!"
+   RedColor=(B=0,G=0,R=255,A=255)
+   YellowColor=(B=0,G=255,R=255,A=255)
+   MessageArea=0
+   bIsUnique=True
+   Lifetime=1.000000
+   DrawColor=(B=255,G=160,R=0,A=255)
+   FontSize=1
+   Name="Default__UTCTFHUDMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

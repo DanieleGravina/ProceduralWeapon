@@ -1,11 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class UTCarriedObject extends UDKCarriedObject
+class UTCarriedObject extends Actor
+    native 
 	abstract 
 	notplaceable
     dependson(UTPlayerController);
 
+var const NavigationPoint LastAnchor;		// recent nearest path
+var		float	LastValidAnchorTime;	// last time a valid anchor was found
+
+var repnotify bool bHome;
 var bool			bLastSecondSave;
 /** set when leaving Dropped state, to stop some of its state functions from doing anything during EndState() */
 var bool bLeavingDroppedState;
@@ -16,12 +21,16 @@ var float		TossDistance;
 var repnotify UTPlayerReplicationInfo HolderPRI;
 var Pawn      Holder;
 
+var UTGameObjective   HomeBase;
+/** offset for placing object when at home */
+var vector HomeBaseOffset;
 var float           TakenTime;
 var float           MaxDropTime;
 var Controller FirstTouch;			// Who touched this objective first
 var array<Controller> Assists;		// Who touches it after
 
 // HUD Rendering
+var vector HUDLocation;
 var float MapSize;
 var TextureCoordinates IconCoords;	/** Coordiates of the icon associated with this object */
 var Texture2D IconTexture;
@@ -43,8 +52,14 @@ var Pawn 			OldHolder;
 var PointLightComponent FlagLight;
 var float			DefaultRadius, DefaultHeight;
 
+var repnotify UTTeamInfo 		Team;
+
 /** announcements used when telling player to pick this object up */
 var array<ObjectiveAnnouncementInfo> NeedToPickUpAnnouncements;
+
+// Keep track of our base-most actor.
+var Actor	OldBase;
+var Actor	OldBaseBase;
 
 /** Used for highlighting on minimap */
 var float HighlightScale;
@@ -62,10 +77,25 @@ var LinearColor RedColor, BlueColor, GoldColor;
 
 var ForceFeedbackWaveform PickUpWaveForm;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 replication
 {
     if (Role == ROLE_Authority)
-		HolderPRI;
+		bHome, HolderPRI, Team, HomeBase;
 }
 
 // Initialization
@@ -98,6 +128,11 @@ simulated function bool ShouldMinimapRenderFor(PlayerController PC)
 	return true;
 }
 
+/** function used to update where icon for this actor should be rendered on the HUD
+ *  @param NewHUDLocation is a vector whose X and Y components are the X and Y components of this actor's icon's 2D position on the HUD
+ */
+simulated native function SetHUDLocation(vector NewHUDLocation);
+
 simulated function HighlightOnMinimap(int Switch)
 {
 	if ( HighlightScale < 1.25 )
@@ -128,7 +163,7 @@ simulated function DrawIcon(Canvas Canvas, vector IconLocation, float IconWidth,
 	DrawColor.A = IconAlpha;
 	YoverX = IconCoords.VL / IconCoords.UL;
 	Canvas.SetPos(IconLocation.X - 0.5 * IconWidth, IconLocation.Y - 0.5 * IconWidth * YoverX);
-	Canvas.DrawTile(IconTexture, IconWidth, IconWidth * YoverX , IconCoords.U, IconCoords.V, IconCoords.UL, IconCoords.VL, DrawColor);
+	Canvas.DrawColorizedTile(IconTexture, IconWidth, IconWidth * YoverX , IconCoords.U, IconCoords.V, IconCoords.UL, IconCoords.VL, DrawColor);
 }
 
 simulated function RenderMapIcon(UTMapInfo MP, Canvas Canvas, UTPlayerController PlayerOwner)
@@ -145,7 +180,7 @@ simulated function RenderMapIcon(UTMapInfo MP, Canvas Canvas, UTPlayerController
 	{
 		CurrentScale = 1.0;
 	}
-	DrawIcon(Canvas, HUDLocation, IconCoords.UL * (Canvas.ClipY/720) * MapSize * CurrentScale, 1.0);
+	DrawIcon(Canvas, HUDLocation, IconCoords.UL * (Canvas.ClipY / 768) * MapSize * CurrentScale, 1.0);
 
 }
 
@@ -170,11 +205,16 @@ simulated function RenderEnemyMapIcon(UTMapInfo MP, Canvas Canvas, UTPlayerContr
 		CurrentScale = 1.0;
 	}
 
-	IconWidth = IconCoords.UL * (Canvas.ClipY/720) * MapSize * CurrentScale;
+	IconWidth = IconCoords.UL * (Canvas.ClipY / 768) * MapSize * CurrentScale;
 	YoverX = IconCoords.VL / IconCoords.UL;
 	Canvas.SetPos(HudLocation.X - 0.5 * IconWidth, HudLocation.Y - 0.5 * IconWidth * YoverX);
-	Canvas.DrawTile(IconTexture, IconWidth, IconWidth * YoverX , IconCoords.U, IconCoords.V, IconCoords.UL, IconCoords.VL, DrawColor);
+	Canvas.DrawColorizedTile(IconTexture, IconWidth, IconWidth * YoverX , IconCoords.U, IconCoords.V, IconCoords.UL, IconCoords.VL, DrawColor);
 }
+
+/** GetTeamNum()
+* returns teamindex of team with which this UTCarriedObject is associated.
+*/
+simulated native function byte GetTeamNum();
 
 // State transitions
 function SetHolder(Controller C)
@@ -205,7 +245,7 @@ function SetHolder(Controller C)
 	PC = UTPlayerController(C);
 	if (PC != None)
 	{
-		PC.CheckAutoObjective(true);
+		PC.CheckAutoObjective(false);
 
 		PC.ClientPlayForceFeedbackWaveform(PickUpWaveForm);
 	}
@@ -224,7 +264,7 @@ function SetHolder(Controller C)
 			B = UTBot(OtherC);
 			if (B != None && B.Squad != None)
 			{
-				UTSquadAI(B.Squad).Retask(B);
+				B.Squad.Retask(B);
 			}
 		}
 	}
@@ -521,7 +561,8 @@ simulated function ClientReturnedHome()
 
 event NotReachableBy(Pawn P)
 {
-	if ( (Physics != PHYS_Falling) && (WorldInfo.Game.NumBots > 0) )
+	if ( (Physics != PHYS_Falling) && (WorldInfo.Game.NumBots > 0)
+		&& (!UTGame(WorldInfo.Game).bAllowTranslocator || (UTBot(P.Controller) == None) || UTBot(P.Controller).CanUseTranslocator()) )
 	{
 		SendHome(None);
 	}
@@ -545,16 +586,18 @@ event Landed(vector HitNormal, actor FloorActor)
 		if ( B.Pawn != None && B.RouteGoal != self && B.MoveTarget != self
 			&& VSize(B.Pawn.Location - Location) < 1600.f && B.LineOfSightTo(self) )
 		{
-			UTSquadAI(B.Squad).Retask(B);
+			B.Squad.Retask(B);
 		}
 	}
 }
 
 /** returns the game objective we should trigger Kismet flag events on */
-function UDKGameObjective GetKismetEventObjective()
+function UTGameObjective GetKismetEventObjective()
 {
 	return HomeBase;
 }
+
+simulated event OnBaseChainChanged();
 
 // Logging
 function LogTaken(Controller EventInstigator)
@@ -602,10 +645,10 @@ function CheckTouching()
 			{
 				if ( PastHolder != Touching[i] )
 				{
-			SetHolder(Pawn(Touching[i]).Controller);
+					SetHolder(Pawn(Touching[i]).Controller);
 				}
-			return;
-		}
+				return;
+			}
 			else if ( BestToucher == None )
 			{
 				// players get priority over bots
@@ -646,7 +689,7 @@ auto state Home
 		if (VSize2D(Location - FinalLoc) > 10.0 || Abs(Location.Z - FinalLoc.Z) > CylinderComponent(CollisionComponent).CollisionHeight)
 		{
 			BroadcastReturnedMessage();
-			`log(self$" Home.Timer: had to sendhome",, 'Error');
+			LogInternal(self$" Home.Timer: had to sendhome",'Error');
 			BeginState('');
 		}
 	}
@@ -665,7 +708,7 @@ auto state Home
 		}
 		else
 		{
-			`Warn("Failed to return flag home!");
+			WarnInternal("Failed to return flag home!");
 			// let timer try again later
 		}
 	}
@@ -712,7 +755,7 @@ state Held
 	{
 		if (Holder == None)
 		{
-			`Log(self$" Held.Timer: had to sendhome",, 'Error');
+			LogInternal(self$" Held.Timer: had to sendhome",'Error');
 			BroadcastReturnedMessage();
 			SendHome(None);
 		}
@@ -862,41 +905,33 @@ Begin:
 
 defaultproperties
 {
-	Physics=PHYS_None
-	bOrientOnSlope=true
-	RemoteRole=ROLE_SimulatedProxy
-	bReplicateMovement=true
-	bIgnoreRigidBodyPawns=true
-
-	Begin Object Class=CylinderComponent Name=CollisionCylinder
-		CollisionRadius=+0048.000000
-		CollisionHeight=+0030.000000
-		CollideActors=true
-	End Object
-	CollisionComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-	MaxDropTime=25.f
-	bUpdateSimulatedPosition=true
-	bAlwaysRelevant=true
-
-	TossDistance=1500
-
-	IconCoords=(U=599,V=236,UL=25,VL=25)
-	MapSize=1.0
-
-	MaxHighlightScale=8.0
-	HighlightSpeed=10.0
-
-	LastSeeMessageIndex=-1
-	
-	RedColor=(R=1.0,A=1.0)
-	BlueColor=(B=1.0,A=1.0)
-	GoldColor=(R=1.0,G=1.0,A=1.0)
-	IconTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
-
-	Begin Object Class=ForceFeedbackWaveform Name=ForceFeedbackWaveformPickUp
-		Samples(0)=(LeftAmplitude=80,RightAmplitude=80,LeftFunction=WF_LinearIncreasing,RightFunction=WF_LinearIncreasing,Duration=0.2)
-	End Object
-	PickUpWaveForm=ForceFeedbackWaveformPickUp
+   TossDistance=1500.000000
+   MaxDropTime=25.000000
+   MapSize=1.000000
+   IconCoords=(U=599.000000,V=236.000000,UL=25.000000,VL=25.000000)
+   IconTexture=Texture2D'UI_HUD.HUD.UI_HUD_BaseA'
+   MaxHighlightScale=8.000000
+   HighlightSpeed=10.000000
+   LastSeeMessageIndex=-1
+   RedColor=(R=1.000000,G=0.000000,B=0.000000,A=1.000000)
+   BlueColor=(R=0.000000,G=0.000000,B=1.000000,A=1.000000)
+   GoldColor=(R=1.000000,G=1.000000,B=0.000000,A=1.000000)
+   PickUpWaveForm=ForceFeedbackWaveform'UTGame.Default__UTCarriedObject:ForceFeedbackWaveformPickUp'
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__CylinderComponent'
+      CollisionHeight=30.000000
+      CollisionRadius=48.000000
+      CollideActors=True
+      Name="CollisionCylinder"
+      ObjectArchetype=CylinderComponent'Engine.Default__CylinderComponent'
+   End Object
+   Components(0)=CollisionCylinder
+   RemoteRole=ROLE_SimulatedProxy
+   bIgnoreRigidBodyPawns=True
+   bOrientOnSlope=True
+   bAlwaysRelevant=True
+   bUpdateSimulatedPosition=True
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__UTCarriedObject"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

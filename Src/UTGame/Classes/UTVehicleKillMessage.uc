@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTVehicleKillMessage extends UTLocalMessage;
 
@@ -36,23 +36,27 @@ static function SoundNodeWave AnnouncementSound(int MessageIndex, Object Optiona
 
 defaultproperties
 {
-	KillSounds(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_RoadKill'
-	KillSounds(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Hitandrun'
-	KillSounds(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_RoadRage'
-	KillSounds(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Vehicularmanslaughter'
-	KillSounds(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Pancake'
-	KillSounds(5)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_EagleEye'
-	KillSounds(6)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_topgun'
-	KillSounds(7)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_RoadRampage'
-
-	bIsSpecial=True
-	bIsUnique=True
-	Lifetime=3
-	bBeep=False
-	AnnouncementPriority=10
-
-	DrawColor=(R=255,G=0,B=0)
-	FontSize=2
-
-	MessageArea=3
+   KillString(0)="Uccisione stradale!"
+   KillString(1)="Colpisci e fuggi!"
+   KillString(2)="Furia stradale!"
+   KillString(3)="Killer della strada!"
+   KillString(4)="Frittella!"
+   KillString(5)="Vista Aquila!"
+   KillString(6)="Top Gun!"
+   KillString(7)="Infuriato!"
+   KillSounds(0)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Roadkill'
+   KillSounds(1)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_HitAndRun'
+   KillSounds(2)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_RoadRage'
+   KillSounds(3)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_VehicularManslaughter'
+   KillSounds(4)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_Pancake'
+   KillSounds(5)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_EagleEye'
+   KillSounds(6)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_TopGun'
+   KillSounds(7)=SoundNodeWave'A_Announcer_Reward.Rewards.A_RewardAnnouncer_RoadRampage'
+   MessageArea=3
+   AnnouncementPriority=10
+   bIsUnique=True
+   DrawColor=(B=0,G=0,R=255,A=255)
+   FontSize=2
+   Name="Default__UTVehicleKillMessage"
+   ObjectArchetype=UTLocalMessage'UTGame.Default__UTLocalMessage'
 }

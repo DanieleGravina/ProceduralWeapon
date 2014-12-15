@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -8,6 +8,7 @@
  */
 class UIDataProvider_OnlineFriendMessages extends UIDataProvider_OnlinePlayerDataBase
 	native(inherit)
+	implements(UIListElementCellProvider)
 	dependson(OnlineSubsystem)
 	transient;
 
@@ -32,6 +33,82 @@ var localized string MessageCol;
 /** The person that sent the last invite */
 var string LastInviteFrom;
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 /**
  * Binds the player to this provider. Starts the async friends list gathering
  *
@@ -44,7 +121,7 @@ event OnRegister(LocalPlayer InPlayer)
 
 	Super.OnRegister(InPlayer);
 	// If the player is None, we are in the editor
-	if (PlayerControllerId != -1)
+	if (Player != None)
 	{
 		// Figure out if we have an online subsystem registered
 		OnlineSub = class'GameEngine'.static.GetOnlineSubsystem();
@@ -55,11 +132,11 @@ event OnRegister(LocalPlayer InPlayer)
 			if (PlayerInterface != None)
 			{
 				// Register that we are interested in any sign in change for this player
-				PlayerInterface.AddLoginChangeDelegate(OnLoginChange);
+				PlayerInterface.AddLoginChangeDelegate(OnLoginChange,Player.ControllerId);
 				// Add the callbacks for messages
-				PlayerInterface.AddFriendMessageReceivedDelegate(PlayerControllerId,OnFriendMessageReceived);
-				PlayerInterface.AddFriendInviteReceivedDelegate(PlayerControllerId,OnFriendInviteReceived);
-				PlayerInterface.AddReceivedGameInviteDelegate(PlayerControllerId,OnGameInviteReceived);
+				PlayerInterface.AddFriendMessageReceivedDelegate(Player.ControllerId,OnFriendMessageReceived);
+				PlayerInterface.AddFriendInviteReceivedDelegate(Player.ControllerId,OnFriendInviteReceived);
+				PlayerInterface.AddReceivedGameInviteDelegate(Player.ControllerId,OnGameInviteReceived);
 				// Read any messages that are waiting
 				ReadMessages();
 			}
@@ -84,11 +161,11 @@ event OnUnregister()
 		if (PlayerInterface != None)
 		{
 			// Clear our callback function per player
-			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange);
+			PlayerInterface.ClearLoginChangeDelegate(OnLoginChange,Player.ControllerId);
 			// Clear the callbacks for messages
-			PlayerInterface.ClearFriendMessageReceivedDelegate(PlayerControllerId,OnFriendMessageReceived);
-			PlayerInterface.ClearFriendInviteReceivedDelegate(PlayerControllerId,OnFriendInviteReceived);
-			PlayerInterface.ClearReceivedGameInviteDelegate(PlayerControllerId,OnGameInviteReceived);
+			PlayerInterface.ClearFriendMessageReceivedDelegate(Player.ControllerId,OnFriendMessageReceived);
+			PlayerInterface.ClearFriendInviteReceivedDelegate(Player.ControllerId,OnFriendInviteReceived);
+			PlayerInterface.ClearReceivedGameInviteDelegate(Player.ControllerId,OnGameInviteReceived);
 		}
 	}
 	Super.OnUnregister();
@@ -107,13 +184,14 @@ function ReadMessages()
 	{
 		// Grab the player interface to verify the subsystem supports it
 		PlayerInterface = OnlineSub.PlayerInterface;
-		if (PlayerInterface != None &&
-			PlayerInterface.GetLoginStatus(PlayerControllerId) > LS_NotLoggedIn)
+		if (PlayerInterface != None)
 		{
 			// Make a copy of the friends messages for the UI
-			PlayerInterface.GetFriendMessages(PlayerControllerId,Messages);
+			PlayerInterface.GetFriendMessages(Player.ControllerId,Messages);
 		}
 	}
+	// Notify any subscribers that we have new data
+	NotifyPropertyChanged();
 }
 
 /**
@@ -145,15 +223,10 @@ function OnFriendMessageReceived(byte LocalUserNum,UniqueNetId SendingPlayer,str
 /**
  * Executes a refetching of the friends data when the login for this player
  * changes
- *
- * @param LocalUserNum the player that logged in/out
  */
-function OnLoginChange(byte LocalUserNum)
+function OnLoginChange()
 {
-	if (LocalUserNum == PlayerControllerId)
-	{
-		ReadMessages();
-	}
+	ReadMessages();
 }
 
 /**
@@ -166,4 +239,15 @@ function OnGameInviteReceived(byte LocalUserNum,string InviterName)
 {
 	LastInviteFrom = InviterName;
 	ReadMessages();
+}
+
+defaultproperties
+{
+   SendingPlayerNameCol="Sender's Name"
+   bIsFriendInviteCol="Friend Invitation"
+   bWasAcceptedCol="Friend Was Accepted"
+   bWasDeniedCol="Friend Was Denied"
+   MessageCol="Message"
+   Name="Default__UIDataProvider_OnlineFriendMessages"
+   ObjectArchetype=UIDataProvider_OnlinePlayerDataBase'Engine.Default__UIDataProvider_OnlinePlayerDataBase'
 }

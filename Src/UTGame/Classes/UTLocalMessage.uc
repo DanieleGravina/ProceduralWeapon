@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTLocalMessage extends LocalMessage
 	abstract;
@@ -113,6 +113,9 @@ static function bool KilledByVictoryMessage(int AnnouncementIndex)
 
 defaultproperties
 {
-	MessageArea=1
-	AnnouncementVolume=2.0
+   MessageArea=1
+   AnnouncementVolume=2.000000
+   bIsConsoleMessage=False
+   Name="Default__UTLocalMessage"
+   ObjectArchetype=LocalMessage'Engine.Default__LocalMessage'
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -9,12 +9,7 @@ class UTGameSearchDM extends UTGameSearchCommon;
 
 defaultproperties
 {
-	GameClass="UTGame.UTDeathmatch"
-	GameSettingsClass=class'UTGame.UTGameSettingsDM'
-
-	// Which server side query to execute
-	Query=(ValueIndex=QUERY_DM)
-
-	// Set the specific game mode that we are searching for
-	LocalizedSettings(0)=(Id=CONTEXT_GAME_MODE,ValueIndex=CONTEXT_GAME_MODE_DM,AdvertisementType=ODAT_OnlineService)
+   GameSettingsClass=Class'UTGame.UTGameSettingsDM'
+   Name="Default__UTGameSearchDM"
+   ObjectArchetype=UTGameSearchCommon'UTGame.Default__UTGameSearchCommon'
 }

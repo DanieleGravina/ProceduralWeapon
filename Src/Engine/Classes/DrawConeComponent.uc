@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DrawConeComponent extends PrimitiveComponent
 	native
@@ -12,23 +12,24 @@ var()	float			ConeRadius;
 var()	float			ConeAngle;
 var()	int				ConeSides;
 
-cpptext
-{
-	// UPrimitiveComponent interface.
-	/**
-	 * Creates a proxy to represent the primitive to the scene manager in the rendering thread.
-	 * @return The proxy object.
-	 */
-	virtual FPrimitiveSceneProxy* CreateSceneProxy();
-	virtual void UpdateBounds();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ConeColor=(R=150,G=200,B=255,A=255)
-	ConeRadius=100.0
-	ConeAngle=44.0
-	ConeSides=16
-
-	HiddenGame=True
+   ConeColor=(B=255,G=200,R=150,A=255)
+   ConeRadius=100.000000
+   ConeAngle=44.000000
+   ConeSides=16
+   HiddenGame=True
+   Name="Default__DrawConeComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
 }

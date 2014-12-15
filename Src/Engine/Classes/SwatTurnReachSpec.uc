@@ -1,24 +1,21 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
 class SwatTurnReachSpec extends ForcedReachSpec
 	native;
 
-cpptext
-{
-	virtual INT CostFor(APawn* P);
-	virtual INT defineFor( class ANavigationPoint *begin, class ANavigationPoint * dest, class APawn * Scout );
-	virtual FVector GetForcedPathSize( class ANavigationPoint* Start, class ANavigationPoint* End, class AScout* Scout );
-}
-
-// Value CoverLink.ECoverDirection for movement direction along this spec
-var() editconst Byte SpecDirection;
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	bSkipPrune=FALSE
-	PruneSpecList(0)=class'ReachSpec'
+   PruneSpecList(0)=Class'Engine.ReachSpec'
+   ForcedPathSizeName="Common"
+   Name="Default__SwatTurnReachSpec"
+   ObjectArchetype=ForcedReachSpec'Engine.Default__ForcedReachSpec'
 }

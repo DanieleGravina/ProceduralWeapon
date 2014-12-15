@@ -1,18 +1,19 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionReflectionVector extends MaterialExpression
 	native(Material)
 	collapsecategories
 	hidecategories(Object);
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Vectors"
+   Name="Default__MaterialExpressionReflectionVector"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

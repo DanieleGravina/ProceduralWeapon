@@ -3,7 +3,7 @@ class SkelControlFootPlacement extends SkelControlLimb
 	native(Anim);
 	
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  *	SkelControlLimb subclass designed for placing feet on the ground.
  *	The SkeletalMeshComponent must be adjusted in gameplay code so that the feet can pass into some world geometry,
@@ -38,18 +38,18 @@ var(FootPlacement)	float	MaxDownAdjustment;
 /** Maximum angle (in degrees) that we will rotate the foot from the animated orientation in an attempt to match the ground normal. */
 var(FootPlacement)	float	MaxFootOrientAdjust;
 
-cpptext
-{
-	// USkelControlBase interface
-	virtual void CalculateNewBoneTransforms(INT BoneIndex, USkeletalMeshComponent* SkelComp, TArray<FBoneAtom>& OutBoneTransforms);	
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	FootUpAxis=AXIS_X
-	bOrientFootToGround=true
-	
-	MaxUpAdjustment=50.0
-	MaxDownAdjustment=0.0
-	MaxFootOrientAdjust=45.0
+   FootUpAxis=AXIS_X
+   bOrientFootToGround=True
+   MaxUpAdjustment=50.000000
+   MaxFootOrientAdjust=45.000000
+   Name="Default__SkelControlFootPlacement"
+   ObjectArchetype=SkelControlLimb'Engine.Default__SkelControlLimb'
 }

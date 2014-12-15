@@ -2,7 +2,7 @@
  *	ParticleModuleTrailTaper
  *	Trail taper module
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleTrailTaper extends ParticleModuleTrailBase
 	native(Particle)
@@ -32,29 +32,30 @@ var(Taper)									rawdistributionfloat			TaperFactor;
 //*************************************************************************************************
 // C++ Text
 //*************************************************************************************************
-cpptext
-{
-	virtual void	Spawn(FParticleEmitterInstance* Owner, INT Offset, FLOAT SpawnTime);
-	virtual void	Update(FParticleEmitterInstance* Owner, INT Offset, FLOAT DeltaTime);
-	virtual UINT	RequiredBytes(FParticleEmitterInstance* Owner = NULL);
-	virtual void	PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-
-	// Trail
-//	virtual void	GetDataPointers(FParticleEmitterInstance* Owner, const BYTE* ParticleBase, 
-//			INT& CurrentOffset, FBeam2TypeDataPayload*& BeamData, FVector*& InterpolatedPoints, 
-//			FLOAT*& NoiseRate, FVector*& TargetNoisePoints, FVector*& CurrentNoisePoints, 
-//			FLOAT*& TaperValues);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //*************************************************************************************************
 // Default properties
 //*************************************************************************************************
+
 defaultproperties
 {
-	TaperMethod=PETTM_None
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionTaperFactor
-		Constant=1.0
-	End Object
-	TaperFactor=(Distribution=DistributionTaperFactor)
+   TaperFactor=(Distribution=DistributionTaperFactor,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(1.000000,1.000000,1.000000,1.000000))
+   Name="Default__ParticleModuleTrailTaper"
+   ObjectArchetype=ParticleModuleTrailBase'Engine.Default__ParticleModuleTrailBase'
 }

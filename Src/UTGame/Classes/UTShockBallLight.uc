@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -8,8 +8,10 @@ class UTShockBallLight extends PointLightComponent;
 
 defaultproperties
 {
-	Brightness=15
-	Radius=128
-	CastShadows=false
-	LightColor=(R=184,G=143,B=197,A=255)
+   Radius=128.000000
+   Brightness=15.000000
+   LightColor=(B=197,G=143,R=184,A=255)
+   CastShadows=False
+   Name="Default__UTShockBallLight"
+   ObjectArchetype=PointLightComponent'Engine.Default__PointLightComponent'
 }

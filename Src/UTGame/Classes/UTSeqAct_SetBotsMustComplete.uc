@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -9,8 +9,10 @@ class UTSeqAct_SetBotsMustComplete extends SequenceAction;
 
 defaultproperties
 {
-	ObjCategory="Objective"
-	ObjName="Set Bots Must Complete"
-	InputLinks[0]=(LinkDesc="Turn On")
-	InputLinks[1]=(LinkDesc="Turn Off")
+   InputLinks(0)=(LinkDesc="Turn On")
+   InputLinks(1)=(LinkDesc="Turn Off")
+   ObjName="Set Bots Must Complete"
+   ObjCategory="Objective"
+   Name="Default__UTSeqAct_SetBotsMustComplete"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

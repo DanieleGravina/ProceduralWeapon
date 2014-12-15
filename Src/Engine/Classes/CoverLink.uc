@@ -1,18 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class CoverLink extends NavigationPoint
 	native
-	DependsOn(Pylon)
-	placeable
-	ClassGroup(Cover)
-	config(Game);
-
-/**
- *	Global flag: Whether coverlinks should create slot markers for navigation
- *	Should be FALSE if using navigation mesh, where cover navigation info will be built into the mesh
- */
-var globalconfig bool GLOBAL_bUseSlotMarkers;
+	placeable;
 
 // Initial flanking dot prod value
 const COVERLINK_ExposureDot		= 0.4f;
@@ -22,186 +13,94 @@ const COVERLINK_EdgeExposureDot	= 0.85f;
 // Navigation points within this range are considered dangerous to travel through
 const COVERLINK_DangerDist		= 1536.f;
 
-struct immutablewhencooked native CoverReference extends ActorReference
+struct native CoverReference extends NavReference
 {
 	/** Slot referenced in the link */
 	var() int SlotIdx;
-	structcpptext
-	{
-		friend FArchive& operator<<( FArchive& Ar, FCoverReference& T );
-	}
+	/** Direction, used for swat/slip */
+	var() int Direction;
 };
 
-cpptext
-{
-	struct FFireLinkInfo
-	{
-		class ACoverLink*	Link;
-		INT					SlotIdx;
-		FCoverSlot*			Slot;
-		FVector				SlotLocation;
-		FRotator			SlotRotation;
-		FVector				X, Y, Z;
-		TArray<BYTE>		Types;
-		TArray<BYTE>		Actions;
-
-		INT*				out_FireLinkIdx;
-
-		FFireLinkInfo( ACoverLink* InLink, INT InSlotIdx, INT* InIdx = NULL )
-		{
-			Link			= InLink;
-			SlotIdx			= InSlotIdx;
-			Slot			= &Link->Slots(SlotIdx);
-			out_FireLinkIdx = InIdx;
-
-			if( Slot->bLeanLeft )
-			{
-				Actions.AddItem( CA_LeanLeft );
-			}
-			if( Slot->bLeanRight )
-			{
-				Actions.AddItem( CA_LeanRight );
-			}
-			if( Slot->bCanPopUp && Slot->CoverType == CT_MidLevel )
-			{
-				Actions.AddItem( CA_PopUp );
-			}
-
-			Types.AddItem( Slot->CoverType );
-			if( Slot->CoverType == CT_Standing )
-			{
-				Types.AddItem( CT_MidLevel );
-			}
-
-			SlotLocation = Link->GetSlotLocation(SlotIdx);
-			SlotRotation = Link->GetSlotRotation(SlotIdx);
-			FRotationMatrix(SlotRotation).GetAxes(X,Y,Z);
-		}
-	};
-
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual void BuildSlotInfo( INT SlotIdx, UBOOL bSeedPylon = FALSE, AScout* Scout = NULL);
-	virtual void BuildSlotInfoInternal( AScout* Scout, INT SlotIdx, UBOOL bSeedPylon = FALSE );
-
-	/**Sorts the CoverSlots
-		* @param LastSelectedSlot - the last coverslot the user has selected, the sort will update this value if passed in*/
-	void SortSlots(FCoverSlot** LastSelectedSlot = NULL);
-	void BuildFireLinks( AScout* Scout );
-	void BuildOtherLinks( AScout* Scout );
-	UBOOL GetFireActions( FFireLinkInfo& SrcInfo, ACoverLink* TestLink, INT TestSlotIdx, UBOOL bFill = TRUE );
-	UBOOL CanFireLinkHit( const FVector &ViewPt, const FVector &TargetLoc, UBOOL bDebugLines = FALSE );
-
-	UBOOL GetExposedInfo( ACoverLink* SrcLink, INT SrcSlotIdx, ACoverLink* DestLink, INT DestSlotIdx, FLOAT& out_ExposedScale );
-
-	virtual UBOOL GetFireLinkTo( INT SlotIdx, const FCoverInfo& ChkCover, BYTE ChkActin, BYTE ChkType, INT& out_FireLinkIdx, TArray<INT>& Items );
-	virtual UBOOL HasFireLinkTo( INT SlotIdx, const FCoverInfo& ChkCover, UBOOL bAllowFallbackLinks = FALSE );
-	FLOAT GetSlotHeight(INT SlotIdx);
-#if WITH_EDITOR
-	/** Properly handles the mirroring of cover slots associated with this link */
-	virtual void EditorApplyMirror(const FVector& MirrorScale, const FVector& PivotLocation);
-
-	virtual void CheckForErrors();
-	virtual INT AddMyMarker(AActor *S);
-#endif
-	virtual UBOOL IsFireLinkValid( INT SlotIdx, INT FireLinkIdx, BYTE ArrayID = 0 );
-	virtual void GetActorReferences(TArray<FActorReference*> &ActorRefs, UBOOL bIsRemovingLevel);
-
-	UBOOL IsOverlapSlotClaimed( APawn *ChkClaim, INT SlotIdx, UBOOL bSkipTeamCheck );
-
-	static FCoverSlot* CoverInfoToSlotPtr( FCoverInfo& InSlot );
-	static FCoverSlot* CoverRefToSlotPtr( FCoverReference& InRef );
-
-	UBOOL FindCoverEdges(const FVector& StartLoc, FVector AxisX, FVector AxisY, FVector AxisZ);
-	INT AddCoverSlot(FVector& SlotLocation, FRotator& SlotRotation, FCoverSlot Slot, INT SlotIdx = -1);
-	void EditorAutoSetup(FVector Direction,FVector *HitL = NULL, FVector *HitN = NULL);
-	void ClearExposedFireLinks();
-
-	// called during navmesh generation to link this coverlink into the mesh
-	virtual UBOOL LinkCoverSlotToNavigationMesh(INT SlotIdx, class UNavigationMeshBase* Mesh=NULL);
-
-	virtual INT FindCoverReference( ACoverLink* TestLink, INT TestSlotIdx, UBOOL bAddIfNotFound = TRUE );
-	virtual UBOOL GetCachedCoverInfo( INT RefIdx, FCoverInfo& out_Info );
-	void FixupLevelCoverReferences();
-
-	static FORCEINLINE void FireLinkInteraction_PackSrcType( BYTE SrcType, BYTE& PackedByte )
-	{
-		if( SrcType == CT_MidLevel ) { PackedByte |= (1<<0); }
-	}
-	static FORCEINLINE void FireLinkInteraction_PackSrcAction( BYTE SrcAction, BYTE& PackedByte )
-	{
-		PackedByte |= (SrcAction == CA_LeanLeft  ? (1<<1) :
-					   SrcAction == CA_LeanRight ? (1<<2) :
-					   SrcAction == CA_PopUp     ? (1<<3) :
-													0);
-	}
-	static FORCEINLINE void FireLinkInteraction_PackDestType( BYTE DestType, BYTE& PackedByte )
-	{
-		if( DestType == CT_MidLevel ) { PackedByte |= (1<<4); }
-	}
-	static FORCEINLINE void FireLinkInteraction_PackDestAction( BYTE DestAction, BYTE& PackedByte )
-	{
-		PackedByte |= (DestAction == CA_LeanLeft  ? (1<<5) :
-					   DestAction == CA_LeanRight ? (1<<6) :
-					   DestAction == CA_PopUp     ? (1<<7) :
-													0);
-	}
-
-	static FORCEINLINE BYTE FireLinkInteraction_UnpackSrcType( const BYTE PackedByte )
-	{
-		return (PackedByte & (1<<0)) ? CT_MidLevel : CT_Standing;
-	}
-	static FORCEINLINE BYTE FireLinkInteraction_UnpackSrcAction( const BYTE PackedByte )
-	{
-		return (PackedByte & (1<<1)) ? CA_LeanLeft  :
-			   (PackedByte & (1<<2)) ? CA_LeanRight :
-			   (PackedByte & (1<<3)) ? CA_PopUp :
-				CA_Default;
-	}
-	static FORCEINLINE BYTE FireLinkInteraction_UnpackDestType( const BYTE PackedByte )
-	{
-		return (PackedByte & (1<<4)) ? CT_MidLevel : CT_Standing;
-	}
-	static FORCEINLINE BYTE FireLinkInteraction_UnpackDestAction( const BYTE PackedByte )
-	{
-		return (PackedByte & (1<<5)) ? CA_LeanLeft  :
-			   (PackedByte & (1<<6)) ? CA_LeanRight :
-			   (PackedByte & (1<<7)) ? CA_PopUp :
-				CA_Default;
-	}
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Utility struct for referencing cover link slots. */
-struct immutablewhencooked native CoverInfo
+struct native CoverInfo
 {
 	var() editconst CoverLink Link;
 	var() editconst int SlotIdx;
 
 	structcpptext
 	{
-		FCoverInfo()
-		{
-			Link = NULL;
-			SlotIdx = 0;
-		}
-		FCoverInfo(EEventParm)
-		{
-			appMemzero(this, sizeof(FCoverInfo));
-		}
-		FCoverInfo(class ACoverLink* inLink, INT inSlotIdx)
-		{
-			Link = inLink;
-			SlotIdx = inSlotIdx;
-		}
-		UBOOL operator==(const FCoverInfo &Other) const
+		UBOOL operator==(const FCoverInfo &Other)
 		{
 			return (this->Link == Other.Link && this->SlotIdx == Other.SlotIdx);
 		}
-		FString ToString() const;
 	}
 };
 
+struct native TargetInfo
+{
+	var Actor	Target;
+	var int		SlotIdx;	// Used if Target is a CoverLink
+	var int		Direction;	// -1 -> Left, 0 -> Center, +1 -> Right
+};
+
 /** Utility struct to reference a position in cover */
-struct immutablewhencooked native CovPosInfo
+struct native CovPosInfo
 {
 	/** CoverLink holding cover position */
 	var CoverLink	Link;
@@ -243,6 +142,10 @@ enum ECoverAction
 	CA_LeanLeft,
 	/** Leaning to the right */
 	CA_LeanRight,
+	/** Stepping out to the left */
+	CA_StepLeft,
+	/** Stepping out to the right */
+	CA_StepRight,
 	/** Pop up, out of cover */
 	CA_PopUp,
 	/** Blind fire up */
@@ -278,185 +181,42 @@ enum ECoverType
 	CT_MidLevel,
 };
 
-/** Descriptive tags for a particular cover location.  Could be used for custom dialogue, for instance. */
-enum ECoverLocationDescription
-{
-	CoverDesc_None,
-	CoverDesc_InWindow,
-	CoverDesc_InDoorway,
-	CoverDesc_BehindCar,
-	CoverDesc_BehindTruck,
-	CoverDesc_OnTruck,
-	CoverDesc_BehindBarrier,
-	CoverDesc_BehindColumn,
-	CoverDesc_BehindCrate,
-	CoverDesc_BehindWall,
-	CoverDesc_BehindStatue,
-	CoverDesc_BehindSandbags,
-	// new entries go here at the end
-};
-
-enum EFireLinkID
-{
-	FLI_FireLink,
-	FLI_RejectedFireLink,
-	// new entries go here at the end
-};
-
-/** Contains specific links between SOURCE actions/postures to DEST actions/postures */
-struct immutablewhencooked native FireLinkItem
-{
-	/** CT_Standing/CT_MidLevel for source */
-	var ECoverType		SrcType;
-	/** Action for source */
-	var ECoverAction	SrcAction;
-	/** CT_Standing/CT_MidLevel for source */
-	var ECoverType		DestType;
-	/** Action for source */
-	var ECoverAction	DestAction;
-};
-
 /**
  * Contains information about what other cover nodes this node is
  * capable of firing on.
  */
-struct immutablewhencooked native FireLink
+struct native FireLink
 {
-//	var deprecated editconst const CoverReference TargetActor;
-//	var deprecated array<FireLinkItem>	Items;
+	/** Acceptable methods of attack to use when engaging the target link */
+	var array<ECoverAction> CoverActions;
 
-	/** List of fire link interactions */
-	var array<byte> Interactions;
+	/** Type of cover for these links
+		(ie can be CT_MidLevel even in a standing slot) */
+	var ECoverType		CoverType;
 
-	/**
-	 *  Packed properties
-	 *  CoverRefIdx          (Bits 0  - 15) - Index into Levels CoverIndexPairs array
-	 *  DynamicLinkInfoIndex (Bits 16 - 31) - Index into this CoverLinks DynamicLinkInfos array
-	 */
-	var private const int PackedProperties_CoverPairRefAndDynamicInfo;
+	/** Target link */
+	var() editconst const NavReference TargetLink;
+
+	/** Target link slot */
+	var int TargetSlotIdx;
+
+	/** Location of the TargetLink when this FireLink was created/updated (Used for tracking CoverLink_Dynamic) */
+	var Vector LastLinkLocation;
 
 	/** Is this link considered a fallback link? (Shouldn't be desired, but is acceptable) */
-	var private bool bFallbackLink;
-	/** Whether DynamicLinkInfoIndex has been initialized */
-	var private bool bDynamicIndexInited;
-
-	structcpptext
-	{
-		/**
-		  *  Updated DynamicLinkInfos array if source or destination is dynamic
-		  */
-		void UpdateDynamicLinkInfoFor(ACoverLink* MyLink, ACoverLink* TestLink, INT InSlotIdx, const FVector& LastSrcLocation);
-
-		FVector GetLastTargetLocation(ACoverLink *MyLink);
-		FVector GetLastSrcLocation(ACoverLink *MyLink);
-
-		FORCEINLINE void SetFallbackLink( UBOOL bSet )
-		{
-			bFallbackLink = bSet;
-		}
-
-		FORCEINLINE UBOOL IsFallbackLink()
-		{
-			return bFallbackLink;
-		}
-
-		FORCEINLINE void SetDynamicIndexInited( UBOOL bSet )
-		{
-			bDynamicIndexInited = bSet;
-		}
-
-		FORCEINLINE UBOOL IsDynamicIndexInited()
-		{
-			return bDynamicIndexInited;
-		}
-
-		FORCEINLINE void SetCoverRefIdx( INT Val )
-		{
-			Val &= 0x0000FFFF;
-			PackedProperties_CoverPairRefAndDynamicInfo &= ~(0x0000FFFF);
-			PackedProperties_CoverPairRefAndDynamicInfo |= Val;
-		}
-		FORCEINLINE DWORD GetCoverRefIdx()
-		{
-			return (PackedProperties_CoverPairRefAndDynamicInfo & (0x0000FFFF));
-		}
-
-		FORCEINLINE void SetDynamicLinkInfoIndex( INT Val )
-		{
-			Val &= 0xFFFF0000;
-			PackedProperties_CoverPairRefAndDynamicInfo &= ~(0xFFFF0000);
-			PackedProperties_CoverPairRefAndDynamicInfo |= (Val << 16);
-		}
-		FORCEINLINE DWORD GetDynamicLinkInfoIndex()
-		{
-			return ((PackedProperties_CoverPairRefAndDynamicInfo & (0xFFFF0000)) >> 16);
-		}
-	}
-};
-
-struct immutablewhencooked native DynamicLinkInfo
-{
-	/** Location of the target when this FireLink was created/updated (Used for tracking CoverLink_Dynamic) */
-	var Vector LastTargetLocation;
-
-	/** Location of the src when this FireLink was created/updated (Used for tracking CoverLink_Dynamic) */
-	var Vector LastSrcLocation;
-};
-
-/**
- *	Contains information about other cover nodes this node is exposed to
- *	(ie flanked by)
- */
-struct immutablewhencooked native ExposedLink
-{
-	/** Slot that is dangerous to this link */
-	var() editconst const CoverReference	TargetActor;
-
-	/** Scale of how dangerous this exposure is
-		(0,255] -- ~0 = not very dangerous, 255 = extremely dangerous */
-	var() byte ExposedScale;
-};
-
-struct immutablewhencooked native SlotMoveRef
-{
-	var() PolyReference Poly;
-	var() BasedPosition Dest;
-	var() int			Direction;
-
-	structcpptext
-	{
-		void Clear()
-		{
-			Poly.Clear();
-			Dest.Clear();
-			Direction = 0;
-		}
-	}
+	var bool bFallbackLink;
 };
 
 /** Contains information for a cover slot that a player can occupy */
-struct immutablewhencooked native CoverSlot
+struct native CoverSlot
 {
-	/** Slot marker to allow the slot to exist on the navigation network */
-//	var deprecated editconst Actor SlotMarker;
-//	var deprecated array<FireLink> ForcedFireLinks;
-//	var deprecated array<ExposedLink> ExposedFireLinks;
-//	var deprecated editconst array<CoverInfo> OverlapClaims;
-//	var deprecated array<CoverReference> TurnTarget;
-
 	/** Current owner of this slot */
-	var Pawn SlotOwner;
-
-	/** Slot is invalid until world.timeseconds is >= this value (allows temporary disabling of slots) */
-	var transient float SlotValidAfterTime;
+	var Controller SlotOwner;
 
 	/** Gives LDs ability to force the type - CT_None == auto find*/
 	var() ECoverType ForceCoverType;
 	/** Type of cover this slot provides */
 	var(Auto) editconst ECoverType CoverType;
-	/** Per-slot description tag.  If _None, fall back to the description in the CoverLink. */
-	var() ECoverLocationDescription	LocationDescription;
-
 
 	/** Offset from node location for this slot */
 	var vector LocationOffset;
@@ -464,47 +224,37 @@ struct immutablewhencooked native CoverSlot
 	/** Offset from node rotation for this slot */
 	var rotator RotationOffset;
 
-	/** List of actions possible from this slot */
-	var array<ECoverAction> Actions;
-
 	/** List of all attackable nodes */
-	var() editconst array<FireLink> FireLinks;
-
+	var duplicatetransient array<FireLink>			FireLinks;
+	var duplicatetransient array<FireLink>			ForcedFireLinks;
 	/** List of coverlinks/slots that couldn't be shot at - used by COVERLINK_DYNAMIC */
-	var() editconst transient array<FireLink>	RejectedFireLinks;
+	var duplicatetransient array<CoverInfo>			RejectedFireLinks;
+	/** List of targets that are flanked by this slot */
+	var duplicatetransient array<CoverReference>	ExposedFireLinks;
+	/** List of nav points that are dangerous to path through when this slot is occupied */
+	var duplicatetransient array<NavReference>		DangerLinks;
 
-	/**
-	 *  ExposedCover Packed Properties
-	 *  CoverRefIdx          (Bits 0  - 15) - Index into Levels CoverIndexPairs array
-	 *  ExposedScale         (Bits 16 - 23) - Scale of how dangerous this exposure is
-	 *                                       (0,255] -- ~0 = not very dangerous, 255 = extremely dangerous
-	 */
-	var private array<int>  ExposedCoverPackedProperties;
+	/** Link/slot info about where this slot can mantle to */
+	var duplicatetransient CoverReference	MantleTarget;
 
-	/**
-	 *  Link/slot info about where swat turn evade can move to
-	 *  Packs left/right index into Level CoverIndexPair
-	 *  left turn target into bits 0-15, right turn target into 16-31
-	 */
-	var private int TurnTargetPackedProperties;
+	/** Link/slot info about where swat turn evade can move to */
+	/** @fixme: can't these be a static 2 element array and eliminate the direction parameter in CoverReference? */
+	var duplicatetransient array<CoverReference>	TurnTarget;
 
 	/** Info about where cover slip can move to */
-	var array<SlotMoveRef> SlipRefs;
+	var duplicatetransient array<CoverReference>	SlipTarget;
 
 	/** List of cover slots that should be claimed when this slot is claimed
 		because they are overlapping */
-	var(Auto) editconst array<CoverInfo> OverlapClaimsList;
+	var(Auto) editconst duplicatetransient array<CoverReference>	OverlapClaims;
+
 	/** Can we lean left/right to shoot from this slot? */
 	var(Auto) bool bLeanLeft, bLeanRight;
 	/** Can we popup? */
-	var(Auto) bool bForceCanPopUp;
 	var(Auto) editconst bool bCanPopUp;
 	/** Can we mantle over this cover? */
 	var(Auto) editconst bool bCanMantle;
-	/** Can we mantle up? */
-	var(Auto) editconst bool bCanClimbUp;
 	/** Can cover slip at this slot? */
-	var(Auto) bool bForceCanCoverSlip_Left, bForceCanCoverSlip_Right;
 	var(Auto) editconst bool bCanCoverSlip_Left, bCanCoverSlip_Right;
 	/** Can swat turn at this slot? */
 	var(Auto) editconst bool bCanSwatTurn_Left, bCanSwatTurn_Right;
@@ -522,21 +272,17 @@ struct immutablewhencooked native CoverSlot
 	var() bool bAllowClimbUp;
 	/** Is swat turn allowed? */
 	var() bool bAllowSwatTurn;
-	/** if this is on ground adjustments will be skipped */
-	var() bool bForceNoGroundAdjust;
-	/** Slot can only be used by players, not AI */
-	var() bool bPlayerOnly;
-	/** Override the default behavior of popup on target preffered over lean out */
-	var() bool bPreferLeanOverPopup;
-	/** runtime only - whether this slot is on destructible cover (so AI can shoot it to get the enemy out) */
-	var transient bool bDestructible;
 
 	/** === Editor specific === */
 	/** Is this slot currently selected for editing? */
 	var transient bool bSelected;
 
-	/** Map Error: Cover slot failed to find surface to align to */
-	var() transient editconst bool bFailedToFindSurface;
+	/** How far auto adjust code traces forward from lean fire point
+		to determine if the lean has a valid fire line */
+	var	float LeanTraceDist;
+
+	/** Slot marker to allow the slot to exist on the navigation network */
+	var() editconst duplicatetransient CoverSlotMarker SlotMarker;
 
 	structdefaultproperties
 	{
@@ -547,7 +293,6 @@ struct immutablewhencooked native CoverSlot
 		bCanCoverSlip_Right=TRUE
 		bCanSwatTurn_Left=TRUE
 		bCanSwatTurn_Right=TRUE
-		bCanClimbUp=FALSE
 
 		bAllowMantle=TRUE
 		bAllowCoverSlip=TRUE
@@ -555,81 +300,15 @@ struct immutablewhencooked native CoverSlot
 		bAllowSwatTurn=TRUE
 		bAllowClimbUp=FALSE
 
-		TurnTargetPackedProperties=4294967296
-	}
-
-	structcpptext
-	{
-		FORCEINLINE void SetExposedCoverRefIdx( INT Index, INT Val )
-		{
-			Val &= 0x0000FFFF;
-			ExposedCoverPackedProperties(Index) &= ~(0x0000FFFF);
-			ExposedCoverPackedProperties(Index) |= Val;
-		}
-		FORCEINLINE DWORD GetExposedCoverRefIdx( INT Index )
-		{
-			return (ExposedCoverPackedProperties(Index) & (0x0000FFFF));
-		}
-
-		FORCEINLINE void SetExposedScale( INT Index, INT Val )
-		{
-			Val &= 0x000000FF;
-			ExposedCoverPackedProperties(Index) &= ~(0x00FF0000);
-			ExposedCoverPackedProperties(Index) |= (Val << 16);
-		}
-		FORCEINLINE BYTE GetExposedScale( INT Index )
-		{
-			return ((ExposedCoverPackedProperties(Index) & (0x00FF0000)) >> 16);
-		}
-
-		FORCEINLINE void SetLeftTurnTargetCoverRefIdx( INT Val )
-		{
-			Val &= 0x0000FFFF;
-			TurnTargetPackedProperties &= ~(0x0000FFFF);
-			TurnTargetPackedProperties |= Val;
-		}
-		FORCEINLINE DWORD GetLeftTurnTargetCoverRefIdx()
-		{
-			return (TurnTargetPackedProperties & (0x0000FFFF));
-		}
-		FORCEINLINE void SetRightTurnTargetCoverRefIdx( INT Val )
-		{
-			Val &= 0x0000FFFF;
-			TurnTargetPackedProperties &= ~(0xFFFF0000);
-			TurnTargetPackedProperties |= (Val << 16);
-		}
-		FORCEINLINE DWORD GetRightTurnTargetCoverRefIdx()
-		{
-			return ((TurnTargetPackedProperties & (0xFFFF0000)) >> 16);
-		}
-
-		FORCEINLINE FFireLink& GetFireLinkRef( INT FireLinkIdx, BYTE ArrayID = 0 )
-		{
-			if( ArrayID == FLI_RejectedFireLink )
-			{
-				return RejectedFireLinks(FireLinkIdx);
-			}
-			else
-			{
-				return FireLinks(FireLinkIdx);
-			}
-		}
+		LeanTraceDist=64.f
 	}
 };
-
-/** How far auto adjust code traces forward from lean fire point
-	to determine if the lean has a valid fire line */
-var	float LeanTraceDist;
-
 
 /** All slots linked to this node */
 var() editinline array<CoverSlot> Slots;
 
-/** Array of src and target location for dynamic links */
-var array<DynamicLinkInfo> DynamicLinkInfos;
-
 /** List of all players using this cover */
-var array<Pawn> Claims;
+var array<Controller> Claims;
 
 /** Whether cover link is disabled */
 var() bool bDisabled;
@@ -638,7 +317,7 @@ var() bool bDisabled;
 var() bool bClaimAllSlots;
 
 /** Allow auto-sorting of the Slots array */
-var() bool bAutoSort;
+var bool bAutoSort;
 
 /** Allow auto-adjusting of the Slots orientation/position and covertype? */
 var() bool bAutoAdjust;
@@ -653,10 +332,6 @@ var() bool bLooped;
 var() bool bPlayerOnly;
 /** This cover is dynamic */
 var	  bool bDynamicCover;
-/** This cover fractures when it is interacted with */
-var() bool bFractureOnTouch;
-/** Distance link must move to invalidate it's info */
-var() float	InvalidateDistance;
 /** Max trace dist for fire links to check */
 var() float MaxFireLinkDist;
 
@@ -669,14 +344,16 @@ var const float CircularRadius;
 /** Distance used when aligning to nearby surfaces */
 var const float AlignDist;
 
-/** Minimum distance to place between non-essential cover slots when auto-generating a cover link */
-var const float AutoCoverSlotInterval;
-
 /** Min height for nearby geometry to categorize as standing cover */
 var const float StandHeight;
 
 /** Min height for nearby geometry to categorize as mid-level cover */
 var const float MidHeight;
+
+/** Default height for Perch walls */
+var() const float	PerchWallHeight; 
+/** Allow a little error, we support walls slightly higher or lower. */
+var() const	float	PerchWallNudge;
 
 var const Vector	StandingLeanOffset;
 var const Vector	CrouchLeanOffset;
@@ -684,34 +361,12 @@ var const Vector	PopupOffset;
 
 /** Forward distance for checking cover slip links */
 var const float	SlipDist;
+
 /** Lateral distance for checking swat turn links */
 var const float	TurnDist;
-/** Scale applied to danger cost during path finding for slots of this link */
-var() float DangerScale;
 
 /** Used for the WorldInfo.CoverList linked list */
 var const CoverLink NextCoverLink;
-
-var(Debug)	bool bDebug_FireLinks;
-var(Debug)	bool bDebug_ExposedLinks;
-/** when enabled, extra info will be drawn and printed to the log related to generation of cover information for this link */
-var(Debug)  bool bDebug_CoverGen;
-
-/** Description for the entire CoverLink.  Can be overridden per-slot. */
-var() const ECoverLocationDescription	LocationDescription;
-
-/** Should we automatically insert slots when there is too big of a gap? */
-var() bool bDoAutoSlotDensityFixup;
-
-simulated native function bool GetFireLinkTargetCoverInfo( int SlotIdx, int FireLinkIdx, out CoverInfo out_Info, optional EFireLinkID ArrayID );
-
-/**
- *  Packs fire link item info into a single byte
- *  SrcType/DestType - only allow CT_Standing/CT_MidLevel
- *  SrcAction/DestAction - only allow CA_LeanLeft/CA_LeanRight/CA_PopUp/CA_Default(destonly)
- */
-simulated static native function BYTE PackFireLinkInteractionInfo( ECoverType SrcType, ECoverAction SrcAction, ECoverType	DestType, ECoverAction DestAction );
-simulated static native function UnPackFireLinkInteractionInfo( const BYTE PackedByte, out ECoverType SrcType, out ECoverAction SrcAction, out ECoverType DestType, out ECoverAction DestAction );
 
 /** Returns the world location of the requested slot. */
 simulated native final function vector GetSlotLocation(int SlotIdx, optional bool bForceUseOffset);
@@ -722,23 +377,20 @@ simulated native final function rotator GetSlotRotation(int SlotIdx, optional bo
 /** Returns the world location of the default viewpoint for the specified slot. */
 simulated native final function vector GetSlotViewPoint( int SlotIdx, optional ECoverType Type, optional ECoverAction Action );
 
-simulated native final function bool IsExposedTo( int SlotIdx, CoverInfo ChkSlot, out float out_ExposedScale );
+/** Returns reference to the slot marker navigation point */
+simulated native final function CoverSlotMarker	GetSlotMarker( int SlotIdx );
 
-simulated final event SetInvalidUntil(int SlotIdx, float TimeToBecomeValid)
-{
-	Slots[SlotIdx].SlotValidAfterTime = TimeToBecomeValid;
-	NotifySlotOwnerCoverDisabled( SlotIdx );
-}
+simulated native final function bool IsExposedTo( int SlotIdx, CoverInfo ChkSlot );
 
 /** Asserts a claim on this link by the specified controller. */
-simulated final event bool Claim( Pawn NewClaim, int SlotIdx )
+final event bool Claim( Controller NewClaim, int SlotIdx )
 {
 	local int	Idx;
 	local bool	bResult, bDoClaim;
 	local PlayerController PC;
-	local Pawn PreviousOwner;
+	local Controller PreviousOwner;
 
-`if (`notdefined(FINAL_RELEASE))
+
 	local int NumClaims;
 	local array<int> SlotList;
 	local String Str;
@@ -746,15 +398,9 @@ simulated final event bool Claim( Pawn NewClaim, int SlotIdx )
 	//debug
 	if( bDebug )
 	{
-		`log( self@"Claim Slot"@SlotIdx@"For"@NewClaim@"(All?)"@bClaimAllSlots );
+		LogInternal(self@"Claim Slot"@SlotIdx@"For"@NewClaim@"(All?)"@bClaimAllSlots);
 	}
-`endif
 
-	// Make sure SlotIdx is valid
-	if( SlotIdx < 0 )
-	{
-		return FALSE;
-	}
 
 	bDoClaim = TRUE;
 
@@ -771,7 +417,7 @@ simulated final event bool Claim( Pawn NewClaim, int SlotIdx )
 		if( !bResult )
 		{
 			// If claimer is a player controller
-			PC = PlayerController( NewClaim.Controller );
+			PC = PlayerController( NewClaim );
 			if( PC != None )
 			{
 				PreviousOwner = Slots[SlotIdx].SlotOwner;
@@ -808,14 +454,14 @@ simulated final event bool Claim( Pawn NewClaim, int SlotIdx )
 
 			bResult = TRUE;
 		}
-		if (PreviousOwner != None && PreviousOwner.Controller != None)
+		if (PreviousOwner != None)
 		{
-			PreviousOwner.Controller.NotifyCoverClaimViolation( NewClaim.Controller, self, SlotIdx );
+			PreviousOwner.NotifyCoverClaimViolation( NewClaim, self, SlotIdx );
 		}
 	}
 
 	//debug
-`if (`notdefined(FINAL_RELEASE))
+
 	if( bDebug )
 	{
 		for( Idx = 0; Idx < Claims.Length; Idx++ )
@@ -844,22 +490,22 @@ simulated final event bool Claim( Pawn NewClaim, int SlotIdx )
 			}
 		}
 
-		`log( self@"Claims from"@NewClaim@NumClaims@"Slots:"@Str );
+		LogInternal(self@"Claims from"@NewClaim@NumClaims@"Slots:"@Str);
 
 		ScriptTrace();
 	}
-`endif
+
 
 	return bResult;
 }
 
 /** Removes any claims the specified controller has on this link. */
-simulated final event bool UnClaim( Pawn OldClaim, int SlotIdx, bool bUnclaimAll )
+final event bool UnClaim( Controller OldClaim, int SlotIdx, bool bUnclaimAll )
 {
 	local int Idx, NumReleased;
 	local bool bResult;
 
-`if (`notdefined(FINAL_RELEASE))
+
 	//debug
 	local int NumClaims;
 	local array<int> SlotList;
@@ -868,14 +514,9 @@ simulated final event bool UnClaim( Pawn OldClaim, int SlotIdx, bool bUnclaimAll
 	//debug
 	if( bDebug )
 	{
-		`log( self@"UnClaim"@`showvar(OldClaim)@`showvar(SlotIdx)@`showvar(bUnclaimAll)@`showvar(bClaimAllSlots) );
+		LogInternal(self@"UnClaim"@OldClaim@SlotIdx@bUnclaimAll@bClaimAllSlots);
 	}
-`endif
 
-	if( !bUnclaimAll && SlotIdx < 0)
-	{
-		return false;
-	}
 
 	// If letting go of link completely
 	if( bUnclaimAll )
@@ -916,7 +557,7 @@ simulated final event bool UnClaim( Pawn OldClaim, int SlotIdx, bool bUnclaimAll
 	}
 
 	//debug
-`if (`notdefined(FINAL_RELEASE))
+
 	if( bDebug )
 	{
 		for( Idx = 0; Idx < Claims.Length; Idx++ )
@@ -945,25 +586,24 @@ simulated final event bool UnClaim( Pawn OldClaim, int SlotIdx, bool bUnclaimAll
 			}
 		}
 
-		`log( self@"Claims from"@`showvar(OldClaim)@`showvar(NumClaims)@"Slots:"@Str );
+		LogInternal(self@"Claims from"@OldClaim@NumClaims@"Slots:"@Str);
 
 		ScriptTrace();
 	}
-`endif
+
 
 	return bResult;
 }
 
 /** Returns true if the specified controller is able to claim the slot. */
-final native function bool IsValidClaim( Pawn ChkClaim, int SlotIdx, optional bool bSkipTeamCheck, optional bool bSkipOverlapCheck );
-final native function bool IsValidClaimBetween( Pawn ChkClaim, int StartSlotIdx, int EndSlotIdx, optional bool bSkipTeamCheck, optional bool bSkipOverlapCheck );
+final native function bool IsValidClaim( Controller ChkClaim, int SlotIdx, optional bool bSkipTeamCheck, optional bool bSkipOverlapCheck );
 
 /**
  * Checks to see if the specified slot support stationary cover actions.
  */
 simulated final function bool IsStationarySlot(int SlotIdx)
 {
-	return (!bCircular && IsEdgeSlot(SlotIdx,FALSE));
+	return (!bCircular);
 }
 
 /**
@@ -980,43 +620,54 @@ simulated native final function bool IsEdgeSlot( int SlotIdx, optional bool bIgn
 simulated native final function bool IsLeftEdgeSlot( int SlotIdx, bool bIgnoreLeans );
 simulated native final function bool IsRightEdgeSlot( int SlotIdx, bool bIgnoreLeans );
 
-simulated native final function int GetSlotIdxToLeft(  int SlotIdx, optional int Cnt = 1 );
-simulated native final function int GetSlotIdxToRight( int SlotIdx, optional int Cnt = 1 );
-
 simulated final function bool AllowRightTransition(int SlotIdx)
 {
 	local int NextSlotIdx;
 
-	NextSlotIdx = GetSlotIdxToRight( SlotIdx );
-	if( NextSlotIdx >= 0 )
+	NextSlotIdx = SlotIdx + 1;
+	if( bLooped )
 	{
+
+		if( NextSlotIdx >= Slots.Length )
+		{
+			NextSlotIdx -= Slots.Length;
+		}
+
 		return Slots[NextSlotIdx].bEnabled;
 	}
-	return FALSE;
+
+	return (SlotIdx < Slots.Length - 1 && Slots[NextSlotIdx].bEnabled);
 }
 
 simulated final function bool AllowLeftTransition(int SlotIdx)
 {
 	local int NextSlotIdx;
 
-	NextSlotIdx = GetSlotIdxToLeft( SlotIdx );
-	if( NextSlotIdx >= 0 )
+	NextSlotIdx = SlotIdx - 1;
+	if( bLooped )
 	{
+
+		if( NextSlotIdx < 0 )
+		{
+			NextSlotIdx += Slots.Length;
+		}
+
 		return Slots[NextSlotIdx].bEnabled;
 	}
-	return FALSE;
+
+	return (SlotIdx > 0 && Slots[NextSlotIdx].bEnabled);
 }
 
 /**
  * Searches for a fire link to the specified cover/slot and returns the cover actions.
  */
-native noexport function bool GetFireLinkTo( int SlotIdx, CoverInfo ChkCover, ECoverAction ChkAction, ECoverType ChkType, out int out_FireLinkIdx, out array<int> out_Items );
+native noexport function bool GetFireLinkTo( int SlotIdx, CoverInfo ChkCover, ECoverType Type, out array<ECoverAction> Actions);
 
 /**
  * Searches for a valid fire link to the specified cover/slot.
  * NOTE: marked noexport until 'optional out int' is fixed in the exporter
  */
-native noexport function bool HasFireLinkTo( int SlotIdx, CoverInfo ChkCover, optional bool bAllowFallbackLinks );
+native noexport function bool HasFireLinkTo( int SlotIdx, CoverInfo ChkCover );
 
 /**
  * Returns a list of AI actions possible from this slot
@@ -1029,25 +680,17 @@ native final function GetSlotActions( int SlotIdx, out array<ECoverAction> Actio
 simulated event SetDisabled(bool bNewDisabled)
 {
 	local int SlotIdx;
-	local CoverReplicator CoverReplicator;
 
 	bDisabled = bNewDisabled;
 
 	if( bDisabled )
 	{
-		for( SlotIdx = 0; SlotIdx < Slots.Length; SlotIdx++ )
+		for (SlotIdx = 0; SlotIdx < Slots.Length; SlotIdx++)
 		{
-			NotifySlotOwnerCoverDisabled( SlotIdx );
-		}
-	}
-
-	// if on server, notify clients slot was disabled
-	if( Role == ROLE_Authority )
-	{
-		CoverReplicator = WorldInfo.Game.GetCoverReplicator();
-		if (CoverReplicator != None)
-		{
-			CoverReplicator.NotifyLinkDisabledStateChange(self);
+			if (Slots[SlotIdx].SlotOwner != None)
+			{
+				Slots[SlotIdx].SlotOwner.NotifyCoverDisabled(self,SlotIdx);
+			}
 		}
 	}
 }
@@ -1059,57 +702,12 @@ simulated event SetSlotEnabled(int SlotIdx, bool bEnable)
 {
 	Slots[SlotIdx].bEnabled = bEnable;
 
-	if( !bEnable )
-	{
-		NotifySlotOwnerCoverDisabled( SlotIdx );
-	}
-}
-
-simulated function NotifySlotOwnerCoverDisabled( int SlotIdx, optional bool bAIOnly )
-{
-	local int LeftIdx, RightIdx;
-
-	if( Slots[SlotIdx].SlotOwner != None &&
-		Slots[SlotIdx].SlotOwner.Controller != None &&
-		(!bAIOnly || PlayerController(Slots[SlotIdx].SlotOwner.Controller) == None) )
+	if ( (bEnable == FALSE) && (Slots[SlotIdx].SlotOwner != None) )
 	{
 		// notify any owner that the slot is disabled
-		Slots[SlotIdx].SlotOwner.Controller.NotifyCoverDisabled( self, SlotIdx, FALSE );
-	}
-
-	// Notify any adjacent owners
-	LeftIdx = GetSlotIdxToLeft( SlotIdx );
-	if( LeftIdx >= 0 &&
-		Slots[LeftIdx].SlotOwner != None &&
-		Slots[LeftIdx].SlotOwner.Controller != None &&
-		(!bAIOnly || PlayerController(Slots[LeftIdx].SlotOwner.Controller) == None) )
-	{
-		Slots[LeftIdx].SlotOwner.Controller.NotifyCoverDisabled( self, SlotIdx, TRUE );
-	}
-
-	RightIdx = GetSlotIdxToRight( SlotIdx );
-	if( RightIdx >= 0 &&
-		Slots[RightIdx].SlotOwner != None &&
-		Slots[RightIdx].SlotOwner.Controller != None &&
-		(!bAIOnly || PlayerController(Slots[RightIdx].SlotOwner.Controller) == None) )
-	{
-		Slots[RightIdx].SlotOwner.Controller.NotifyCoverDisabled( self, SlotIdx, TRUE );
+		Slots[SlotIdx].SlotOwner.NotifyCoverDisabled( self, SlotIdx );
 	}
 }
-
-/**
- * Enable/disable playersonly on a particular cover slot.
- */
-simulated event SetSlotPlayerOnly(int SlotIdx, bool bInPlayerOnly )
-{
-	Slots[SlotIdx].bPlayerOnly = bInPlayerOnly;
-
-	if( Slots[SlotIdx].bPlayerOnly )
-	{
-		NotifySlotOwnerCoverDisabled( SlotIdx, TRUE );
-	}
-}
-
 
 /**
  * Handle modify action by enabling/disabling the list of slots, or auto adjusting.
@@ -1153,25 +751,21 @@ function OnModifyCover(SeqAct_ModifyCover Action)
 			{
 				// update the slot
 				if (AutoAdjustSlot(SlotIdx,FALSE) &&
-					Slots[SlotIdx].SlotOwner != None && Slots[SlotIdx].SlotOwner.Controller != None)
+					Slots[SlotIdx].SlotOwner != None)
 				{
 					// and notify if it changed
-					Slots[SlotIdx].SlotOwner.Controller.NotifyCoverAdjusted();
+					Slots[SlotIdx].SlotOwner.NotifyCoverAdjusted();
 				}
 			}
 			else
 			if (Action.InputLinks[3].bHasImpulse)
 			{
-				if( Action.ManualCoverType != CT_None )
+				Slots[SlotIdx].CoverType = Action.ManualCoverType;
+				if (Slots[SlotIdx].SlotOwner != None)
 				{
-					Slots[SlotIdx].CoverType = Action.ManualCoverType;
-					if (Slots[SlotIdx].SlotOwner != None && Slots[SlotIdx].SlotOwner.Controller != None)
-					{
-						// notify the owner of the change
-						Slots[SlotIdx].SlotOwner.Controller.NotifyCoverAdjusted();
-					}
+					// notify the owner of the change
+					Slots[SlotIdx].SlotOwner.NotifyCoverAdjusted();
 				}
-				Slots[SlotIdx].bPlayerOnly = Action.bManualAdjustPlayersOnly;
 			}
 		}
 	}
@@ -1211,99 +805,41 @@ native final function bool IsEnabled();
  */
 function OnToggle(SeqAct_Toggle inAction)
 {
-	local CoverReplicator CoverReplicator;
 	local int SlotIdx;
 
 	Super.OnToggle( inAction );
 
-	if (inAction.InputLinks[0].bHasImpulse)
+	// Call OnToggle for slot markers also
+	for( SlotIdx = 0; SlotIdx < Slots.Length; SlotIdx++ )
 	{
-		bDisabled = FALSE;
-	}
-	else if (inAction.InputLinks[1].bHasImpulse)
-	{
-		bDisabled = TRUE;
-	}
-	else
-	{
-		bDisabled = !bDisabled;
-	}
-
-	// Call SetSlotEnabled() which notifies any Pawns using this cover
-	for (SlotIdx = 0; SlotIdx < Slots.Length; ++SlotIdx)
-	{
-		SetSlotEnabled(SlotIdx, !bDisabled);
-	}
-
-	CoverReplicator = WorldInfo.Game.GetCoverReplicator();
-	if (CoverReplicator != None)
-	{
-		CoverReplicator.NotifyLinkDisabledStateChange(self);
-	}
-}
-
-function CreateCheckpointRecord(out CheckpointRecord Record)
-{
-	Super.CreateCheckpointRecord(Record);
-	Record.bDisabled = bDisabled;
-}
-
-function ApplyCheckpointRecord(const out CheckpointRecord Record)
-{
-	local CoverReplicator CoverReplicator;
-
-	Super.ApplyCheckpointRecord(Record);
-
-	bDisabled = Record.bDisabled;
-
-	CoverReplicator = WorldInfo.Game.GetCoverReplicator();
-	if (CoverReplicator != None)
-	{
-		CoverReplicator.NotifyLinkDisabledStateChange(self);
-	}
-}
-
-simulated event ShutDown()
-{
-	Super.ShutDown();
-
-	bDisabled = TRUE;
-}
-
-simulated native function bool GetSwatTurnTarget( int SlotIdx, int Direction, out CoverInfo out_Info );
-
-/** Applies an impulse to all nearby fractureable objects, if this coverlink is set to fracture on touch
-*
-* @param   Origin - Origin of fracture pulse
-* @param   Radius - Radius around origin to apply the fracturable pulse. All parts in radius will fracture
-* @param   RBStrength - strength to apply to fractureable parts
-* @param   DamageType - DamageType to use as the fracturable pulse, potentially ignored by certain fractureable objects
-*/
-simulated function BreakFracturedMeshes(vector Origin, float Radius, float RBStrength, class<DamageType> DamageType)
-{
-	local FracturedStaticMeshActor FracActor;
-	local byte bWantPhysChunksAndParticles;
-
-	if (!bFractureOnTouch)
-	{
-		return;
-	}
-
-	foreach CollidingActors(class'FracturedStaticMeshActor', FracActor, Radius, Origin, TRUE)
-	{
-		if((FracActor.Physics == PHYS_None) && FracActor.IsFracturedByDamageType(DamageType))
+		if( Slots[SlotIdx].SlotMarker != None )
 		{
-			// Make sure the impacted fractured mesh is visually relevant
-			if( FracActor.FractureEffectIsRelevant( FALSE, Instigator, bWantPhysChunksAndParticles ) )
-			{
-				FracActor.BreakOffPartsInRadius(Origin, Radius, RBStrength, bWantPhysChunksAndParticles == 1 ? TRUE : FALSE);
-			}
+			Slots[SlotIdx].SlotMarker.OnToggle( inAction );
 		}
 	}
 }
 
+simulated function bool GetSwatTurnTarget( int SlotIdx, int Direction, out CoverReference out_Info )
+{
+	local int TurnIdx, Num;
+
+	Num = Slots[SlotIdx].TurnTarget.Length;
+	for( TurnIdx = 0; TurnIdx < Num; TurnIdx++ )
+	{
+		if( Slots[SlotIdx].TurnTarget[TurnIdx].Direction == Direction )
+		{
+			out_Info.Nav		= Slots[SlotIdx].TurnTarget[TurnIdx].Nav;
+			out_Info.SlotIdx	= Slots[SlotIdx].TurnTarget[TurnIdx].SlotIdx;
+			out_Info.Direction  = Slots[SlotIdx].TurnTarget[TurnIdx].Direction;
+			break;
+		}
+	}
+
+	return (out_Info.Nav != None);
+}
+
 //debug
-`if (`notdefined(FINAL_RELEASE))
+
 simulated event Tick( float DeltaTime )
 {
 	local int SlotIdx;
@@ -1311,8 +847,8 @@ simulated event Tick( float DeltaTime )
 	local Vector OwnerLoc;
 	local byte R, G, B;
 
-	// no super tick implemented
-	//super.Tick( DeltaTime );
+	super.Tick( DeltaTime );
+
 
 	if( bDebug )
 	{
@@ -1321,9 +857,9 @@ simulated event Tick( float DeltaTime )
 			Slot = Slots[SlotIdx];
 			if( Slot.SlotOwner != None )
 			{
-				if( Slot.SlotOwner != None )
+				if( Slot.SlotOwner.Pawn != None )
 				{
-					OwnerLoc = Slot.SlotOwner.Location;
+					OwnerLoc = Slot.SlotOwner.Pawn.Location;
 					R = 166;
 					G = 236;
 					B = 17;
@@ -1341,77 +877,58 @@ simulated event Tick( float DeltaTime )
 		}
 	}
 }
-`endif
 
-native final function int AddCoverSlot(vector SlotLocation, rotator SlotRotation, optional int SlotIdx = -1, optional bool bForceSlotUpdate, optional Scout Scout);
 
-simulated final event string GetDebugString(int SlotIdx)
-{
-	return "L:"$GetRightMost(self)@"S:"$SlotIdx;
-}
-
-simulated native final function ECoverLocationDescription GetLocationDescription(int SlotIdx);
-
-simulated event string GetDebugAbbrev()
-{
-	return "CL";
-}
+native final function int AddCoverSlot(vector SlotLocation, rotator SlotRotation, optional int SlotIdx = -1, optional bool bForceSlotUpdate);
 
 defaultproperties
 {
-	Components.Remove(PathRenderer)
-
-	Begin Object Name=CollisionCylinder
-		CollisionRadius=48.f
-		CollisionHeight=58.f
-	End Object
-
-	Begin Object NAME=Sprite
-		Sprite=Texture2D'EditorMaterials.CoverIcons.CoverNodeNoneLocked'
-		SpriteCategoryName="Cover"
-	End Object
-
-	Begin Object Class=CoverMeshComponent Name=CoverMesh
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		bUsePrecomputedShadows=False
-	End Object
-	Components.Add(CoverMesh)
-	// Don't show the navigation point arrow on cover links.
-	Components.Remove(Arrow)
-	Slots(0)=(LocationOffset=(X=64.f))
-
-	AlignDist=36.f
-	StandHeight=160.f
-	MidHeight=70.f
-	AutoCoverSlotInterval=175.f
-
-	StandingLeanOffset=(X=0,Y=78,Z=69)
-	CrouchLeanOffset=(X=0,Y=70,Z=19)
-	PopupOffset=(X=0,Y=0,Z=70)
-
-	SlipDist=60.f
-	TurnDist=512.f
-
-	bAutoSort=TRUE
-	bAutoAdjust=TRUE
-	bSpecialMove=TRUE
-	bBuildLongPaths=FALSE
-
-	MaxFireLinkDist=2048.f
-	InvalidateDistance=64.f
-	DangerScale=2.f
-
-//debug
-//	bDebug=TRUE
-//	bStatic=FALSE
-
-	bDebug_FireLinks=FALSE
-	bDebug_ExposedLinks=FALSE
-
-	bDestinationOnly=TRUE
-
-	LeanTraceDist=64.f
-
-	bDoAutoSlotDensityFixup=FALSE
+   Slots(0)=(LocationOffset=(X=64.000000,Y=0.000000,Z=0.000000),bCanMantle=True,bCanCoverSlip_Left=True,bCanCoverSlip_Right=True,bCanSwatTurn_Left=True,bCanSwatTurn_Right=True,bEnabled=True,bAllowPopup=True,bAllowMantle=True,bAllowCoverSlip=True,bAllowSwatTurn=True,LeanTraceDist=64.000000)
+   bAutoSort=True
+   bAutoAdjust=True
+   MaxFireLinkDist=2048.000000
+   AlignDist=34.000000
+   StandHeight=130.000000
+   MidHeight=70.000000
+   PerchWallHeight=160.000000
+   PerchWallNudge=4.000000
+   StandingLeanOffset=(X=0.000000,Y=78.000000,Z=69.000000)
+   CrouchLeanOffset=(X=0.000000,Y=70.000000,Z=19.000000)
+   PopupOffset=(X=0.000000,Y=0.000000,Z=70.000000)
+   SlipDist=152.000000
+   TurnDist=512.000000
+   bSpecialMove=True
+   bBuildLongPaths=False
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+      CollisionHeight=58.000000
+      CollisionRadius=48.000000
+      ObjectArchetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+      Sprite=Texture2D'EngineResources.CoverNodeNone'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=CoverMeshComponent Name=CoverMesh ObjName=CoverMesh Archetype=CoverMeshComponent'Engine.Default__CoverMeshComponent'
+      bUsePrecomputedShadows=False
+      Name="CoverMesh"
+      ObjectArchetype=CoverMeshComponent'Engine.Default__CoverMeshComponent'
+   End Object
+   Components(4)=CoverMesh
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__CoverLink"
+   ObjectArchetype=NavigationPoint'Engine.Default__NavigationPoint'
 }

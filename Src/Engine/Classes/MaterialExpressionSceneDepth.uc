@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionSceneDepth extends MaterialExpression
 	native(Material)
@@ -18,16 +18,17 @@ var ExpressionInput	Coordinates;
 /** normalize the depth values to [near,far] -> [0,1] */
 var() bool bNormalize;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual void SwapReferenceTo(UMaterialExpression* OldExpression,UMaterialExpression* NewExpression = NULL);
-
-	virtual FString GetCaption() const;
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	MenuCategories(0)="Depth"
-	Outputs(0)=(OutputName="",Mask=1,MaskR=1,MaskG=0,MaskB=0,MaskA=0)
+   Name="Default__MaterialExpressionSceneDepth"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

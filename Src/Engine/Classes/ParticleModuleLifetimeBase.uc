@@ -1,29 +1,23 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleLifetimeBase extends ParticleModule
 	native(Particle)
 	editinlinenew
+	collapsecategories
 	hidecategories(Object)
 	abstract;
 
-cpptext
-{
-	/** Return the maximum lifetime this module would return. */
-	virtual FLOAT	GetMaxLifetime()
-	{
-		return 0.0f;
-	}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
-	/**
-	 *	Call to retrieve the lifetime value at the given time.
-	 *
-	 *	@param	Owner		The emitter instance that owns this module
-	 *	@param	InTime		The time input for retrieving the lifetime value
-	 *	@param	Data		The data associated with the distribution
-	 *
-	 *	@return	FLOAT		The Lifetime value
-	 */
-	virtual FLOAT	GetLifetimeValue(FParticleEmitterInstance* Owner, FLOAT InTime, UObject* Data = NULL)
-		PURE_VIRTUAL(UParticleModuleLifetimeBase::GetLifetimeValue,return 0.0f;);
+defaultproperties
+{
+   Name="Default__ParticleModuleLifetimeBase"
+   ObjectArchetype=ParticleModule'Engine.Default__ParticleModule'
 }

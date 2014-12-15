@@ -1,8 +1,8 @@
 /**
- * Info, the root of all information holding classes.
+ * Info, the root of all information holding klasses.
  * Doesn't have any movement / collision related code.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class Info extends Actor
@@ -48,21 +48,20 @@ struct transient native export ServerResponseLine
 	var() array<PlayerResponseLine> PlayerInfo;
 };
 
-
 defaultproperties
 {
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Actor'
-		HiddenGame=TRUE
-		AlwaysLoadOnClient=FALSE
-		AlwaysLoadOnServer=FALSE
-		SpriteCategoryName="Info"
-	End Object
-	Components.Add(Sprite)
-
-	RemoteRole=ROLE_None
-	NetUpdateFrequency=10
-	bHidden=TRUE
-	bOnlyDirtyReplication=TRUE
-	bSkipActorPropertyReplication=TRUE
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   bHidden=True
+   bSkipActorPropertyReplication=True
+   bOnlyDirtyReplication=True
+   NetUpdateFrequency=10.000000
+   Name="Default__Info"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

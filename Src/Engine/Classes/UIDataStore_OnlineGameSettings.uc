@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 /**
@@ -30,22 +30,57 @@ struct native GameSettingsCfg
 /** The list of settings that this data store is exposing */
 var const array<GameSettingsCfg> GameSettingsCfgList;
 
-/** the class to use for creating the data provider for each game settings object */
-var	const	class<UIDataProvider_Settings>	SettingsProviderClass;
-
 /** The index into the list that is currently being exposed */
 var int SelectedIndex;
 
-cpptext
-{
-private:
-	/**
-	 * Loads and creates an instance of the registered provider objects for each
-	 * registered OnlineGameSettings class
-	 */
-	virtual void InitializeDataStore(void);
-
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /**
  * Called to kick create an online game based upon the settings
@@ -69,16 +104,16 @@ event bool CreateGame( byte ControllerIndex )
 		if (GameInterface != None)
 		{
 			// Start the async task
-			return GameInterface.CreateOnlineGame(ControllerIndex,'Game',GameSettingsCfgList[SelectedIndex].GameSettings);
+			return GameInterface.CreateOnlineGame(ControllerIndex,GameSettingsCfgList[SelectedIndex].GameSettings);
 		}
 		else
 		{
-			`warn("OnlineSubsystem does not support the game interface. Can't create online games");
+			WarnInternal("OnlineSubsystem does not support the game interface. Can't create online games");
 		}
 	}
 	else
 	{
-		`warn("No OnlineSubsystem present. Can't create online games");
+		WarnInternal("No OnlineSubsystem present. Can't create online games");
 	}
 	return false;
 }
@@ -88,6 +123,41 @@ event OnlineGameSettings GetCurrentGameSettings()
 {
 	return GameSettingsCfgList[SelectedIndex].GameSettings;
 }
+
+// Stores the current game settings object values to the specified settings profile
+function StoreCurrentSettings(string ProfileName)
+{
+	local OnlineGameSettings CurSettings;
+	local SettingsProfile ProfileObj;
+
+	CurSettings = GameSettingsCfgList[SelectedIndex].GameSettings;
+
+	if (CurSettings == none)
+		return;
+
+
+	ProfileObj = new(none, string(GameSettingsCfgList[SelectedIndex].SettingsName)$"_"$ProfileName) Class'SettingsProfile';
+
+	ProfileObj.SaveSettings(CurSettings);
+}
+
+// Loads values from the specified settings profile to the current game settings object
+function LoadToCurrentSettings(string ProfileName)
+{
+	local OnlineGameSettings CurSettings;
+	local SettingsProfile ProfileObj;
+
+	CurSettings = GameSettingsCfgList[SelectedIndex].GameSettings;
+
+	if (CurSettings == none)
+		return;
+
+
+	ProfileObj = new(none, string(GameSettingsCfgList[SelectedIndex].SettingsName)$"_"$ProfileName) Class'SettingsProfile';
+
+	ProfileObj.TransferSettings(CurSettings);
+}
+
 
 /** Returns the provider object that is currently selected */
 event UIDataProvider_Settings GetCurrentProvider()
@@ -103,15 +173,17 @@ event UIDataProvider_Settings GetCurrentProvider()
 event SetCurrentByIndex(int NewIndex)
 {
 	// Range check to prevent accessed nones
-	if (NewIndex >= 0 && NewIndex < GameSettingsCfgList.Length)
+	if (NewIndex > 0 && NewIndex < GameSettingsCfgList.Length)
 	{
 		SelectedIndex = NewIndex;
+		// Notify any subscribers that we have new data
+		NotifyPropertyChanged();
 		// notify any subscribers that we have new data
 		RefreshSubscribers( , true, GetCurrentProvider());
 	}
 	else
 	{
-		`Log("Invalid index ("$NewIndex$") specified to SetCurrentByIndex() on "$Self);
+		LogInternal("Invalid index ("$NewIndex$") specified to SetCurrentByIndex() on "$Self);
 	}
 }
 
@@ -129,65 +201,41 @@ event SetCurrentByName(name SettingsName)
 		// If this is the one we want, set it and refresh
 		if (GameSettingsCfgList[Index].SettingsName == SettingsName)
 		{
-			SetCurrentByIndex(Index);
+			SelectedIndex = Index;
+			// Notify any subscribers that we have new data
+			NotifyPropertyChanged();
+			// notify any subscribers that we have new data
+			RefreshSubscribers( , true, GetCurrentProvider());
 			return;
 		}
 	}
-	`Log("Invalid name ("$SettingsName$") specified to SetCurrentByName() on "$Self);
+	LogInternal("Invalid name ("$SettingsName$") specified to SetCurrentByName() on "$Self);
 }
 
 /** Moves to the next item in the list */
 event MoveToNext()
 {
-	local int NewIndex;
-
-	NewIndex = Min(SelectedIndex + 1, GameSettingsCfgList.Length - 1);
-	if ( SelectedIndex != NewIndex )
-	{
-		SetCurrentByIndex(NewIndex);
-	}
+	SelectedIndex = Min(SelectedIndex + 1,GameSettingsCfgList.Length - 1);
+	// Notify any subscribers that we have new data
+	NotifyPropertyChanged();
+	// notify any subscribers that we have new data
+	RefreshSubscribers( , true, GetCurrentProvider());
 }
 
 /** Moves to the previous item in the list */
 event MoveToPrevious()
 {
-	local int NewIndex;
-
-	NewIndex = Max(SelectedIndex - 1,0);
-	if ( SelectedIndex != NewIndex )
-	{
-		SetCurrentByIndex(NewIndex);
-	}
-}
-
-/* === UIDataStore interface === */
-/**
- * Called when this data store is added to the data store manager's list of active data stores.
- *
- * @param	PlayerOwner		the player that will be associated with this DataStore.  Only relevant if this data store is
- *							associated with a particular player; NULL if this is a global data store.
- */
-event Registered( LocalPlayer PlayerOwner )
-{
-	Super.Registered(PlayerOwner);
-}
-
-/**
- * Called when this data store is removed from the data store manager's list of active data stores.
- *
- * @param	PlayerOwner		the player that will be associated with this DataStore.  Only relevant if this data store is
- *							associated with a particular player; NULL if this is a global data store.
- */
-event Unregistered( LocalPlayer PlayerOwner )
-{
-
-	Super.Unregistered(PlayerOwner);
+	SelectedIndex = Max(SelectedIndex - 1,0);
+	// Notify any subscribers that we have new data
+	NotifyPropertyChanged();
+	// notify any subscribers that we have new data
+	RefreshSubscribers( , true, GetCurrentProvider());
 }
 
 defaultproperties
 {
-	// derived classes should keep the same tag if they are replacing the OnlineGameSettings data store
-	Tag=OnlineGameSettings
-
-	SettingsProviderClass=class'Engine.UIDataProvider_Settings'
+   Tag="OnlineGameSettings"
+   WriteAccessType=ACCESS_WriteAll
+   Name="Default__UIDataStore_OnlineGameSettings"
+   ObjectArchetype=UIDataStore_Settings'Engine.Default__UIDataStore_Settings'
 }

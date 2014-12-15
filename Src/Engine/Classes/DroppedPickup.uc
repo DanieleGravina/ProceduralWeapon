@@ -4,7 +4,7 @@
 // PickupFactory should be used to place items in the level.  This class is for dropped inventory, which should attach
 // itself to this pickup, and set the appropriate mesh
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class DroppedPickup extends Actor
 	notplaceable
@@ -16,6 +16,7 @@ var				Inventory					Inventory;			// the dropped inventory item which spawned th
 var	repnotify	class<Inventory>			InventoryClass;		// Class of the inventory object to pickup
 var				NavigationPoint				PickupCache;		// navigationpoint this pickup is attached to
 var	repnotify	bool						bFadeOut;
+var				bool						bNavigationSet;
 
 native final function AddToNavigation();			// cache dropped inventory in navigation network
 native final function RemoveFromNavigation();
@@ -109,27 +110,14 @@ event Landed(Vector HitNormal, Actor FloorActor)
 	NetUpdateFrequency = 3;
 
 	AddToNavigation();
+	bNavigationSet = true;
 }
 
 /** give pickup to player */
 function GiveTo( Pawn P )
 {
-	//local Inventory Inv;
-	
 	if( Inventory != None )
 	{
-		/*if(ProceduralWeapon(Inventory) != none)
-		{
-			Inv = UTInventoryManager(P.InvManager).HasInventoryOfClass(class'ProceduralWeapon');
-			if ( UTWeapon(Inv)!=none )
-			{
-				UTWeapon(Inv).AddAmmo(class'ProceduralWeapon'.Default.AmmoCount);
-				UTWeapon(Inv).AnnouncePickup(P);
-				return;
-			}
-			return;
-		}*/
-		
 		Inventory.AnnouncePickup(P);
 		Inventory.GiveTo(P);
 		Inventory = None;
@@ -169,7 +157,7 @@ auto state Pickup
 		// make sure not touching through wall
 		if ( !FastTrace(Other.Location, Location) )
 		{
-			SetTimer( 0.5, false, nameof(RecheckValidTouch) );
+			SetTimer(0.5, false, 'RecheckValidTouch');
 			return false;
 		}
 
@@ -219,11 +207,12 @@ auto state Pickup
 
 	event BeginState(Name PreviousStateName)
 	{
-		AddToNavigation();
-		if( LifeSpan > 0.f )
+		if ( !bNavigationSet && (Physics != PHYS_Falling) )
 		{
-			SetTimer(LifeSpan - 1, false);
+		AddToNavigation();
+			bNavigationSet = true;
 		}
+		SetTimer(LifeSpan - 1, false);
 	}
 
 	event EndState(Name NextStateName)
@@ -248,37 +237,39 @@ State FadeOut extends Pickup
 
 defaultproperties
 {
-	Begin Object Class=SpriteComponent Name=Sprite
-		Sprite=Texture2D'EditorResources.S_Inventory'
-		HiddenGame=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Inventory"
-	End Object
-	Components.Add(Sprite)
-
-	Begin Object Class=CylinderComponent NAME=CollisionCylinder
-		CollisionRadius=+00030.000000
-		CollisionHeight=+00020.000000
-		CollideActors=true
-	End Object
-	CollisionComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-
-	bOnlyDirtyReplication=true
-	NetUpdateFrequency=8
-	RemoteRole=ROLE_SimulatedProxy
-	bHidden=false
-	NetPriority=+1.4
-	bCollideActors=true
-	bCollideWorld=true
-	RotationRate=(Yaw=5000)
-
-	bOrientOnSlope=true
-	bShouldBaseAtStartup=true
-	bIgnoreEncroachers=false
-	bIgnoreRigidBodyPawns=true
-	bUpdateSimulatedPosition=true
-	LifeSpan=+16.0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__SpriteComponent'
+      Sprite=Texture2D'EngineResources.S_Inventory'
+      HiddenGame=True
+      AlwaysLoadOnClient=False
+      AlwaysLoadOnServer=False
+      Name="Sprite"
+      ObjectArchetype=SpriteComponent'Engine.Default__SpriteComponent'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__CylinderComponent'
+      CollisionHeight=20.000000
+      CollisionRadius=30.000000
+      CollideActors=True
+      Name="CollisionCylinder"
+      ObjectArchetype=CylinderComponent'Engine.Default__CylinderComponent'
+   End Object
+   Components(1)=CollisionCylinder
+   Physics=PHYS_Falling
+   RemoteRole=ROLE_SimulatedProxy
+   bIgnoreRigidBodyPawns=True
+   bOrientOnSlope=True
+   bUpdateSimulatedPosition=True
+   bOnlyDirtyReplication=True
+   bShouldBaseAtStartup=True
+   bCollideActors=True
+   bCollideWorld=True
+   NetUpdateFrequency=8.000000
+   NetPriority=1.400000
+   LifeSpan=16.000000
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   RotationRate=(Pitch=0,Yaw=5000,Roll=0)
+   DesiredRotation=(Pitch=0,Yaw=30000,Roll=0)
+   Name="Default__DroppedPickup"
+   ObjectArchetype=Actor'Engine.Default__Actor'
 }

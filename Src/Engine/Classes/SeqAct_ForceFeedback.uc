@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -8,14 +8,12 @@ class SeqAct_ForceFeedback extends SequenceAction;
 
 var() editinline ForceFeedbackWaveform FFWaveform;
 
-/** A predefined WaveForm, only works with start, stopping a predefined doesn't do anything, can't use for looping **/
-var() class<WaveFormBase> PredefinedWaveForm<AllowAbstract>;
-
 defaultproperties
 {
-	ObjName="Force Feedback"
-	ObjCategory="Misc"
-
-	InputLinks(0)=(LinkDesc="Start")
-	InputLinks(1)=(LinkDesc="Stop")
+   InputLinks(0)=(LinkDesc="Start")
+   InputLinks(1)=(LinkDesc="Stop")
+   ObjName="Force Feedback"
+   ObjCategory="Misc"
+   Name="Default__SeqAct_ForceFeedback"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

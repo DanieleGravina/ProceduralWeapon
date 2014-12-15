@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTWeap_LinkGun extends UTBeamWeapon;
 
@@ -38,12 +38,6 @@ var float	ReaccquireTimer;
 
 /** true if beam currently hitting target */
 var bool	bBeamHit;
-
-/** whether link gun should auto-recharge */
-var bool	bAutoCharge;
-
-/** recharge rate in ammo per second */
-var float RechargeRate;
 
 /** saved partial damage (in case of high frame rate */
 var float	SavedDamage;
@@ -92,19 +86,15 @@ var class<UTAttachment_LinkGun> LinkAttachmentClass;
 var ParticleSystem TeamMuzzleFlashTemplates[3];
 var ParticleSystem HighPowerMuzzleFlashTemplate;
 
-/** True if have picked up link booster */
-var repnotify bool bFullPower;
-
 replication
 {
 	if (bNetDirty)
-		LinkedTo, LinkStrength, bBeamHit, bFullPower;
+		LinkedTo, LinkStrength, bBeamHit;
 }
 
 simulated function PostBeginPlay()
 {
-	local color DefaultBeamColor, DefaultColor;
-	local LinearColor LinColor;	
+	local color DefaultBeamColor;
 
 	Super.PostBeginPlay();
 
@@ -119,10 +109,7 @@ simulated function PostBeginPlay()
 	{
 		LinkAttachmentClass.static.GetTeamBeamInfo(255, DefaultBeamColor);
 		WeaponMaterialInstance = Mesh.CreateAndSetMaterialInstanceConstant(0);
-		LinColor = ColorToLinearColor(DefaultBeamColor);
-		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', LinColor);
-		LinColor = ColorToLinearColor(DefaultColor);
-		WeaponMaterialInstance.SetVectorParameterValue('Paint_Color', LinColor);
+		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(DefaultBeamColor));
 	}
 }
 
@@ -141,14 +128,13 @@ simulated function ParticleSystem GetTeamMuzzleFlashTemplate(byte TeamNum)
 simulated function DrawWeaponCrosshair( Hud HUD )
 {
 	local vector2d CrosshairSize;
-	local float x,y,PickupScale, ScreenX, ScreenY, TargetDist;
-	local UTHUDBase	H;
+	local float x,y,PickupScale, ScreenX, ScreenY;
+	local UTHUD	H;
 
-	H = UTHUDBase(HUD);
+	H = UTHUD(HUD);
 	if ( H == None )
 		return;
 
-	TargetDist = GetTargetDistance();
 	// Apply pickup scaling
 	if ( H.LastPickupTime > WorldInfo.TimeSeconds - 0.3 )
 	{
@@ -166,7 +152,7 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 		PickupScale = 1.0;
 	}
 
- 	CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * CrossHairCoordinates.VL * PickupScale * H.Canvas.ClipY/720;
+ 	CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * CrossHairCoordinates.VL * PickupScale * H.Canvas.ClipY/768;
   	CrosshairSize.X = CrosshairSize.Y * ( CrossHairCoordinates.UL / CrossHairCoordinates.VL );
 
 	X = H.Canvas.ClipX * 0.5;
@@ -177,13 +163,13 @@ simulated function DrawWeaponCrosshair( Hud HUD )
 	{
 		// crosshair drop shadow
 		H.Canvas.DrawColor = H.BlackColor;
-		H.Canvas.SetPos( ScreenX+1, ScreenY+1, TargetDist);
+		H.Canvas.SetPos( ScreenX+1, ScreenY+1 );
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, CrossHairCoordinates.U, CrossHairCoordinates.V, CrossHairCoordinates.UL,CrossHairCoordinates.VL);
 
 		CrosshairColor = (LinkStrength > 1) ? H.Default.LightGoldColor : default.CrosshairColor;
 		CrosshairColor = H.bGreenCrosshair ? H.Default.LightGreenColor : CrosshairColor;
 		H.Canvas.DrawColor = (WorldInfo.TimeSeconds - LastHitEnemyTime < 0.3) ? H.RedColor : CrosshairColor;
-		H.Canvas.SetPos(ScreenX, ScreenY, TargetDist);
+		H.Canvas.SetPos(ScreenX, ScreenY);
 		H.Canvas.DrawTile(CrosshairImage,CrosshairSize.X, CrosshairSize.Y, CrossHairCoordinates.U, CrossHairCoordinates.V, CrossHairCoordinates.UL,CrossHairCoordinates.VL);
 	}
 }
@@ -213,7 +199,6 @@ simulated function UpdateBeamEmitter(vector FlashLocation, vector HitNormal, act
 	local color BeamColor;
 	local ParticleSystem BeamSystem, BeamEndpointTemplate, MuzzleFlashTemplate;
 	local byte TeamNum;
-	local LinearColor LinColor;
 
 	if (LinkedTo != None)
 	{
@@ -284,8 +269,7 @@ simulated function UpdateBeamEmitter(vector FlashLocation, vector HitNormal, act
 
 	if (WeaponMaterialInstance != None)
 	{
-		LinColor = ColorToLinearColor(BeamColor);
-		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', LinColor);
+		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(BeamColor));
 	}
 
 	if (WorldInfo.NetMode != NM_DedicatedServer && Instigator != None && Instigator.IsFirstPerson())
@@ -367,41 +351,16 @@ simulated function KillEndpointEffect()
 	}
 }
 
-function ConsumeAmmo( byte FireModeNum )
-{
-	if ( bAutoCharge && (Role == ROLE_Authority) )
-	{
-		SetTimer(RechargeRate+1.0, false, 'RechargeAmmo');
-	}
-	super.ConsumeAmmo(FireModeNum);
-}
-
 /** ConsumeBeamAmmo()
 consume beam ammo per tick.
 */
 function ConsumeBeamAmmo(float Amount)
 {
-	if ( bAutoCharge && (Role == ROLE_Authority) )
-	{
-		SetTimer(RechargeRate+1.0, false, 'RechargeAmmo');
-	}
 	PartialAmmo += Amount;
 	if (PartialAmmo >= 1.0)
 	{
 		AddAmmo(-int(PartialAmmo));
 		PartialAmmo -= int(PartialAmmo);
-	}
-}
-
-function RechargeAmmo()
-{
-	if ( AmmoCount < MaxAmmoCount )
-	{
-		AmmoCount += 1;
-		if ( AmmoCount < MaxAmmoCount )
-		{
-			SetTimer(RechargeRate, false, 'RechargeAmmo');
-		}	
 	}
 }
 
@@ -505,18 +464,6 @@ simulated function ProcessBeamHit(vector StartTrace, vector AimDir, out ImpactIn
 			// the linked component can't be replicated to the client, so set it here
 			LinkedComponent = TestImpact.HitInfo.HitComponent;
 		}
-		if (Victim != None && (Victim.Role == ROLE_Authority) )
-		{
-			bBeamHit = !Victim.bWorldGeometry;
-			if ( DamageAmount > 0 )
-			{
-				ShotDir = Normal(TestImpact.HitLocation - Location);
-				SideDir = Normal(ShotDir Cross vect(0,0,1));
-				PushForce =  vect(0,0,1) + Normal(SideDir * (SideDir dot (TestImpact.HitLocation - Victim.Location)));
-				PushForce *= (Victim.Physics == PHYS_Walking) ? 0.1*MomentumTransfer : DeltaTime*MomentumTransfer;
-				Victim.TakeDamage(DamageAmount, Instigator.Controller, TestImpact.HitLocation, PushForce, InstantHitDamageTypes[1], TestImpact.HitInfo, self);
-			}
-		}
 	}
 }
 
@@ -525,27 +472,39 @@ simulated function ProcessBeamHit(vector StartTrace, vector AimDir, out ImpactIn
  */
 simulated function vector GetLinkedToLocation()
 {
+	local name SocketName;
+	local name BestSocket;
 	local vector BestLoc;
+	local float Dist,BestScore,Score;
 	local vector Loc,ToTarget;
 	local bool bHitVehicleAimingAt;
 	local vector HitLocation, HitNormal;
+
+	BestSocket='';
 
 	if (LinkedTo == None)
 	{
 		return vect(0,0,0);
 	}
-	else if( UTVehicle(LinkedTo) != none )
+	else if( UTVehicle(LinkedTo) != none || UTWalkerBody(LinkedTo) != none )
 	{
 		if (Mesh.bAttached)
 		{
 			// so we trace from gun tip to the vehicle's GetTargetLocation() and then at hit set that to be BestLoc
-			UDKSkeletalMeshComponent(Mesh).GetSocketWorldLocationAndRotation( 'MuzzleFlashSocket', Loc );
+			UTSkeletalMeshComponent(Mesh).GetSocketWorldLocationAndRotation( 'MuzzleFlashSocket', Loc );
 		}
 		else
 		{
 			Loc = Instigator.GetPawnViewLocation();
 		}
 		ToTarget = UTVehicle(LinkedTo).GetTargetLocation();
+
+		// need to do this check first as otherwise we will clip through the Walkers' legs!
+		if( (UTVehicle_Walker(LinkedTo) != none) && (UTVehicle_Walker(LinkedTo).BodyActor != None) )
+		{
+			// check to see if we are hitting the legs
+			bHitVehicleAimingAt = TraceComponent( HitLocation, HitNormal, UTVehicle_Walker(LinkedTo).BodyActor.SkeletalMeshComponent, ToTarget, Loc,, );
+		}
 
 		// if we didn't it the legs so maybe we hit the body or it wasn't a Walker at all!
 		if( !bHitVehicleAimingAt )
@@ -564,6 +523,30 @@ simulated function vector GetLinkedToLocation()
 			BestLoc = Loc;
 		}
 
+		return BestLoc;
+	}
+	else if(UTOnslaughtPowerNode(LinkedTo) != none && UTOnslaughtPowerNode(LinkedTo).LinkToSockets.Length != 0)
+	{
+		foreach (UTOnslaughtPowerNode(LinkedTo).LinkToSockets)(SocketName)
+		{
+			UTOnslaughtPowerNode(LinkedTo).EnergySphere.GetSocketWorldLocationAndRotation(SocketName,Loc);
+			ToTarget = Location-Loc;
+			Dist = VSizeSq(ToTarget);
+			if(Instigator.Controller != none)
+			{
+				Score = Abs(ToTarget/VSize(ToTarget) dot vector(Instigator.GetViewRotation()));
+			}
+			else
+			{
+				Score=1/Dist;
+			}
+			if(BestSocket == '' || Score>BestScore)
+			{
+				BestSocket = SocketName;
+				BestLoc = Loc;
+				BestScore = Score;
+			}
+		}
 		return BestLoc;
 	}
 	else if (Pawn(LinkedTo) != None)
@@ -586,6 +569,7 @@ simulated function vector GetLinkedToLocation()
 function AttemptLinkTo(Actor Who, PrimitiveComponent HitComponent)
 {
 	local UTVehicle UTV;
+	local UTOnslaughtObjective UTO;
 	local Vector 		StartTrace, EndTrace, V, HitLocation, HitNormal;
 	local Actor			HitActor;
 
@@ -622,6 +606,31 @@ function AttemptLinkTo(Actor Who, PrimitiveComponent HitComponent)
 		else
 		{
 			// Enemy got in the way, break any links
+			UnLink();
+		}
+	}
+	else
+	{
+		UTO = UTOnslaughtObjective(Who);
+		if ( (UTO != none) && WorldInfo.Game.GameReplicationInfo.OnSameTeam(UTO,Instigator) )
+		{
+			if ( UTO.LinkHealMult > 0 )
+			{
+				if(LinkedTo != Who)
+				{
+					Unlink();
+				}
+				LinkedTo = UTO;
+				LinkedComponent = HitComponent;
+			}
+			else
+			{
+				UTO.FailedLinkHeal(Instigator.Controller);
+				UnLink();
+			}
+		}
+		else if (Who != None && !Who.bStatic)
+		{
 			UnLink();
 		}
 	}
@@ -780,11 +789,6 @@ simulated event ReplicatedEvent(name VarName)
 			PoweredUpEffect.DeactivateSystem();
 		}
 	}
-	else if ( VarName == 'bFullPower' )
-	{
-		if ( bFullPower )
-			BoostPower();
-	}
 	else
 	{
 		Super.ReplicatedEvent(VarName);
@@ -847,7 +851,7 @@ simulated state WeaponBeamFiring
 				InstigatorFireMode = CurrentFireMode;
 			}
 
-			Instigator.SetFiringMode(Self, InstigatorFireMode);
+			Instigator.SetFiringMode(InstigatorFireMode);
 		}
 	}
 
@@ -860,7 +864,6 @@ simulated state WeaponBeamFiring
 
 	/**
 	 * Update the beam and handle the effects
-	 * FIXMESTEVE MOVE TO TICKSPECIAL
 	 */
 	simulated function Tick(float DeltaTime)
 	{
@@ -895,7 +898,6 @@ simulated state WeaponBeamFiring
 	simulated function EndState(Name NextStateName)
 	{
 		local color EffectColor;
-		local LinearColor LinEffectColor;
 
 		WeaponPlaySound(EndAltFireSound);
 
@@ -912,8 +914,7 @@ simulated state WeaponBeamFiring
 		LinkAttachmentClass.static.GetTeamBeamInfo(255, EffectColor);
 		if (WeaponMaterialInstance != None)
 		{
-			LinEffectColor = ColorToLinearColor(EffectColor);
-			WeaponMaterialInstance.SetVectorParameterValue('TeamColor', LinEffectColor);
+			WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(EffectColor));
 		}
 		if (MuzzleFlashPSC != None)
 		{
@@ -958,7 +959,7 @@ function float GetAIRating()
 		return AIRating;
 	}
 
-	V = UTSquadAI(B.Squad).GetLinkVehicle(B);
+	V = B.Squad.GetLinkVehicle(B);
 	if ( (V != None)
 		&& (VSize(Instigator.Location - V.Location) < 1.5 * WeaponRange)
 		&& (V.Health < V.HealthMax) && (V.LinkHealMult > 0) )
@@ -973,7 +974,7 @@ function float GetAIRating()
 		return 1.2;
 	}
 
-	O = UTGameObjective(B.Squad.SquadObjective);
+	O = B.Squad.SquadObjective;
 	if (O != None && O.TeamLink(B.GetTeamNum()) && O.NeedsHealing()
 	     && VSize(Instigator.Location - O.Location) < 1.1 * GetTraceRange() && B.LineOfSightTo(O))
 	{
@@ -998,29 +999,23 @@ function bool FocusOnLeader(bool bLeaderFiring)
 	local UTVehicle LinkVehicle;
 	local Actor Other;
 	local vector HitLocation, HitNormal, StartTrace;
-	local Controller SquadLeader;
-	
+
 	B = UTBot(Instigator.Controller);
-	if ( B == None || B.Squad == None )
+	if (B == None || B.Squad == None || B.Squad.SquadLeader == None)
 	{
 		return false;
 	}
-	SquadLeader = UTSquadAI(B.Squad).SquadLeader;
-	if ( SquadLeader == None )
+	if ( PlayerController(B.Squad.SquadLeader) != None )
 	{
-		return false;
-	}
-	if ( PlayerController(SquadLeader) != None )
-	{
-		LinkVehicle = UTVehicle(SquadLeader.Pawn);
+		LinkVehicle = UTVehicle(B.Squad.SquadLeader.Pawn);
 	}
 	else
 	{
-		LinkVehicle = UTSquadAI(B.Squad).GetLinkVehicle(B);
+		LinkVehicle = B.Squad.GetLinkVehicle(B);
 	}
 	if ( LinkVehicle == None )
 	{
-		LinkVehicle = UTVehicle(SquadLeader.Pawn);
+		LinkVehicle = UTVehicle(B.Squad.SquadLeader.Pawn);
 		if ( LinkVehicle == None )
 		{
 			return false;
@@ -1052,12 +1047,7 @@ function byte BestMode()
 	local UTBot B;
 	local UTVehicle V;
 	local UTGameObjective ObjTarget;
-
-	// currently no beams on mobile devices, so disallow the alt-fire
-	if (WorldInfo.IsConsoleBuild(CONSOLE_Mobile))
-	{
-		return 0;
-	}
+	local UTPawn EnemyPawn;
 
 	B = UTBot(Instigator.Controller);
 	if ( B == None )
@@ -1070,7 +1060,7 @@ function byte BestMode()
 	{
 		return 1;
 	}
-	if ( FocusOnLeader(B.Focus == UTSquadAI(B.Squad).SquadLeader.Pawn) )
+	if ( FocusOnLeader(B.Focus == B.Squad.SquadLeader.Pawn) )
 	{
 		return 1;
 	}
@@ -1086,6 +1076,16 @@ function byte BestMode()
 	}
 	EnemyDist = VSize(B.Enemy.Location - Instigator.Location);
 	if ( EnemyDist > WeaponRange )
+	{
+		return 0;
+	}
+
+	if ( UTSlowVolume(B.Enemy.PhysicsVolume) != None )
+	{
+		return 0;
+	}
+	EnemyPawn = UTPawn(B.Enemy);
+	if ( (EnemyPawn != None) && EnemyPawn.bHasSlowField )
 	{
 		return 0;
 	}
@@ -1124,184 +1124,104 @@ function float SuggestDefenseStyle()
 	return -0.4;
 }
 
-/**
- * Detect that we are trying to pickup another link gun and switch to full power
- */
-function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
-{
-	if ( ItemClass==Class )
-	{
-		BoostPower();
-	}
-	return super.DenyPickupQuery(ItemClass, Pickup);
-}
-
-/** 
-  * Increase weapon power (after picking up Link Booster) 
-  */
-simulated function BoostPower()
-{
-	AIRating = 0.71;
-	CurrentRating = 0.71;
-	FireInterval[0] = 0.16;
-	WeaponRange = 900;
-	bFullPower = true;
-	if ( WeaponMaterialInstance != None )
-	{
-		WeaponMaterialInstance.SetVectorParameterValue('Paint_Color', class'UTHUD'.default.WhiteLinearColor);
-	}
-}
-
-simulated state WeaponEquipping
-{
-	simulated event BeginState(Name PreviousStateName)
-	{
-		local LinearColor TeamColor;
-
-		super.BeginState(PreviousStateName);
-
-		// if not full power, and team game, team color the linkgun
-		if ( !bFullPower && (WorldInfo.GRI != None) && WorldInfo.GRI.GameClass.default.bTeamGame 
-			&& (Instigator != None) && (Instigator.PlayerReplicationInfo != None) && (Instigator.PlayerReplicationInfo.Team != None) )
-		{
-			if ( Instigator.PlayerReplicationInfo.Team.TeamIndex == 0 )
-			{
-				TeamColor.R = 0.2;
-			}
-			else
-			{
-				TeamColor.B = 0.4;
-			}
-			WeaponMaterialInstance.SetVectorParameterValue('Paint_Color', TeamColor);
-		}
-	}
-}
-
 defaultproperties
 {
-	WeaponColor=(R=255,G=255,B=0,A=255)
-	FireInterval(0)=+0.24
-	FireInterval(1)=+0.35
-	PlayerViewOffset=(X=16.0,Y=-18,Z=-18.0)
-
-	FiringStatesArray(1)=WeaponBeamFiring
-
-	Begin Object class=AnimNodeSequence Name=MeshSequenceA
-		bCauseActorAnimEnd=true
-	End Object
-
-	// Weapon SkeletalMesh
-	Begin Object Name=FirstPersonMesh
-		SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_Linkgun_1P'
-		AnimSets(0)=AnimSet'WP_LinkGun.Anims.K_WP_LinkGun_1P_Base'
-		Animations=MeshSequenceA
-		Scale=0.9
-		FOV=60.0
-	End Object
-
-	AttachmentClass=class'UTAttachment_Linkgun'
-
-	// Pickup staticmesh
-	Begin Object Name=PickupMesh
-		SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_LinkGun_3P'
-	End Object
-
-	Begin Object Class=ParticleSystemComponent Name=PoweredUpComponent
-		Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_PoweredUp'
-		bAutoActivate=false
-		DepthPriorityGroup=SDPG_Foreground
-		SecondsBeforeInactive=1.0f
-	End Object
-	PoweredUpEffect=PoweredUpComponent
-	PoweredUpEffectSocket=PowerEffectSocket
-
-	FireOffset=(X=12,Y=10,Z=-10)
-
-	WeaponFireTypes(0)=EWFT_Projectile
-	WeaponProjectiles(0)=class'UTProj_LinkPlasma' // UTProj_LinkPowerPlasma if linked (see GetProjectileClass() )
-
-	WeaponEquipSnd=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_RaiseCue'
-	WeaponPutDownSnd=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_LowerCue'
-	WeaponFireSnd(0)=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_FireCue'
-	WeaponFireSnd(1)=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireCue'
-
-	MaxDesireability=0.7
-	AIRating=+0.3
-	CurrentRating=+0.3
-	bFastRepeater=true
-	bInstantHit=false
-	bSplashJump=false
-	bRecommendSplashDamage=false
-	bSniping=false
-	ShouldFireOnRelease(0)=0
-	ShouldFireOnRelease(1)=0
-	InventoryGroup=1
-	GroupWeight=0.5
-	bAutoCharge=true
-	RechargeRate=1.0
-
-	WeaponRange=500
-	LinkStrength=1
-	LinkFlexibility=0.64	// determines how easy it is to maintain a link.
-							// 1=must aim directly at linkee, 0=linkee can be 90 degrees to either side of you
-
-	LinkBreakDelay=0.5		// link will stay established for this long extra when blocked (so you don't have to worry about every last tree getting in the way)
-	WeaponLinkDistance=160.0
-
-	InstantHitDamage(1)=100
-	InstantHitDamageTypes(1)=class'UTDmgType_LinkBeam'
-
-	PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Link_Cue'
-
-	AmmoCount=100
-	LockerAmmoCount=100
-	MaxAmmoCount=100
-	MomentumTransfer=50000.0
-	BeamAmmoUsePerSecond=8.5
-	MinimumDamage=5.0
-
-	EffectSockets(0)=MuzzleFlashSocket
-	EffectSockets(1)=MuzzleFlashSocket
-
-	BeamPreFireAnim(1)=WeaponAltFireStart
-	BeamFireAnim(1)=WeaponAltFire
-	BeamPostFireAnim(1)=WeaponAltFireEnd
-
-	MuzzleFlashSocket=MuzzleFlashSocket
-	MuzzleFlashPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Primary'
-	MuzzleFlashAltPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam'
-	bMuzzleFlashPSCLoops=true
-	MuzzleFlashLightClass=class'UTGame.UTLinkGunMuzzleFlashLight'
-
-	bShowAltMuzzlePSCWhenWeaponHidden=TRUE
-
-	TeamMuzzleFlashTemplates[0]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Red'
-	TeamMuzzleFlashTemplates[1]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Blue'
-	TeamMuzzleFlashTemplates[2]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam'
-	HighPowerMuzzleFlashTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Gold'
-
-	MuzzleFlashColor=(R=120,G=255,B=120,A=255)
-	MuzzleFlashDuration=0.33;
-
-	BeamTemplate[1]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
-	BeamSockets[1]=MuzzleFlashSocket02
-	EndPointParamName=LinkBeamEnd
-
-	IconX=412
-	IconY=82
-	IconWidth=40
-	IconHeight=36
-
-	StartAltFireSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireStartCue'
-	EndAltFireSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireStopCue'
-	CrossHairCoordinates=(U=384,V=0,UL=64,VL=64)
-
-	LockerRotation=(pitch=0,yaw=0,roll=-16384)
-	IconCoordinates=(U=453,V=467,UL=147,VL=41)
-
-	Begin Object Class=ForceFeedbackWaveform Name=BeamForceFeedbackWaveform1
-		Samples(0)=(LeftAmplitude=20,RightAmplitude=10,LeftFunction=WF_Constant,RightFunction=WF_Constant,Duration=0.100)
-		bIsLooping=TRUE
-	End Object
-	BeamWeaponFireWaveForm=BeamForceFeedbackWaveform1
+   WeaponLinkDistance=160.000000
+   LinkStrength=1
+   LinkFlexibility=0.640000
+   LinkBreakDelay=0.500000
+   MomentumTransfer=50000.000000
+   BeamAmmoUsePerSecond=8.500000
+   MinimumDamage=5.000000
+   StartAltFireSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireStartCue'
+   EndAltFireSound=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireStopCue'
+   Begin Object Class=ParticleSystemComponent Name=PoweredUpComponent ObjName=PoweredUpComponent Archetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+      Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_PoweredUp'
+      bAutoActivate=False
+      SecondsBeforeInactive=1.000000
+      DepthPriorityGroup=SDPG_Foreground
+      Name="PoweredUpComponent"
+      ObjectArchetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+   End Object
+   PoweredUpEffect=PoweredUpComponent
+   PoweredUpEffectSocket="PowerEffectSocket"
+   TeamMuzzleFlashTemplates(0)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Red'
+   TeamMuzzleFlashTemplates(1)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Blue'
+   TeamMuzzleFlashTemplates(2)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam'
+   HighPowerMuzzleFlashTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam_Gold'
+   BeamTemplate(1)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
+   BeamSockets(1)="MuzzleFlashSocket02"
+   EndPointParamName="LinkBeamEnd"
+   BeamPreFireAnim(1)="WeaponAltFireStart"
+   BeamFireAnim(1)="WeaponAltFire"
+   BeamPostFireAnim(1)="WeaponAltFireEnd"
+   BeamWeaponFireWaveForm=ForceFeedbackWaveform'UTGame.Default__UTWeap_LinkGun:BeamForceFeedbackWaveform1'
+   bShowAltMuzzlePSCWhenWeaponHidden=True
+   bMuzzleFlashPSCLoops=True
+   bFastRepeater=True
+   bTargetFrictionEnabled=True
+   bTargetAdhesionEnabled=True
+   AmmoCount=50
+   LockerAmmoCount=100
+   MaxAmmoCount=220
+   IconX=412
+   IconY=82
+   IconWidth=40
+   IconHeight=36
+   IconCoordinates=(U=453.000000,V=467.000000,UL=147.000000,VL=41.000000)
+   CrossHairCoordinates=(U=384.000000,V=0.000000)
+   InventoryGroup=5
+   AttachmentClass=Class'UTGame.UTAttachment_LinkGun'
+   GroupWeight=0.500000
+   QuickPickGroup=5
+   QuickPickWeight=0.800000
+   WeaponFireSnd(0)=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_FireCue'
+   WeaponFireSnd(1)=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_AltFireCue'
+   WeaponPutDownSnd=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_LowerCue'
+   WeaponEquipSnd=SoundCue'A_Weapon_Link.Cue.A_Weapon_Link_RaiseCue'
+   WeaponColor=(B=0,G=255,R=255,A=255)
+   MuzzleFlashPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Primary'
+   MuzzleFlashAltPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_MF_Beam'
+   MuzzleFlashColor=(B=120,G=255,R=120,A=255)
+   MuzzleFlashLightClass=Class'UTGame.UTLinkGunMuzzleFlashLight'
+   PlayerViewOffset=(X=16.000000,Y=-18.000000,Z=-18.000000)
+   LockerRotation=(Pitch=0,Yaw=0,Roll=-16384)
+   CurrentRating=0.710000
+   WeaponFireTypes(0)=EWFT_Projectile
+   FiringStatesArray(1)="WeaponBeamFiring"
+   WeaponProjectiles(0)=Class'UTGame.UTProj_LinkPlasma'
+   FireInterval(0)=0.160000
+   FireInterval(1)=0.350000
+   InstantHitDamage(1)=100.000000
+   InstantHitDamageTypes(1)=Class'UTGame.UTDmgType_LinkBeam'
+   FireOffset=(X=12.000000,Y=10.000000,Z=-10.000000)
+   WeaponRange=900.000000
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTBeamWeapon:FirstPersonMesh'
+      FOV=60.000000
+      SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_Linkgun_1P'
+      Begin Object Class=AnimNodeSequence Name=MeshSequenceA ObjName=MeshSequenceA Archetype=AnimNodeSequence'Engine.Default__AnimNodeSequence'
+         bCauseActorAnimEnd=True
+         Name="MeshSequenceA"
+         ObjectArchetype=AnimNodeSequence'Engine.Default__AnimNodeSequence'
+      End Object
+      Animations=AnimNodeSequence'UTGame.Default__UTWeap_LinkGun:MeshSequenceA'
+      AnimSets(0)=AnimSet'WP_LinkGun.Anims.K_WP_LinkGun_1P_Base'
+      Scale=0.900000
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTBeamWeapon:FirstPersonMesh'
+   End Object
+   Mesh=FirstPersonMesh
+   Priority=5.000000
+   AIRating=0.710000
+   ItemName="Link Gun"
+   MaxDesireability=0.700000
+   PickupMessage="Link Gun"
+   PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Link_Cue'
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTBeamWeapon:PickupMesh'
+      SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_LinkGun_3P'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTBeamWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTWeap_LinkGun"
+   ObjectArchetype=UTBeamWeapon'UTGame.Default__UTBeamWeapon'
 }

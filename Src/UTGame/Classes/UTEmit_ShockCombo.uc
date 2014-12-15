@@ -1,9 +1,9 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTEmit_ShockCombo extends UTReplicatedEmitter;
 
-var class<UDKExplosionLight> ExplosionLightClass;
+var class<UTExplosionLight> ExplosionLightClass;
 
 /** increase in vortex force per second */
 var float VortexForcePerSecond;
@@ -44,7 +44,7 @@ simulated event SetInitialState()
 		{
 			AttachComponent(new(self) ExplosionLightClass);
 		}
-		if ( bDoPhysicsVortex && !class'UTGame'.Static.UseLowGore(WorldInfo) )
+		if ( bDoPhysicsVortex && !class'GameInfo'.Static.UseLowGore(WorldInfo) )
 		{
 			GotoState('PhysicsVortex');
 		}
@@ -84,7 +84,7 @@ state PhysicsVortex
 				{
 					// if it has reached the center, gib it
 					Dir = Location - OtherLocation;
-					if (VSize(Dir) < P.Mesh.Bounds.SphereRadius && Normal(P.Velocity) dot Dir > 0.0 && !class'UTGame'.static.UseLowGore(WorldInfo) )
+					if (VSize(Dir) < P.Mesh.Bounds.SphereRadius && Normal(P.Velocity) dot Dir > 0.0 && !class'GameInfo'.static.UseLowGore(WorldInfo) )
 					{
 						P.SpawnGibs(VortexDamageType, Location);
 					}
@@ -100,13 +100,18 @@ state PhysicsVortex
 
 defaultproperties
 {
-	EmitterTemplate=ParticleSystem'WP_ShockRifle.Particles.P_WP_ShockRifle_Explo'
-	ExplosionLightClass=class'UTShockComboExplosionLight'
-
-	TickGroup=TG_PreAsyncWork
-
-	VortexRadius=400.0
-	VortexForcePerSecond=150.0
-	VortexDuration=2.75
-	VortexDamageType=class'UTDmgType_ShockCombo'
+   ExplosionLightClass=Class'UTGame.UTShockComboExplosionLight'
+   VortexForcePerSecond=150.000000
+   VortexRadius=400.000000
+   VortexDuration=2.750000
+   VortexDamageType=Class'UTGame.UTDmgType_ShockCombo'
+   EmitterTemplate=ParticleSystem'WP_ShockRifle.Particles.P_WP_ShockRifle_Explo'
+   Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0 ObjName=ParticleSystemComponent0 Archetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+      ObjectArchetype=ParticleSystemComponent'UTGame.Default__UTReplicatedEmitter:ParticleSystemComponent0'
+   End Object
+   ParticleSystemComponent=ParticleSystemComponent0
+   Components(0)=ParticleSystemComponent0
+   TickGroup=TG_PreAsyncWork
+   Name="Default__UTEmit_ShockCombo"
+   ObjectArchetype=UTReplicatedEmitter'UTGame.Default__UTReplicatedEmitter'
 }

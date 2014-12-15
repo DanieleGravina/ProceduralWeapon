@@ -1,16 +1,16 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTWeap_RocketLauncher extends UTWeapon
-	abstract;
+	native;
 
-var enum ERocketFireMode1
+var enum ERocketFireMode
 {
 	RFM_Spread,
 	RFM_Spiral,
 	RFM_Grenades,
 	RFM_Max
-} LoadedFireMode;	
+} LoadedFireMode;
 
 /** Class of the rocket to use when seeking */
 var class<UTProjectile> SeekingRocketClass;
@@ -33,7 +33,7 @@ var SoundCue RocketLoadedSound;
 var SoundCue GrenadeFireSound;
 
 /** Skeletal mesh component for the 1st person view of the rocketlauncher */
-var UDKSkeletalMeshComponent SkeletonFirstPersonMesh;
+var UTSkeletalMeshComponent SkeletonFirstPersonMesh;
 
 /** Have we hidden any of the ammo sockets from player's view */
 var bool bIsAnyAmmoHidden;
@@ -140,6 +140,11 @@ var name LoadUpAnimList[3];
 var name WeaponAltFireLaunch[3];
 var name WeaponAltFireLaunchEnd[3];
 
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+
 replication
 {
 	// Server->Client properties
@@ -195,6 +200,13 @@ simulated function float GetFireInterval( byte FireModeNum )
  * Target Locking
  *********************************************************************************************/
 
+/**
+ * The function checks to see if we are locked on a target
+ */
+native function CheckTargetLock();
+
+native function UpdateLockTarget(Actor NewLockTarget);
+
 simulated function GetWeaponDebug( out Array<String> DebugInfo )
 {
 	Super.GetWeaponDebug(DebugInfo);
@@ -219,15 +231,10 @@ simulated function FireAmmunition()
 
 /**
  *  This function is used to adjust the LockTarget.
+ *  Called by UpdateLockTarget() only when NewLockTarget is different from LockTarget
  */
-function AdjustLockTarget(actor NewLockTarget)
+event AdjustLockTarget(actor NewLockTarget)
 {
-	if ( LockedTarget == NewLockTarget )
-	{
-		// no need to update
-		return;
-	}
-
 	if (NewLockTarget == None)
 	{
 		// Clear the lock
@@ -257,193 +264,13 @@ function AdjustLockTarget(actor NewLockTarget)
 }
 
 /**
-* Given an potential target TA determine if we can lock on to it.  By default only allow locking on
-* to pawns.  
-*/
-simulated function bool CanLockOnTo(Actor TA)
-{
-	if ( (TA == None) || !TA.bProjTarget || TA.bDeleteMe || (Pawn(TA) == None) || (TA == Instigator) || (Pawn(TA).Health <= 0) )
-	{
-		return false;
-	}
-
-	return ( (WorldInfo.Game == None) || !WorldInfo.Game.bTeamGame || (WorldInfo.GRI == None) || !WorldInfo.GRI.OnSameTeam(Instigator,TA) );
-}
-
-
-/**
-  * Check target locking - server-side only
-  */
-event Tick( FLOAT DeltaTime )
-{
-	if ( bTargetLockingActive && ( WorldInfo.TimeSeconds > LastTargetLockCheckTime + LockCheckTime ) )
-	{
-		LastTargetLockCheckTime = WorldInfo.TimeSeconds;
-		CheckTargetLock();
-	}
-}
-
-
-/**
-* This function checks to see if we are locked on a target
-*/
-function CheckTargetLock()
-{
-	local Pawn P, LockedPawn;
-	local Actor BestTarget, HitActor, TA;
-	local UDKBot BotController;
-	local vector StartTrace, EndTrace, Aim, HitLocation, HitNormal;
-	local rotator AimRot;
-	local float BestAim, BestDist;
-
-	if ( (Instigator == None) || (Instigator.Controller == None) || (self != Instigator.Weapon) )
-	{
-		return;
-	}
-
-	if ( Instigator.bNoWeaponFiring || (LoadedFireMode == RFM_Grenades) )
-	{
-		AdjustLockTarget(None);
-		PendingLockedTarget = None;
-		return;
-	}
-
-	// support keeping lock as players get onto hoverboard
-	if ( LockedTarget != None )
-	{
-		if ( LockedTarget.bDeleteMe )
-		{
-			if ( (LockedTargetPRI != None) && (UTVehicle_Hoverboard(LockedTarget) != None) )
-			{
-				// find the appropriate pawn
-				for ( P=WorldInfo.PawnList; P!=None; P=P.NextPawn )
-				{
-					if ( P.PlayerReplicationInfo == LockedTargetPRI )
-					{
-						AdjustLockTarget((Vehicle(P) != None) ? None : P);
-						break;
-					}
-				}
-			}
-			else
-			{
-				AdjustLockTarget(None);
-			}
-		}
-		else 
-		{
-			LockedPawn = Pawn(LockedTarget);
-			if ( (LockedPawn != None) && (LockedPawn.DrivenVehicle != None) )
-			{
-				AdjustLockTarget(UTVehicle_Hoverboard(LockedPawn.DrivenVehicle));
-			}
-		}
-	}
-
-	BestTarget = None;
-	BotController = UDKBot(Instigator.Controller);
-	if ( BotController != None )
-	{
-		// only try locking onto bot's target
-		if ( (BotController.Focus != None) && CanLockOnTo(BotController.Focus) )
-		{
-			// make sure bot can hit it
-			BotController.GetPlayerViewPoint( StartTrace, AimRot );
-			Aim = vector(AimRot);
-
-			if ( (Aim dot Normal(BotController.Focus.Location - StartTrace)) > LockAim )
-			{
-				HitActor = Trace(HitLocation, HitNormal, BotController.Focus.Location, StartTrace, true,,, TRACEFLAG_Bullet);
-				if ( (HitActor == None) || (HitActor == BotController.Focus) )
-				{
-					BestTarget = BotController.Focus;
-				}
-			}
-		}
-	}
-	else
-	{
-		// Begin by tracing the shot to see if it hits anyone
-		Instigator.Controller.GetPlayerViewPoint( StartTrace, AimRot );
-		Aim = vector(AimRot);
-		EndTrace = StartTrace + Aim * LockRange;
-		HitActor = Trace(HitLocation, HitNormal, EndTrace, StartTrace, true,,, TRACEFLAG_Bullet);
-
-		// Check for a hit
-		if ( (HitActor == None) || !CanLockOnTo(HitActor) )
-		{
-			// We didn't hit a valid target, have the controller attempt to pick a good target
-			BestAim = ((UDKPlayerController(Instigator.Controller) != None) && UDKPlayerController(Instigator.Controller).bConsolePlayer) ? ConsoleLockAim : LockAim;
-			BestDist = 0.0;
-			TA = Instigator.Controller.PickTarget(class'Pawn', BestAim, BestDist, Aim, StartTrace, LockRange);
-			if ( TA != None && CanLockOnTo(TA) )
-			{
-				BestTarget = TA;
-			}
-		}
-		else	// We hit a valid target
-		{
-			BestTarget = HitActor;
-		}
-	}
-
-	// If we have a "possible" target, note its time mark
-	if ( BestTarget != None )
-	{
-		LastValidTargetTime = WorldInfo.TimeSeconds;
-
-		if ( BestTarget == LockedTarget )
-		{
-			LastLockedOnTime = WorldInfo.TimeSeconds;
-		}
-		else
-		{
-			if ( LockedTarget != None && ((WorldInfo.TimeSeconds - LastLockedOnTime > LockTolerance) || !CanLockOnTo(LockedTarget)) )
-			{
-				// Invalidate the current locked Target
-				AdjustLockTarget(None);
-			}
-
-			// We have our best target, see if they should become our current target.
-			// Check for a new Pending Lock
-			if (PendingLockedTarget != BestTarget)
-			{
-				PendingLockedTarget = BestTarget;
-				PendingLockedTargetTime = ((Vehicle(PendingLockedTarget) != None) && (UDKPlayerController(Instigator.Controller) != None) && UDKPlayerController(Instigator.Controller).bConsolePlayer)
-										? WorldInfo.TimeSeconds + 0.5*LockAcquireTime
-										: WorldInfo.TimeSeconds + LockAcquireTime;
-			}
-
-			// Otherwise check to see if we have been tracking the pending lock long enough
-			else if (PendingLockedTarget == BestTarget && WorldInfo.TimeSeconds >= PendingLockedTargetTime )
-			{
-				AdjustLockTarget(PendingLockedTarget);
-				LastLockedOnTime = WorldInfo.TimeSeconds;
-				PendingLockedTarget = None;
-				PendingLockedTargetTime = 0.0;
-			}
-		}
-	}
-	else 
-	{
-		if ( LockedTarget != None && ((WorldInfo.TimeSeconds - LastLockedOnTime > LockTolerance) || !CanLockOnTo(LockedTarget)) )
-		{
-			// Invalidate the current locked Target
-			AdjustLockTarget(None);
-		}
-
-		// Next attempt to invalidate the Pending Target
-		if ( PendingLockedTarget != None && ((WorldInfo.TimeSeconds - LastValidTargetTime > LockTolerance) || !CanLockOnTo(PendingLockedTarget)) )
-		{
-			PendingLockedTarget = None;
-		}
-	}
-}
+ * Given an actor (TA) determine if we can lock on to it.  By default only allow locking on
+ * to pawns.  Some weapons may want to be able to lock on to other actors.
+ */
+native function bool CanLockOnTo(Actor TA);
 
 auto simulated state Inactive
 {
-	ignores Tick;
-
 	simulated function BeginState(name PreviousStateName)
 	{
 		Super.BeginState(PreviousStateName);
@@ -504,7 +331,7 @@ simulated function ActiveRenderOverlays( HUD H )
 	}
 	if ( bLockedOnTarget && (LockedTarget != None) && (Instigator != None) )
 	{
-		if ( WorldInfo.TimeSeconds - LockedTarget.LastRenderTime > 0.1f )
+		if ( (LocalPlayer(PC.Player) == None) || !LocalPlayer(PC.Player).GetActorVisibility(LockedTarget) )
 		{
 			return;
 		}
@@ -565,7 +392,7 @@ simulated event StopMuzzleFlash()
  */
 simulated event CauseMuzzleFlashLight()
 {
-	local UDKExplosionLight NewMuzzleFlashLight;
+	local UTExplosionLight NewMuzzleFlashLight;
 
 	Super.CauseMuzzleFlashLight();
 
@@ -581,11 +408,11 @@ simulated event CauseMuzzleFlashLight()
 
 simulated function AttachMuzzleFlash()
 {
-	local UDKSkeletalMeshComponent SKMesh;
+	local UTSkeletalMeshComponent SKMesh;
 	local int i;
 
 	bMuzzleFlashAttached = true;
-	SKMesh = UDKSkeletalMeshComponent(Mesh);
+	SKMesh = UTSkeletalMeshComponent(Mesh);
 
 	// Attach the Muzzle Flash
 	if ( SKMesh != none )
@@ -704,10 +531,10 @@ simulated function DrawLFMData(HUD Hud)
 	local string s;
 	local vector2d CrosshairSize;
 	local float XL, YL, x,y,PickupScale, ScreenX, ScreenY;
-	local UTHUDBase	H;
+	local UTHUD	H;
 	local int DrawLoaded;
 	local rotator CrosshairRotation;
-	local float TimeRemaining, TargetDist;
+	local float TimeRemaining;
 
 	if ( LoadedShotCount == 0 )
 	{
@@ -715,11 +542,9 @@ simulated function DrawLFMData(HUD Hud)
 		return;
 	}
 
-	H = UTHUDBase(HUD);
+	H = UTHUD(HUD);
 	if ( H == None )
 		return;
-		
-	TargetDist = GetTargetDistance();
 
 	// Apply pickup scaling
 	if ( H.LastPickupTime > WorldInfo.TimeSeconds - 0.3 )
@@ -739,7 +564,7 @@ simulated function DrawLFMData(HUD Hud)
 	}
 
 	DrawLoaded = Min(LoadedShotCount-1, 3);
- 	CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * LoadedIconCoords[DrawLoaded].VL * PickupScale * H.Canvas.ClipY/720;
+ 	CrosshairSize.Y = H.ConfiguredCrosshairScaling * CrosshairScaling * LoadedIconCoords[DrawLoaded].VL * PickupScale * H.Canvas.ClipY/768;
   	CrosshairSize.X = CrosshairSize.Y * LoadedIconCoords[DrawLoaded].UL/LoadedIconCoords[DrawLoaded].VL;
 
 	X = H.Canvas.ClipX * 0.5;
@@ -753,11 +578,11 @@ simulated function DrawLFMData(HUD Hud)
 		CrosshairRotation.Yaw = 21845.3333 * (LoadedShotCount - 1.0 + FMin(1.0,2.0*TimeRemaining/GetFireInterval(1)));
 	}
 	H.Canvas.DrawColor = H.BlackColor;
-	H.Canvas.SetPos(ScreenX, ScreenY, TargetDist);
+	H.Canvas.SetPos(ScreenX, ScreenY);
 	H.Canvas.DrawRotatedTile(CrosshairImage, CrosshairRotation, CrosshairSize.X, CrosshairSize.Y, LoadedIconCoords[DrawLoaded].U, LoadedIconCoords[DrawLoaded].V, LoadedIconCoords[DrawLoaded].UL,LoadedIconCoords[DrawLoaded].VL);
 
-	H.Canvas.DrawColor = H.bGreenCrosshair ? H.Default.LightGreenColor : Default.CrosshairColor;
-	H.Canvas.SetPos(ScreenX, ScreenY, TargetDist);
+	H.Canvas.DrawColor = UTHUD(HUD).bGreenCrosshair ? UTHUD(HUD).Default.LightGreenColor : Default.CrosshairColor;
+	H.Canvas.SetPos(ScreenX, ScreenY);
 	H.Canvas.DrawRotatedTile(CrosshairImage, CrosshairRotation, CrosshairSize.X, CrosshairSize.Y, LoadedIconCoords[DrawLoaded].U, LoadedIconCoords[DrawLoaded].V, LoadedIconCoords[DrawLoaded].UL,LoadedIconCoords[DrawLoaded].VL);
 
 	if (LoadedFireMode != RFM_Spread)
@@ -766,7 +591,7 @@ simulated function DrawLFMData(HUD Hud)
 
 		H.Canvas.Font = class'UTHUD'.static.GetFontSizeIndex(0);
 		H.Canvas.StrLen(S,XL,YL);
-		H.Canvas.SetPos( 0.5*H.Canvas.ClipX - 0.5*XL, 0.5*H.Canvas.ClipY + 0.71*CrosshairSize.Y, TargetDist);
+		H.Canvas.SetPos( 0.5*H.Canvas.ClipX - 0.5*XL, 0.5*H.Canvas.ClipY + 0.71*CrosshairSize.Y);
 		H.Canvas.DrawText(s);
 	}
 }
@@ -898,7 +723,7 @@ simulated function WeaponFireLoad()
 	}
 
 	PlayFiringSound();
-	UTInventoryManager(InvManager).OwnerEvent('FiredWeapon');
+	InvManager.OwnerEvent('FiredWeapon');
 	GotoState('WeaponPlayingFire');
 
 	//We've expended all our ammo, make sure the ammo geometry is hidden from view
@@ -975,7 +800,7 @@ function FireLoad()
 
 		if (LoadedFireMode != RFM_Grenades && bLockedOnTarget && UTProj_SeekingRocket(SpawnedProjectile) != None)
 		{
-			UTProj_SeekingRocket(SpawnedProjectile).SeekTarget = LockedTarget;
+			UTProj_SeekingRocket(SpawnedProjectile).Seeking = LockedTarget;
 		}
 	}
 
@@ -1023,7 +848,7 @@ simulated function Projectile ProjectileFire()
 	SpawnedProjectile = super.ProjectileFire();
 	if (bLockedOnTarget && UTProj_SeekingRocket(SpawnedProjectile) != None)
 	{
-		UTProj_SeekingRocket(SpawnedProjectile).SeekTarget = LockedTarget;
+		UTProj_SeekingRocket(SpawnedProjectile).Seeking = LockedTarget;
 	}
 
 	return SpawnedProjectile;
@@ -1032,6 +857,7 @@ simulated function Projectile ProjectileFire()
 /**
  * We override GetProjectileClass to swap in a Seeking Rocket if we are locked on.
  */
+
 function class<Projectile> GetProjectileClass()
 {
 	if (CurrentFireMode == 1 && LoadedFireMode == RFM_Grenades)
@@ -1201,7 +1027,7 @@ simulated state WeaponLoadAmmo
 	{
 		if (FireModeNum == 0)
 		{
-			LoadedFireMode = ERocketFireMode1((int(LoadedFireMode) + 1) % RFM_Max);
+			LoadedFireMode = ERocketFireMode((int(LoadedFireMode) + 1) % RFM_Max);
 			WeaponPlaySound(AltFireModeChangeSound);
 		}
 
@@ -1374,14 +1200,6 @@ simulated state WeaponLoadAmmo
 		Super.BeginState(PreviousStateName);
 	}
 
-
-	/** You can run around loading up rockets ready to fire them! **/
-	simulated function bool CanViewAccelerationWhenFiring()
-	{
-		return TRUE;
-	}
-
-
 Begin:
 	AddProjectile();
 }
@@ -1409,7 +1227,7 @@ simulated state WeaponWaitingForFire
 	{
 		if (FireModeNum == 0)
 		{
-			LoadedFireMode = ERocketFireMode1((int(LoadedFireMode) + 1) % RFM_Max);
+			LoadedFireMode = ERocketFireMode((int(LoadedFireMode) + 1) % RFM_Max);
 			WeaponPlaySound(AltFireModeChangeSound);
 		}
 		global.BeginFire(FireModeNum);
@@ -1583,7 +1401,7 @@ simulated state Active
 		// (attachment uses this to play load anim)
 		if (Instigator != None)
 		{
-			Instigator.SetFiringMode(Self, 0);
+			Instigator.SetFiringMode(0);
 		}
 
 		Super.BeginState(PreviousStateName);
@@ -1592,5 +1410,112 @@ simulated state Active
 
 defaultproperties
 {
-	InventoryGroup=8
+   SeekingRocketClass=Class'UTGame.UTProj_SeekingRocket'
+   LoadedRocketClass=Class'UTGame.UTProj_LoadedRocket'
+   GrenadeClass=Class'UTGame.UTProj_Grenade'
+   GrenadeSpreadDist=300
+   AltFireModeChangeSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_AltModeChange_Cue'
+   RocketLoadedSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_RocketLoaded_Cue'
+   GrenadeFireSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_GrenadeFire_Cue'
+   Begin Object Class=UTSkeletalMeshComponent Name=FirstPersonMesh ObjName=FirstPersonMesh Archetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+      FOV=60.000000
+      SkeletalMesh=SkeletalMesh'WP_RocketLauncher.Mesh.SK_WP_RocketLauncher_1P'
+      AnimTreeTemplate=AnimTree'WP_RocketLauncher.Anims.AT_WP_RocketLauncher_1P_Base'
+      AnimSets(0)=AnimSet'WP_RocketLauncher.Anims.K_WP_RocketLauncher_1P_Base'
+      ObjectArchetype=UTSkeletalMeshComponent'UTGame.Default__UTWeapon:FirstPersonMesh'
+   End Object
+   SkeletonFirstPersonMesh=FirstPersonMesh
+   LockCheckTime=0.100000
+   LockRange=8000.000000
+   LockAcquireTime=1.100000
+   LockTolerance=0.200000
+   LockAim=0.997000
+   ConsoleLockAim=0.992000
+   LockAcquiredSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLock_Cue'
+   LockLostSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLost_Cue'
+   MaxLoadCount=3
+   WeaponLoadedSnd=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Load_Cue'
+   AltFireQueueTimes(0)=0.400000
+   AltFireQueueTimes(1)=0.960000
+   AltFireQueueTimes(2)=0.960000
+   AltFireLaunchTimes(0)=0.510000
+   AltFireLaunchTimes(1)=0.510000
+   AltFireLaunchTimes(2)=0.510000
+   AltFireEndTimes(0)=0.440000
+   AltFireEndTimes(1)=0.440000
+   AltFireEndTimes(2)=0.440000
+   AltFireSndQue(0)=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_AltFireQueue1_Cue'
+   AltFireSndQue(1)=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_AltFireQueue2_Cue'
+   AltFireSndQue(2)=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_AltFireQueue3_Cue'
+   MuzzleFlashSocketList(0)="MuzzleFlashSocketA"
+   MuzzleFlashSocketList(1)="MuzzleFlashSocketC"
+   MuzzleFlashSocketList(2)="MuzzleFlashSocketB"
+   SpreadDist=1000
+   GracePeriod=0.960000
+   WaitToFirePct=0.850000
+   GrenadeString="[Granate]"
+   SpiralString="[Spirale]"
+   LoadedIconCoords(0)=(V=384.000000,UL=63.000000,VL=63.000000)
+   LoadedIconCoords(1)=(U=63.000000,V=384.000000,UL=63.000000,VL=63.000000)
+   LoadedIconCoords(2)=(U=126.000000,V=384.000000,UL=63.000000,VL=63.000000)
+   LoadUpAnimList(0)="WeaponAltFireQueue1"
+   LoadUpAnimList(1)="WeaponAltFireQueue2"
+   LoadUpAnimList(2)="WeaponAltFireQueue3"
+   WeaponAltFireLaunch(0)="WeaponAltFireLaunch1"
+   WeaponAltFireLaunch(1)="WeaponAltFireLaunch2"
+   WeaponAltFireLaunch(2)="WeaponAltFireLaunch3"
+   WeaponAltFireLaunchEnd(0)="WeaponAltFireLaunch1End"
+   WeaponAltFireLaunchEnd(1)="WeaponAltFireLaunch2End"
+   WeaponAltFireLaunchEnd(2)="WeaponAltFireLaunch3End"
+   bSplashJump=True
+   bRecommendSplashDamage=True
+   AmmoCount=9
+   LockerAmmoCount=18
+   MaxAmmoCount=30
+   IconX=460
+   IconY=34
+   IconWidth=51
+   IconHeight=38
+   IconCoordinates=(U=131.000000,V=379.000000,UL=129.000000,VL=50.000000)
+   CrossHairCoordinates=(U=128.000000)
+   InventoryGroup=8
+   AttachmentClass=Class'UTGame.UTAttachment_RocketLauncher'
+   GroupWeight=0.500000
+   QuickPickGroup=2
+   QuickPickWeight=0.900000
+   WeaponFireSnd(0)=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Fire_Cue'
+   WeaponFireSnd(1)=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Fire_Cue'
+   WeaponPutDownSnd=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Lower_Cue'
+   WeaponEquipSnd=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Raise_Cue'
+   JumpDamping=0.750000
+   WeaponColor=(B=0,G=0,R=255,A=255)
+   MuzzleFlashSocket="MuzzleFlashSocketA"
+   MuzzleFlashPSCTemplate=ParticleSystem'WP_RocketLauncher.Effects.P_WP_RockerLauncher_Muzzle_Flash'
+   MuzzleFlashLightClass=Class'UTGame.UTRocketMuzzleFlashLight'
+   LockerRotation=(Pitch=0,Yaw=0,Roll=-16384)
+   CurrentRating=0.780000
+   ShouldFireOnRelease(1)=1
+   WeaponFireTypes(0)=EWFT_Projectile
+   WeaponFireTypes(1)=EWFT_Projectile
+   FiringStatesArray(1)="WeaponLoadAmmo"
+   WeaponProjectiles(0)=Class'UTGame.UTProj_Rocket'
+   WeaponProjectiles(1)=Class'UTGame.UTProj_Rocket'
+   FireInterval(1)=1.050000
+   EquipTime=0.600000
+   FireOffset=(X=20.000000,Y=12.000000,Z=-5.000000)
+   Mesh=FirstPersonMesh
+   Priority=10.000000
+   AIRating=0.780000
+   ItemName="Lanciarazzi"
+   MaxDesireability=0.780000
+   PickupMessage="Lanciarazzi"
+   PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Rocket_Cue'
+   Begin Object Class=SkeletalMeshComponent Name=PickupMesh ObjName=PickupMesh Archetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+      SkeletalMesh=SkeletalMesh'WP_RocketLauncher.Mesh.SK_WP_RocketLauncher_3P'
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTWeapon:PickupMesh'
+   End Object
+   DroppedPickupMesh=PickupMesh
+   PickupFactoryMesh=PickupMesh
+   Name="Default__UTWeap_RocketLauncher"
+   ObjectArchetype=UTWeapon'UTGame.Default__UTWeapon'
 }

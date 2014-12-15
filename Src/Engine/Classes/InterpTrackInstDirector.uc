@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class InterpTrackInstDirector extends InterpTrackInst
 	native(Interpolation);
@@ -7,20 +7,16 @@ class InterpTrackInstDirector extends InterpTrackInst
 
 var	Actor	OldViewTarget;
 
-/** Rendering overrides that were active on the player camera, used to restore settings when the director track ends in game. */
-var RenderingPerformanceOverrides OldRenderingOverrides;
-
-/** In the process of transitioning to another director track */
-var bool bTransitioningToOtherDirector;
-
-cpptext
-{
-	/** Initialise this Track instance. Called in-game before doing any interpolation. */
-	virtual void InitTrackInst(UInterpTrack* Track);
-	/** Called when interpolation is done. Should not do anything else with this TrackInst after this. */
-	virtual void TermTrackInst(UInterpTrack* Track);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
+   Name="Default__InterpTrackInstDirector"
+   ObjectArchetype=InterpTrackInst'Engine.Default__InterpTrackInst'
 }

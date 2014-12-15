@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNodeScaleRateBySpeed extends AnimNodeScalePlayRate
 	native(Anim)
@@ -8,12 +7,15 @@ class AnimNodeScaleRateBySpeed extends AnimNodeScalePlayRate
 
 var() float	BaseSpeed;
 
-cpptext
-{
-	virtual FLOAT	GetScaleValue();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 	
+
 defaultproperties
 {
-	BaseSpeed=350
+   BaseSpeed=350.000000
+   Name="Default__AnimNodeScaleRateBySpeed"
+   ObjectArchetype=AnimNodeScalePlayRate'Engine.Default__AnimNodeScalePlayRate'
 }

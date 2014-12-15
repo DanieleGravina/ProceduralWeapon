@@ -3,34 +3,27 @@
  *
  * Kismet action exposing loading and unloading of levels.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SeqAct_LevelStreaming extends SeqAct_LevelStreamingBase
 	native(Sequence);
 
 /** LevelStreaming object that is going to be loaded/ unloaded on request	*/
-var const	 LevelStreaming			Level;
+var() const	 LevelStreaming			Level;
 
 /** LevelStreaming object name */
 var() const	 Name					LevelName<autocomment=true>;
 
-var transient bool bStatusIsOk;
-
-cpptext
-{
-	void Activated();
-	UBOOL UpdateOp(FLOAT DeltaTime);
-	virtual void UpdateStatus();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-	virtual USequenceObject* ConvertObject();
-
-#if WITH_EDITOR
-	virtual void DrawExtraInfo(FCanvas* Canvas, const FVector& BoxCenter);
-#endif
-};
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	ObjName="Stream Level"
-	bSuppressAutoComment=false
+   ObjName="Stream Level"
+   bSuppressAutoComment=False
+   Name="Default__SeqAct_LevelStreaming"
+   ObjectArchetype=SeqAct_LevelStreamingBase'Engine.Default__SeqAct_LevelStreamingBase'
 }

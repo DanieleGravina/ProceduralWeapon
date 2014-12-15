@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -17,27 +17,50 @@ class DynamicAnchor extends NavigationPoint
 /** current controller that's using us to navigate */
 var Controller CurrentUser;
 
-cpptext
-{
-	/** initializes us with the given user and creates ReachSpecs to connect ourselves to the given endpoints,
-	 * using the given ReachSpec as a template
-	 * @param InUser the Controller that will be using us for navigation
-	 * @param Point1 the first NavigationPoint to connect to
-	 * @param Point2 the second NavigationPoint to connect to
-	 * @param SpecTemplate the ReachSpec to use as a template for the ReachSpecs we create
-	 */
-	void Initialize(AController* InUser, ANavigationPoint* Point1, ANavigationPoint* Point2, UReachSpec* SpecTemplate);
-	void InitHelper( ANavigationPoint* Start, ANavigationPoint* End, INT NewHeight, INT NewRadius, UReachSpec* SpecTemplate );
-
-	virtual void PostScriptDestroyed();
-
-	virtual void TickSpecial(FLOAT DeltaSeconds);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	RemoteRole=ROLE_None
-	bStatic=false
-	bNoDelete=false
-	bCollideWhenPlacing=false
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__NavigationPoint:CollisionCylinder'
+   End Object
+   CylinderComponent=CollisionCylinder
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite'
+   End Object
+   GoodSprite=Sprite
+   Begin Object Class=SpriteComponent Name=Sprite2 ObjName=Sprite2 Archetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+      ObjectArchetype=SpriteComponent'Engine.Default__NavigationPoint:Sprite2'
+   End Object
+   BadSprite=Sprite2
+   Components(0)=Sprite
+   Components(1)=Sprite2
+   Begin Object Class=ArrowComponent Name=Arrow ObjName=Arrow Archetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+      ObjectArchetype=ArrowComponent'Engine.Default__NavigationPoint:Arrow'
+   End Object
+   Components(2)=Arrow
+   Components(3)=CollisionCylinder
+   Begin Object Class=PathRenderingComponent Name=PathRenderer ObjName=PathRenderer Archetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+      ObjectArchetype=PathRenderingComponent'Engine.Default__NavigationPoint:PathRenderer'
+   End Object
+   Components(4)=PathRenderer
+   bStatic=False
+   bNoDelete=False
+   bCollideWhenPlacing=False
+   CollisionComponent=CollisionCylinder
+   CollisionType=COLLIDE_CustomDefault
+   Name="Default__DynamicAnchor"
+   ObjectArchetype=NavigationPoint'Engine.Default__NavigationPoint'
 }

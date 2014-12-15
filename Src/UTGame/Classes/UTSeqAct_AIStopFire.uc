@@ -1,10 +1,12 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class UTSeqAct_AIStopFire extends SequenceAction;
 
 defaultproperties
 {
-	ObjName="Stop Firing"
-	ObjCategory="AI"
+   ObjName="Stop Firing"
+   ObjCategory="AI"
+   Name="Default__UTSeqAct_AIStopFire"
+   ObjectArchetype=SequenceAction'Engine.Default__SequenceAction'
 }

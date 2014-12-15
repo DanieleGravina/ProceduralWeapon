@@ -4,16 +4,24 @@
 // PickupFactory should be used to place items in the level.  This class is for dropped inventory, which should attach
 // itself to this pickup, and set the appropriate mesh
 //
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
 //=============================================================================
 class UTDroppedPickup extends DroppedPickup
-	notplaceable;
+	notplaceable
+	native;
 
+var() float YawRotationRate;
 var PrimitiveComponent PickupMesh;
 var ParticleSystemComponent PickupParticles;
 var float StartScale;
+var bool bRotatingPickup;
 var bool bPickupable; // EMP forces a pickup to be unusable until it lands
 var LightEnvironmentComponent MyLightEnvironment;
+
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 event PreBeginPlay()
 {
@@ -97,19 +105,6 @@ auto state Pickup
 
 State FadeOut
 {
-
-	simulated event Tick(FLOAT DeltaSeconds)
-	{
-		if ( (WorldInfo.NetMode == NM_DedicatedServer) || (PickupMesh == None) )
-		{
-			Disable('Tick');
-		}
-		else 
-		{
-			PickupMesh.SetScale(FMax(0.01, PickupMesh.Scale - StartScale * DeltaSeconds));
-		}
-	}
-
 	simulated function BeginState(Name PreviousStateName)
 	{
 		bFadeOut = true;
@@ -124,19 +119,33 @@ State FadeOut
 		}
 
 		LifeSpan = 1.0;
+		YawRotationRate = 60000;
 	}
 }
 
 defaultproperties
 {
-	Begin Object Class=DynamicLightEnvironmentComponent Name=DroppedPickupLightEnvironment
-		bDynamic=FALSE
-		bCastShadows=FALSE
-		AmbientGlow=(R=0.2,G=0.2,B=0.2,A=1.0)
-	End Object
-	MyLightEnvironment=DroppedPickupLightEnvironment
-	Components.Add(DroppedPickupLightEnvironment)
-
-	bPickupable=true
-	bDestroyedByInterpActor=TRUE
+   YawRotationRate=32768.000000
+   bPickupable=True
+   Begin Object Class=DynamicLightEnvironmentComponent Name=DroppedPickupLightEnvironment ObjName=DroppedPickupLightEnvironment Archetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+      AmbientGlow=(R=0.200000,G=0.200000,B=0.200000,A=1.000000)
+      bCastShadows=False
+      bDynamic=False
+      Name="DroppedPickupLightEnvironment"
+      ObjectArchetype=DynamicLightEnvironmentComponent'Engine.Default__DynamicLightEnvironmentComponent'
+   End Object
+   MyLightEnvironment=DroppedPickupLightEnvironment
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__DroppedPickup:Sprite'
+      ObjectArchetype=SpriteComponent'Engine.Default__DroppedPickup:Sprite'
+   End Object
+   Components(0)=Sprite
+   Begin Object Class=CylinderComponent Name=CollisionCylinder ObjName=CollisionCylinder Archetype=CylinderComponent'Engine.Default__DroppedPickup:CollisionCylinder'
+      ObjectArchetype=CylinderComponent'Engine.Default__DroppedPickup:CollisionCylinder'
+   End Object
+   Components(1)=CollisionCylinder
+   Components(2)=DroppedPickupLightEnvironment
+   bDestroyedByInterpActor=True
+   CollisionComponent=CollisionCylinder
+   Name="Default__UTDroppedPickup"
+   ObjectArchetype=DroppedPickup'Engine.Default__DroppedPickup'
 }

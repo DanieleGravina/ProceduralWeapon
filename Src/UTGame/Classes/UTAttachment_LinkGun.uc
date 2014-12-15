@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTAttachment_LinkGun extends UTBeamWeaponAttachment;
@@ -78,8 +78,7 @@ function ParticleSystem GetTeamMuzzleFlashTemplate(byte TeamNum)
 
 simulated function PostBeginPlay()
 {
-	local Color DefaultBeamColor;
-	local LinearColor BeamColor;
+	local color DefaultBeamColor;
 
 	Super.PostBeginPlay();
 
@@ -87,8 +86,7 @@ simulated function PostBeginPlay()
 	{
 		GetTeamBeamInfo(255, DefaultBeamColor);
 		WeaponMaterialInstance = Mesh.CreateAndSetMaterialInstanceConstant(0);
-		BeamColor = ColorToLinearColor(DefaultBeamColor);
-		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', BeamColor);
+		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(DefaultBeamColor));
 		if (PoweredUpEffect != None)
 		{
 			Mesh.AttachComponentToSocket(PoweredUpEffect, PoweredUpEffectSocket);
@@ -107,12 +105,10 @@ simulated function SetSkin(Material NewMaterial)
 	}
 }
 
-simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector HitNormal, TraceHitInfo HitInfo)
+simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector HitNormal)
 {
 	local SoundCue DesiredLinkHitSound;
 	local MaterialInstanceTimeVarying MITV_Decal;
-	local KActorFromStatic NewKActor;
-	local StaticMeshComponent HitStaticMesh;
 
 	if (WorldInfo.NetMode != NM_DedicatedServer)
 	{
@@ -161,18 +157,6 @@ simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector H
 		}
 		if(bHittingWall)
 		{
-			if ( HitActor.bWorldGeometry )
-			{ 
-				HitStaticMesh = StaticMeshComponent(HitInfo.HitComponent);
-				if ( (HitStaticMesh != None) && HitStaticMesh.CanBecomeDynamic() )
-				{
-					NewKActor = class'KActorFromStatic'.Static.MakeDynamic(HitStaticMesh);
-					if ( NewKActor != None )
-					{
-						HitActor = NewKActor;
-					}
-				}
-			}
 			if(HitWallEffect != none)
 			{
 				HitWallEffect.SetRotation(rotator(HitNormal));
@@ -180,21 +164,18 @@ simulated function SetImpactedActor(Actor HitActor, vector HitLocation, vector H
 			}
 
 			// Apply beam decal
-			if (TicksBetweenDecals <= TicksSinceLastDecal)
+			if ( (TicksBetweenDecals <= TicksSinceLastDecal) && (PlayerController(PawnOwner.Controller) != None) && PawnOwner.IsLocallyControlled() && (Terrain(HitActor) == None) && (UTOnslaughtNodeObjective(HitActor) == None) )
 			{
-				if (WorldInfo.MyDecalManager != none)
+				if( MaterialInstanceTimeVarying(BeamDecal) != none )
 				{
-					if( MaterialInstanceTimeVarying(BeamDecal) != none )
-					{
-						MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
-						MITV_Decal.SetParent( BeamDecal );
-						WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
-						MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
-					}
-					else
-					{
-						WorldInfo.MyDecalManager.SpawnDecal( BeamDecal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, true );
-					}
+					MITV_Decal = new(self) class'MaterialInstanceTimeVarying';
+					MITV_Decal.SetParent( BeamDecal );
+					WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, FALSE );
+					MITV_Decal.SetScalarStartTime( DecalDissolveParamName, DurationOfDecal );
+				}
+				else
+				{
+					WorldInfo.MyDecalManager.SpawnDecal( BeamDecal, HitLocation, rotator(-HitNormal), DecalWidth, DecalHeight, 10.0, true );
 				}
 				TicksSinceLastDecal = 0;
 			}
@@ -247,7 +228,6 @@ simulated function UpdateBeam(byte FireModeNum)
 	local rotator CameraRotation;
 	local PlayerController PC;
 	local ParticleSystem BeamSystem, BeamEndpointTemplate, MuzzleFlashTemplate;;
-	local LinearColor LinBeamColor;
 
 	// the weapon sets a FiringMode of 2 instead of 1 when using altfire on a teammate (so team color it)
 	// FiringMode == 3 when using altfire (not on a teammate) while others linked up to this gun
@@ -261,6 +241,9 @@ simulated function UpdateBeam(byte FireModeNum)
 		//@todo: this will have issues with splitscreen
 		foreach LocalPlayerControllers(class'PlayerController', PC)
 		{
+			//Make sure we aren't the ones "getting in the way"
+			if (PC.Pawn != PawnOwner)
+			{
 			PC.GetPlayerViewPoint(CameraLocation, CameraRotation);
 
 			CameraDir = vector(CameraRotation);
@@ -271,6 +254,7 @@ simulated function UpdateBeam(byte FireModeNum)
 				EndPoint = BeamStart + BeamDir * (VSize(CameraLocation - BeamStart) - 20.0f);
 				break;
 			}
+		}
 		}
 
 		BeamEmitter[RealFireModeNum].SetVectorParameter(EndPointParamName, EndPoint);
@@ -345,8 +329,7 @@ simulated function UpdateBeam(byte FireModeNum)
 
 	if (WeaponMaterialInstance != None)
 	{
-		LinBeamColor = ColorToLinearColor(BeamColor);
-		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', LinBeamColor);
+		WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(BeamColor));
 	}
 }
 
@@ -364,7 +347,6 @@ simulated function KillEndpointEffect()
 simulated function HideEmitter(int Index, bool bHide)
 {
 	local color EffectColor;
-	local LinearColor LinEffectColor;
 
 	Super.HideEmitter(Index, bHide);
 
@@ -374,8 +356,7 @@ simulated function HideEmitter(int Index, bool bHide)
 		GetTeamBeamInfo(255, EffectColor);
 		if (WeaponMaterialInstance != None)
 		{
-			LinEffectColor = ColorToLinearColor(EffectColor);
-			WeaponMaterialInstance.SetVectorParameterValue('TeamColor', LinEffectColor);
+			WeaponMaterialInstance.SetVectorParameterValue('TeamColor', ColorToLinearColor(EffectColor));
 		}
 		if (MuzzleFlashPSC != None)
 		{
@@ -493,67 +474,63 @@ state CurrentlyAttached
 	}
 }
 
-
 defaultproperties
 {
-	// Weapon SkeletalMesh
-	Begin Object Name=SkeletalMeshComponent0
-		SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_LinkGun_3P'
-		Translation=(Z=1)
-		Rotation=(Roll=-400)
-		Scale=0.9
-	End Object
-
-	Begin Object Class=ParticleSystemComponent Name=PoweredUpComponent
-		Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_PoweredUp'
-		bAutoActivate=false
-		SecondsBeforeInactive=1.0f
-	End Object
-	PoweredUpEffect=PoweredUpComponent
-	PoweredUpEffectSocket=PowerEffectSocket
-
-	LinkBeamColors(0)=(R=255,G=64,B=64,A=255)
-	LinkBeamColors(1)=(R=64,G=64,B=255,A=255)
-	LinkBeamColors(2)=(R=128,G=220,B=120,A=255)
-	HighPowerBeamColor=(R=192,G=192,B=32,A=255)
-
-	LinkBeamSystems[0]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Red'
-	LinkBeamSystems[1]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Blue'
-	LinkBeamSystems[2]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
-
-	HighPowerSystem=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Gold'
-
-	TeamBeamEndpointTemplates[0]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Red'
-	TeamBeamEndpointTemplates[1]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Blue'
-	TeamBeamEndpointTemplates[2]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact'
-	HighPowerBeamEndpointTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Gold'
-
-	TeamMuzzleFlashTemplates[0]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Red'
-	TeamMuzzleFlashTemplates[1]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Blue'
-	TeamMuzzleFlashTemplates[2]=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF'
-	HighPowerMuzzleFlashTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Gold'
-
-	MuzzleFlashSocket=MussleFlashSocket
-	MuzzleFlashPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Primary_MF'
-	MuzzleFlashAltPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF'
-	MuzzleFlashColor=(R=120,G=255,B=120,A=255)
-	MuzzleFlashDuration=0.33
-	bMuzzleFlashPSCLoops=true
-	MuzzleFlashLightClass=class'UTLinkGunMuzzleFlashLight'
-
-	BeamTemplate[1]=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
-	BeamSockets[1]=MussleFlashSocket02
-
-	EndPointParamName=LinkBeamEnd
-	WeaponClass=class'UTWeap_LinkGun'
-	WallHitTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_HIT'
-
-	ConnectionEffectTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Connection_Beam'
-
-	BeamDecal=MaterialInstanceTimeVarying'WP_FlakCannon.Decals.MITV_WP_FlakCannon_Impact_Decal01' 
-	DecalWidth=32.0
-	DecalHeight=32.0
-	DecalDissolveParamName="DissolveAmount"
-	DurationOfDecal=20.0
-	TicksBetweenDecals=0
+   LinkBeamColors(0)=(B=64,G=64,R=255,A=255)
+   LinkBeamColors(1)=(B=255,G=64,R=64,A=255)
+   LinkBeamColors(2)=(B=120,G=220,R=128,A=255)
+   LinkBeamSystems(0)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Red'
+   LinkBeamSystems(1)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Blue'
+   LinkBeamSystems(2)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
+   HighPowerBeamColor=(B=32,G=192,R=192,A=255)
+   HighPowerSystem=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam_Gold'
+   WallHitTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_HIT'
+   TeamBeamEndpointTemplates(0)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Red'
+   TeamBeamEndpointTemplates(1)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Blue'
+   TeamBeamEndpointTemplates(2)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact'
+   HighPowerBeamEndpointTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Beam_Impact_Gold'
+   BeamDecal=MaterialInstanceTimeVarying'WP_FlakCannon.Decals.MITV_WP_FlakCannon_Impact_Decal01'
+   DecalWidth=32.000000
+   DecalHeight=32.000000
+   DurationOfDecal=10.000000
+   DecalDissolveParamName="DissolveAmount"
+   TeamMuzzleFlashTemplates(0)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Red'
+   TeamMuzzleFlashTemplates(1)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Blue'
+   TeamMuzzleFlashTemplates(2)=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF'
+   HighPowerMuzzleFlashTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF_Gold'
+   Begin Object Class=ParticleSystemComponent Name=PoweredUpComponent ObjName=PoweredUpComponent Archetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+      Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_PoweredUp'
+      bAutoActivate=False
+      SecondsBeforeInactive=1.000000
+      Name="PoweredUpComponent"
+      ObjectArchetype=ParticleSystemComponent'Engine.Default__ParticleSystemComponent'
+   End Object
+   PoweredUpEffect=PoweredUpComponent
+   PoweredUpEffectSocket="PowerEffectSocket"
+   ConnectionEffectTemplate=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Connection_Beam'
+   BeamTemplate(1)=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Altbeam'
+   BeamSockets(1)="MussleFlashSocket02"
+   EndPointParamName="LinkBeamEnd"
+   Begin Object Class=SkeletalMeshComponent Name=SkeletalMeshComponent0 ObjName=SkeletalMeshComponent0 Archetype=SkeletalMeshComponent'UTGame.Default__UTBeamWeaponAttachment:SkeletalMeshComponent0'
+      Begin Object Class=UTAnimNodeSequence Name=MeshSequenceA ObjName=MeshSequenceA Archetype=UTAnimNodeSequence'UTGame.Default__UTBeamWeaponAttachment:SkeletalMeshComponent0.MeshSequenceA'
+         ObjectArchetype=UTAnimNodeSequence'UTGame.Default__UTBeamWeaponAttachment:SkeletalMeshComponent0.MeshSequenceA'
+      End Object
+      SkeletalMesh=SkeletalMesh'WP_LinkGun.Mesh.SK_WP_LinkGun_3P'
+      Animations=UTAnimNodeSequence'UTGame.Default__UTAttachment_LinkGun:SkeletalMeshComponent0.MeshSequenceA'
+      Translation=(X=0.000000,Y=0.000000,Z=1.000000)
+      Rotation=(Pitch=0,Yaw=0,Roll=-400)
+      Scale=0.900000
+      ObjectArchetype=SkeletalMeshComponent'UTGame.Default__UTBeamWeaponAttachment:SkeletalMeshComponent0'
+   End Object
+   Mesh=SkeletalMeshComponent0
+   MuzzleFlashSocket="MussleFlashSocket"
+   MuzzleFlashPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Primary_MF'
+   MuzzleFlashAltPSCTemplate=ParticleSystem'WP_LinkGun.Effects.P_FX_LinkGun_3P_Beam_MF'
+   MuzzleFlashColor=(B=120,G=255,R=120,A=255)
+   bMuzzleFlashPSCLoops=True
+   MuzzleFlashLightClass=Class'UTGame.UTLinkGunMuzzleFlashLight'
+   MuzzleFlashDuration=0.330000
+   WeaponClass=Class'UTGame.UTWeap_LinkGun'
+   Name="Default__UTAttachment_LinkGun"
+   ObjectArchetype=UTBeamWeaponAttachment'UTGame.Default__UTBeamWeaponAttachment'
 }

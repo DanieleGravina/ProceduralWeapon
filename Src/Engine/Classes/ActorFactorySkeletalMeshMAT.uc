@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ActorFactorySkeletalMeshMAT extends ActorFactorySkeletalMesh
 	config(Editor)
@@ -7,6 +7,8 @@ class ActorFactorySkeletalMeshMAT extends ActorFactorySkeletalMesh
 
 defaultproperties
 {
-	MenuName="Add SkeletalMeshMAT"
-	NewActorClass=class'Engine.SkeletalMeshActorMAT'
+   MenuName="Add SkeletalMeshMAT"
+   NewActorClass=Class'Engine.SkeletalMeshActorMAT'
+   Name="Default__ActorFactorySkeletalMeshMAT"
+   ObjectArchetype=ActorFactorySkeletalMesh'Engine.Default__ActorFactorySkeletalMesh'
 }

@@ -1,57 +1,41 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class DirectionalLight extends Light
-	native(Light)
-	ClassGroup(Lights,DirectionalLights)
+	native
 	placeable;
 
-cpptext
-{
-public:
-	/**
-	 * This will determine which icon should be displayed for this light.
-	 **/
-	virtual void DetermineAndSetEditorIcon();
-
-	/**
-	 * Called from within SpawnActor, setting up the default value for the Lightmass light source angle.
-	 */
-	virtual void Spawned();
-
-	virtual void PostLoad();
-}
-
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Begin Object Name=Sprite
-		Sprite=Texture2D'EditorResources.LightIcons.Light_Directional_Stationary_DynamicsAndStatics'
-	End Object
-	
-	Begin Object Class=DirectionalLightComponent Name=DirectionalLightComponent0
-	    LightAffectsClassification=LAC_DYNAMIC_AND_STATIC_AFFECTING
-
-	    CastShadows=TRUE
-	    CastStaticShadows=TRUE
-	    CastDynamicShadows=TRUE
-	    bForceDynamicLight=FALSE
-	    UseDirectLightMap=TRUE
-
-	    LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=TRUE,bInitialized=TRUE)
-	End Object
-	LightComponent=DirectionalLightComponent0
-	Components.Add(DirectionalLightComponent0)
-
-	Begin Object Class=ArrowComponent Name=ArrowComponent0
-		ArrowColor=(R=150,G=200,B=255)
-		bTreatAsASprite=True
-		AlwaysLoadOnClient=False
-		AlwaysLoadOnServer=False
-		SpriteCategoryName="Lighting"
-	End Object
-	Components.Add(ArrowComponent0)
-
-	Rotation=(Pitch=-16384,Yaw=0,Roll=0)
-	RotationRate=(Pitch=0, Yaw=0, Roll=0)
+   Begin Object Class=DirectionalLightComponent Name=DirectionalLightComponent0 ObjName=DirectionalLightComponent0 Archetype=DirectionalLightComponent'Engine.Default__DirectionalLightComponent'
+      UseDirectLightMap=True
+      Name="DirectionalLightComponent0"
+      ObjectArchetype=DirectionalLightComponent'Engine.Default__DirectionalLightComponent'
+   End Object
+   LightComponent=DirectionalLightComponent0
+   Begin Object Class=SpriteComponent Name=Sprite ObjName=Sprite Archetype=SpriteComponent'Engine.Default__Light:Sprite'
+      Sprite=Texture2D'EngineResources.LightIcons.Light_Directional_Stationary_UserSelected'
+      ObjectArchetype=SpriteComponent'Engine.Default__Light:Sprite'
+   End Object
+   Components(0)=Sprite
+   Components(1)=DirectionalLightComponent0
+   Begin Object Class=ArrowComponent Name=ArrowComponent0 ObjName=ArrowComponent0 Archetype=ArrowComponent'Engine.Default__ArrowComponent'
+      ArrowColor=(B=255,G=200,R=150,A=255)
+      Name="ArrowComponent0"
+      ObjectArchetype=ArrowComponent'Engine.Default__ArrowComponent'
+   End Object
+   Components(2)=ArrowComponent0
+   Rotation=(Pitch=-16384,Yaw=0,Roll=0)
+   DesiredRotation=(Pitch=-16384,Yaw=0,Roll=0)
+   Name="Default__DirectionalLight"
+   ObjectArchetype=Light'Engine.Default__Light'
 }

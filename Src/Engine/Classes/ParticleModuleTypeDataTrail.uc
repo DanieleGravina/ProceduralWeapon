@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class ParticleModuleTypeDataTrail extends ParticleModuleTypeDataBase
 	native(Particle)
@@ -20,28 +20,21 @@ var(Trail)	rawdistributionfloat				Tension;
 var(Trail)	bool								SpawnByDistance;
 var(Trail)	vector								SpawnDistance;
 
-cpptext
-{
-	virtual FParticleEmitterInstance* CreateInstance(UParticleEmitter* InEmitterParent, UParticleSystemComponent* InComponent);
-
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	Tapered=false
-	TessellationFactor=1
-
-	Begin Object Class=DistributionFloatConstant Name=DistributionTension
-		Constant=0.0
-	End Object
-	Tension=(Distribution=DistributionTension)
-
-	SpawnByDistance=false
-	SpawnDistance=(X=5.0,Y=5.0,Z=5.0)
-//@todo. Remove these once trails are finialized - START
-	RenderGeometry=true
-	RenderLines=false
-	RenderTessellation=false
-//@todo. Remove these once trails are finialized - END
+   RenderGeometry=True
+   TessellationFactor=1
+   Tension=(Distribution=DistributionTension,Op=1,LookupTableNumElements=1,LookupTableChunkSize=1,LookupTable=(0.000000,0.000000,0.000000,0.000000))
+   SpawnDistance=(X=5.000000,Y=5.000000,Z=5.000000)
+   Name="Default__ParticleModuleTypeDataTrail"
+   ObjectArchetype=ParticleModuleTypeDataBase'Engine.Default__ParticleModuleTypeDataBase'
 }

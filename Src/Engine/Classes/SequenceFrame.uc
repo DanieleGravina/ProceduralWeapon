@@ -2,23 +2,21 @@
  * This class is used for rendering a box around a group of kismet objects in the kismet editor, for organization
  * and clarity.  Corresponds to a "comment box" in the kismet editor.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SequenceFrame extends SequenceObject
 	native(Sequence);
 
 // JTODO: Make Kismet handle the case of NULL references in SequenceObjects and mark these objects as 'only for editor'
 
-cpptext
-{
-#if WITH_EDITOR
-	/** Draws the box part of the comment (including handle) */
-	void DrawFrameBox(FCanvas* Canvas, UBOOL bSelected);
-
-	// SequenceObject interface
-	virtual void DrawSeqObj(FCanvas* Canvas, UBOOL bSelected, UBOOL bMouseOver, INT MouseOverConnType, INT MouseOverConnIndex, FLOAT MouseOverTime);
-#endif
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 /** Horizontal size of comment box in pixels. */
 var()	int			SizeX;
@@ -48,27 +46,25 @@ var()	color		FillColor;
  *	If bDrawBox and bFilled, you can optionally specify a texture to fill the box with.
  *	If both FillTexture and FillMaterial are specified, the FillMaterial will be used.
  */
-var()	editoronly	Texture2D	FillTexture;
+var()	texture2D	FillTexture;
 
 /**
  *	If bDrawBox and bFilled, you can optionally specify a material to fill the box with.
  *	If both FillTexture and FillMaterial are specified, the FillMaterial will be used.
  */
-var()	editoronly	Material	FillMaterial;
-
+var()	material	FillMaterial;
 
 defaultproperties
 {
-	bDrawFirst=true
-	ObjName="Sequence Comment"
-	ObjComment="Comment"
-
-	SizeX=128
-	SizeY=64
-
-	BorderWidth=1
-	bFilled=true
-
-	FillColor=(R=255,G=255,B=255,A=16)
-	BorderColor=(R=0,G=0,B=0,A=255)
+   SizeX=128
+   SizeY=64
+   BorderWidth=1
+   bFilled=True
+   BorderColor=(B=0,G=0,R=0,A=255)
+   FillColor=(B=255,G=255,R=255,A=16)
+   ObjName="Sequence Comment"
+   ObjComment="Comment"
+   bDrawFirst=True
+   Name="Default__SequenceFrame"
+   ObjectArchetype=SequenceObject'Engine.Default__SequenceObject'
 }

@@ -1,102 +1,84 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class AnimNotify_ViewShake extends AnimNotify_Scripted
-	native(Anim);
+class AnimNotify_ViewShake extends AnimNotify_Scripted;
 
-/** 
- *  Note: these shake-defining params are deprecated.  Use ShakeParams.
- *  Leaving them here for now for compatibility with existing content (which will be 
- *  upgraded via PostLoad()).
- */
+/** radius within which to shake player views */
+var()	float	ShakeRadius;
 /** Duration in seconds of shake */
-var	private editconst float	Duration;
+var()	float	Duration;
 /** view rotation amplitude (pitch,yaw,roll) */
-var	private editconst vector	RotAmplitude;
+var()	vector	RotAmplitude;
 /** frequency of rotation shake */
-var	private editconst vector	RotFrequency;
+var()	vector	RotFrequency;
 /** relative view offset amplitude (x,y,z) */
-var	private editconst vector	LocAmplitude;
+var()	vector	LocAmplitude;
 /** frequency of view offset shake */
-var	private editconst vector	LocFrequency;
+var()	vector	LocFrequency;
 /** fov shake amplitude */
-var	private editconst float	FOVAmplitude;
+var()	float	FOVAmplitude;
 /** fov shake frequency */
-var	private editconst float	FOVFrequency;
+var()	float	FOVFrequency;
 
-var() bool bDoControllerVibration;
-
-/** Radius within which to shake player views. If 0 only plays on the animated player */
-var() float	ShakeRadius;
-
-/** Should use a bone location as the shake's epicenter? */
-var() bool	bUseBoneLocation;
+/** Should use a bone location as shake's epicentre? */
+var()	bool	bUseBoneLocation;
 /** if so, bone name to use */
-var() name	BoneName;
+var()	name	BoneName;
 
-var() export editinline CameraShake ShakeParams;
-
-cpptext
+event Notify( Actor Owner, AnimNodeSequence AnimSeqInstigator )
 {
-	virtual void PostLoad();
-	virtual FString GetEditorComment() { return TEXT("CameraShake"); }
-};
-
-/**
- * Trigger the view shake
- * 
- * @param Owner - the actor that is playing this animation
- * 
- * @param AnimSeqInstigator - the anim sequence that triggered the notify
- */
-event Notify(Actor Owner, AnimNodeSequence AnimSeqInstigator)
-{
-	local vector ViewShakeOrigin;
-	local Pawn P;
 	local PlayerController PC;
+	local float			Pct, DistToOrigin;
+	local vector		ViewShakeOrigin, CamLoc;
+	local rotator		CamRot;
 
-	if (ShakeRadius == 0)
+	// Figure out world origin of view shake
+	if( bUseBoneLocation &&
+		AnimSeqInstigator != None &&
+		AnimSeqInstigator.SkelComponent != None )
 	{
-		P = Pawn(Owner);
-		if (P != None && P.IsLocallyControlled())
-		{
-			PC = PlayerController(P.Controller);
-			if (PC != None)
-			{
-				PC.ClientPlayCameraShake(ShakeParams);
-			}
-		}
+		ViewShakeOrigin = AnimSeqInstigator.SkelComponent.GetBoneLocation( BoneName );
 	}
 	else
 	{
-		// Figure out world origin of view shake
-		if( bUseBoneLocation &&
-			AnimSeqInstigator != None &&
-			AnimSeqInstigator.SkelComponent != None )
-		{
-			ViewShakeOrigin = AnimSeqInstigator.SkelComponent.GetBoneLocation( BoneName );
-		}
-		else
-		{
-			ViewShakeOrigin = Owner.Location;
-		}
+		ViewShakeOrigin = Owner.Location;
+	}
 
-		// propagate to all player controllers
-		if (Owner != None)
+	// propagate to all player controllers
+	if (Owner != None)
+	{
+		foreach Owner.WorldInfo.AllControllers(class'PlayerController', PC)
 		{
-			class'Camera'.static.PlayWorldCameraShake(ShakeParams, Owner, ViewShakeOrigin, 0.f, ShakeRadius, 1.f, bDoControllerVibration);
+			PC.GetPlayerViewPoint(CamLoc, CamRot);
+			DistToOrigin = VSize(ViewShakeOrigin - CamLoc);
+			if( DistToOrigin < ShakeRadius )
+			{
+				Pct = 1.f - (DistToOrigin / ShakeRadius);
+				PC.CameraShake
+				(
+					Duration*Pct,
+					RotAmplitude*Pct,
+					RotFrequency*Pct,
+					LocAmplitude*Pct,
+					LocFrequency*Pct,
+					FOVAmplitude*Pct,
+					FOVFrequency*Pct
+				);
+			}
 		}
 	}
 }
 
 defaultproperties
 {
-	ShakeRadius=4096.0
-	Duration=1.f
-	RotAmplitude=(X=100,Y=100,Z=200)
-	RotFrequency=(X=10,Y=10,Z=25)
-	LocAmplitude=(X=0,Y=3,Z=6)
-	LocFrequency=(X=1,Y=10,Z=20)
-	FOVAmplitude=2
-	FOVFrequency=5
+   ShakeRadius=4096.000000
+   Duration=1.000000
+   RotAmplitude=(X=100.000000,Y=100.000000,Z=200.000000)
+   RotFrequency=(X=10.000000,Y=10.000000,Z=25.000000)
+   LocAmplitude=(X=0.000000,Y=3.000000,Z=6.000000)
+   LocFrequency=(X=1.000000,Y=10.000000,Z=20.000000)
+   FOVAmplitude=2.000000
+   FOVFrequency=5.000000
+   Name="Default__AnimNotify_ViewShake"
+   ObjectArchetype=AnimNotify_Scripted'Engine.Default__AnimNotify_Scripted'
 }

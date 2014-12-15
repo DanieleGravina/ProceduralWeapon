@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class LensFlarePreviewComponent extends PrimitiveComponent
 	native
@@ -9,8 +9,13 @@ class LensFlarePreviewComponent extends PrimitiveComponent
 
 var native transient const pointer	LensFlareEditorPtr{class WxLensFlareEditor};
 
-cpptext
-{
-	virtual void Render(const FSceneView* View,FPrimitiveDrawInterface* PDI);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
+defaultproperties
+{
+   Name="Default__LensFlarePreviewComponent"
+   ObjectArchetype=PrimitiveComponent'Engine.Default__PrimitiveComponent'
+}

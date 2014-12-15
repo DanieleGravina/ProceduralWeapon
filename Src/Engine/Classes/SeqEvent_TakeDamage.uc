@@ -3,13 +3,12 @@
  * which types of damage should be be required (or ignored).
  * Originator: the actor that was damaged
  * Instigator: the actor that did the damaging
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
-class SeqEvent_TakeDamage extends SequenceEvent
-	native(Sequence);
+class SeqEvent_TakeDamage extends SequenceEvent;
 
 /** Damage must exceed this value to be counted */
-var() float MinDamageAmount<autocomment=true>;
+var() float MinDamageAmount;
 
 /** Total amount of damage to take before activating the event */
 var() float DamageThreshold;
@@ -22,9 +21,6 @@ var() array<class<DamageType> > IgnoreDamageTypes<AllowAbstract>;
 
 /** Current damage amount */
 var float CurrentDamage;
-
-/** Should the damage counter be reset if this event is toggled? */
-var() bool bResetDamageOnToggle;
 
 /**
  * Searches DamageTypes[] for the specified damage type.
@@ -72,12 +68,10 @@ final function bool IsValidDamageType(class<DamageType> inDamageType)
 /**
  * Applies the damage and checks for activation of the event.
  */
-function HandleDamage(Actor inOriginator, Actor inInstigator, class<DamageType> inDamageType, int inAmount)
+final function HandleDamage(Actor inOriginator, Actor inInstigator, class<DamageType> inDamageType, int inAmount)
 {
 	local SeqVar_Float FloatVar;
 	local bool bAlreadyActivatedThisTick;
-
-	PublishLinkedVariableValues();
 
 	if (inOriginator != None &&
 		bEnabled &&
@@ -128,43 +122,13 @@ function Reset()
 	CurrentDamage = 0.f;
 }
 
-/**
- * Return the version number for this class.  Child classes should increment this method by calling Super then adding
- * a individual class version to the result.  When a class is first created, the number should be 0; each time one of the
- * link arrays is modified (VariableLinks, OutputLinks, InputLinks, etc.), the number that is added to the result of
- * Super.GetObjClassVersion() should be incremented by 1.
- *
- * @return	the version number for this specific class.
- */
-static event int GetObjClassVersion()
-{
-	return Super.GetObjClassVersion() + 2;
-}
-
-event Toggled()
-{
-	if (bResetDamageOnToggle)
-	{
-		CurrentDamage = 0.f;
-	}
-	Super.Toggled();
-}
-
-cpptext
-{
-#if WITH_EDITOR
-	// Gives op a chance to add realtime debugging information (when enabled)
-	virtual void GetRealtimeComments(TArray<FString> &OutComments);
-#endif
-}
-
 defaultproperties
 {
-	ObjName="Take Damage"
-	ObjCategory="Actor"
-
-	DamageThreshold=100.f
-	VariableLinks(1)=(ExpectedType=class'SeqVar_Float',LinkDesc="Damage Taken",bWriteable=true)
-
-	bResetDamageOnToggle=TRUE
+   DamageThreshold=100.000000
+   VariableLinks(1)=(ExpectedType=Class'Engine.SeqVar_Float',LinkDesc="Damage Taken",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjClassVersion=3
+   ObjName="Take Damage"
+   ObjCategory="Actor"
+   Name="Default__SeqEvent_TakeDamage"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

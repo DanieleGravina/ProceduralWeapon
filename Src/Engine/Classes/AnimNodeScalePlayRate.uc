@@ -1,6 +1,5 @@
-
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class AnimNodeScalePlayRate extends AnimNodeBlendBase
 	native(Anim)
@@ -8,15 +7,18 @@ class AnimNodeScalePlayRate extends AnimNodeBlendBase
 
 var() float	ScaleByValue;
 
-cpptext
-{
-	virtual void	TickAnim(FLOAT DeltaSeconds);
-	virtual FLOAT	GetScaleValue();
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+	
 
 defaultproperties
 {
-	Children(0)=(Name="Input",Weight=1.0)
-	bFixNumChildren=TRUE
-	ScaleByValue=1
+   ScaleByValue=1.000000
+   Children(0)=(Name="Input",Weight=1.000000)
+   bFixNumChildren=True
+   Name="Default__AnimNodeScalePlayRate"
+   ObjectArchetype=AnimNodeBlendBase'Engine.Default__AnimNodeBlendBase'
 }

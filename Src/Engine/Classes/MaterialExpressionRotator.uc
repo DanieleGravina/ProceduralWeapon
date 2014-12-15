@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class MaterialExpressionRotator extends MaterialExpression
 	native(Material)
@@ -13,29 +13,24 @@ var() float	CenterX,
 			CenterY,
 			Speed;
 
-cpptext
-{
-	virtual INT Compile(FMaterialCompiler* Compiler, INT OutputIndex);
-	virtual FString GetCaption() const;
-
-	/**
-	 * Replaces references to the passed in expression with references to a different expression or NULL.
-	 * @param	OldExpression		Expression to find reference to.
-	 * @param	NewExpression		Expression to replace reference with.
-	 */
-	virtual void SwapReferenceTo(UMaterialExpression* OldExpression,UMaterialExpression* NewExpression = NULL);
-
-	/**
-	 * @return TRUE if the expression preview needs realtime update
-     */
-	virtual UBOOL NeedsRealtimePreview() { return Time.Expression==NULL && Speed != 0.f; }
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	CenterX=0.5
-	CenterY=0.5
-	Speed=0.25
-	MenuCategories(0)="Coordinates"
-	MenuCategories(1)="WorldPosOffset"
+   CenterX=0.500000
+   CenterY=0.500000
+   Speed=0.250000
+   Name="Default__MaterialExpressionRotator"
+   ObjectArchetype=MaterialExpression'Engine.Default__MaterialExpression'
 }

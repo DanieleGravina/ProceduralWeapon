@@ -4,66 +4,60 @@
  * Sequence event is a representation of any event that
  * is used to instigate a sequence.
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 class SequenceEvent extends SequenceOp
 	native(Sequence)
 	abstract;
 
-cpptext
-{
-	
-
-	virtual UBOOL CheckActivate(AActor *InOriginator, AActor *InInstigator, UBOOL bTest=FALSE, TArray<INT>* ActivateIndices = NULL, UBOOL bPushTop = FALSE);
-
-	/**
-	 * Adds an error message to the map check dialog if this SequenceEvent's EventActivator is bStatic
-	 */
-#if WITH_EDITOR
-	virtual void CheckForErrors();
-
-	// USequenceObject interface
-	virtual void DrawSeqObj(FCanvas* Canvas, UBOOL bSelected, UBOOL bMouseOver, INT MouseOverConnType, INT MouseOverConnIndex, FLOAT MouseOverTime);
-	virtual FIntRect GetSeqObjBoundingBox();
-	FIntPoint GetCenterPoint(FCanvas* Canvas);
-
-	virtual FString GetDisplayTitle() const;
-#endif
-
-	/**
-	 * This is a debug version of ActivateEvent which can be used by automated testing tools to Activate
-	 * an event for testing purposes.
-	 **/
-	virtual void DebugActivateEvent(AActor *InOriginator, AActor *InInstigator, TArray<INT> *ActivateIndices = NULL);
-
-	virtual UBOOL RegisterEvent();
-
-	/**
-	 * Fills in the value of the "Instigator" VariableLink
-	 */
-	virtual void InitializeLinkedVariableValues();
-
-	virtual void OnExport()
-	{
-		Super::OnExport();
-		Originator = NULL;
-		Instigator = NULL;
-	}
-
-	/**
-	 * Returns whether this SequenceObject can exist in a sequence without being linked to anything else (i.e. does not require
-	 * another sequence object to activate it)
-	 */
-	virtual UBOOL IsStandalone() const { return TRUE; }
-
-	virtual void ActivateEvent(AActor *InOriginator, AActor *InInstigator, TArray<INT> *ActivateIndices = NULL, UBOOL bPushTop = FALSE, UBOOL bFromQueued = FALSE);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 //==========================
 // Base variables
-
-/** List of events that are in-place duplicates of this event, used to relay messages. */
-var array<SequenceEvent> DuplicateEvts;
 
 /** Originator of this event, set at editor time.  Usually the actor that this event is attached to. */
 var Actor				Originator;
@@ -72,13 +66,13 @@ var Actor				Originator;
  * Instigator of the event activation, or the actor that caused the event to be activated.  Can vary depending
  * on the type of event.
  */
-var Actor Instigator;
+var transient Actor		Instigator;
 
 /** Last time this event was activated at */
-var float ActivationTime;
+var transient float		ActivationTime;
 
 /** Number of times this event has been activated */
-var int TriggerCount;
+var transient int		TriggerCount;
 
 /** How many times can this event be activated, 0 for infinite */
 var() int				MaxTriggerCount;
@@ -107,6 +101,16 @@ var transient bool 		bRegistered;
  * bStatic or bNoDelete set; otherwise the reference will be NULL on the client
  */
 var() const bool bClientSideOnly;
+
+/** Matches the ::ActivateEvent parms, for storing multiple activations per frame */
+struct native QueuedActivationInfo
+{
+	var Actor InOriginator;
+	var Actor InInstigator;
+	var array<int> ActivateIndices;
+	var bool bPushTop;
+};
+var array<QueuedActivationInfo> QueuedActivations;
 
 /**
  * Called when the sequence that contains this event is initialized (@see USequence::InitializeSequence).  For events
@@ -154,12 +158,11 @@ event Toggled()
 
 defaultproperties
 {
-	ObjColor=(R=255,G=0,B=0,A=255)
-	MaxTriggerCount=1
-	bEnabled=true
-	bPlayerOnly=true
-	bAutoActivateOutputLinks=false
-
-	InputLinks.Empty
-	VariableLinks(0)=(ExpectedType=class'SeqVar_Object',LinkDesc="Instigator",bWriteable=true)
+   MaxTriggerCount=1
+   bEnabled=True
+   bPlayerOnly=True
+   VariableLinks(0)=(ExpectedType=Class'Engine.SeqVar_Object',LinkDesc="Instigator",bWriteable=True,MinVars=1,MaxVars=255)
+   ObjColor=(B=0,G=0,R=255,A=255)
+   Name="Default__SequenceEvent"
+   ObjectArchetype=SequenceOp'Engine.Default__SequenceOp'
 }

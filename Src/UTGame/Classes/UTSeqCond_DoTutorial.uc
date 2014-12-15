@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTSeqCond_DoTutorial extends SequenceCondition;
@@ -29,12 +29,11 @@ event Activated()
 	OutputLinks[ bTutorialOK ? 0 : 1].bHasImpulse = true;
 }
 
-
 defaultproperties
 {
-	ObjName="Do Tutorial"
-	OutputLinks(0)=(LinkDesc="Play Tutorial")
-	OutputLinks(1)=(LinkDesc="Abort Tutorial")
+   OutputLinks(0)=(LinkDesc="Play Tutorial")
+   OutputLinks(1)=(LinkDesc="Abort Tutorial")
+   ObjName="Do Tutorial"
+   Name="Default__UTSeqCond_DoTutorial"
+   ObjectArchetype=SequenceCondition'Engine.Default__SequenceCondition'
 }
-
-

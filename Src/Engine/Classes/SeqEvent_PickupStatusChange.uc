@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 
@@ -9,9 +9,11 @@ class SeqEvent_PickupStatusChange extends SequenceEvent;
 
 defaultproperties
 {
-	ObjName="Pickup Status Change"
-	OutputLinks[0]=(LinkDesc="Available")
-	OutputLinks[1]=(LinkDesc="Taken")
-	bPlayerOnly=false
-	MaxTriggerCount=0
+   MaxTriggerCount=0
+   bPlayerOnly=False
+   OutputLinks(0)=(LinkDesc="Available")
+   OutputLinks(1)=(LinkDesc="Taken")
+   ObjName="Pickup Status Change"
+   Name="Default__SeqEvent_PickupStatusChange"
+   ObjectArchetype=SequenceEvent'Engine.Default__SequenceEvent'
 }

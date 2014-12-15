@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  *
  * Depth of Field post process effect
  *
@@ -9,18 +9,18 @@ class DOFEffect extends PostProcessEffect
 	abstract;
 
 /** exponent to apply to blur amount after it has been normalized to [0,1] */
-var(DepthOfField) float FalloffExponent;
-/** affects the radius of the DepthOfField bohek / how blurry the scene gets */
-var(DepthOfField) float BlurKernelSize;
+var() float FalloffExponent;
+/** affects the size of the Poisson disc kernel */
+var() float BlurKernelSize;
 /** [0,1] value for clamping how much blur to apply to items in front of the focus plane */
-var(DepthOfField, BlurAmount) float MaxNearBlurAmount<DisplayName=MaxNear>;
-/** [0,1] value for clamping how much blur to apply */
-var(DepthOfField, BlurAmount) float MinBlurAmount<DisplayName=Min>;
+var() float MaxNearBlurAmount;
 /** [0,1] value for clamping how much blur to apply to items behind the focus plane */
-var(DepthOfField, BlurAmount) float MaxFarBlurAmount<DisplayName=MaxFar>;
+var() float MaxFarBlurAmount;
+/** blur color for debugging etc */
+var() color ModulateBlurColor;
 
 /** control how the focus point is determined */
-var(DepthOfField) enum EFocusType
+var() enum EFocusType
 {
 	// use distance from the view
 	FOCUS_Distance,
@@ -28,44 +28,44 @@ var(DepthOfField) enum EFocusType
 	FOCUS_Position	
 } FocusType;
 /** inner focus radius */
-var(DepthOfField) float FocusInnerRadius;
+var() float FocusInnerRadius;
 /** used when FOCUS_Distance is enabled */
-var(DepthOfField) float FocusDistance;
+var() float FocusDistance;
 /** used when FOCUS_Position is enabled */
-var(DepthOfField) vector FocusPosition;
+var() vector FocusPosition;
 
-cpptext
-{
-	// UPostProcessEffect interface
-
-	/**
-	 * Creates a proxy to represent the render info for a post process effect
-	 * @param WorldSettings - The world's post process settings for the view.
-	 * @return The proxy object.
-	 */
-	virtual class FPostProcessSceneProxy* CreateSceneProxy(const FPostProcessSettings* WorldSettings);
-
-	/**
-	 * @param View - current view
-	 * @return TRUE if the effect should be rendered
-	 */
-	virtual UBOOL IsShown(const FSceneView* View) const;
-
-	// UObject inteface
-
-	/** callback for changed property */
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent);
-}
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
+// (cpptext)
 
 defaultproperties
 {
-	// typical settings
-	FocusType=FOCUS_Distance
-	FocusDistance=800
-	FocusInnerRadius=400
-	FalloffExponent=2
-	BlurKernelSize=2
-	MaxNearBlurAmount=1
-	MinBlurAmount=0
-	MaxFarBlurAmount=1
+   FalloffExponent=2.000000
+   BlurKernelSize=2.000000
+   MaxNearBlurAmount=1.000000
+   MaxFarBlurAmount=1.000000
+   ModulateBlurColor=(B=255,G=255,R=255,A=255)
+   FocusInnerRadius=400.000000
+   FocusDistance=800.000000
+   Name="Default__DOFEffect"
+   ObjectArchetype=PostProcessEffect'Engine.Default__PostProcessEffect'
 }

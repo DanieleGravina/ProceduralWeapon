@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+ * Copyright 1998-2008 Epic Games, Inc. All Rights Reserved.
  */
 
 class UTDmgType_LinkBeam extends UTDamageType
@@ -14,7 +14,7 @@ static function DoCustomDamageEffects(UTPawn ThePawn, class<UTDamageType> TheDam
 {
 	local Vector BoneLocation;
 
-	if ( class'UTGame'.static.UseLowGore(ThePawn.WorldInfo) )
+	if ( class'GameInfo'.static.UseLowGore(ThePawn.WorldInfo) )
 	{
 		return;
 	}
@@ -38,7 +38,7 @@ static function DoCustomDamageEffects(UTPawn ThePawn, class<UTDamageType> TheDam
 /** allows special effects when gibs are spawned via DoCustomDamageEffects() instead of the normal way */
 simulated static function SpawnExtraGibEffects(UTGib TheGib)
 {
-	if ( (TheGib.WorldInfo.GetDetailMode() != DM_Low) && !TheGib.WorldInfo.bDropDetail && FRand() < 0.70f )
+	if ( (TheGib.WorldInfo.GetDetailMode() != DM_Low) && !TheGib.WorldInfo.bDropDetail && !class'Engine'.static.IsSplitScreen() && FRand() < 0.70f )
 	{
 		TheGib.PSC_GibEffect = new(TheGib) class'UTParticleSystemComponent';
 		TheGib.PSC_GibEffect.SetTemplate(default.PS_AttachToGib);
@@ -48,30 +48,30 @@ simulated static function SpawnExtraGibEffects(UTGib TheGib)
 
 defaultproperties
 {
-	KillStatsName=KILLS_LINKGUN
-	DeathStatsName=DEATHS_LINKGUN
-	SuicideStatsName=SUICIDES_LINKGUN
-	RewardCount=15
-	RewardEvent=REWARD_SHAFTMASTER
-	RewardAnnouncementSwitch=1
-	DamageWeaponClass=class'UTWeap_LinkGun'
-	DamageWeaponFireMode=1
-
-	DamageBodyMatColor=(R=50,G=50,B=50)
-	DamageOverlayTime=0.5
-	DeathOverlayTime=1.0
-
-	bCausesBlood=false
-	bLeaveBodyEffect=true
-	bUseDamageBasedDeathEffects=true
-	VehicleDamageScaling=0.8
-	VehicleMomentumScaling=0.1
-
-	KDamageImpulse=100
-
-	PS_AttachToGib=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Death_Gib_Effect'
-	DamageCameraAnim=CameraAnim'Camera_FX.LinkGun.C_WP_Link_Beam_Hit'
-
-	BoneToAttach="b_Spine1"
-	PS_AttachToBody=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Skeleton_Dissolve'
+   PS_AttachToGib=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Death_Gib_Effect'
+   BoneToAttach="b_Spine1"
+   PS_AttachToBody=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Skeleton_Dissolve'
+   DamageBodyMatColor=(R=50.000000,G=50.000000,B=50.000000,A=1.000000)
+   DamageOverlayTime=0.500000
+   DeathOverlayTime=1.000000
+   bLeaveBodyEffect=True
+   bUseDamageBasedDeathEffects=True
+   DamageWeaponClass=Class'UTGame.UTWeap_LinkGun'
+   DamageWeaponFireMode=1
+   DamageCameraAnim=CameraAnim'Camera_FX.LinkGun.C_WP_Link_Beam_Hit'
+   KillStatsName="KILLS_LINKGUN"
+   DeathStatsName="DEATHS_LINKGUN"
+   SuicideStatsName="SUICIDES_LINKGUN"
+   RewardCount=15
+   RewardAnnouncementSwitch=6
+   RewardEvent="REWARD_SHAFTMASTER"
+   DeathString="`o è stato trafitto dall'asta verde di `k. "
+   FemaleSuicide="`o si è trafitta."
+   MaleSuicide="`o si è trafitto."
+   bCausesBlood=False
+   KDamageImpulse=100.000000
+   VehicleDamageScaling=0.800000
+   VehicleMomentumScaling=0.100000
+   Name="Default__UTDmgType_LinkBeam"
+   ObjectArchetype=UTDamageType'UTGame.Default__UTDamageType'
 }
