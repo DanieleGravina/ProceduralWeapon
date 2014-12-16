@@ -38,7 +38,7 @@ function SetProceduralWeapon()
 			myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).RoF;
 			myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).MaxAmmo;
 			myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).ShotCost;
-			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Range;
+			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername).Range*1000;
 		
 			myWeapon.AmmoCount = myWeapon.MaxAmmoCount;
 			myWeapon.Spread[1] = myWeapon.Spread[0];

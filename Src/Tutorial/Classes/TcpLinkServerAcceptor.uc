@@ -169,8 +169,7 @@ function ModifyWeapon(array<string> WeaponPar, int index)
 	
 	local string par;
 	
-	
-	for(i = index; i < index + numParWeapon*2; ++i)
+	for(i = index; i < index + (numParWeapon + 1)*2; ++i)
 	{
 		par = WeaponPar[i];
 		val = float(WeaponPar[i + 1]);
@@ -383,7 +382,7 @@ defaultproperties
 	
 	bIsGameInitialized = false;
 	
-	GoalScore = 25;
+	GoalScore = 100;
 	
 	StateCurrent = 1;
 	INITIALIZATION = 1;

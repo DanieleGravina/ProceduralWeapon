@@ -208,7 +208,7 @@ function bool TooManyBots(Controller botToRemove)
 
 defaultproperties
 {
-	//DefaultInventory(0)=class'ProceduralWeapon'
+	DefaultInventory(0)=class'ProceduralWeapon'
 	DefaultInventory(1)=None
 	
     DefaultPawnClass=class'PWPawn'

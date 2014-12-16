@@ -24,7 +24,7 @@ simulated function Projectile ProjectileFire()
 	if(ProceduralProjectile(SpawnedProjectile) != none)
 	{
 		//`log("[ProceduralWeapon] ProjectileFire: set projectile");
-		ProceduralProjectile(SpawnedProjectile).Initialize();
+		//ProceduralProjectile(SpawnedProjectile).Initialize();
 	}
     
     return SpawnedProjectile;
@@ -75,7 +75,7 @@ defaultproperties
     // Damage types
     InstantHitDamage(0)=0
     FireInterval(0)=+1.0
-    FireInterval(1)=+1.3
+    FireInterval(1)=+1.0
     InstantHitDamageTypes(0)=None
     InstantHitDamageTypes(1)=None                   // Not an instant hit weapon, so set to "None"
 
