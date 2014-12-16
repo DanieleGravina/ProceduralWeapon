@@ -3,14 +3,13 @@ from BalancedWeaponClient import BalancedWeaponClient
 from Costants import NUM_BOTS
 
 class myThread (threading.Thread):
-    def __init__(self, threadID, name, population, statics, port):
+    def __init__(self, threadID, name, population, port):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.population = population
         self.client = BalancedWeaponClient(port)
         self.stats = {}
-        self.statics = statics
 
     def run(self):
         print("Starting " + self.name)
@@ -20,11 +19,13 @@ class myThread (threading.Thread):
         index =  self.threadID
         population = self.population
 
-        for i in range (index, NUM_BOTS + index):
-            self.client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
+        self.client.SendWeaponParams(i, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-        for i in range (index, NUM_BOTS + index):
-            self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
+        self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
+
+        self.client.SendWeaponParams(i + 1, population[i][9], population[i][10], population[i][11], population[i][12], population[i][13])
+
+        self.client.SendProjectileParams(population[i][14], population[i][15], population[i][16], population[i][17])
 
         self.client.SendStartMatch()
 

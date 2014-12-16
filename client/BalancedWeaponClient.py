@@ -31,7 +31,7 @@ class BalancedWeaponClient:
 
     def SendStartMatch(self):
         time.sleep(0.1)
-        self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict')
+        self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict'))
 
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
         time.sleep(0.1) 
@@ -43,7 +43,7 @@ class BalancedWeaponClient:
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)
         print('Send ' + messageWeapon)
-        self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict')
+        self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 
     def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity):
@@ -54,16 +54,16 @@ class BalancedWeaponClient:
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
         print('Send ' + messageProjectile)
-        self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict')
+        self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 
     def SendClose(self):
         time.sleep(0.1) 
-        self.s.send(messageClose.encode(encoding='utf-8',errors='strict')
+        self.s.send(messageClose.encode(encoding='utf-8',errors='strict'))
 
     def SendReset(self):
         time.sleep(0.1) 
-        self.s.send(messageReset.encode(encoding='utf-8',errors='strict')
+        self.s.send(messageReset.encode(encoding='utf-8',errors='strict'))
 
     def WaitForBotStatics(self):
 

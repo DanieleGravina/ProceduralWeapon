@@ -1,0 +1,13 @@
+UT3.exe
+
+7 server
+
+1, 2, 3, 4, 5 : 1200 5 iter 1x
+
+6 : 1200 13 iter 5x
+
+7 : 1200 12 iter 5x
+
+8 : 1200 25 iter 12x
+
+4 weapon, 4 bot

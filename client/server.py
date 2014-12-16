@@ -10,17 +10,17 @@ from Costants import PORT
 from Costants import NUM_SERVER
 from ServerLaunchThread import ServerLaunchThread
 
-NUM_SERVER = 8
+NUM_SERVER = 10
 
 os.chdir('..')
 
 # max GameSpeed UDK = 12
-MAX_GAMESPEED = [1, 1, 1, 1, 1, 5, 5, 12]
+MAX_GAMESPEED = 12
 
 threads = []
 
 for i in range(NUM_SERVER):
-	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED[i], PORT[i], 1200))
+	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 120))
 
 for thread in threads:
 	thread.start()

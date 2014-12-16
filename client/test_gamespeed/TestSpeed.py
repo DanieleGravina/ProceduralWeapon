@@ -145,8 +145,8 @@ def main():
     final_statistics.update({"variance dies 12x" : [statistics.variance(dies_12x[i]) for i in range(4)]})
 
     for key, val in final_statistics.items():
-        print(key + " : " + val)
-        statics_file.write(key + " : " + val + "\n")
+        print(str(key) + " : " + str(val))
+        statics_file.write(str(key) + " : " + str(val) + "\n")
 
     plt.figure(1)
 

@@ -87,6 +87,12 @@ def printWeapon(pop):
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
         print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) )
+
+        print("Weapon "+ " Rof:" + str(ind[9]/100) + " Spread:" + str(ind[10]/10) + " MaxAmmo:" + str(ind[11]) 
+            + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) )
+        print("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
+            + " Gravity:" + str(ind[17]) )
+
         print("fitness: " + str(ind.fitness.values))
         print("*********************************************************")
 
@@ -96,7 +102,13 @@ def writeWeapon(pop, pop_file):
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) +"\n")
-        pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
+
+        pop_file.write("Weapon "+ " Rof:" + str(ind[9]/100) + " Spread:" + str(ind[10]/10) + " MaxAmmo:" + str(ind[11]) 
+            + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) + "\n")
+        pop_file.write("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
+            + " Gravity:" + str(ind[17]) + "\n")
+
+        pop_file.write("fitness: " + str(ind.fitness.values) + "\n")
         pop_file.write("*********************************************************" + "\n")
     pop_file.write("\n" + "=======================================================" + "\n")
 
@@ -109,7 +121,7 @@ def check_param(param, min, max):
 
 def check(param, n) :
 
-    check_param(param, limits[n][0], limits[n][1])
+    check_param(param, limits[n % 9][0], limits[n % 9][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -133,21 +145,23 @@ def initialize_server():
         c.SendStartMatch()
         c.SendClose()
 
-# Run the simulation on the server side (UDK)
-def simulate_population(population, statics) :
+# Run the simulation on the server side (UT3)
+def simulate_population(population) :
 
     stats = {}
     threads = []
 
-    for i in range(NUM_SERVER):
-        threads.append( myThread(i*2, "Thread-" + str(i), population, statics, PORT[i]) )
+    for iter in range(len(population)/NUM_SERVER) :
 
-    for t in threads:
-        t.start()
+        for i in range(iter*NUM_SERVER, (iter + 1)*NUM_SERVER):
+            threads.append( myThread(i, "Thread-" + str(i), population, PORT[i]) )
 
-    # Wait for all threads to complete
-    for t in threads:
-        stats.update(t.join())
+        for t in threads:
+            t.start()
+
+        # Wait for all threads to complete
+        for t in threads:
+            stats.update(t.join())
 
     return stats
 
@@ -158,10 +172,8 @@ def entropy(index, statics) :
     total_kills = 0
     total_dies = 0
 
-    ind = index if index % 2 == 0 else index - 1
-
     for key, val in statics.items():
-        if key >= ind and key < ind + NUM_BOTS :
+        if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
             total_dies += val[1]
 
@@ -183,16 +195,16 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
     return -(entropy_kill + entropy_dies)
 
 # ATTENTION, you MUST return a tuple
-def evaluate(index, population, statics):
-    e = entropy(index, statics)
+def evaluate(index, statics):
+    e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
     return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)],
-                                                up  = [limits[j][1] for j in range(9)], 
+toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)] + [limits[j][0] for j in range(9)],
+                                                up  = [limits[j][1] for j in range(9)] + [limits[j][1] for j in range(9)], 
                                                 indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
@@ -229,11 +241,11 @@ def main():
 
     initialize_server()
 
-    statics = simulate_population(pop, statics)
+    statics = simulate_population(pop)
 
     # Evaluate the entire population
     for i in range(len(pop)) :
-        fitnesses += [toolbox.evaluate(i, pop, statics)]
+        fitnesses += [toolbox.evaluate(i, statics)]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
@@ -248,39 +260,34 @@ def main():
     for g in range(NGEN - 1):
 
         # Select the next generation individuals
-        offspring = toolbox.select(pop, 2)
+        offspring = toolbox.select(pop, len(pop))
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
-        while len(offspring) < len(pop) :
-
-            child1 = toolbox.clone(toolbox.select(pop, 1))
-            child2 = toolbox.clone(toolbox.select(pop, 1))
-
+        # Apply crossover and mutation on the offspring
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
             if random.random() < CXPB:
-                toolbox.mate(child1[0], child2[0])
-                del child1[0].fitness.values
-                del child2[0].fitness.values
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
 
+        for mutant in offspring:
             if random.random() < MUTPB:
-                toolbox.mutate(child1[0])
-                toolbox.mutate(child2[0])
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
 
-            offspring += child1
-            offspring += child2
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
 
-        statics = simulate_population(offspring, statics)
+        statics = simulate_population(offspring)
 
-        fit = 0,
+        fitnesses = []
+        # Evaluate the entire population
+        for i in range(len(invalid_ind)) :
+            fitnesses += [toolbox.evaluate(i, statics)]
 
-        for individual in offspring:
-           del individual.fitness.values
-
-        for i in range(len(offspring)) :
-            if not offspring[i].fitness.valid :
-                fit = toolbox.evaluate(i, offspring, statics)
-                fitnesses += [fit]
-                offspring[i].fitness.values = fit
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
 
         # The population is entirely replaced by the offspring
         pop[:] = offspring
