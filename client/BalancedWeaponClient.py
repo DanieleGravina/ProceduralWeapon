@@ -26,11 +26,11 @@ class BalancedWeaponClient:
 
     def SendInit(self):
         #send to UDK server init message
-        time.sleep(10) 
+        time.sleep(0.1) 
         self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
 
     def SendStartMatch(self):
-        time.sleep(10)
+        time.sleep(0.1)
         self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict')
 
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
@@ -43,7 +43,7 @@ class BalancedWeaponClient:
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)
         print('Send ' + messageWeapon)
-        self.s.send(messageWeapon.encode(encoding='ascii',errors='strict')
+        self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict')
         time.sleep(0.1)
 
     def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity):
@@ -58,7 +58,7 @@ class BalancedWeaponClient:
         time.sleep(0.1)
 
     def SendClose(self):
-        time.sleep(10) 
+        time.sleep(0.1) 
         self.s.send(messageClose.encode(encoding='utf-8',errors='strict')
 
     def SendReset(self):

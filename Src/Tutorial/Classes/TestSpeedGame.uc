@@ -1,9 +1,8 @@
-class ServerGame extends UTDeathmatch;
+class TestSpeedGame extends UTDeathmatch;
 
 var TcpLinkServer tcpServer;
 
 var bool bGameStart;
-var bool bTestGame;
 
 var int numPlayer;
 
@@ -57,13 +56,6 @@ event InitGame( string Options, out string ErrorMessage )
 		`log("MaxDuration"@InOpt);
 		maxDuration = float(InOpt);
 	}
-
-	InOpt = ParseOption( Options, "TestGame");
-	if( InOpt != "" )
-	{
-		`log("TestGame"@InOpt);
-		bTestGame = true;
-	}
 	
 }
 
@@ -75,10 +67,6 @@ event PreBeginPlay()
     
     tcpServer.SetListenPort(listenPort);
     tcpServer.SetMaxDuration(maxDuration);
-
-    bChangeLevels = false;
-    TimeLimit = 1000;
-    GoalScore = 1000;
    
 }
 
@@ -86,69 +74,49 @@ function AddDefaultInventory( pawn Pawn ){
 
 	local int i;
 
-	if(bTestGame)
+	if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 	{
-
-		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
+		for(i = 0; i < mapBotPar.length; ++i)
 		{
-			for(i = 0; i < mapBotPar.length; ++i)
+			if(mapBotPar[i].botName == Pawn.Controller.PlayerReplicationInfo.PlayerName)
 			{
-				if(mapBotPar[i].botName == Pawn.Controller.PlayerReplicationInfo.PlayerName)
+				switch (i)
 				{
-					switch (i)
-					{
-						case 0:
-							
-							DefaultInventory[0] = class 'ProceduralSniper';
-							`log("[TestGame] Add SniperRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-					
-						case 1:
+					case 0:
+						
+						DefaultInventory[0] = class 'UTWeap_SniperRifle';
+						`log("[TestGame] Add SniperRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+						break;
+				
+					case 1:
 
-							DefaultInventory[0]  = class 'ProceduralFlak';
-							`log("[TestGame] Add ShockRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
+						DefaultInventory[0]  = class 'UTWeap_ShockRifle';
+						`log("[TestGame] Add ShockRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+						break;
 
-						case 2:
+					case 2:
 
-							DefaultInventory[0]  = class 'ProceduralRocketLauncher';
-							`log("[TestGame] Add Flak inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
+						DefaultInventory[0]  = class 'UTWeap_FlakCannon';
+						`log("[TestGame] Add Flak inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+						break;
 
-						case 3:
+					case 3:
 
-							DefaultInventory[0]  = class 'ProceduralShockRifle';
-							`log("[TestGame] Add Rocket inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-							
-					
-						default:
-							DefaultInventory[0] = class 'UTWeap_SniperRifle';
-							break;
-							
-					}
+						DefaultInventory[0]  = class 'UTWeap_RocketLauncher';
+						`log("[TestGame] Add Rocket inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+						break;
+						
+				
+					default:
+						
 				}
 			}
 		}
-
-		Super.AddDefaultInventory(Pawn);
-
 	}
-	else
-	{
-		Super.AddDefaultInventory(Pawn);
-		
-		if( Pawn.IsHumanControlled() )
-		{
-			Pawn.CreateInventory(class'ProceduralWeapon',true);
-		}
-		
-		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
-		{
-			`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-			PWPawn(Pawn).SetProceduralWeapon();
-		}
-	}
+
+
+	Super.AddDefaultInventory(Pawn);
+	
 }
 
 function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
@@ -208,7 +176,6 @@ function bool TooManyBots(Controller botToRemove)
 
 defaultproperties
 {
-	//DefaultInventory(0)=class'ProceduralWeapon'
 	DefaultInventory(1)=None
 	
     DefaultPawnClass=class'PWPawn'
@@ -217,7 +184,5 @@ defaultproperties
 
     bGameStart = false
     
-    numPlayer = 4
-
-    bTestGame = false
+    numPlayer = 2
 }

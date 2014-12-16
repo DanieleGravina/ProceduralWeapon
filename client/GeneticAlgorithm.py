@@ -27,8 +27,6 @@ creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
-WEIGHT = 100
-
 ###############
 # Weapon ######
 ###############
@@ -61,9 +59,9 @@ limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (S
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX)]
 
 
-N_CYCLES = 1
+N_CYCLES = 2
 # size of the population
-NUM_POP = NUM_BOTS*NUM_SERVER
+NUM_POP = 50
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -100,35 +98,7 @@ def writeWeapon(pop, pop_file):
             + " Gravity:" + str(ind[8]) +"\n")
         pop_file.write("fitness: " + str(ind.fitness.values)+"\n")
         pop_file.write("*********************************************************" + "\n")
-
-def selRoulette(individuals, k):
-
-    for ind in individuals:
-        fit = ind.fitness.values[0]
-        fit += 1
-        del ind.fitness.values
-        ind.fitness.values = fit, 
-
-    s_inds = sorted(individuals, key=attrgetter("fitness"), reverse=True)
-    sum_fits = sum(ind.fitness.values[0] for ind in individuals)
-    
-    chosen = []
-    for i in range(k):
-        u = random.random() * sum_fits
-        sum_ = 0
-        for ind in s_inds:
-            sum_ += ind.fitness.values[0]
-            if sum_ > u:
-                chosen.append(ind)
-                break
-
-    for ind in individuals:
-        fit = ind.fitness.values[0]
-        fit -= 1
-        del ind.fitness.values
-        ind.fitness.values = fit,
-    
-    return chosen
+    pop_file.write("\n" + "=======================================================" + "\n")
 
 
 def check_param(param, min, max):
@@ -225,7 +195,7 @@ toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in ran
                                                 up  = [limits[j][1] for j in range(9)], 
                                                 indpb = 0.1)
 
-toolbox.register("select", selRoulette)
+toolbox.register("select", tools.selTournament, tournsize = 3)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
