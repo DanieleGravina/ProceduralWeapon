@@ -34,36 +34,36 @@ WEIGHT = 100
 ###############
 
 #default Rof = 100
-ROF_MIN, ROF_MAX = 1, 500
+ROF_MIN, ROF_MAX = 1, 1000
 #default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 50
+SPREAD_MIN, SPREAD_MAX = 0, 100
 #default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 1000
+AMMO_MIN, AMMO_MAX = 1, 999
 #deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
+SHOT_COST_MIN, SHOT_COST_MAX = 1, 100
 #defualt Range 10000
-RANGE_MIN, RANGE_MAX = 10, 100000
+RANGE_MIN, RANGE_MAX = 1, 1000
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED_MIN, SPEED_MAX = 10, 10000
+SPEED_MIN, SPEED_MAX = 1, 10000
 #default damage = 1
 DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
 DMG_RAD_MIN, DMG_RAD_MAX = 1, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = 1, 100
+GRAVITY_MIN, GRAVITY_MAX = -100, 100
 
 limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN, RANGE_MAX),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX)]
 
 
-N_CYCLES = 1
+N_CYCLES = 2
 # size of the population
-NUM_POP = NUM_BOTS*NUM_SERVER
+NUM_POP = 50
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -114,7 +114,7 @@ def check_param(param, min, max):
 
 def check(param, n) :
 
-    check_param(param, limits[n][0], limits[n][1])
+    check_param(param, limits[n % 9][0], limits[n % 9][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -128,6 +128,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server():
+
     clients = []
 
     for i in range(NUM_SERVER):
@@ -138,21 +139,40 @@ def initialize_server():
         c.SendStartMatch()
         c.SendClose()
 
-# Run the simulation on the server side (UDK)
-def simulate_population(population, statics) :
+# Run the simulation on the server side (UT3)
+def simulate_population(population) :
 
     stats = {}
     threads = []
+    # population index
+    index = 0
+    # flag to know if we have finished
+    bSimulate = True
 
-    for i in range(NUM_SERVER):
-        threads.append( myThread(i*2, "Thread-" + str(i), population, statics, PORT[i]) )
+    while bSimulate:
 
-    for t in threads:
-        t.start()
+        to_simulate = 0
+        
+        while to_simulate < NUM_SERVER and index < len(population) :
 
-    # Wait for all threads to complete
-    for t in threads:
-        stats.update(t.join())
+            if not population[index].fitness.valid :
+                threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+                to_simulate += 1
+            
+            index += 1
+
+        if index >= len(population) :
+            bSimulate = False
+
+        for t in threads:
+            t.start()
+
+        # Wait for all threads to complete
+        for t in threads:
+            stats.update(t.join())
+
+        threads = []
+
 
     return stats
 
@@ -197,14 +217,14 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 def evaluate_difference(index, population):
 
-    ind = index if index % 2 == 0 else index - 1
-
     diff = 0
+
+    ind = index
 
     for j in range(9):
         den = limits[j][1] - limits[j][0]
         norm1 = (population[ind][j] - limits[j][0])/den
-        norm2 = (population[ind + 1][j] - limits[j][0])/den
+        norm2 = (population[ind][j + 9] - limits[j][0])/den
         diff += pow(norm1 - norm2, 2)
 
     result = sqrt(diff)
@@ -213,8 +233,8 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e, suicides = entropy(index, statics)
-    #e = random.randint(0,2)
+    e, suicides = entropy(index*2, statics)
+    #e, suicides = random.randint(0,2), random.randint(0,2)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -226,8 +246,8 @@ def evaluate(index, population, statics):
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)],
-                                                up  = [limits[j][1] for j in range(9)], 
+toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)] + [limits[j][0] for j in range(9)],
+                                                up  = [limits[j][1] for j in range(9)] + [limits[j][1] for j in range(9)], 
                                                 indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
@@ -273,14 +293,14 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 40 #20 is 1h
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
 
     fitnesses = []
     statics = {}
 
     initialize_server()
 
-    statics = simulate_population(pop, statics)
+    statics = simulate_population(pop)
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -306,41 +326,39 @@ def main():
 
     for g in range(NGEN - 1):
 
-        # Elitism : 2 individuals
-        offspring = toolbox.select(pop, 2)
-
+        # Select the next generation individuals
+        offspring = toolbox.select(pop, len(pop))
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
-        while len(offspring) < len(pop) :
+        # Apply crossover and mutation on the offspring
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if random.random() < CXPB:
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
 
-           child1 = toolbox.clone(toolbox.select(pop, 1))
-           child2 = toolbox.clone(toolbox.select(pop, 1))
+        for mutant in offspring:
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
 
-           if random.random() < CXPB:
-               toolbox.mate(child1[0], child2[0])
-               del child1[0].fitness.values
-               del child2[0].fitness.values
 
-           if random.random() < MUTPB:
-               toolbox.mutate(child1[0])
-               toolbox.mutate(child2[0])
+        statics = simulate_population(offspring)
 
-           offspring += child1
-           offspring += child2
+        fitnesses = []
 
-        statics = simulate_population(offspring, statics)
+        # Evaluate only invalid population
+        index = 0
+        fit = 0,
+        while index < len(offspring):
 
-        fit = 0, 0, 0
+            if not offspring[index].fitness.valid :
+                fit = toolbox.evaluate(index, statics)
+                fitnesses += [fit]
+                offspring[index].fitness.values = fit
 
-        for individual in offspring:
-           del individual.fitness.values
-
-        for i in range(len(offspring)) :
-           fit = toolbox.evaluate(i, offspring, statics)
-           fitnesses += [fit]
-           offspring[i].fitness.values = fit
-
+            index += 1
         # The population is entirely replaced by the offspring
         pop[:] = offspring
 

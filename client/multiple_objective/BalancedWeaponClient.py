@@ -41,7 +41,7 @@ class BalancedWeaponClient:
         messageWeapon += ':Spread:' + str(Spread/10)
         messageWeapon += ':MaxAmmo:' + str(MaxAmmo)
         messageWeapon += ':ShotCost:' + str(ShotCost)
-        messageWeapon += ':Range:' + str(Range/10)
+        messageWeapon += ':Range:' + str(Range)
         print('Send ' + messageWeapon)
         self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)

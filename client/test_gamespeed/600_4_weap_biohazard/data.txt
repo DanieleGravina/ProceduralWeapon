@@ -1,0 +1,7 @@
+8 server
+1,2,3,4,5 a 1x con 5 partite
+6,7 a 5x con 13 partite
+8 a 12x con 12 partite
+600 s  
+4 weapon (rocket, flak, sniper, shock rifle)
+4 bot

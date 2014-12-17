@@ -14,17 +14,15 @@ from TestClientThread import TestClientThread
 from math import log
 
 
-messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
-
-
 N_CYCLES = 1
 NUM_SERVER = 8
+NUM_BOTS = 4
 
 statics = {}
 
 
 def initialize_server():
+
     clients = []
 
     for i in range(NUM_SERVER):
@@ -89,20 +87,55 @@ def simulate_population() :
 
     return stats
 
+def eval_entropy(data):
+
+    p = 0
+    e = 0
+
+    total = sum(data)
+
+    for d in data:
+        p = d/total if total != 0 else 0
+        e += p*log(p, NUM_BOTS) if p != 0 else 0
+
+    return -e
+
+
+def entropy(data, pop):
+
+    result = []
+
+    for i in range(pop):
+        result += [eval_entropy( [data[j][i] for j in range(NUM_BOTS)])]
+
+    return result
+
+def log_stats(file, string, stats, i, f):
+    
+    print(string)
+    file.write(string + "\n")
+
+    for index in range(i ,f):
+        print(str(stats[index]))
+        file.write( str(stats[index]) + "\n")
+
+
+
+
 def main():
 
     statics_file = open("statics.txt", "w")
 
     statics = {}
 
-    final_statistics = {}
+    final_statistics = []
 
-    kills_1x = [[], [], [], []]
-    dies_1x = [[], [], [], []]
-    kills_5x = [[], [], [], []]
-    dies_5x = [[], [], [], []]
-    kills_12x = [[], [], [], []]
-    dies_12x = [[], [], [], []]
+    kills_1x = [[] for _ in range(NUM_BOTS)]
+    dies_1x = [[] for _ in range(NUM_BOTS)]
+    kills_5x = [[] for _ in range(NUM_BOTS)]
+    dies_5x = [[] for _ in range(NUM_BOTS)]
+    kills_12x = [[] for _ in range(NUM_BOTS)]
+    dies_12x = [[] for _ in range(NUM_BOTS)]
 
     initialize_server()
 
@@ -112,41 +145,80 @@ def main():
 
     for key, val in statics.items() :
         if key < 5 :
-            for j in range(4) :
+            for j in range(NUM_BOTS) :
                 kills_1x[j] += val[j]
-                dies_1x[j] += val[j+4]
+                dies_1x[j] += val[j+NUM_BOTS]
 
         elif key < 7 :
-            for j in range(4) :
+            for j in range(NUM_BOTS) :
                 kills_5x[j] += val[j]
-                dies_5x[j] += val[j+4]
+                dies_5x[j] += val[j+NUM_BOTS]
         elif key == 7 :
-            for j in range(4) :
+            for j in range(NUM_BOTS) :
                 kills_12x[j] += val[j]
-                dies_12x[j] += val[j+4]
+                dies_12x[j] += val[j+NUM_BOTS]
+
+    print("kills")
+    statics_file.write("kills\n")
+    for vector in kills_1x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
+    for vector in kills_5x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
+    for vector in kills_12x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
+
+    print("dies")
+    statics_file.write("dies\n")
+    for vector in dies_1x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
+    for vector in dies_5x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
+    for vector in dies_12x:
+        print(vector)
+        statics_file.write(str(vector) + "\n")
 
 
-    final_statistics.update({"mean kill 1x" : [statistics.mean(kills_1x[i]) for i in range(4)]})
-    final_statistics.update({"variance kill 1x" : [statistics.variance(kills_1x[i]) for i in range(4)]})
+    final_statistics += [[statistics.mean(kills_1x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(kills_1x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(kills_1x, 25)), statistics.variance(entropy(kills_1x, 25))]
 
-    final_statistics.update({"mean dies 1x" : [statistics.mean(kills_1x[i]) for i in range(4)]})
-    final_statistics.update({"variance dies 1x" : [statistics.variance(dies_1x[i]) for i in range(4)]})
+    log_stats(statics_file, "kill 1x", final_statistics, 0, 4)
 
-    final_statistics.update({"mean kill 5x" : [statistics.mean(kills_5x[i]) for i in range(4)]})
-    final_statistics.update({"variance kill 5x" : [statistics.variance(kills_5x[i]) for i in range(4)]})
+    final_statistics += [[statistics.mean(dies_1x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(dies_1x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(dies_1x, 25)), statistics.variance(entropy(dies_1x, 25))]
 
-    final_statistics.update({"mean dies 5x" : [statistics.mean(dies_5x[i]) for i in range(4)]})
-    final_statistics.update({"variance dies 5x" : [statistics.variance(dies_5x[i]) for i in range(4)]})
+    log_stats(statics_file, "dies 1x", final_statistics, 4, 8)
+
+    final_statistics += [[statistics.mean(kills_5x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(kills_5x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(kills_5x, 25)), statistics.variance(entropy(kills_5x, 25))]
+
+    log_stats(statics_file, "kill 5x",final_statistics, 8, 12)
+
+    final_statistics += [[statistics.mean(dies_5x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(dies_5x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(dies_5x, 25)), statistics.variance(entropy(dies_5x, 25))]
+
+    log_stats(statics_file, "dies 5x",final_statistics, 12, 16)
     
-    final_statistics.update({"mean kill 12x" : [statistics.mean(kills_12x[i]) for i in range(4)]})
-    final_statistics.update({"variance kill 12x" : [statistics.variance(kills_12x[i]) for i in range(4)]})
+    final_statistics += [[statistics.mean(kills_12x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(kills_12x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(kills_12x, 25)), statistics.variance(entropy(kills_12x, 25))]
 
-    final_statistics.update({"mean dies 12x" : [statistics.mean(dies_12x[i]) for i in range(4)]})
-    final_statistics.update({"variance dies 12x" : [statistics.variance(dies_12x[i]) for i in range(4)]})
+    log_stats(statics_file, "kill 12x",final_statistics, 16, 20)
 
-    for key, val in final_statistics.items():
-        print(str(key) + " : " + str(val))
-        statics_file.write(str(key) + " : " + str(val) + "\n")
+    final_statistics += [[statistics.mean(dies_12x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [[statistics.variance(dies_12x[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(dies_12x, 25)), statistics.variance(entropy(dies_12x, 25))]
+
+    log_stats(statics_file, "dies 12x",final_statistics, 20, 24)
+
 
     plt.figure(1)
 
@@ -156,6 +228,8 @@ def main():
 
     plt.ylabel('kill 1x')
 
+    plt.ylim(0, 30)
+
     plt.boxplot(kills_1x, labels=list('1234'))
 
     plt.subplot(232)
@@ -163,6 +237,8 @@ def main():
     plt.xlabel('id bot')
 
     plt.ylabel('kill 5x')
+
+    plt.ylim(0, 30)
 
     plt.boxplot(kills_5x, labels=list('1234'))
 
@@ -172,6 +248,8 @@ def main():
 
     plt.ylabel('kill 12x')
 
+    plt.ylim(0, 30)
+
     plt.boxplot(kills_12x, labels=list('1234'))
 
     plt.subplot(234)
@@ -179,6 +257,8 @@ def main():
     plt.xlabel('id bot')
 
     plt.ylabel('dies 1x')
+
+    plt.ylim(0, 30)
 
     plt.boxplot(dies_1x, labels=list('1234'))
 
@@ -188,6 +268,8 @@ def main():
 
     plt.ylabel('dies 5x')
 
+    plt.ylim(0, 30)
+
     plt.boxplot(dies_5x, labels=list('1234'))
 
     plt.subplot(236)
@@ -196,7 +278,63 @@ def main():
 
     plt.ylabel('dies 12x')
 
+    plt.ylim(0, 30)
+
     plt.boxplot(dies_12x, labels=list('1234'))
+
+
+
+
+    plt.figure(2)
+
+    plt.subplot(231)
+
+    plt.ylabel('entropy 1x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(kills_1x, 25), labels=list('K'))
+
+    plt.subplot(232)
+
+    plt.ylabel('entropy 5x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(kills_5x, 25), labels=list('K'))
+
+    plt.subplot(233)
+
+    plt.ylabel('entropy 12x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(kills_12x, 25), labels=list('K'))
+
+    plt.subplot(234)
+
+    plt.ylabel('entropy 1x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(dies_1x, 25), labels=list('D'))
+
+    plt.subplot(235)
+
+    plt.ylabel('entropy 5x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(dies_5x, 25), labels=list('D'))
+
+    plt.subplot(236)
+
+    plt.ylabel('entropy 12x')
+
+    plt.ylim(0.7, 1)
+
+    plt.boxplot(entropy(dies_12x, 25), labels=list('D'))
+
 
 
     plt.show()

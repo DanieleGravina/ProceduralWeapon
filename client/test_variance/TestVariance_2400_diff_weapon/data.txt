@@ -1,0 +1,26 @@
+2400
+5 server
+2 partite per server
+2 bot
+
+different weapon per bot
+
+#default Rof = 100
+ROF = [100, 200]
+#default Spread = 0
+SPREAD = [2, 1]
+#default MaxAmmo = 40
+AMMO = [100, 50]
+#deafult ShotCost = 1
+SHOT_COST = [1, 1]
+#defualt Range 10000
+RANGE = [10, 20]
+
+#default speed = 1000
+SPEED = [1000, 2000]
+#default damage = 1
+DMG = [50, 60]
+#default damgae radius = 10
+DMG_RAD = [40, 20]
+#default gravity = 1
+GRAVITY = [0, 0]

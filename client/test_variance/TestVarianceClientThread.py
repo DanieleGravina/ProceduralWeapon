@@ -2,6 +2,8 @@ import threading
 import statistics
 import time
 
+from math import log
+
 from BalancedWeaponClient import BalancedWeaponClient
 
 NUM_BOTS = 2
@@ -47,10 +49,8 @@ class TestClientThread (threading.Thread):
 
         result = {}
 
-        kills1 = []
-        dies1 = []
-        kills2 = []
-        dies2 = []
+        entropy_kill = []
+        entropy_dies = []
 
         t0 = 0
 
@@ -74,16 +74,30 @@ class TestClientThread (threading.Thread):
 
             print(str(self.threadID) + " " + str(result))
 
-            kills1.append(result[0][0])
-            dies1.append(result[0][1])
+            total_kills = result[0][0] + result[1][0]
+            total_dies = result[0][1] + result[1][1]
 
-            kills2.append(result[1][0])
-            dies2.append(result[1][1])
+            p_kills_1 = 0  if total_kills == 0 else result[0][0]/total_kills
+            p_dies_1 = 0 if total_dies == 0 else result[0][1]/total_dies
+
+            p_kills_2 = 0  if total_kills == 0 else result[1][0]/total_kills
+            p_dies_2 = 0 if total_dies == 0 else result[1][1]/total_dies
+
+            entropy_kill_1 = p_kills_1*log(p_kills_1, NUM_BOTS) if p_kills_1 != 0 else 0
+
+            entropy_dies_1 = p_dies_1*log(p_dies_1, NUM_BOTS) if p_dies_1 != 0 else 0
+
+            entropy_kill_2 = p_kills_2*log(p_kills_2, NUM_BOTS) if p_kills_2 != 0 else 0
+
+            entropy_dies_2 = p_dies_2*log(p_dies_2, NUM_BOTS) if p_dies_2 != 0 else 0
+
+            entropy_kill += [-(entropy_kill_1 + entropy_kill_2)]
+            entropy_dies += [-(entropy_dies_1 + entropy_dies_2)]
 
             self.client = BalancedWeaponClient(self.port)
             self.client.SendInit()
 
-        self.stats.update( {self.threadID : [kills1, kills2, dies1, dies2] } )
+        self.stats.update( {self.threadID : [entropy_kill, entropy_dies] } )
 
 
     def join(self):

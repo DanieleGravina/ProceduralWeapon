@@ -34,13 +34,13 @@ toolbox = base.Toolbox()
 #default Rof = 100
 ROF_MIN, ROF_MAX = 1, 1000
 #default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 100
+SPREAD_MIN, SPREAD_MAX = 0, 50
 #default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 10, 1000
+AMMO_MIN, AMMO_MAX = 1, 999
 #deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
+SHOT_COST_MIN, SHOT_COST_MAX = 1, 100
 #defualt Range 10000
-RANGE_MIN, RANGE_MAX = 1, 100000
+RANGE_MIN, RANGE_MAX = 1, 1000
 
 ###################
 # Projectile ######
@@ -53,7 +53,7 @@ DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
 DMG_RAD_MIN, DMG_RAD_MAX = 1, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = 1, 100
+GRAVITY_MIN, GRAVITY_MAX = -20, 20
 
 limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN, RANGE_MAX),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX)]
@@ -61,7 +61,7 @@ limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (S
 
 N_CYCLES = 2
 # size of the population
-NUM_POP = 20
+NUM_POP = 50
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -150,11 +150,25 @@ def simulate_population(population) :
 
     stats = {}
     threads = []
+    # population index
+    index = 0
+    # flag to know if we have finished
+    bSimulate = True
 
-    for iter in range(int(len(population)/NUM_SERVER)) :
+    while bSimulate:
 
-        for i in range(iter*NUM_SERVER, (iter + 1)*NUM_SERVER):
-            threads.append( myThread(i*2, "Thread-" + str(i), population, PORT[i % 10]) )
+        to_simulate = 0
+        
+        while to_simulate < NUM_SERVER and index < len(population) :
+
+            if not population[index].fitness.valid :
+                threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+                to_simulate += 1
+            
+            index += 1
+
+        if index >= len(population) :
+            bSimulate = False
 
         for t in threads:
             t.start()
@@ -164,6 +178,7 @@ def simulate_population(population) :
             stats.update(t.join())
 
         threads = []
+
 
     return stats
 
@@ -198,6 +213,7 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
+
     e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
     return e,
@@ -278,18 +294,21 @@ def main():
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
 
-        # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-
         statics = simulate_population(offspring)
 
         fitnesses = []
-        # Evaluate the entire population
-        for i in range(len(invalid_ind)) :
-            fitnesses += [toolbox.evaluate(i, statics)]
 
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+        # Evaluate only invalid population
+        index = 0
+        fit = 0,
+        while index < len(offspring):
+
+            if not offspring[index].fitness.valid :
+                fit = toolbox.evaluate(index, statics)
+                fitnesses += [fit]
+                offspring[index].fitness.values = fit
+
+            index += 1
 
         # The population is entirely replaced by the offspring
         pop[:] = offspring

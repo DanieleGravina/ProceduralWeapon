@@ -14,10 +14,6 @@ from TestVarianceClientThread import TestClientThread
 from math import log
 
 
-messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
-
-
 NUM_SERVER = 5
 
 statics = {}
@@ -77,8 +73,8 @@ def main():
 
     final_statistics = {}
 
-    kills = [[], []]
-    dies = [[], []]
+    entropy_kills = []
+    entropy_dies = []
 
     initialize_server()
 
@@ -87,13 +83,20 @@ def main():
     print(statistics)
 
     for key, val in stats.items() :
-        for j in range(2) :
-            kills[j] += val[j]
-            dies[j] += val[j+2]
+        entropy_kills += val[0]
+        entropy_dies += val[1]
+
+    print(str(entropy_kills))
+    statistics_file.write(str(entropy_kills) + "\n")
+
+    print(str(entropy_dies))
+    statistics_file.write(str(entropy_dies) + "\n")
 
 
-    final_statistics.update({"mean kill " : [statistics.mean(kills[i]) for i in range(2)]})
-    final_statistics.update({"variance kill " : [statistics.variance(kills[i]) for i in range(2)]})
+    final_statistics.update({"mean entropy kill " : statistics.mean(entropy_kills)})
+    final_statistics.update({"variance entropy kill " : statistics.variance(entropy_kills)})
+    final_statistics.update({"mean entropy_dies " : statistics.mean(entropy_dies) })
+    final_statistics.update({"variance entropy_dies " : statistics.variance(entropy_dies) })
 
     for key, val in final_statistics.items():
         print(str(key) + " : " + str(val))
@@ -107,7 +110,7 @@ def main():
 
     plt.ylabel('kill')
 
-    plt.boxplot(kills, labels=list('12'))
+    plt.boxplot(entropy_kills, labels=list('K'))
 
     plt.subplot(212)
 
@@ -115,7 +118,7 @@ def main():
 
     plt.ylabel('dies')
 
-    plt.boxplot(dies, labels=list('12'))
+    plt.boxplot(entropy_dies, labels=list('D'))
 
     plt.show()
 
