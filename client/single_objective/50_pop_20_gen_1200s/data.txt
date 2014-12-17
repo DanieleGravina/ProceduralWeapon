@@ -1,0 +1,5 @@
+10 server 1200 s 12x
+
+pop 50
+gen 20
+
