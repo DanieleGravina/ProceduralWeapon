@@ -20,7 +20,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, -1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, 1.0))
 creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
@@ -28,7 +28,6 @@ creator.create("Individual", list, fitness = creator.FitnessMax)
 toolbox = base.Toolbox()
 
 WEIGHT = 100
-MAX_KILLS = 25
 
 ###############
 # Weapon ######
@@ -216,8 +215,6 @@ def match_kills(index, statics) :
         if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
 
-    total_kills = total_kills/MAX_KILLS
-
     return total_kills
 
 def entropy(index, statics) :
@@ -243,7 +240,7 @@ def entropy(index, statics) :
         print("error index + 1 > NUM_POP*NUM_BOTS")
         suicides = 0
 
-    return e, suicides
+    return e
 
 
 def evaluate_entropy(index, statics, total_kills, total_dies, N) :
@@ -275,17 +272,16 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e, suicides = entropy(index*2, statics)
-    #e, suicides = random.randint(0,2), random.randint(0,2)
+    e = entropy(index*2, statics)
+    #e, tot_kills = random.randint(0,2), random.randint(0,25)
+    tot_kills = match_kills(index*2, statics)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
     print('difference :' + str(index) + " " + str(diff))
-    print('suicides :' + str(index) + " " + str(suicides))
+    print('tot kills :' + str(index) + " " + str(tot_kills))
 
-    e += match_kills(index*2, statics)
-
-    return e, diff, suicides
+    return e, diff, tot_kills
 
 
 toolbox.register("mate", tools.cxTwoPoint)
@@ -324,7 +320,7 @@ stats3.register("std", numpy.std)
 stats3.register("min", numpy.min)
 stats3.register("max", numpy.max)
 
-mstats = tools.MultiStatistics(entropy = stats1, diff = stats2, suicides = stats3)
+mstats = tools.MultiStatistics(entropy = stats1, diff = stats2, kills = stats3)
 
 logbook = tools.Logbook()
 
@@ -347,6 +343,9 @@ def main():
 
     statics = simulate_population(pop)
 
+    for key, val in statics.items():
+        logbook_file.write(str(key) + " : " + str(val) + "\n")
+
     # Evaluate the entire population
     for i in range(len(pop)) :
         fitnesses += [toolbox.evaluate(i, pop, statics)]
@@ -359,10 +358,10 @@ def main():
 
     logbook.record(gen = 0, **record)
 
-    logbook.header = "gen", "entropy", "diff", "suicides"
+    logbook.header = "gen", "entropy", "diff", "kills"
     logbook.chapters["entropy"].header = "avg", "max"
     logbook.chapters["diff"].header = "avg", "max"
-    logbook.chapters["suicides"].header = "avg", "min"
+    logbook.chapters["kills"].header = "avg", "max"
 
     print(logbook)
 
@@ -391,6 +390,9 @@ def main():
 
         statics = simulate_population(offspring)
 
+        for key, val in statics.items():
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
+
         fitnesses = []
 
         # Evaluate only invalid population
@@ -414,18 +416,18 @@ def main():
 
         logbook.record(gen = g + 1, **record)
 
-        logbook.header = "gen", "entropy", "diff", "suicides"
+        logbook.header = "gen", "entropy", "diff", "kills"
         logbook.chapters["entropy"].header = "avg", "max"
         logbook.chapters["diff"].header = "avg", "max"
-        logbook.chapters["suicides"].header = "avg", "min"
+        logbook.chapters["kills"].header = "avg", "max"
 
         print(logbook)
 
 
-    logbook.header = "gen", "entropy", "diff", "suicides"
+    logbook.header = "gen", "entropy", "diff", "kills"
     logbook.chapters["entropy"].header = "min", "avg", "max"
     logbook.chapters["diff"].header = "min", "avg", "max"
-    logbook.chapters["suicides"].header = "min", "avg", "max"
+    logbook.chapters["kills"].header = "min", "avg", "max"
     
     log_string = str(logbook)
 
@@ -461,14 +463,14 @@ def main():
 
     plt.figure(3)
 
-    fit_avg = logbook.chapters["suicides"].select("avg")
-    fit_max = logbook.chapters["suicides"].select("max")
-    fit_min = logbook.chapters["suicides"].select("min")
+    fit_avg = logbook.chapters["kills"].select("avg")
+    fit_max = logbook.chapters["kills"].select("max")
+    fit_min = logbook.chapters["kills"].select("min")
 
     plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
 
     plt.xlabel("Generation")
-    plt.ylabel("Suicides")
+    plt.ylabel("kills")
 
     plt.show()
 

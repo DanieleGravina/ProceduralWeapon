@@ -1,5 +1,5 @@
 from BalancedWeaponClient import BalancedWeaponClient
-from Costants import PORT
+import time
 
 ###############
 # Weapon ######
@@ -29,6 +29,8 @@ DMG_RAD = [35, 44]
 #default gravity = 1
 GRAVITY = [0, 0]
 
+PORT = [3760]
+
 
 def main():
 
@@ -46,9 +48,13 @@ def main():
         client.SendWeaponParams(i, ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
         client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i])
 
+    t0 = time.clock()
+
     client.SendStartMatch()
 
     client.WaitForBotStatics()
+
+    print(str(time.clock() - t0))
 
 main()
 

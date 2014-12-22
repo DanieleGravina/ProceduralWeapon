@@ -13,6 +13,8 @@ from Costants import NUM_BOTS
 from Costants import NUM_SERVER
 from Costants import PORT
 
+from InitialPopulationSeed import getTwoSeedWeapons
+
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
 
@@ -64,6 +66,8 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
 N_CYCLES = 2
 # size of the population
 NUM_POP = 50
+NUM_POP_SEED = 10
+NUM_POP_RANDOM = 40
 
 #MAX KILLS PER MATCH
 MAX_KILLS = 25
@@ -77,6 +81,11 @@ def round_decorator(min, max):
             return result
         return wrapper
     return decorator
+
+def SeedIndividual(container):
+    result = getTwoSeedWeapons()
+    return container(result[i] for i in range(len(result)))
+
 
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
@@ -100,7 +109,10 @@ toolbox.register("individual", tools.initCycle, creator.Individual,
                   toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
                   toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = N_CYCLES)
 
+toolbox.register("individual_guess", SeedIndividual, creator.Individual)
+
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+toolbox.register("population_guess", tools.initRepeat, list, toolbox.individual_guess)
 
 def printWeapon(pop):
     i = 0
@@ -174,7 +186,6 @@ def initialize_server():
 
 # Run the simulation on the server side (UT3)
 def simulate_population(population) :
-
     stats = {}
     threads = []
     # population index
@@ -253,7 +264,7 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-
+    #e = random.randint(0, 2)
     e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
     e += match_kills(index*2, statics)
@@ -287,7 +298,8 @@ def main():
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
 
-    pop = toolbox.population(n = NUM_POP)
+    pop = toolbox.population(n = NUM_POP_RANDOM)
+    pop += toolbox.population_guess(n = NUM_POP_SEED)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)

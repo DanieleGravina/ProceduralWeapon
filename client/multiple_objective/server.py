@@ -20,9 +20,9 @@ NUM_SERVER = 10
 threads = []
 
 for i in range(NUM_SERVER):
-	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 1200))
+	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 1800))
 
 for thread in threads:
 	thread.start()
-	time.sleep(20)
+	time.sleep(21)
 

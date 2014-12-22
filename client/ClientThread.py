@@ -1,4 +1,5 @@
 import threading
+import time
 from BalancedWeaponClient import BalancedWeaponClient
 from Costants import NUM_BOTS
 
@@ -21,6 +22,8 @@ class myThread (threading.Thread):
 
         i = int(index/2)
 
+        t0 = time.clock()
+
         self.client.SendWeaponParams(index, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
         self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
@@ -32,6 +35,8 @@ class myThread (threading.Thread):
         self.client.SendStartMatch()
 
         self.client.WaitForBotStatics()
+
+        print(str(self.threadID) + " " + str(time.clock() - t0))
 
         self.stats = self.client.GetStatics()
 
