@@ -4,4 +4,21 @@
 8 a 12x con 12 partite
 600 s  
 4 weapon (rocket, flak, sniper, shock rifle)
-4 bot
+4 bot :
+1° sniper rifle 
+2° shock rifle
+3° flak cannon
+4° rocket launcher
+
+Bot Skill : 7
+
+Bot Parameters:
+
+Aggressiveness = 1;
+BaseAggressiveness = Aggressiveness;
+Accuracy = 1;
+StrafingAbility = 1;
+CombatStyle = 0.50;
+Jumpiness = -1;
+Tactics = 0;
+ReactionTime = 0;

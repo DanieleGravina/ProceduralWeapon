@@ -1,0 +1,172 @@
+{70: (0, 1), 71: (1, 1)}
+{68: (4, 4), 69: (4, 4)}
+{60: (4, 1), 61: (1, 5)}
+{64: (1, 3), 65: (2, 3)}
+{46: (2, 5), 47: (4, 2)}
+{56: (4, 9), 57: (7, 6)}
+{66: (5, 2), 67: (2, 5)}
+{62: (1, 1), 63: (1, 2)}
+{74: (3, 5), 75: (5, 4)}
+{72: (2, 3), 73: (3, 3)}
+
+{0: (1, 2), 1: (1, 1)}
+{30: (2, 2), 31: (2, 4)}
+{4: (2, 3), 5: (3, 2)}
+{6: (4, 2), 7: (0, 4)}
+{2: (3, 2), 3: (1, 4)}
+{8: (6, 6), 9: (4, 7)}
+{32: (0, 0), 33: (0, 2)}
+{44: (2, 3), 45: (3, 2)}
+{34: (6, 2), 35: (2, 6)}
+{28: (0, 0), 29: (0, 1)}
+
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:322
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (1.8365916681089791,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.1 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-13
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:885 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (1.9419011889093372,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:109
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (1.9852281360342516,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-15
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:180 ShotCost:93 Range:841
+Projectile  Speed:7363 Damage:12 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:85 Range:233
+Projectile  Speed:6945 Damage:76 DamageRadius:11 Gravity:5
+Weapon  Rof:1.82 Spread:0.0 MaxAmmo:211 ShotCost:66 Range:518
+Projectile  Speed:7386 Damage:84 DamageRadius:68 Gravity:-2
+fitness: (1.808787474273981,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (1.8357249021556576,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (1.8340711630212996,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (0.7219280948873623,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:2955 Damage:96 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:191 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:74 Gravity:-2
+fitness: (1.8631205685666308,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:75 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:211 ShotCost:66 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (1.533206219346495,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:85 Range:233
+Projectile  Speed:6945 Damage:76 DamageRadius:11 Gravity:-2
+Weapon  Rof:1.58 Spread:0.3 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:7386 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (1.9182958340544896,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.1 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:2955 Damage:76 DamageRadius:74 Gravity:5
+Weapon  Rof:0.43 Spread:0.8 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (1.0638392719519878,)
+*********************************************************
+Weapon  Rof:6.71 Spread:0.1 MaxAmmo:776 ShotCost:85 Range:233
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:2505 Damage:50 DamageRadius:39 Gravity:4
+fitness: (1.6743986930257637,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+Weapon  Rof:4.23 Spread:0.8 MaxAmmo:479 ShotCost:87 Range:373
+Projectile  Speed:1350 Damage:71 DamageRadius:66 Gravity:-3
+Weapon  Rof:4.96 Spread:0.0 MaxAmmo:399 ShotCost:93 Range:518
+Projectile  Speed:9788 Damage:27 DamageRadius:68 Gravity:-2
+fitness: (2.0,)
+*********************************************************
+
+gen     avg             std             min     ma
+0       0.576305        0.760111        0       2
+1       0.757613        0.795477        0       2
+2       1.14592         0.786565        0       2
+3       1.28177         0.827729        0       2
+4       1.23256         0.865423        0       2
+5       1.35041         0.810435        0       2
+6       1.2878          0.791188        0       2
+7       1.3361          0.746826        0       2
+8       1.44614         0.717629        0       2
+9       1.45992         0.70117         0       2
+10      1.4308          0.724738        0       2
+11      1.50356         0.727437        0       2
+12      1.39924         0.779806        0       2
+13      1.50768         0.727293        0       2
+14      1.63251         0.56563         0       2

@@ -4,6 +4,8 @@ import numpy
 import pickle
 import time
 
+
+from decimal import *
 from functools import partial
 from operator import attrgetter
 
@@ -32,15 +34,15 @@ toolbox = base.Toolbox()
 ###############
 
 #default Rof = 100
-ROF_MIN, ROF_MAX = 1, 1000
+ROF_MIN, ROF_MAX = 10, 1000
 #default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 50
+SPREAD_MIN, SPREAD_MAX = 0, 300
 #default MaxAmmo = 40
 AMMO_MIN, AMMO_MAX = 1, 999
 #deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 100
+SHOT_COST_MIN, SHOT_COST_MAX = 1, 999
 #defualt Range 10000
-RANGE_MIN, RANGE_MAX = 1, 1000
+RANGE_MIN, RANGE_MAX = 100, 10000
 
 ###################
 # Projectile ######
@@ -51,17 +53,31 @@ SPEED_MIN, SPEED_MAX = 1, 10000
 #default damage = 1
 DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = 1, 100
+DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -20, 20
+GRAVITY_MIN, GRAVITY_MAX = -2000, 2000
 
-limits = [(ROF_MIN, ROF_MAX), (SPREAD_MIN, SPREAD_MAX), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN, RANGE_MAX),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX)]
+limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
 
 
 N_CYCLES = 2
 # size of the population
 NUM_POP = 50
+
+#MAX KILLS PER MATCH
+MAX_KILLS = 25
+
+
+def round_decorator(min, max):
+    def decorator(func):
+        def wrapper(*args, **kargs):
+            result = func(*args, **kargs)
+            result = result/100
+            return result
+        return wrapper
+    return decorator
+
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -74,6 +90,11 @@ toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
 toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
 toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
 
+toolbox.decorate("attr_rof", round_decorator(0,1))
+toolbox.decorate("attr_spread", round_decorator(0,1))
+toolbox.decorate("attr_range", round_decorator(0,1))
+toolbox.decorate("attr_gravity", round_decorator(0,1))
+
 toolbox.register("individual", tools.initCycle, creator.Individual,
                  (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
                   toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
@@ -82,13 +103,16 @@ toolbox.register("individual", tools.initCycle, creator.Individual,
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def printWeapon(pop):
+    i = 0
     for ind in pop :
-        print("Weapon "+ " Rof:" + str(ind[0]/100) + " Spread:" + str(ind[1]/10) + " MaxAmmo:" + str(ind[2]) 
+        print("(" + str(i*2) + ")")
+        i += 1
+        print("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
         print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) )
 
-        print("Weapon "+ " Rof:" + str(ind[9]/100) + " Spread:" + str(ind[10]/10) + " MaxAmmo:" + str(ind[11]) 
+        print("Weapon "+ " Rof:" + str(ind[9]) + " Spread:" + str(ind[10]) + " MaxAmmo:" + str(ind[11]) 
             + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) )
         print("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
             + " Gravity:" + str(ind[17]) )
@@ -97,13 +121,16 @@ def printWeapon(pop):
         print("*********************************************************")
 
 def writeWeapon(pop, pop_file):
+    i = 0
     for ind in pop :
-        pop_file.write("Weapon "+ " Rof:" + str(ind[0]/100) + " Spread:" + str(ind[1]/10) + " MaxAmmo:" + str(ind[2]) 
+        pop_file.write("(" + str(i*2) + ")\n")
+        i += 1
+        pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) +"\n")
 
-        pop_file.write("Weapon "+ " Rof:" + str(ind[9]/100) + " Spread:" + str(ind[10]/10) + " MaxAmmo:" + str(ind[11]) 
+        pop_file.write("Weapon "+ " Rof:" + str(ind[9]) + " Spread:" + str(ind[10]) + " MaxAmmo:" + str(ind[11]) 
             + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
             + " Gravity:" + str(ind[17]) + "\n")
@@ -199,6 +226,19 @@ def entropy(index, statics) :
 
     return e
 
+def match_kills(index, statics) :
+
+    total_kills = 0
+
+    for key, val in statics.items():
+        if key >= index and key <= index + (NUM_BOTS - 1) :
+            total_kills += val[0]
+
+    total_kills = total_kills/MAX_KILLS
+
+    return total_kills
+
+
 
 def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
@@ -216,14 +256,15 @@ def evaluate(index, statics):
 
     e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
+    e += match_kills(index*2, statics)
     return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutUniformInt, low = [limits[j][0] for j in range(9)] + [limits[j][0] for j in range(9)],
-                                                up  = [limits[j][1] for j in range(9)] + [limits[j][1] for j in range(9)], 
-                                                indpb = 0.1)
+toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(18)],
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
+                                              indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
 
@@ -261,6 +302,9 @@ def main():
 
     statics = simulate_population(pop)
 
+    for key, val in statics.items():
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
+
     # Evaluate the entire population
     for i in range(len(pop)) :
         fitnesses += [toolbox.evaluate(i, statics)]
@@ -295,6 +339,9 @@ def main():
                 del mutant.fitness.values
 
         statics = simulate_population(offspring)
+
+        for key, val in statics.items():
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
 
         fitnesses = []
 

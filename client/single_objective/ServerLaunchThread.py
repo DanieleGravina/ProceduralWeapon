@@ -12,7 +12,8 @@ class ServerLaunchThread (threading.Thread):
 
     def run(self):
         print(self.threadID)
-        os.system("UT3.exe server DM-Biohazard.ut3?game=Tutorial.ServerGame?numplay=2?Difficulty=8?ServerListenPort=" + str(self.port)
-            + "?GameSpeed=" + str(self.speed) + "?MaxDuration=" + str(self.maxDuration) + " -useunpublished")
+        os.system("UT3.exe server DM-RisingSun.ut3?game=Tutorial.ServerGame?numplay=2?botskill=7?ServerListenPort=" + str(self.port)
+            + "?GameSpeed=" + str(self.speed) + "?MaxDuration=" + str(self.maxDuration) 
+            + " -useunpublished" )
 
          

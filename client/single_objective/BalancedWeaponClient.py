@@ -37,12 +37,12 @@ class BalancedWeaponClient:
         time.sleep(0.1) 
         messageWeapon = ':WeaponPar'
         messageWeapon += ':ID:' + str(id)
-        messageWeapon += ':Rof:' + str(Rof/100)
-        messageWeapon += ':Spread:' + str(Spread/10)
+        messageWeapon += ':Rof:' + str(Rof)
+        messageWeapon += ':Spread:' + str(Spread)
         messageWeapon += ':MaxAmmo:' + str(MaxAmmo)
         messageWeapon += ':ShotCost:' + str(ShotCost)
-        messageWeapon += ':Range:' + str(Range/10)
-        print('Send ' + messageWeapon)
+        messageWeapon += ':Range:' + str(Range)
+        print('Send ' + str(id))
         self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 
@@ -53,7 +53,7 @@ class BalancedWeaponClient:
         messageProjectile += ':Damage:' + str(Damage)
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
-        print('Send ' + messageProjectile)
+        #print('Send ' + messageProjectile)
         self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 

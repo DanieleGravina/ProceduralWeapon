@@ -37,8 +37,8 @@ class BalancedWeaponClient:
         time.sleep(0.1) 
         messageWeapon = ':WeaponPar'
         messageWeapon += ':ID:' + str(id)
-        messageWeapon += ':Rof:' + str(Rof/100)
-        messageWeapon += ':Spread:' + str(Spread/10)
+        messageWeapon += ':Rof:' + str(Rof)
+        messageWeapon += ':Spread:' + str(Spread)
         messageWeapon += ':MaxAmmo:' + str(MaxAmmo)
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)

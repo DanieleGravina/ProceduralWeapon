@@ -5,29 +5,29 @@ from Costants import PORT
 # Weapon ######
 ###############
 
-#default Rof = 100
-ROF = [332, 10]
+#default Rof = 1
+ROF = [1, 1]
 #default Spread = 0
-SPREAD = [15, 5]
+SPREAD = [0.5, 0.5]
 #default MaxAmmo = 40
-AMMO = [978, 900]
+AMMO = [999, 999]
 #deafult ShotCost = 1
-SHOT_COST = [9, 8]
+SHOT_COST = [55, 54]
 #defualt Range 10000
-RANGE = [8, 100]
+RANGE = [50, 100]
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED = [500, 1000]
+SPEED = [523, 20]
 #default damage = 1
-DMG = [93, 93]
+DMG = [61, 58]
 #default damgae radius = 10
-DMG_RAD = [21, 21]
+DMG_RAD = [35, 44]
 #default gravity = 1
-GRAVITY = [1, -100]
+GRAVITY = [0, 0]
 
 
 def main():

@@ -1,0 +1,5 @@
+multiple objective
+
+1 : entropy + normalized kill (max 25)
+2 : difference
+3 : suicides

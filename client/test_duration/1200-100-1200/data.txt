@@ -1,0 +1,5 @@
+test duration
+
+1 server 1x 1200s 1 iter
+2 server 1x 100s 24 iter
+2 server 12x 1200s 24 iter
