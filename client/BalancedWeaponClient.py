@@ -25,9 +25,19 @@ class BalancedWeaponClient:
         time.sleep(0.1) 
 
     def SendInit(self):
-        #send to UDK server init message
+        #send to UT3 server init message
         time.sleep(0.1) 
         self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
+
+    def SendGameSpeed(self, gameSpeed):
+        time.sleep(0.1)
+        message = ":GameSpeed:" + str(gameSpeed)
+        self.s.send(message.encode(encoding='utf-8',errors='strict'))
+
+    def SendMaxDuration(self, maxDuration):
+        time.sleep(0.1)
+        message = ":MaxDuration:" + str(maxDuration)
+        self.s.send(message.encode(encoding='utf-8',errors='strict'))
 
     def SendStartMatch(self):
         time.sleep(0.1)

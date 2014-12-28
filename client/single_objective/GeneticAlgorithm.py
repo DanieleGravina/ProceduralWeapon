@@ -158,9 +158,11 @@ def check_param(param, min, max):
     elif param > max :
         param = max
 
+    return param
+
 def check(param, n) :
 
-    check_param(param, limits[n % 9][0], limits[n % 9][1])
+    return check_param(param, limits[n % 9][0], limits[n % 9][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -168,7 +170,7 @@ def checkBounds(min, max):
             offspring = func(*args, **kargs)
             for child in offspring:
                 for i in range(len(child)):
-                    check(child[i], i)
+                    child[i] = check(child[i], i)
             return offspring
         return wrapper
     return decorator

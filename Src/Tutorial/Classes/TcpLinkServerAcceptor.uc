@@ -382,7 +382,7 @@ defaultproperties
 	
 	bIsGameInitialized = false;
 	
-	GoalScore = 100;
+	GoalScore = 25;
 	
 	StateCurrent = 1;
 	INITIALIZATION = 1;

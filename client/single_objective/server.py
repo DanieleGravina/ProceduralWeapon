@@ -23,5 +23,5 @@ for i in range(NUM_SERVER):
 
 for thread in threads:
 	thread.start()
-	time.sleep(20)
+	time.sleep(21)
 

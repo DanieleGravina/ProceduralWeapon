@@ -5,7 +5,7 @@ messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000
 
 messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
 
-messageInit = ":Init"
+messageInit = ':Init'
 messageStartMatch = ':StartMatch'
 messageClose = ":Close"
 messageReset = ':Reset'
@@ -25,39 +25,55 @@ class BalancedWeaponClient:
         time.sleep(0.1) 
 
     def SendInit(self):
-        #send to UDK server init message
-        self.s.send(messageInit.encode())
+        #send to UT3 server init message
+        time.sleep(0.1) 
+        self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
+
+    def SendGameSpeed(self, gameSpeed):
+        time.sleep(0.1)
+        message = ":GameSpeed:" + str(gameSpeed)
+        self.s.send(message.encode(encoding='utf-8',errors='strict'))
+
+    def SendMaxDuration(self, maxDuration):
+        time.sleep(0.1)
+        message = ":MaxDuration:" + str(maxDuration)
+        self.s.send(message.encode(encoding='utf-8',errors='strict'))
 
     def SendStartMatch(self):
-        self.s.send(messageStartMatch.encode())
+        time.sleep(0.1)
+        self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict'))
 
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
+        time.sleep(0.1) 
         messageWeapon = ':WeaponPar'
         messageWeapon += ':ID:' + str(id)
-        messageWeapon += ':Rof:' + str(Rof/100)
-        messageWeapon += ':Spread:' + str(Spread/10)
+        messageWeapon += ':Rof:' + str(Rof)
+        messageWeapon += ':Spread:' + str(Spread)
         messageWeapon += ':MaxAmmo:' + str(MaxAmmo)
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)
         print('Send ' + messageWeapon)
-        self.s.send(messageWeapon.encode())
+        self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 
     def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity):
+        time.sleep(0.1) 
         messageProjectile = ':ProjectilePar'
         messageProjectile += ':Speed:' + str(Speed)
         messageProjectile += ':Damage:' + str(Damage)
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
         print('Send ' + messageProjectile)
-        self.s.send(messageProjectile.encode())
+        self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
         time.sleep(0.1)
 
     def SendClose(self):
-        self.s.send(messageClose.encode())
+        time.sleep(0.1) 
+        self.s.send(messageClose.encode(encoding='utf-8',errors='strict'))
 
     def SendReset(self):
-        self.s.send(messageReset.encode())
+        time.sleep(0.1) 
+        self.s.send(messageReset.encode(encoding='utf-8',errors='strict'))
 
     def WaitForBotStatics(self):
 

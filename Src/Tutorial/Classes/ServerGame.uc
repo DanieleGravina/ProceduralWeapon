@@ -138,11 +138,6 @@ function AddDefaultInventory( pawn Pawn ){
 	{
 		Super.AddDefaultInventory(Pawn);
 		
-		if( Pawn.IsHumanControlled() )
-		{
-			Pawn.CreateInventory(class'ProceduralWeapon',true);
-		}
-		
 		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 		{
 			`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
@@ -220,4 +215,8 @@ defaultproperties
     numPlayer = 4
 
     bTestGame = false
+
+    BotClass=Class'ProceduralWeaponBot'
+
+    MaxCustomChars = 4
 }
