@@ -19,20 +19,31 @@ class BalancedWeaponClient:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = port
         self.host = 'localhost'
+        self.serverRunning = True
 
         # connection to hostname on the port.
-        self.s.connect((self.host, self.port))  
+        try:
+            self.s.connect((self.host, self.port))
+        except :
+            pass
+
         time.sleep(0.1) 
 
     def SendInit(self):
         #send to UT3 server init message
         time.sleep(0.1) 
-        self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
+        try:
+            self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
 
     def SendGameSpeed(self, gameSpeed):
         time.sleep(0.1)
         message = ":GameSpeed:" + str(gameSpeed)
-        self.s.send(message.encode(encoding='utf-8',errors='strict'))
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
 
     def SendMaxDuration(self, maxDuration):
         time.sleep(0.1)
@@ -41,7 +52,11 @@ class BalancedWeaponClient:
 
     def SendStartMatch(self):
         time.sleep(0.1)
-        self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict'))
+
+        try:
+            self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
 
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
         time.sleep(0.1) 
@@ -53,7 +68,12 @@ class BalancedWeaponClient:
         messageWeapon += ':ShotCost:' + str(ShotCost)
         messageWeapon += ':Range:' + str(Range)
         print('Send ' + messageWeapon)
-        self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
+
+        try:
+            self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
+
         time.sleep(0.1)
 
     def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity):
@@ -64,24 +84,45 @@ class BalancedWeaponClient:
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
         print('Send ' + messageProjectile)
-        self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
+
+        try:
+            self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
+
         time.sleep(0.1)
 
     def SendClose(self):
         time.sleep(0.1) 
-        self.s.send(messageClose.encode(encoding='utf-8',errors='strict'))
+
+        try:
+            self.s.send(messageClose.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
 
     def SendReset(self):
         time.sleep(0.1) 
-        self.s.send(messageReset.encode(encoding='utf-8',errors='strict'))
+
+        try:
+            self.s.send(messageReset.encode(encoding='utf-8',errors='strict'))
+        except :
+            pass
 
     def WaitForBotStatics(self):
 
+        self.serverRunning = True
+
         finish = True
 
-        while finish:
-            data = self.s.recv(255)
-            data.decode()
+        while finish and self.serverRunning:
+
+            try:
+                data = self.s.recv(255)
+            except :
+                self.serverRunning = False
+                message = ""
+                data = message.encode()
+                pass
 
             splitted = data.decode().split("%")
 
@@ -95,12 +136,19 @@ class BalancedWeaponClient:
                     self.buffer += string
 
         self.SendClose()
-        self.s.close()
+
+        try:
+            self.s.close()
+        except :
+            pass
 
 
 
 
     def GetStatics(self):
+
+         if not self.serverRunning:
+            return None
 
          strings = self.buffer.split(":")
 

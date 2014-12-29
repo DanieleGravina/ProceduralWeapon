@@ -35,7 +35,8 @@ class myThread (threading.Thread):
 
         self.stats = self.client.GetStatics()
 
-        print(self.stats)
+        if self.stats != None:
+            print(self.stats)
 
     def join(self):
         threading.Thread.join(self)

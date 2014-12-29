@@ -70,7 +70,10 @@ NUM_POP_SEED = 10
 NUM_POP_RANDOM = 40
 
 #MAX KILLS PER MATCH
-MAX_KILLS = 25
+MAX_KILLS = 
+
+#NUM OF NOT RUNNING SERVER
+numServerCrashed = 0
 
 
 def round_decorator(min, max):
@@ -186,6 +189,53 @@ def initialize_server():
         c.SendStartMatch()
         c.SendClose()
 
+def redo_simulation(indexToRedo, population):
+
+    stats = {}
+    threads = []
+    # population index
+    index = 0
+    # flag to know if we have finished
+    bSimulate = True
+
+    temp = None
+
+    while bSimulate:
+
+        to_simulate = 0
+        
+        while to_simulate < NUM_SERVER - numServerCrashed and len(indexToRedo) != 0 :
+
+            index = indexToRedo.pop()
+
+            threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+            to_simulate += 1
+
+        if len(indexToRedo) == 0 :
+            bSimulate = False
+
+        for t in threads:
+            t.start()
+
+        # Wait for all threads to complete
+        for t in threads:
+            temp = t.join()
+
+            if temp != None :
+                stats.update(temp)
+            else :
+                numServerCrashed += 1
+
+                if NUM_SERVER - numServerCrashed == 0 :
+                    bSimulate = False
+                
+                indexToRedo += [int(t.threadID/2)]
+
+        threads = []
+
+    return stats
+
+
 # Run the simulation on the server side (UT3)
 def simulate_population(population) :
     stats = {}
@@ -195,11 +245,17 @@ def simulate_population(population) :
     # flag to know if we have finished
     bSimulate = True
 
+    temp = None
+
+    indexToRedo = []
+
+    to_simulate = 0
+
     while bSimulate:
 
         to_simulate = 0
         
-        while to_simulate < NUM_SERVER and index < len(population) :
+        while to_simulate < NUM_SERVER - numServerCrashed and index < len(population) :
 
             if not population[index].fitness.valid :
                 threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
@@ -215,10 +271,21 @@ def simulate_population(population) :
 
         # Wait for all threads to complete
         for t in threads:
-            stats.update(t.join())
+            temp = t.join()
+
+            if temp != None :
+                stats.update(temp)
+            else :
+                numServerCrashed += 1
+
+                if NUM_SERVER - numServerCrashed == 0 :
+                    bSimulate = False
+
+                indexToRedo += [int(t.threadID/2)]
 
         threads = []
 
+    stats.update(redo_simulation(indexToRedo, population))
 
     return stats
 

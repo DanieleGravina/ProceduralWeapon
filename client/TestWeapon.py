@@ -54,6 +54,9 @@ def main():
 
     client.WaitForBotStatics()
 
+    if client.GetStatics() is None:
+        print("server is not runnning")
+
     print(str(time.clock() - t0))
 
 main()
