@@ -1,0 +1,13 @@
+2 real weapon
+
+1 bot : sniper
+2 bot : shock rifle
+
+1x 2400s, 15 iter
+
+1x 300s, 24 iter
+
+12x 2400s, 25 iter
+
+12x 300s, 125 iter
+
