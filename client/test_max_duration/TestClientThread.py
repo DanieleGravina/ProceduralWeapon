@@ -7,6 +7,30 @@ from BalancedWeaponClient import BalancedWeaponClient
 
 NUM_BOTS = 2
 
+#default Rof = 1
+ROF = [0.5, 1.75]
+#default Spread = 0
+SPREAD = [7.6, 0.8]
+#default MaxAmmo = 40
+AMMO = [853, 949]
+#deafult ShotCost = 1
+SHOT_COST = [100, 689]
+#defualt Range 10000
+RANGE = [23.5, 73]
+
+###################
+# Projectile ######
+###################
+
+#default speed = 1000
+SPEED = [8452, 5559]
+#default damage = 1
+DMG = [72, 78]
+#default damgae radius = 10
+DMG_RAD = [5, 12]
+#default gravity = 1
+GRAVITY = [-16, -12]
+
 class TestClientThread (threading.Thread):
     def __init__(self, threadID, name, port, iterations):
         threading.Thread.__init__(self)
@@ -33,11 +57,9 @@ class TestClientThread (threading.Thread):
 
         for i in range(self.iterations):
 
-            for i in range (NUM_BOTS):
-                self.client.SendWeaponParams(i, 100, 0, 40, 1, 10000)
-
-            for i in range (NUM_BOTS):
-                self.client.SendProjectileParams(1000, 1, 10, 1)
+            for j in range(NUM_BOTS):
+                self.client.SendWeaponParams(j, ROF[j], SPREAD[j], AMMO[j], SHOT_COST[j], RANGE[j])
+                self.client.SendProjectileParams(SPEED[j], DMG[j], DMG_RAD[j], GRAVITY[j])
 
             self.client.SendStartMatch()
 

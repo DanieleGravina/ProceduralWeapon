@@ -1,0 +1,30 @@
+2 random weapon
+
+#default Rof = 1
+ROF = [0.5, 1.75]
+#default Spread = 0
+SPREAD = [7.6, 0.8]
+#default MaxAmmo = 40
+AMMO = [853, 949]
+#deafult ShotCost = 1
+SHOT_COST = [100, 689]
+#defualt Range 10000
+RANGE = [23.5, 73]
+
+
+#default speed = 1000
+SPEED = [8452, 5559]
+#default damage = 1
+DMG = [72, 78]
+#default damgae radius = 10
+DMG_RAD = [5, 12]
+#default gravity = 1
+GRAVITY = [-16, -12]
+
+1x 2400s, 15 iter
+
+1x 300s, 24 iter
+
+12x 2400s, 24 iter
+
+12x 300s, 125 iter

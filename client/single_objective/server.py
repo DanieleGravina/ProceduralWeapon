@@ -19,7 +19,7 @@ MAX_GAMESPEED = 12
 threads = []
 
 for i in range(NUM_SERVER):
-	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 1800))
+	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 1200))
 
 for thread in threads:
 	thread.start()

@@ -37,8 +37,6 @@ def initialize_server():
 def simulate_population() :
 
     stats = {}
-
-    population = [3, 3, 3, 3, 3, 12, 12, 13 , 12, 125]
     
     '''
     for i in range(NUM_SERVER):
@@ -58,7 +56,7 @@ def simulate_population() :
     '''
     
     threads = []
-    population = [3, 3, 3, 3, 3, 12, 12, 13 , 12, 125]
+    population = [3, 3, 3, 3, 3, 12, 12, 12, 12, 125]
 
     for i in range(NUM_SERVER): 
 
@@ -212,50 +210,50 @@ def main():
 
 
     final_statistics += [[statistics.mean(kills_1x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [[statistics.mean(kills_1x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(kills_1x_2400, 15)), statistics.variance(entropy(kills_1x_2400, 15))]
+    final_statistics += [[statistics.variance(kills_1x_2400[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(kills_1x_2400, 5)), statistics.variance(entropy(kills_1x_2400, 15))]
 
     log_stats(statics_file, "kill 1x 2400", final_statistics, 0, 4)
 
     final_statistics += [[statistics.mean(dies_1x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [[statistics.mean(dies_1x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(dies_1x_2400, 15)), statistics.variance(entropy(dies_1x_2400, 15))]
+    final_statistics += [[statistics.variance(dies_1x_2400[i]) for i in range(NUM_BOTS)]]
+    final_statistics += [statistics.mean(entropy(dies_1x_2400, 5)), statistics.variance(entropy(dies_1x_2400, 15))]
 
     log_stats(statics_file, "dies 1x 2400", final_statistics, 4, 8)
 
     final_statistics += [[statistics.mean(kills_1x_300[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(kills_1x_300[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(kills_1x_300, 24)), statistics.variance(entropy(kills_1x_300, 24))]
+    final_statistics += [statistics.mean(entropy(kills_1x_300, 12)), statistics.variance(entropy(kills_1x_300, 24))]
 
     log_stats(statics_file, "kill 1x 300",final_statistics, 8, 12)
 
     final_statistics += [[statistics.mean(dies_1x_300[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(dies_1x_300[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(dies_1x_300, 24)), statistics.variance(entropy(dies_1x_300, 24))]
+    final_statistics += [statistics.mean(entropy(dies_1x_300, 12)), statistics.variance(entropy(dies_1x_300, 24))]
 
     log_stats(statics_file, "dies 1x 300",final_statistics, 12, 16)
     
     final_statistics += [[statistics.mean(kills_12x_2400[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(kills_12x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(kills_12x_2400, 25)), statistics.variance(entropy(kills_12x_2400, 25))]
+    final_statistics += [statistics.mean(entropy(kills_12x_2400, 12)), statistics.variance(entropy(kills_12x_2400, 24))]
 
     log_stats(statics_file, "kill 12x 2400",final_statistics, 16, 20)
 
     final_statistics += [[statistics.mean(dies_12x_2400[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(dies_12x_2400[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(dies_12x_2400, 25)), statistics.variance(entropy(dies_12x_2400, 25))]
+    final_statistics += [statistics.mean(entropy(dies_12x_2400, 12)), statistics.variance(entropy(dies_12x_2400, 24))]
 
     log_stats(statics_file, "dies 12x 2400",final_statistics, 20, 24)
 
     final_statistics += [[statistics.mean(kills_12x_300[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(kills_12x_300[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(kills_12x_300, 125)), statistics.variance(entropy(kills_12x_300, 125))]
+    final_statistics += [statistics.mean(entropy(kills_12x_300, 75)), statistics.variance(entropy(kills_12x_300, 125))]
 
     log_stats(statics_file, "kill 12x 300",final_statistics, 24, 28)
 
     final_statistics += [[statistics.mean(dies_12x_300[i]) for i in range(NUM_BOTS)]]
     final_statistics += [[statistics.variance(dies_12x_300[i]) for i in range(NUM_BOTS)]]
-    final_statistics += [statistics.mean(entropy(dies_12x_300, 125)), statistics.variance(entropy(dies_12x_300, 125))]
+    final_statistics += [statistics.mean(entropy(dies_12x_300, 75)), statistics.variance(entropy(dies_12x_300, 125))]
 
     log_stats(statics_file, "dies 12x 300",final_statistics, 28, 32)
 
@@ -368,7 +366,7 @@ def main():
 
     plt.ylim(0.5, 1)
 
-    plt.boxplot(entropy(kills_12x_2400, 25), labels=list('K'))
+    plt.boxplot(entropy(kills_12x_2400, 24), labels=list('K'))
 
     plt.subplot(244)
 
@@ -400,7 +398,7 @@ def main():
 
     plt.ylim(0.5, 1)
 
-    plt.boxplot(entropy(dies_12x_2400, 25), labels=list('D'))
+    plt.boxplot(entropy(dies_12x_2400, 24), labels=list('D'))
 
     plt.subplot(248)
 

@@ -17,6 +17,7 @@ from InitialPopulationSeed import getTwoSeedWeapons
 
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
+from ClusterProceduralWeapon import ClusterProceduralWeapon
 
 from math import log
 
@@ -70,7 +71,7 @@ NUM_POP_SEED = 10
 NUM_POP_RANDOM = 40
 
 #MAX KILLS PER MATCH
-MAX_KILLS = 
+MAX_KILLS = 25
 
 #NUM OF NOT RUNNING SERVER
 numServerCrashed = 0
@@ -179,6 +180,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server():
+    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -189,7 +191,7 @@ def initialize_server():
         c.SendStartMatch()
         c.SendClose()
 
-def redo_simulation(indexToRedo, population):
+def redo_simulation(indexToRedo, population, numServerCrashed):
 
     stats = {}
     threads = []
@@ -237,7 +239,8 @@ def redo_simulation(indexToRedo, population):
 
 
 # Run the simulation on the server side (UT3)
-def simulate_population(population) :
+def simulate_population(population, numServerCrashed) :
+    return {}
     stats = {}
     threads = []
     # population index
@@ -282,10 +285,11 @@ def simulate_population(population) :
                     bSimulate = False
 
                 indexToRedo += [int(t.threadID/2)]
+                PORT = [p for p in PORT if p != t.PORT]
 
         threads = []
 
-    stats.update(redo_simulation(indexToRedo, population))
+    stats.update(redo_simulation(indexToRedo, population, numServerCrashed))
 
     return stats
 
@@ -333,10 +337,10 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-    #e = random.randint(0, 2)
-    e = entropy(index*2, statics)
+    e = random.randint(0, 2)
+    #e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
-    e += match_kills(index*2, statics)
+    #e += match_kills(index*2, statics)
     return e,
 
 
@@ -364,6 +368,8 @@ logbook = tools.Logbook()
 
 def main():
 
+    numServerCrashed = 0
+
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
 
@@ -381,7 +387,7 @@ def main():
 
     initialize_server()
 
-    statics = simulate_population(pop)
+    statics = simulate_population(pop, numServerCrashed)
 
     for key, val in statics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
@@ -419,7 +425,7 @@ def main():
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
 
-        statics = simulate_population(offspring)
+        statics = simulate_population(offspring, numServerCrashed)
 
         for key, val in statics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
@@ -476,5 +482,15 @@ def main():
     pop_file.close()
     logbook_file.close()
 
+    real_pop = []
+
+    for ind in pop:
+        temp1 = ind[:9]
+        temp2 = ind[9:]
+        real_pop += [temp1]
+        real_pop += [temp2]
+
+    cluster = ClusterProceduralWeapon(real_pop, pop, 100, 9, 7)
+    cluster.cluster()
 
 main()

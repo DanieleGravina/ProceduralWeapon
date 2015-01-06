@@ -10,6 +10,7 @@ class myThread (threading.Thread):
         self.population = population
         self.client = BalancedWeaponClient(port)
         self.stats = {}
+        self.port = port
 
     def run(self):
         print("Starting " + self.name)

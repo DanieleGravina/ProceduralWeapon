@@ -6,8 +6,12 @@ import time
 
 from Costants import NUM_BOTS
 from Costants import NUM_SERVER
-from Costants import PORT
+from Costants import INITIAL_PORT
+from Costants import MAX_DURATION
+
+from InitialPopulationSeed import getTwoSeedWeapons
 from BalancedWeaponClient import BalancedWeaponClient
+from ClusterProceduralWeapon import ClusterProceduralWeapon
 from ClientThread import myThread
 from itertools import repeat
 
@@ -69,10 +73,16 @@ def round_decorator(min, max):
         return wrapper
     return decorator
 
+def SeedIndividual(container):
+    result = getTwoSeedWeapons()
+    return container(result[i] for i in range(len(result)))
+
 
 N_CYCLES = 2
 # size of the population
-NUM_POP = 50
+NUM_POP_SEED = 10
+NUM_POP_RANDOM = 40
+NUM_POP = NUM_POP_SEED + NUM_POP_RANDOM
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
@@ -95,7 +105,10 @@ toolbox.register("individual", tools.initCycle, creator.Individual,
                   toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
                   toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = N_CYCLES)
 
+toolbox.register("individual_guess", SeedIndividual, creator.Individual)
+
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+toolbox.register("population_guess", tools.initRepeat, list, toolbox.individual_guess)
 
 def printWeapon(pop):
     i = 0
@@ -159,7 +172,7 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def initialize_server():
+def initialize_server(PORT):
 
     clients = []
 
@@ -167,12 +180,12 @@ def initialize_server():
         clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
+        c.SendMaxDuration(MAX_DURATION)
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
 
-# Run the simulation on the server side (UT3)
-def simulate_population(population) :
+def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 
     stats = {}
     threads = []
@@ -181,11 +194,64 @@ def simulate_population(population) :
     # flag to know if we have finished
     bSimulate = True
 
+    temp = None
+
     while bSimulate:
 
         to_simulate = 0
         
-        while to_simulate < NUM_SERVER and index < len(population) :
+        while to_simulate < NUM_SERVER - numServerCrashed and len(indexToRedo) != 0 :
+
+            index = indexToRedo.pop()
+
+            threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+            to_simulate += 1
+
+        if len(indexToRedo) == 0 :
+            bSimulate = False
+
+        for t in threads:
+            t.start()
+
+        # Wait for all threads to complete
+        for t in threads:
+            temp = t.join()
+
+            if temp != None :
+                stats.update(temp)
+            else :
+                numServerCrashed += 1
+
+                if NUM_SERVER - numServerCrashed == 0 :
+                    bSimulate = False
+                
+                indexToRedo += [int(t.threadID/2)]
+
+        threads = []
+
+    return stats
+
+
+# Run the simulation on the server side (UT3)
+def simulate_population(population, numServerCrashed, PORT) :
+    stats = {}
+    threads = []
+    # population index
+    index = 0
+    # flag to know if we have finished
+    bSimulate = True
+
+    temp = None
+
+    indexToRedo = []
+
+    to_simulate = 0
+
+    while bSimulate:
+
+        to_simulate = 0
+        
+        while to_simulate < NUM_SERVER - numServerCrashed and index < len(population) :
 
             if not population[index].fitness.valid :
                 threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
@@ -201,12 +267,25 @@ def simulate_population(population) :
 
         # Wait for all threads to complete
         for t in threads:
-            stats.update(t.join())
+            temp = t.join()
+
+            if temp != None :
+                stats.update(temp)
+            else :
+                numServerCrashed += 1
+
+                if NUM_SERVER - numServerCrashed == 0 :
+                    bSimulate = False
+
+                indexToRedo += [int(t.threadID/2)]
+                PORT.remove(t.port)
+                print(PORT)
 
         threads = []
 
+    stats.update(redo_simulation(indexToRedo, population, numServerCrashed, PORT))
 
-    return stats
+    return stats, PORT, numServerCrashed
 
 def match_kills(index, statics) :
 
@@ -327,10 +406,15 @@ logbook = tools.Logbook()
 
 def main():
 
+    PORT = INITIAL_PORT
+
+    numServerCrashed = 0
+
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
 
-    pop = toolbox.population(n = NUM_POP)
+    pop = toolbox.population(n = NUM_POP_RANDOM)
+    pop += toolbox.population_guess(n = NUM_POP_SEED)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)
@@ -340,9 +424,9 @@ def main():
     fitnesses = []
     statics = {}
 
-    initialize_server()
+    initialize_server(PORT)
 
-    statics = simulate_population(pop)
+    statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
 
     for key, val in statics.items():
         logbook_file.write(str(key) + " : " + str(val) + "\n")
@@ -389,7 +473,7 @@ def main():
                 del mutant.fitness.values
 
 
-        statics = simulate_population(offspring)
+        statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
 
         for key, val in statics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
@@ -474,6 +558,18 @@ def main():
     plt.ylabel("kills")
 
     plt.show()
+
+    real_pop = []
+
+    for ind in pop:
+        temp1 = ind[:9]
+        temp2 = ind[9:]
+        real_pop += [temp1]
+        real_pop += [temp2]
+
+    cluster = ClusterProceduralWeapon(real_pop, pop, 100, 9, 7)
+    cluster.cluster()
+
 
 
 main()

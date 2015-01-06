@@ -14,7 +14,7 @@ os.chdir('..')
 
 # max GameSpeed UDK = 12
 MAX_GAMESPEED = [1, 1, 1, 1, 1, 1, 1, 12, 12, 12]
-DURATION = [2400, 2400, 2400, 2400, 2400, 300, 300, 2400, 300, 300]
+DURATION = [2400, 2400, 2400, 2400, 2400, 300, 300, 2400, 2400, 300]
 
 NUM_SERVER = 10
 
@@ -25,5 +25,5 @@ for i in range(NUM_SERVER):
 
 for thread in threads:
 	thread.start()
-	time.sleep(20)
+	time.sleep(21)
 

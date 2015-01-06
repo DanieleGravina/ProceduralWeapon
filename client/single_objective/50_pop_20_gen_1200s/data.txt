@@ -3,3 +3,5 @@
 pop 50
 gen 20
 
+from figure 3, with initial seed
+

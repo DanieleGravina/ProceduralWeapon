@@ -22,3 +22,10 @@ CombatStyle = 0.50;
 Jumpiness = -1;
 Tactics = 0;
 ReactionTime = 0;
+
+from 5:
+kills 12x scaled with:
+
+mean = [2.3400  ,  1.0421  ,  0.9845 ,   1.3707]
+
+mean of kill1x/kill12x of other experiment 

@@ -1,6 +1,7 @@
 import threading
 from BalancedWeaponClient import BalancedWeaponClient
 from Costants import NUM_BOTS
+from Costants import TIMEOUT
 
 class myThread (threading.Thread):
     def __init__(self, threadID, name, population, port):
@@ -10,6 +11,7 @@ class myThread (threading.Thread):
         self.population = population
         self.client = BalancedWeaponClient(port)
         self.stats = {}
+        self.port = port
 
     def run(self):
         print("Starting " + self.name)

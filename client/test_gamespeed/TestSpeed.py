@@ -143,6 +143,8 @@ def main():
 
     print(statics)
 
+    mean = [2.3400  ,  1.0421  ,  0.9845 ,   1.3707]
+
     for key, val in statics.items() :
         if key < 5 :
             for j in range(NUM_BOTS) :
@@ -155,29 +157,41 @@ def main():
                 dies_5x[j] += val[j+NUM_BOTS]
         elif key == 7 :
             for j in range(NUM_BOTS) :
-                kills_12x[j] += val[j]
+                kills_12x[j] += [ind*mean[j] for ind in val[j]]
                 dies_12x[j] += val[j+NUM_BOTS]
 
     print("kills")
     statics_file.write("kills\n")
+    print("1x")
+    statics_file.write("1x\n")
     for vector in kills_1x:
         print(vector)
         statics_file.write(str(vector) + "\n")
+    print("5x")
+    statics_file.write("1x\n")
     for vector in kills_5x:
         print(vector)
         statics_file.write(str(vector) + "\n")
+    print("12x")
+    statics_file.write("12x\n")
     for vector in kills_12x:
         print(vector)
         statics_file.write(str(vector) + "\n")
 
     print("dies")
     statics_file.write("dies\n")
+    print("1x")
+    statics_file.write("1x\n")
     for vector in dies_1x:
         print(vector)
         statics_file.write(str(vector) + "\n")
+    print("5x")
+    statics_file.write("1x\n")
     for vector in dies_5x:
         print(vector)
         statics_file.write(str(vector) + "\n")
+    print("12x")
+    statics_file.write("12x\n")
     for vector in dies_12x:
         print(vector)
         statics_file.write(str(vector) + "\n")
