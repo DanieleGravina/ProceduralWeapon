@@ -22,7 +22,7 @@ statics = {}
 
 
 def initialize_server():
-
+    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -38,7 +38,6 @@ def simulate_population() :
 
     stats = {}
 
-    '''
     for i in range(8):
         if i < 5 :
             population = 5
@@ -50,18 +49,17 @@ def simulate_population() :
             population = 25
 
         stats.update({i : [
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)],
-                          [random.randint(5, 10) for _ in range(population)]]
+                          [random.randint(5, 10) for _ in range(population)], #kill1
+                          [random.randint(5, 10) for _ in range(population)], #kill2
+                          [random.randint(5, 10) for _ in range(population)], #kill3
+                          [random.randint(5, 10) for _ in range(population)], #kill4
+                          [random.randint(1, 2) for _ in range(population)], #dies1
+                          [random.randint(1, 2) for _ in range(population)], #dies2
+                          [random.randint(1, 2) for _ in range(population)], #dies3
+                          [random.randint(1, 2) for _ in range(population)]] #dies4
                           })
 
     return stats
-    '''
 
     threads = []
     population = 0
@@ -157,7 +155,7 @@ def main():
                 dies_5x[j] += val[j+NUM_BOTS]
         elif key == 7 :
             for j in range(NUM_BOTS) :
-                kills_12x[j] += [ind*mean[j] for ind in val[j]]
+                kills_12x[j] += [ind for ind in val[j]]
                 dies_12x[j] += val[j+NUM_BOTS]
 
     print("kills")

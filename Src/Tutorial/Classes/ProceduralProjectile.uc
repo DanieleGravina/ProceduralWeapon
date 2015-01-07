@@ -6,11 +6,15 @@ function Init(vector Direction)
 
 	playerName = InstigatorController.PlayerReplicationInfo.PlayerName;
 	
-	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Speed;
-	Damage = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Damage;
-	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters(playerName).DamageRadius;
-	TossZ = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Gravity;
-	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters(playername).Range;
+	ServerGame(WorldInfo.Game).SetPPParameters(playerName);
+	
+	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+	Damage = ServerGame(WorldInfo.Game).GetPPParameters().Damage;
+	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
+	TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
+	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
+
+	Speed = AccelRate;
 	
 	MaxSpeed = Speed;
 
@@ -22,12 +26,16 @@ function Initialize()
 	local string playerName;
 	
 	playerName = InstigatorController.PlayerReplicationInfo.PlayerName;
+
+	ServerGame(WorldInfo.Game).SetPPParameters(playerName);
 	
-	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Speed;
-	Damage = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Damage;
-	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters(playerName).DamageRadius;
-	TossZ = ServerGame(WorldInfo.Game).GetPPParameters(playerName).Gravity;
-	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters(playername).Range;
+	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+	Damage = ServerGame(WorldInfo.Game).GetPPParameters().Damage;
+	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
+	TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
+	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
+
+	Speed = AccelRate;
 	
 	MaxSpeed = Speed;
 	

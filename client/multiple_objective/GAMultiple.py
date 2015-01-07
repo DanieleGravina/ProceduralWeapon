@@ -80,8 +80,8 @@ def SeedIndividual(container):
 
 N_CYCLES = 2
 # size of the population
-NUM_POP_SEED = 10
-NUM_POP_RANDOM = 40
+NUM_POP_SEED = 0
+NUM_POP_RANDOM = 50
 NUM_POP = NUM_POP_SEED + NUM_POP_RANDOM
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)

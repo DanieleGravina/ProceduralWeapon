@@ -15,7 +15,7 @@ from math import log
 
 
 N_CYCLES = 1
-NUM_SERVER = 10
+NUM_SERVER = 9
 NUM_BOTS = 2
 
 statics = {}
@@ -37,26 +37,23 @@ def initialize_server():
 def simulate_population() :
 
     stats = {}
-    
     '''
+    population = [3, 3, 3, 3, 3, 12, 12, 24, 125]
+    
     for i in range(NUM_SERVER):
 
         stats.update({i : [
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])],
-                          [random.randint(1, 30) for _ in range(population[i])]]
+                          [random.randint(2, 5) for _ in range(population[i])],
+                          [random.randint(2, 5) for _ in range(population[i])],
+                          [random.randint(2, 5) for _ in range(population[i])],
+                          [random.randint(2, 5) for _ in range(population[i])]]
                           })
 
     return stats
     '''
     
     threads = []
-    population = [3, 3, 3, 3, 3, 12, 12, 12, 12, 125]
+    population = [3, 3, 3, 3, 3, 12, 12, 24, 125]
 
     for i in range(NUM_SERVER): 
 
@@ -140,7 +137,7 @@ def main():
                 kills_1x_300[j] += val[j]
                 dies_1x_300[j] += val[j+NUM_BOTS]
 
-        elif key < 9 :
+        elif key < 8 :
             for j in range(NUM_BOTS) :
                 kills_12x_2400[j] += val[j]
                 dies_12x_2400[j] += val[j+NUM_BOTS]
@@ -348,7 +345,7 @@ def main():
 
     plt.ylabel('entropy 1x 2400')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(kills_1x_2400, 15), labels=list('K'))
 
@@ -356,7 +353,7 @@ def main():
 
     plt.ylabel('entropy 1x 300')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(kills_1x_300, 24), labels=list('K'))
 
@@ -364,7 +361,7 @@ def main():
 
     plt.ylabel('entropy 12x 2400')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(kills_12x_2400, 24), labels=list('K'))
 
@@ -372,7 +369,7 @@ def main():
 
     plt.ylabel('entropy 12x 300')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(kills_12x_300, 125), labels=list('K'))
 
@@ -380,7 +377,7 @@ def main():
 
     plt.ylabel('entropy 1x 2400')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(dies_1x_2400, 15), labels=list('D'))
 
@@ -388,7 +385,7 @@ def main():
 
     plt.ylabel('entropy 1x 300')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(dies_1x_300, 24), labels=list('D'))
 
@@ -396,7 +393,7 @@ def main():
 
     plt.ylabel('entropy 12x 2400')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(dies_12x_2400, 24), labels=list('D'))
 
@@ -404,7 +401,7 @@ def main():
 
     plt.ylabel('entropy 12x 300')
 
-    plt.ylim(0.5, 1)
+    plt.ylim(0, 1)
 
     plt.boxplot(entropy(dies_12x_300, 125), labels=list('D'))
 

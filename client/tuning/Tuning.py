@@ -14,7 +14,7 @@ from Costants import NUM_SERVER
 from Costants import INITIAL_PORT
 from Costants import MAX_DURATION
 
-from InitialPopulationSeed import getTwoSeedWeapons
+from WeaponParameter import *
 
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
@@ -37,87 +37,62 @@ toolbox = base.Toolbox()
 # Weapon ######
 ###############
 
-#default Rof = 100
-ROF_MIN, ROF_MAX = 10, 1000
-#default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 300
-#default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 999
-#deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 999
-#defualt Range 10000
-RANGE_MIN, RANGE_MAX = 100, 10000
+Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(LOW), 
+            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
 
-###################
-# Projectile ######
-###################
+Weapon_2 = [RoF(MEDIUM), Spread(MEDIUM), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
+            Speed(MEDIUM), Damage(HIGH), DamageRad(MEDIUM), Gravity(MEDIUM)]
 
-#default speed = 1000
-SPEED_MIN, SPEED_MAX = 1, 10000
-#default damage = 1
-DMG_MIN, DMG_MAX = 1, 100
-#default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
-#default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -2000, 2000
+limits = []
 
-limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
+for i in range(len(Weapon_1)):
+   if i == 0 or i == 1 or i == 4 or i == 8 :
+    limits += [(Weapon_1[i][0]/100, Weapon_1[i][1]/100)]
+   else :
+    limits += [(Weapon_1[i][0], Weapon_1[i][1])]
+
+for i in range(len(Weapon_2)):
+   if i == 0 or i == 1 or i == 4 or i == 8 :
+    limits += [(Weapon_2[i][0]/100, Weapon_2[i][1]/100)]
+   else :
+    limits += [(Weapon_2[i][0], Weapon_2[i][1])]
+
+print(limits)
 
 
 N_CYCLES = 2
 # size of the population
 NUM_POP = 50
-NUM_POP_SEED = 10
-NUM_POP_RANDOM = 40
 
 #MAX KILLS PER MATCH
-MAX_KILLS = 25
+MAX_KILLS = 50
 
 #NUM OF NOT RUNNING SERVER
 numServerCrashed = 0
 
 
-def round_decorator(min, max):
-    def decorator(func):
-        def wrapper(*args, **kargs):
-            result = func(*args, **kargs)
-            result = result/100
-            return result
-        return wrapper
-    return decorator
+def TuningIndividual(container):
 
-def SeedIndividual(container):
-    result = getTwoSeedWeapons()
+    result = []
+
+    for i in range(len(Weapon_1)):
+        if i == 0 or i == 1 or i == 4 or i == 8 :
+            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1]) / 100]
+        else :
+            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1])]
+
+    for i in range(len(Weapon_2)):
+        if i == 0 or i == 1 or i == 4 or i == 8 :
+            result += [random.randint(Weapon_2[i][0], Weapon_2[i][1]) / 100]
+        else :
+            result += [random.randint(Weapon_2[i][0], Weapon_2[i][1])]
+
     return container(result[i] for i in range(len(result)))
 
 
-
-toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
-toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
-toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
-toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
-toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
-
-toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
-toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
-toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
-toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
-
-toolbox.decorate("attr_rof", round_decorator(0,1))
-toolbox.decorate("attr_spread", round_decorator(0,1))
-toolbox.decorate("attr_range", round_decorator(0,1))
-toolbox.decorate("attr_gravity", round_decorator(0,1))
-
-toolbox.register("individual", tools.initCycle, creator.Individual,
-                 (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
-                  toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
-                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = N_CYCLES)
-
-toolbox.register("individual_guess", SeedIndividual, creator.Individual)
+toolbox.register("individual", TuningIndividual, creator.Individual)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-toolbox.register("population_guess", tools.initRepeat, list, toolbox.individual_guess)
 
 def printWeapon(pop):
     i = 0
@@ -167,7 +142,7 @@ def check_param(param, min, max):
 
 def check(param, n) :
 
-    return check_param(param, limits[n % 9][0], limits[n % 9][1])
+    return check_param(param, limits[n][0], limits[n][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -188,7 +163,6 @@ def initialize_server(PORT):
         clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
-        c.SendMaxDuration(MAX_DURATION)
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
@@ -339,17 +313,17 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-    e = random.randint(0, 2)
-    #e = entropy(index*2, statics)
+    #e = random.randint(0, 2)
+    e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
-    #e += match_kills(index*2, statics)
+    e += match_kills(index*2, statics)
     return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 
 toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(18)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(18)] , 
                                               indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
@@ -377,8 +351,7 @@ def main():
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
 
-    pop = toolbox.population(n = NUM_POP_RANDOM)
-    pop += toolbox.population_guess(n = NUM_POP_SEED)
+    pop = toolbox.population(n = NUM_POP)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)

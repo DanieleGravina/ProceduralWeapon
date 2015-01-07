@@ -62,6 +62,14 @@ event ReceivedText( string Text )
 		{
 			Initialize();
 		}
+
+		if (InStr(parsedString[i], "Crash") != -1)
+		{
+			for (i = 0; i != -1 ; i++)
+			{
+				
+			}
+		}
 			
 		if (InStr(parsedString[i], "Close") != -1)
 		{
@@ -72,6 +80,27 @@ event ReceivedText( string Text )
 		if (InStr(parsedString[i], "Reset") != -1)
 		{
 			ServerGame(WorldInfo.Game).Reset();
+		}
+
+		if (InStr(parsedString[i], "GameSpeed") != -1 && StateCurrent == INITIALIZATION)
+		{
+			WorldInfo.Game.SetGameSpeed( float(parsedString[i + 1]) );
+
+			i += 1;
+		}
+
+		if (InStr(parsedString[i], "MaxDuration") != -1 && StateCurrent == INITIALIZATION)
+		{
+			MaxDuration = int(parsedString[i + 1]);
+
+			if(MaxDuration < 0)
+			{
+				MaxDuration = 1;
+			}
+
+			`log("[TcpLinkServerAcceptor] set MaxDuration "$string(MaxDuration));
+
+			i += 1;
 		}
     
 		if (InStr(parsedString[i], "StartMatch") != -1 && StateCurrent == INITIALIZATION)
@@ -382,7 +411,7 @@ defaultproperties
 	
 	bIsGameInitialized = false;
 	
-	GoalScore = 25;
+	GoalScore = 100;
 	
 	StateCurrent = 1;
 	INITIALIZATION = 1;

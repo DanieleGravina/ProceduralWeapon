@@ -37,6 +37,9 @@ struct BotParTriple{
 /* array of weapon parameters */
 var array<BotParTriple> mapBotPar;
 
+var PPParameters tempPP;
+var PWParameters tempPW;
+
 //Added functionality to set the listen port of tcpServer
 event InitGame( string Options, out string ErrorMessage )
 {
@@ -104,19 +107,16 @@ function AddDefaultInventory( pawn Pawn ){
 							break;
 					
 						case 1:
-
 							DefaultInventory[0]  = class 'ProceduralFlak';
 							`log("[TestGame] Add ShockRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 							break;
 
 						case 2:
-
 							DefaultInventory[0]  = class 'ProceduralRocketLauncher';
 							`log("[TestGame] Add Flak inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 							break;
 
 						case 3:
-
 							DefaultInventory[0]  = class 'ProceduralShockRifle';
 							`log("[TestGame] Add Rocket inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 							break;
@@ -153,7 +153,7 @@ function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 	tcpServer.SendPawnDied(killed, killer);
 }
 
-function PWParameters GetPWParameters(string botName)
+function SetPWParameters(string botName)
 {
 	local int i;
 	
@@ -161,15 +161,14 @@ function PWParameters GetPWParameters(string botName)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			return mapBotPar[i].weapPars;
+			tempPW =  mapBotPar[i].weapPars;
+			break;
 		}
 	}
-
-	return mapBotPar[0].weapPars;
 	
 }
 
-function PPParameters GetPPParameters(string botName)
+function SetPPParameters(string botName)
 {
 	local int i;
 	
@@ -177,11 +176,21 @@ function PPParameters GetPPParameters(string botName)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			return mapBotPar[i].projPars;
+			tempPP = mapBotPar[i].projPars;
+			break;
 		}
 	}	
 	
-	return mapBotPar[0].projPars;
+}
+
+function PWParameters GetPWParameters()
+{
+	return tempPW;
+}
+
+function PPParameters GetPPParameters()
+{
+	return tempPP;
 }
 
 function int LevelRecommendedPlayers()
@@ -219,4 +228,15 @@ defaultproperties
     BotClass=Class'ProceduralWeaponBot'
 
     MaxCustomChars = 4
+
+    tempPW.RoF = 0
+	tempPW.Spread = 0
+	tempPW.Range = 0
+	tempPW.MaxAmmo = 0
+	tempPW.ShotCost = 0
+
+	tempPP.Speed = 0
+	tempPP.Damage = 0
+	tempPP.DamageRadius = 0
+	tempPP.Gravity = 0
 }

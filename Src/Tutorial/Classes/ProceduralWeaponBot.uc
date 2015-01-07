@@ -8,7 +8,7 @@ function Initialize(float InSkill, const out CharacterInfo BotInfo)
 	BaseAggressiveness = Aggressiveness;
 	Accuracy = 1;
 	StrafingAbility = 1;
-	CombatStyle = 0.50;
+	CombatStyle = 1;
 	Jumpiness = 0.25;
 	Tactics = 1;
 	ReactionTime = 0;
