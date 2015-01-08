@@ -1,0 +1,16 @@
+1200s 20 iter 12x
+
+Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(LOW), 
+            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
+
+Weapon_2 = [RoF(MEDIUM), Spread(MEDIUM), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
+            Speed(MEDIUM), Damage(HIGH), DamageRad(MEDIUM), Gravity(MEDIUM)]
+
+Result:
+
+Weapon  Rof:0.7145320063902124 Spread:0.65 MaxAmmo:365 ShotCost:2 Range:0.52
+Projectile  Speed:892 Damage:18 DamageRadius:23 Gravity:0.06
+
+Weapon  Rof:2.0 Spread:0.1 MaxAmmo:23 ShotCost:1.9873786479209672 Range:3.35
+Projectile  Speed:17 Damage:63.26685350725654 DamageRadius:37.67914873576609 Gravity:-0.68
+

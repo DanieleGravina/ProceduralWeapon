@@ -1,8 +1,10 @@
 import random
 import matplotlib.pyplot as plt
+import networkx
 import numpy
 import pickle
 import time
+import itertools
 
 from Costants import NUM_BOTS
 from Costants import NUM_SERVER
@@ -81,7 +83,7 @@ def SeedIndividual(container):
 N_CYCLES = 2
 # size of the population
 NUM_POP_SEED = 0
-NUM_POP_RANDOM = 50
+NUM_POP_RANDOM = 5
 NUM_POP = NUM_POP_SEED + NUM_POP_RANDOM
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
@@ -173,6 +175,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
+    return 
 
     clients = []
 
@@ -234,6 +237,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
+    return {}, PORT, numServerCrashed
     stats = {}
     threads = []
     # population index
@@ -352,9 +356,9 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e = entropy(index*2, statics)
-    #e, tot_kills = random.randint(0,2), random.randint(0,25)
-    tot_kills = match_kills(index*2, statics)
+    #e = entropy(index*2, statics)
+    e, tot_kills = random.randint(0,2), random.randint(0, 25)
+    #tot_kills = match_kills(index*2, statics)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -371,7 +375,7 @@ toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(18)],
                                               sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
                                               indpb = 0.1)
 
-toolbox.register("select", tools.selTournament, tournsize = 3)
+toolbox.register("select", tools.selNSGA2)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
@@ -404,6 +408,12 @@ mstats = tools.MultiStatistics(entropy = stats1, diff = stats2, kills = stats3)
 
 logbook = tools.Logbook()
 
+hof = tools.ParetoFront()
+history = tools.History()
+
+toolbox.decorate("mate", history.decorator)
+toolbox.decorate("mutate", history.decorator)
+
 def main():
 
     PORT = INITIAL_PORT
@@ -419,7 +429,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 5 #160 min
 
     fitnesses = []
     statics = {}
@@ -440,6 +450,8 @@ def main():
 
 
     record = mstats.compile(pop)
+    hof.update(pop)
+    history.update(pop)
 
     logbook.record(gen = 0, **record)
 
@@ -498,6 +510,8 @@ def main():
         writeWeapon(pop, pop_file)
 
         record = mstats.compile(pop)
+        hof.update(pop)
+        history.update(pop)
 
         logbook.record(gen = g + 1, **record)
 
@@ -507,6 +521,8 @@ def main():
         logbook.chapters["kills"].header = "avg", "max"
 
         print(logbook)
+
+    print(hof)
 
 
     logbook.header = "gen", "entropy", "diff", "kills"
@@ -556,6 +572,47 @@ def main():
 
     plt.xlabel("Generation")
     plt.ylabel("kills")
+
+    e = [pop[i].fitness.values[0] for i in range(len(pop))]
+    d = [pop[i].fitness.values[1] for i in range(len(pop))]
+    k = [pop[i].fitness.values[2] for i in range(len(pop))]
+
+    e_front = [hof[i].fitness.values[0] for i in range(len(hof))]
+    d_front = [hof[i].fitness.values[1] for i in range(len(hof))]
+    k_front = [hof[i].fitness.values[2] for i in range(len(hof))]
+
+    plt.figure(4)
+
+    plt.xlabel("Entropy")
+    plt.ylabel("Difference")
+
+    plt.scatter(e, d)
+    plt.scatter(e_front, d_front, c=u'r')
+    plt.plot(e_front, d_front)
+
+    plt.figure(5)
+
+    plt.xlabel("Difference")
+    plt.ylabel("Number of Kills")
+
+    plt.scatter(d, k)
+    plt.scatter(d_front, k_front, c=u'r')
+    plt.plot(d_front, k_front)
+
+    plt.figure(6)
+
+    plt.xlabel("Entropy")
+    plt.ylabel("Number of kills")
+
+    plt.scatter(e, k)
+    plt.scatter(e_front, k_front, c=u'r')
+    plt.plot(e_front, k_front)
+
+    plt.figure(7)
+
+    graph = networkx.DiGraph(history.genealogy_tree)
+    graph = graph.reverse()     # Make the grah top-down
+    networkx.draw_graphviz(graph)
 
     plt.show()
 

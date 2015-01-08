@@ -13,10 +13,10 @@ from ServerLaunchThread import ServerLaunchThread
 os.chdir('..')
 
 # max GameSpeed UDK = 12
-MAX_GAMESPEED = [1, 1, 1, 1, 1, 1, 1, 12, 12, 12]
-DURATION = [2400, 2400, 2400, 2400, 2400, 300, 300, 2400, 2400, 300]
+MAX_GAMESPEED = [1, 1, 1, 1, 1, 1, 12, 12]
+DURATION = [2400, 2400, 2400, 2400, 300, 300, 2400, 300]
 
-NUM_SERVER = 10
+NUM_SERVER = 8
 
 threads = []
 

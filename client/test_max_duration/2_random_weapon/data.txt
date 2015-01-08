@@ -21,10 +21,40 @@ DMG_RAD = [5, 12]
 #default gravity = 1
 GRAVITY = [-16, -12]
 
-1x 2400s, 15 iter
+1x 2400s, 15 iter (5 server)
 
-1x 300s, 24 iter
+1x 300s, 24 iter (2 server)
+
+12x 2400s, 24 iter (2 server)
+
+12x 300s, 125 iter
+
+1)bot:
+Aggressiveness = 1;
+BaseAggressiveness = Aggressiveness;
+Accuracy = 1;
+StrafingAbility = 1;
+CombatStyle = 0.5;
+Jumpiness = 0.25;
+Tactics = 1;
+ReactionTime = 0;
+
+2) 
+
+1x 2400s, 8 iter (4 server)
+
+1x 300s, 24 iter (2 server)
 
 12x 2400s, 24 iter
 
 12x 300s, 125 iter
+
+bot :
+Aggressiveness = 1;
+BaseAggressiveness = Aggressiveness;
+Accuracy = 1;
+StrafingAbility = 1;
+CombatStyle = 1;
+Jumpiness = 0.25;
+Tactics = 1;
+ReactionTime = 0;
