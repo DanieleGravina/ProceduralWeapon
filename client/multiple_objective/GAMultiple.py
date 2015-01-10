@@ -1,6 +1,5 @@
 import random
 import matplotlib.pyplot as plt
-import networkx
 import numpy
 import pickle
 import time
@@ -82,8 +81,8 @@ def SeedIndividual(container):
 
 N_CYCLES = 2
 # size of the population
-NUM_POP_SEED = 0
-NUM_POP_RANDOM = 5
+NUM_POP_SEED = 10
+NUM_POP_RANDOM = 40
 NUM_POP = NUM_POP_SEED + NUM_POP_RANDOM
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
@@ -174,8 +173,7 @@ def checkBounds(min, max):
         return wrapper
     return decorator
 
-def initialize_server(PORT):
-    return 
+def initialize_server(PORT): 
 
     clients = []
 
@@ -237,8 +235,8 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
-    return {}, PORT, numServerCrashed
     stats = {}
+    #return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -356,9 +354,9 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    #e = entropy(index*2, statics)
-    e, tot_kills = random.randint(0,2), random.randint(0, 25)
-    #tot_kills = match_kills(index*2, statics)
+    e = entropy(index*2, statics)
+    #e, tot_kills = random.randint(0,2), random.randint(0, 25)
+    tot_kills = match_kills(index*2, statics)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -429,7 +427,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 5 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
 
     fitnesses = []
     statics = {}
@@ -607,12 +605,6 @@ def main():
     plt.scatter(e, k)
     plt.scatter(e_front, k_front, c=u'r')
     plt.plot(e_front, k_front)
-
-    plt.figure(7)
-
-    graph = networkx.DiGraph(history.genealogy_tree)
-    graph = graph.reverse()     # Make the grah top-down
-    networkx.draw_graphviz(graph)
 
     plt.show()
 

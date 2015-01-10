@@ -4,7 +4,7 @@ HIGH = 2
 VERY_HIGH = 3
 
 
-#ROF
+#ROF/100
 
 def RoF(label):
 	if label == LOW :
@@ -16,7 +16,7 @@ def RoF(label):
 	else:
 		return 400, 1000
 
-#SPREAD
+#SPREAD/100
 
 def Spread( label):
 	if label == LOW :

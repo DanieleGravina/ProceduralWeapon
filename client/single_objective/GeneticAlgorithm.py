@@ -71,8 +71,8 @@ NUM_POP = 50
 NUM_POP_SEED = 10
 NUM_POP_RANDOM = 40
 
-#MAX KILLS PER MATCH
-MAX_KILLS = 25
+#MAX KILLS PER BOT
+MAX_KILLS = 20
 
 #NUM OF NOT RUNNING SERVER
 numServerCrashed = 0
@@ -389,6 +389,8 @@ def main():
     gen_fitnesses = []
     statics = {}
 
+    hof = tools.HallOfFame(1)
+
     initialize_server(PORT)
 
     statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
@@ -404,6 +406,9 @@ def main():
         ind.fitness.values = fit
 
     record = stats.compile(pop)
+    hof.update(pop)
+
+
     logbook.record(gen = 0, **record)
 
     logbook.header = "gen", "avg", "std", "min", "max"
@@ -452,6 +457,7 @@ def main():
         pop[:] = offspring
 
         record = stats.compile(pop)
+        hof.update(pop)
 
         printWeapon(pop)
 
@@ -462,6 +468,12 @@ def main():
         logbook.header = "gen", "avg", "std", "min", "max"
 
         print(logbook)
+
+
+    print("best individual")
+    printWeapon(hof)
+    pop_file.write("best individual\n")
+    writeWeapon(hof, pop_file)
 
     plt.figure(1)
 

@@ -13,13 +13,14 @@ from ServerLaunchThread import ServerLaunchThread
 os.chdir('..')
 
 # max GameSpeed UDK = 12
-MAX_GAMESPEED = 5
+MAX_GAMESPEED = [1, 1, 1, 1, 12, 12, 12, 12]
 
+NUM_SERVER = 8
 
 threads = []
 
 for i in range(NUM_SERVER):
-	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED, PORT[i], 750))
+	threads.append(ServerLaunchThread(i, "Thread-" + str(i), MAX_GAMESPEED[i], PORT[i], 7200))
 
 for thread in threads:
 	thread.start()
