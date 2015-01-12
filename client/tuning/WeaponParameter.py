@@ -46,11 +46,11 @@ def ShotCost( label):
 	if label == LOW :
 		return 1, 2
 	elif label == MEDIUM :
-		return 2, 10
+		return 2, 4
 	elif label == HIGH:
-		return 10, 100
+		return 4, 7
 	else:
-		return 100, 999
+		return 7, 10
 
 #RANGE/100
 

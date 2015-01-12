@@ -45,7 +45,7 @@ SPREAD_MIN, SPREAD_MAX = 0, 300
 #default MaxAmmo = 40
 AMMO_MIN, AMMO_MAX = 1, 999
 #deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 999
+SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
 #defualt Range 10000
 RANGE_MIN, RANGE_MAX = 100, 10000
 
@@ -174,7 +174,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT): 
-
+    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -236,7 +236,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
-    #return stats, PORT, numServerCrashed
+    return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -354,9 +354,9 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e = entropy(index*2, statics)
-    #e, tot_kills = random.randint(0,2), random.randint(0, 25)
-    tot_kills = match_kills(index*2, statics)
+    #e = entropy(index*2, statics)
+    e, tot_kills = random.randint(0,2), random.randint(0, 25)
+    #tot_kills = match_kills(index*2, statics)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -537,6 +537,8 @@ def main():
     pop_file.close()
     logbook_file.close()
 
+    '''
+
     plt.figure(1)
 
     gen = logbook.select("gen")
@@ -607,6 +609,7 @@ def main():
     plt.plot(e_front, k_front)
 
     plt.show()
+    '''
 
     real_pop = []
 

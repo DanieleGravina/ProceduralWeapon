@@ -1,0 +1,147 @@
+(2) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.2282325322873562 MaxAmmo:800 ShotCost:8 Range:10.89489091675473 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(8) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.2282325322873562 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(10) 
+  Rof:6.52 Spread:1.84 MaxAmmo:171 ShotCost:10 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:6.63 Spread:1.48 MaxAmmo:61 ShotCost:8 Range:10.89489091675473 
+  Speed:2050.9377955526465 Damage:46 DamageRadius:0 Gravity:18.2 
+ 
+********************************************************* 
+(24) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:10.0 Spread:1.280009473584172 MaxAmmo:726.5774263769396 ShotCost:7.91445380468339 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(30) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:62 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.33 MaxAmmo:726.5774263769396 ShotCost:8 Range:27.57 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(32) 
+  Rof:6.52 Spread:1.84 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:62 DamageRadius:57 Gravity:15.24 
+  Rof:6.63 Spread:1.48 MaxAmmo:61 ShotCost:8 Range:10.89489091675473 
+  Speed:2050.9377955526465 Damage:46 DamageRadius:0 Gravity:18.2 
+ 
+********************************************************* 
+(34) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:62 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.33 MaxAmmo:726.5774263769396 ShotCost:8 Range:27.57 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(40) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9.630089993085141 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:9.8 Spread:1.33 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:3936.069205288156 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(56) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.2282325322873562 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(66) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.5210657459175476 MaxAmmo:726.5774263769396 ShotCost:8 Range:10.89489091675473 
+  Speed:2050.9377955526465 Damage:46 DamageRadius:0 Gravity:18.2 
+ 
+********************************************************* 
+(70) 
+  Rof:6.52 Spread:2.014260368736058 MaxAmmo:171 ShotCost:10 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:6.478393323965076 Spread:1.378842329043374 MaxAmmo:61 ShotCost:8 Range:8.045137930285456 
+  Speed:2050.9377955526465 Damage:46 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(72) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.2282325322873562 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(74) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.2282325322873562 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(78) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:28.57463449977129 
+  Speed:3996 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.280009473584172 MaxAmmo:726.5774263769396 ShotCost:8 Range:26.072041363692314 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(80) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9.630089993085141 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:9.8 Spread:1.33 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:3936.069205288156 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(82) 
+  Rof:9.76 Spread:1.76 MaxAmmo:560.412594937455 ShotCost:9 Range:49.48 
+  Speed:6055.730856508903 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.023430583548944 Spread:1.280009473584172 MaxAmmo:800 ShotCost:8 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(88) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:6.63 Spread:1.48 MaxAmmo:726.5774263769396 ShotCost:7.91445380468339 Range:27.57 
+  Speed:2995 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(92) 
+  Rof:6.52 Spread:1.84 MaxAmmo:171 ShotCost:10 Range:49.48 
+  Speed:6055.730856508903 Damage:82 DamageRadius:56.99240079054905 Gravity:15.24 
+  Rof:6.63 Spread:1.48 MaxAmmo:61 ShotCost:8 Range:10.89489091675473 
+  Speed:2050.9377955526465 Damage:46 DamageRadius:0 Gravity:18.2 
+ 
+********************************************************* 
+(94) 
+  Rof:10.0 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:59.948309985946985 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.5210657459175476 MaxAmmo:726.5774263769396 ShotCost:8 Range:27.57 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(96) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:62 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.33 MaxAmmo:726.5774263769396 ShotCost:8 Range:27.57 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+********************************************************* 
+(98) 
+  Rof:9.76 Spread:1.76 MaxAmmo:519 ShotCost:9 Range:27.41 
+  Speed:3996 Damage:62 DamageRadius:57 Gravity:-11.57 
+  Rof:9.8 Spread:1.33 MaxAmmo:726.5774263769396 ShotCost:8 Range:27.57 
+  Speed:3358.6839268419426 Damage:72 DamageRadius:61 Gravity:17.06 
+ 
+*********************************************************

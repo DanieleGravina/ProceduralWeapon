@@ -51,9 +51,9 @@ class ClusterProceduralWeapon:
 
 		X = self.data
 
-		#X = StandardScaler().fit_transform(X)
+		X = StandardScaler().fit_transform(X)
 
-		db = DBSCAN(eps=5.0, min_samples=2).fit(X)
+		db = DBSCAN(eps=10, min_samples=2).fit(X)
 		labels = db.labels_
 
 		print(labels)
@@ -108,6 +108,20 @@ class ClusterProceduralWeapon:
 			fitness = []
 			mean = []
 
+		mds = MDS(n_components=2)
+
+		pos = mds.fit_transform(X.astype(np.float64))
+
+		import matplotlib.pyplot as plt
+
+		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
+
+		plt.figure(2)
+
+		for i in range(len(pos[:,0])):
+
+			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
+
 
 
 		import matplotlib.pyplot as plt
@@ -121,9 +135,8 @@ class ClusterProceduralWeapon:
 		for j in range(9):
 			plt.subplot(330 + j)
 			plt.ylabel(label[j])
-			cluster_center = [cluster_centers[i, j] for i in range(n_clusters_)]
-			plt.ylim(limits[j][0], limits[j][1])
-			plt.vlines(x=k, ymin=[0 for _ in range(len(X))], ymax=X[:][j], colors=colors_cluster)
+			#plt.ylim(limits[j][0], limits[j][1])
+			plt.bar(k, X[:][j], color=colors_cluster)
 		plt.show()
 
 	def write(self, file):
@@ -134,7 +147,7 @@ def main():
 
 	data = []
 
-	pop_file = open("population.txt", "r")
+	pop_file = open("population_cluster.txt", "r")
 
 	text = pop_file.read()
 
@@ -161,9 +174,11 @@ def main():
 	print(data)
 
 
-	c = ClusterProceduralWeapon(data, 4, 9, 3, None)
+	c = ClusterProceduralWeapon(data, None, 4, 9, 3, None)
 
 	c.cluster()
+
+main()
 
 
 

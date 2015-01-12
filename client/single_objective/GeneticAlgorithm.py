@@ -44,7 +44,7 @@ SPREAD_MIN, SPREAD_MAX = 0, 300
 #default MaxAmmo = 40
 AMMO_MIN, AMMO_MAX = 1, 999
 #deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 999
+SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
 #defualt Range 10000
 RANGE_MIN, RANGE_MAX = 100, 10000
 
@@ -67,11 +67,11 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
 
 N_CYCLES = 2
 # size of the population
-NUM_POP = 50
-NUM_POP_SEED = 10
-NUM_POP_RANDOM = 40
+NUM_POP_SEED = 0
+NUM_POP_RANDOM = 50
+NUM_POP = NUM_POP_RANDOM + NUM_POP_RANDOM
 
-#MAX KILLS PER BOT
+#MAX KILLS PER MATCH
 MAX_KILLS = 20
 
 #NUM OF NOT RUNNING SERVER
@@ -320,6 +320,9 @@ def match_kills(index, statics) :
         if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
 
+    if total_kills >= MAX_KILLS:
+        total_kills = MAX_KILLS
+
     total_kills = total_kills/MAX_KILLS
 
     return total_kills
@@ -339,8 +342,8 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-    e = random.randint(0, 2)
-    #e = entropy(index*2, statics)
+    #e = random.randint(0, 2)
+    e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
     #e += match_kills(index*2, statics)
     return e,

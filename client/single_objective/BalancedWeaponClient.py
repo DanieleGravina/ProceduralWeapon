@@ -42,13 +42,36 @@ class BalancedWeaponClient:
         message = ":GameSpeed:" + str(gameSpeed)
         try:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
         except :
             pass
 
     def SendMaxDuration(self, maxDuration):
         time.sleep(0.1)
         message = ":MaxDuration:" + str(maxDuration)
-        self.s.send(message.encode(encoding='utf-8',errors='strict'))
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
+        except :
+            pass
+
+    def SendGoalScore(self, goalScore):
+        time.sleep(0.1)
+        message = ":GoalScore:" + str(goalScore)
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
+        except :
+            pass
+
+    def SendTestKillsVsTime(self):
+        time.sleep(0.1)
+        message = ":TestKillsVsTime:" 
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
+        except :
+            pass
 
     def SendStartMatch(self):
         time.sleep(0.1)
