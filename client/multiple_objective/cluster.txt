@@ -1,0 +1,60 @@
+number of estimated clusters : 5
+index:
+[0, 4]
+fitness:
+[(2.0, 1.8626768399216191, 19.0), (1.0, 1.940471253287745, 6.0)]
+mean fitness:
+[1.5, 1.901574046604682, 12.5]
+members:
+Weapon  Rof:6.71 Spread:2.54 MaxAmmo:744.0 ShotCost:1.0 Range:3.0
+Projectile  Speed:1150.0 Damage:55.0 DamageRadius:40.0 Gravity:0.0
+*********************************************************
+Weapon  Rof:6.71 Spread:2.54 MaxAmmo:748.0 ShotCost:1.0 Range:3.0
+Projectile  Speed:1150.0 Damage:55.0 DamageRadius:53.0 Gravity:9.03
+*********************************************************
+index:
+[6, 8]
+fitness:
+[(1.0, 1.9086604253067252, 7.0), (0.0, 1.9109425069648363, 16.0)]
+mean fitness:
+[0.5, 1.9098014661357807, 11.5]
+members:
+Weapon  Rof:3.57 Spread:2.28 MaxAmmo:859.0 ShotCost:8.0 Range:71.89
+Projectile  Speed:8035.0 Damage:48.0 DamageRadius:35.0 Gravity:-4.74
+*********************************************************
+Weapon  Rof:3.72329 Spread:2.28 MaxAmmo:859.0 ShotCost:8.0 Range:71.89
+Projectile  Speed:8035.0 Damage:48.0 DamageRadius:35.0 Gravity:-4.74
+*********************************************************
+index:
+[1, 5]
+fitness:
+[(2.0, 1.8626768399216191, 19.0), (1.0, 1.940471253287745, 6.0)]
+mean fitness:
+[1.5, 1.901574046604682, 12.5]
+members:
+Weapon  Rof:4.0 Spread:0.0 MaxAmmo:15.0 ShotCost:10.0 Range:75.09
+Projectile  Speed:7227.0 Damage:58.0 DamageRadius:4.0 Gravity:-13.51
+*********************************************************
+Weapon  Rof:4.0 Spread:0.0 MaxAmmo:15.0 ShotCost:10.0 Range:75.09
+Projectile  Speed:7227.0 Damage:58.0 DamageRadius:4.0 Gravity:-12.6427
+*********************************************************
+index:
+[7, 9]
+fitness:
+[(1.0, 1.9086604253067252, 7.0), (0.0, 1.9109425069648363, 16.0)]
+mean fitness:
+[0.5, 1.9098014661357807, 11.5]
+members:
+Weapon  Rof:0.86 Spread:0.0 MaxAmmo:15.0 ShotCost:1.0 Range:8.0
+Projectile  Speed:500.0 Damage:100.0 DamageRadius:65.0 Gravity:17.89
+*********************************************************
+Weapon  Rof:0.86 Spread:0.0 MaxAmmo:15.0 ShotCost:1.0 Range:8.0
+Projectile  Speed:500.0 Damage:100.0 DamageRadius:65.0 Gravity:17.89
+*********************************************************
+index:
+[]
+fitness:
+[]
+mean fitness:
+[]
+members:

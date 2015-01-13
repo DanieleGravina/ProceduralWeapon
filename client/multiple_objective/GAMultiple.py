@@ -520,8 +520,6 @@ def main():
 
         print(logbook)
 
-    print(hof)
-
 
     logbook.header = "gen", "entropy", "diff", "kills"
     logbook.chapters["entropy"].header = "min", "avg", "max"
@@ -534,10 +532,13 @@ def main():
 
     logbook_file.write(log_string)
 
+    print("Best individuals:")
+    printWeapon(hof)
+    pop_file.write("Best individuals:\n")
+    writeWeapon(hof, pop_file)
+
     pop_file.close()
     logbook_file.close()
-
-    '''
 
     plt.figure(1)
 
@@ -608,18 +609,15 @@ def main():
     plt.scatter(e_front, k_front, c=u'r')
     plt.plot(e_front, k_front)
 
-    plt.show()
-    '''
-
     real_pop = []
 
-    for ind in pop:
+    for ind in hof:
         temp1 = ind[:9]
         temp2 = ind[9:]
         real_pop += [temp1]
         real_pop += [temp2]
 
-    cluster = ClusterProceduralWeapon(real_pop, pop, 100, 9, 7)
+    cluster = ClusterProceduralWeapon(real_pop, hof)
     cluster.cluster()
 
 
