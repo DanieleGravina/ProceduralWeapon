@@ -67,8 +67,8 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
 
 N_CYCLES = 2
 # size of the population
-NUM_POP_SEED = 0
-NUM_POP_RANDOM = 50
+NUM_POP_SEED = 10
+NUM_POP_RANDOM = 40
 NUM_POP = NUM_POP_RANDOM + NUM_POP_RANDOM
 
 #MAX KILLS PER MATCH
@@ -243,6 +243,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
+    #return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -345,7 +346,7 @@ def evaluate(index, statics):
     #e = random.randint(0, 2)
     e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
-    #e += match_kills(index*2, statics)
+    e += match_kills(index*2, statics)
     return e,
 
 
@@ -398,8 +399,10 @@ def main():
 
     statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
 
+    logbook_file.write("Gen : " + str(0) + "\n")
     for key, val in statics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
+    logbook_file.write("*********************************************************\n")
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -439,8 +442,10 @@ def main():
 
         statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
 
+        logbook_file.write("Gen : " + str(g) + "\n")
         for key, val in statics.items():
-            logbook_file.write(str(key) + " : " + str(val) + "\n")
+                logbook_file.write(str(key) + " : " + str(val) + "\n")
+        logbook_file.write("*********************************************************\n")
 
         fitnesses = []
 
@@ -472,12 +477,6 @@ def main():
 
         print(logbook)
 
-
-    print("best individual")
-    printWeapon(hof)
-    pop_file.write("best individual\n")
-    writeWeapon(hof, pop_file)
-
     plt.figure(1)
 
     gen = logbook.select("gen")
@@ -498,6 +497,11 @@ def main():
 
     logbook_file.write(log_string)
 
+    print("best individual")
+    printWeapon(hof)
+    pop_file.write("best individual\n")
+    writeWeapon(hof, pop_file)
+
     pop_file.close()
     logbook_file.close()
 
@@ -509,7 +513,7 @@ def main():
         real_pop += [temp1]
         real_pop += [temp2]
 
-    cluster = ClusterProceduralWeapon(real_pop, pop, 100, 9, 7)
+    cluster = ClusterProceduralWeapon(real_pop, pop)
     cluster.cluster()
 
 main()

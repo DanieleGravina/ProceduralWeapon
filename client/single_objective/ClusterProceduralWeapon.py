@@ -1,11 +1,9 @@
-from sklearn.cluster import k_means
-from sklearn.cluster import MeanShift, estimate_bandwidth
-from sklearn.cluster import AffinityPropagation
 from sklearn.manifold import MDS
-from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
 import numpy as np
 from sklearn import metrics
 import statistics
+import matplotlib.pyplot as plt
 
 #default Rof = 100
 ROF_MIN, ROF_MAX = 10, 1000
@@ -36,6 +34,25 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
 
 label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "RANGE", "SPEED", "DMG", "DMG_RAD", "GRAVITY"]
 
+def printWeapon(pop):
+
+    for ind in pop :
+
+        print("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
+            + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
+        print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
+            + " Gravity:" + str(ind[8]) )
+        print("*********************************************************" + "\n")
+
+
+def writeWeapon(pop, pop_file):
+    for ind in pop :
+        pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
+            + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
+        pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
+            + " Gravity:" + str(ind[8]) +"\n")
+        pop_file.write("*********************************************************" + "\n")
+
 def normalize(data):
 	for i in range(100):
 		for j in range(9):
@@ -44,13 +61,9 @@ def normalize(data):
 	return data
 
 class ClusterProceduralWeapon:
-	def __init__(self, data = None, pure_data = None, num_weapon = 0, num_par = 0, num_clusters = 0, file = None):
+	def __init__(self, data = None, pure_data = None):
 		self.data = np.array(data, np.float32)
 		self.pure_data = pure_data
-		self.num_weapon = num_weapon
-		self.num_par = num_par
-		self.num_clusters = num_clusters
-		self.file = file
 
 	def cluster(self):
 
@@ -58,20 +71,16 @@ class ClusterProceduralWeapon:
 
 		print(self.data.shape)
 
-		X = self.data
+		X = np.array(self.data)
 
-		#X = normalize(X)
+		X = normalize(X)
 
-		print(X)
+		db = DBSCAN(eps=0.3, min_samples=10).fit(X)
+		labels = db.labels_
 
-		bandwidth = estimate_bandwidth(X, quantile=0.2, n_samples=100)
+		labels_unique = np.unique(labels)
+		n_clusters_ = len(labels_unique)
 
-		ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
-		ms.fit(X)
-		labels = ms.labels_
-		cluster_centers = ms.cluster_centers_
-
-		print(cluster_centers)
 		print(labels)
 
 		labels_unique = np.unique(labels)
@@ -86,7 +95,6 @@ class ClusterProceduralWeapon:
 
 		for k in range(n_clusters_):
 			my_members = labels == k
-			cluster_center = cluster_centers[k]
 			for i in range(100):
 				if my_members[i]:
 					index += [i]
@@ -110,16 +118,12 @@ class ClusterProceduralWeapon:
 			cluster_file.write(str(fitness)+ "\n")
 			cluster_file.write("mean fitness:"+ "\n")
 			cluster_file.write(str(mean)+ "\n")
-			cluster_file.write("center: \n")
-			cluster_file.write(str(cluster_center)+ "\n")
 			cluster_file.write("members:"+ "\n")
-			cluster_file.write(str(X[my_members])+ "\n")
+			writeWeapon(self.data[my_members], cluster_file)
 
 			print(index)
-			print("center:")
-			print(cluster_center)
 			print("members:")
-			print(X[my_members])
+			printWeapon(self.data[my_members])
 			print("fitness:"+ "\n")
 			print(str(fitness)+ "\n")
 
@@ -132,34 +136,37 @@ class ClusterProceduralWeapon:
 
 		pos = mds.fit_transform(X.astype(np.float64))
 
-		import matplotlib.pyplot as plt
-
 		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
 
-		plt.figure(2)
+		plt.figure(1)
 
 		for i in range(len(pos[:,0])):
 
 			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
 
-		import matplotlib.pyplot as plt
-		from itertools import cycle
+		X_ordered = []
+		X = np.array(self.data);
+		colors_ordered = []
 
-		plt.figure(1)
+		for i in range(n_clusters_):
+			for j in range(100):
+				if labels[j] == i and labels[j] != -1:
+					X_ordered.append(X[j][:])
+					colors_ordered += [colors[labels[j]]]
+
+		labels_ = [labels[i] for i in range(len(labels)) if labels[i] != -1]
+
+		plt.figure(2)
 		plt.title("number of estimated clusters : %d" % n_clusters_)
-		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
-		ind = np.arange(n_clusters_)
+		colors_cluster = [colors[labels_[i]] for i in range(len(labels_))]
+
+		k = [i for i in range(len(labels_))]
 		for j in range(9):
 			plt.subplot(330 + j)
 			plt.ylabel(label[j])
-			cluster_center = [cluster_centers[i, j] for i in range(n_clusters_)]
-			#plt.ylim(limits[j][0], limits[j][1])
-			plt.bar(ind, cluster_center, color=[colors[i] for i in range(n_clusters_)])
-			plt.xticks(ind+0.8/2., list(str(i) for i in range(n_clusters_)) )
+			plt.ylim(limits[j][0], limits[j][1])
+			plt.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)
 		plt.show()
-
-	def write(self, file):
-		file.write(str(AffinityPropagation().fit(self.data)))
 
 def main():
 
@@ -193,7 +200,7 @@ def main():
 	print(data)
 
 
-	c = ClusterProceduralWeapon(data, None, 4, 9, 3, None)
+	c = ClusterProceduralWeapon(data, None)
 
 	c.cluster()
 

@@ -16,17 +16,17 @@ from math import log
 
 
 N_CYCLES = 1
-NUM_SERVER = 8
+NUM_SERVER = 2
 NUM_BOTS = 2
 
-N_SERVER_SPEED_1 = 4
+N_SERVER_SPEED_1 = 1
 
-population = [9, 9, 9, 9, 9, 9, 9, 9]
+population = [3, 9]
 
 statics = {}
 
-speed1 = "8x"
-speed2 = "10x"
+speed1 = "1x"
+speed2 = "12x"
 
 
 def initialize_server():

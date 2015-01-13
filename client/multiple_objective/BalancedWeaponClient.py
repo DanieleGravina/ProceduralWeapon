@@ -1,9 +1,7 @@
 import socket
 import time
 
-messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-
-messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
+from Costants import TIMEOUT
 
 messageInit = ':Init'
 messageStartMatch = ':StartMatch'
@@ -25,6 +23,7 @@ class BalancedWeaponClient:
         try:
             self.s.connect((self.host, self.port))
         except :
+            self.serverRunning = False
             pass
 
         time.sleep(0.1) 
@@ -35,6 +34,7 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageInit.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
     def SendGameSpeed(self, gameSpeed):
@@ -44,6 +44,7 @@ class BalancedWeaponClient:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
             print('Send ' + message)
         except :
+            self.serverRunning = False
             pass
 
     def SendMaxDuration(self, maxDuration):
@@ -53,6 +54,7 @@ class BalancedWeaponClient:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
             print('Send ' + message)
         except :
+            self.serverRunning = False
             pass
 
     def SendGoalScore(self, goalScore):
@@ -62,6 +64,7 @@ class BalancedWeaponClient:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
             print('Send ' + message)
         except :
+            self.serverRunning = False
             pass
 
     def SendTestKillsVsTime(self):
@@ -71,6 +74,7 @@ class BalancedWeaponClient:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
             print('Send ' + message)
         except :
+            self.serverRunning = False
             pass
 
     def SendStartMatch(self):
@@ -79,6 +83,7 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageStartMatch.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
     def SendWeaponParams(self, id, Rof, Spread, MaxAmmo, ShotCost, Range):
@@ -95,6 +100,7 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageWeapon.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
         time.sleep(0.1)
@@ -111,6 +117,7 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageProjectile.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
         time.sleep(0.1)
@@ -121,6 +128,7 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageClose.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
     def SendReset(self):
@@ -129,23 +137,26 @@ class BalancedWeaponClient:
         try:
             self.s.send(messageReset.encode(encoding='utf-8',errors='strict'))
         except :
+            self.serverRunning = False
             pass
 
     def WaitForBotStatics(self):
 
-        self.serverRunning = True
+        self.s.setblocking(0)
 
         finish = True
 
         while finish and self.serverRunning:
 
-            try:
+            #if server crashes, it can continue after timeout
+            ready = select.select([self.s], [], [], TIMEOUT)
+
+            if ready[0]:
                 data = self.s.recv(255)
-            except :
+            else :
                 self.serverRunning = False
                 message = ""
                 data = message.encode()
-                pass
 
             splitted = data.decode().split("%")
 
@@ -163,6 +174,7 @@ class BalancedWeaponClient:
         try:
             self.s.close()
         except :
+            self.serverRunning = False
             pass
 
 
