@@ -174,7 +174,6 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT): 
-    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -236,7 +235,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
-    return stats, PORT, numServerCrashed
+    #return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -354,9 +353,9 @@ def evaluate_difference(index, population):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    #e = entropy(index*2, statics)
-    e, tot_kills = random.randint(0,2), random.randint(0, 25)
-    #tot_kills = match_kills(index*2, statics)
+    e = entropy(index*2, statics)
+    #e, tot_kills = random.randint(0,2), random.randint(0, 25)
+    tot_kills = match_kills(index*2, statics)
     diff = evaluate_difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -427,7 +426,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
 
     fitnesses = []
     statics = {}
@@ -436,8 +435,10 @@ def main():
 
     statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
 
+    logbook_file.write("Gen : " + str(0) + "\n")
     for key, val in statics.items():
-        logbook_file.write(str(key) + " : " + str(val) + "\n")
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
+    logbook_file.write("*********************************************************\n")
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -485,8 +486,10 @@ def main():
 
         statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
 
+        logbook_file.write("Gen : " + str(g+1) + "\n")
         for key, val in statics.items():
-            logbook_file.write(str(key) + " : " + str(val) + "\n")
+                logbook_file.write(str(key) + " : " + str(val) + "\n")
+        logbook_file.write("*********************************************************\n")
 
         fitnesses = []
 

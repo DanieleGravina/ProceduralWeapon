@@ -14,11 +14,12 @@ from Costants import NUM_SERVER
 from Costants import INITIAL_PORT
 from Costants import MAX_DURATION
 
-from InitialPopulationSeed import getTwoSeedWeapons
+from WeaponParameter import *
 
 from BalancedWeaponClient import BalancedWeaponClient
 from ClientThread import myThread
 from ClusterProceduralWeapon import ClusterProceduralWeapon
+from InitialPopulationSeed import getOneSeedWeapons
 
 from math import log
 
@@ -37,86 +38,55 @@ toolbox = base.Toolbox()
 # Weapon ######
 ###############
 
-#default Rof = 100
-ROF_MIN, ROF_MAX = 10, 1000
-#default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 300
-#default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 999
-#deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
-#defualt Range 10000
-RANGE_MIN, RANGE_MAX = 100, 10000
+Weapon_1 = [RoF(MEDIUM), Spread(LOW), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
+            Speed(VERY_HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
 
-###################
-# Projectile ######
-###################
+Weapon_Fixed = [1.05,  0.5,     30,      1,     8, 1350, 100,       42,      -1]
 
-#default speed = 1000
-SPEED_MIN, SPEED_MAX = 1, 10000
-#default damage = 1
-DMG_MIN, DMG_MAX = 1, 100
-#default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
-#default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -2000, 2000
+limits = []
 
-limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
+for i in range(len(Weapon_1)):
+   if i == 0 or i == 1 or i == 4 or i == 8 :
+    limits += [(Weapon_1[i][0]/100, Weapon_1[i][1]/100)]
+   else :
+    limits += [(Weapon_1[i][0], Weapon_1[i][1])]
+
+print(limits)
 
 
-N_CYCLES = 2
+N_CYCLES = 1
 # size of the population
-NUM_POP_SEED = 10
-NUM_POP_RANDOM = 40
-NUM_POP = NUM_POP_RANDOM + NUM_POP_RANDOM
+NUM_POP_SEED = 25
+NUM_POP_RANDOM = 25
 
 #MAX KILLS PER MATCH
-MAX_KILLS = 20
+MAX_KILLS = 50
 
 #NUM OF NOT RUNNING SERVER
 numServerCrashed = 0
 
 
-def round_decorator(min, max):
-    def decorator(func):
-        def wrapper(*args, **kargs):
-            result = func(*args, **kargs)
-            result = result/100
-            return result
-        return wrapper
-    return decorator
+def TuningIndividual(container):
+
+    result = []
+
+    for i in range(len(Weapon_1)):
+        if i == 0 or i == 1 or i == 4 or i == 8 :
+            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1]) / 100]
+        else :
+            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1])]
+
+    return container(result[i] for i in range(len(result)))
 
 def SeedIndividual(container):
-    result = getTwoSeedWeapons()
+    result = getOneSeedWeapons()
     return container(result[i] for i in range(len(result)))
 
 
-
-toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
-toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
-toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
-toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
-toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
-
-toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
-toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
-toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
-toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
-
-toolbox.decorate("attr_rof", round_decorator(0,1))
-toolbox.decorate("attr_spread", round_decorator(0,1))
-toolbox.decorate("attr_range", round_decorator(0,1))
-toolbox.decorate("attr_gravity", round_decorator(0,1))
-
-toolbox.register("individual", tools.initCycle, creator.Individual,
-                 (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
-                  toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
-                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = N_CYCLES)
+toolbox.register("individual", TuningIndividual, creator.Individual)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 toolbox.register("individual_guess", SeedIndividual, creator.Individual)
-
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("population_guess", tools.initRepeat, list, toolbox.individual_guess)
 
 def printWeapon(pop):
@@ -128,11 +98,6 @@ def printWeapon(pop):
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
         print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) )
-
-        print("Weapon "+ " Rof:" + str(ind[9]) + " Spread:" + str(ind[10]) + " MaxAmmo:" + str(ind[11]) 
-            + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) )
-        print("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
-            + " Gravity:" + str(ind[17]) )
 
         print("fitness: " + str(ind.fitness.values))
         print("*********************************************************")
@@ -146,11 +111,6 @@ def writeWeapon(pop, pop_file):
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) +"\n")
-
-        pop_file.write("Weapon "+ " Rof:" + str(ind[9]) + " Spread:" + str(ind[10]) + " MaxAmmo:" + str(ind[11]) 
-            + " ShotCost:" + str(ind[12]) + " Range:" + str(ind[13]) + "\n")
-        pop_file.write("Projectile "+ " Speed:" + str(ind[14]) + " Damage:" + str(ind[15]) + " DamageRadius:" + str(ind[16])
-            + " Gravity:" + str(ind[17]) + "\n")
 
         pop_file.write("fitness: " + str(ind.fitness.values) + "\n")
         pop_file.write("*********************************************************" + "\n")
@@ -167,7 +127,7 @@ def check_param(param, min, max):
 
 def check(param, n) :
 
-    return check_param(param, limits[n % 9][0], limits[n % 9][1])
+    return check_param(param, limits[n][0], limits[n][1])
 
 def checkBounds(min, max):
     def decorator(func):
@@ -181,6 +141,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
+    return
 
     clients = []
 
@@ -188,7 +149,6 @@ def initialize_server(PORT):
         clients.append(BalancedWeaponClient(PORT[i]))
 
     for c in clients :
-        c.SendMaxDuration(MAX_DURATION)
         c.SendInit()
         c.SendStartMatch()
         c.SendClose()
@@ -212,7 +172,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 
             index = indexToRedo.pop()
 
-            threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+            threads.append( myThread(index*2, "Thread-" + str(index), population, Weapon_Fixed, PORT[to_simulate]) )
             to_simulate += 1
 
         if len(indexToRedo) == 0 :
@@ -243,7 +203,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
-    #return stats, PORT, numServerCrashed
+    return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -263,7 +223,7 @@ def simulate_population(population, numServerCrashed, PORT) :
         while to_simulate < NUM_SERVER - numServerCrashed and index < len(population) :
 
             if not population[index].fitness.valid :
-                threads.append( myThread(index*2, "Thread-" + str(index), population, PORT[to_simulate]) )
+                threads.append( myThread(index*2, "Thread-" + str(index), population, Weapon_Fixed, PORT[to_simulate]) )
                 to_simulate += 1
             
             index += 1
@@ -321,9 +281,6 @@ def match_kills(index, statics) :
         if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
 
-    if total_kills >= MAX_KILLS:
-        total_kills = MAX_KILLS
-
     total_kills = total_kills/MAX_KILLS
 
     return total_kills
@@ -343,17 +300,17 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-    #e = random.randint(0, 2)
-    e = entropy(index*2, statics)
+    e = random.randint(0, 2)
+    #e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
-    e += match_kills(index*2, statics)
+    #e += match_kills(index*2, statics)
     return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(18)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
+toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(9)],
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
                                               indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
@@ -404,6 +361,9 @@ def main():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
     logbook_file.write("*********************************************************\n")
 
+    for key, val in statics.items():
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
+
     # Evaluate the entire population
     for i in range(len(pop)) :
         fitnesses += [toolbox.evaluate(i, statics)]
@@ -411,10 +371,8 @@ def main():
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
-    record = stats.compile(pop)
     hof.update(pop)
-
-
+    record = stats.compile(pop)
     logbook.record(gen = 0, **record)
 
     logbook.header = "gen", "avg", "std", "min", "max"
@@ -442,7 +400,7 @@ def main():
 
         statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
 
-        logbook_file.write("Gen : " + str(g + 1) + "\n")
+        logbook_file.write("Gen : " + str(g+1) + "\n")
         for key, val in statics.items():
                 logbook_file.write(str(key) + " : " + str(val) + "\n")
         logbook_file.write("*********************************************************\n")
@@ -464,8 +422,8 @@ def main():
         # The population is entirely replaced by the offspring
         pop[:] = offspring
 
-        record = stats.compile(pop)
         hof.update(pop)
+        record = stats.compile(pop)
 
         printWeapon(pop)
 
@@ -505,15 +463,7 @@ def main():
     pop_file.close()
     logbook_file.close()
 
-    real_pop = []
-
-    for ind in pop:
-        temp1 = ind[:9]
-        temp2 = ind[9:]
-        real_pop += [temp1]
-        real_pop += [temp2]
-
-    cluster = ClusterProceduralWeapon(real_pop, pop)
+    cluster = ClusterProceduralWeapon(pop, pop)
     cluster.cluster()
 
 main()
