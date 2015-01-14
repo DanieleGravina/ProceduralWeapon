@@ -426,7 +426,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 30 #160 min
 
     fitnesses = []
     statics = {}

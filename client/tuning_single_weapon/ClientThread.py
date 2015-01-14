@@ -2,6 +2,7 @@ import threading
 from BalancedWeaponClient import BalancedWeaponClient
 from Costants import NUM_BOTS
 from Costants import MAX_DURATION
+from Costants import GOAL_SCORE
 
 class myThread (threading.Thread):
     def __init__(self, threadID, name, population, fixedWeapon, port):
@@ -19,6 +20,7 @@ class myThread (threading.Thread):
 
         self.client.SendInit()
         self.client.SendMaxDuration(MAX_DURATION)
+        self.client.SendGoalScore(GOAL_SCORE)
 
         index =  self.threadID
         population = self.population

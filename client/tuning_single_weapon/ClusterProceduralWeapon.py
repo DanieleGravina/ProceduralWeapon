@@ -54,7 +54,7 @@ def writeWeapon(pop, pop_file):
         pop_file.write("*********************************************************" + "\n")
 
 def normalize(data):
-	for i in range(100):
+	for i in range(data.shape[0]):
 		for j in range(9):
 			data[i][j] = (data[i][j] - limits[j][0])/(limits[j][1] - limits[j][0])
 
@@ -99,7 +99,7 @@ class ClusterProceduralWeapon:
 				if my_members[i]:
 					index += [i]
 					if self.pure_data != None:
-						fitness += [self.pure_data[num].fitness.values] 
+						fitness += [self.pure_data[i].fitness.values] 
 
 			
 			if fitness != []:
@@ -143,7 +143,7 @@ class ClusterProceduralWeapon:
 		colors_ordered = []
 
 		for i in range(n_clusters_):
-			for j in range(100):
+			for j in range(len(labels)):
 				if labels[j] == i and labels[j] != -1:
 					X_ordered.append(X[j][:])
 					colors_ordered += [colors[labels[j]]]

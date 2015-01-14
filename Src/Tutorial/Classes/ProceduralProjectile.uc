@@ -10,6 +10,7 @@ function Init(vector Direction)
 	
 	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
 	Damage = ServerGame(WorldInfo.Game).GetPPParameters().Damage;
+	bWideCheck = true;
 	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
 	TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
 	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;

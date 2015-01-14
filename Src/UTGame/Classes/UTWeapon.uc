@@ -2202,7 +2202,7 @@ simulated function vector InstantFireStartTrace()
 */
 simulated function vector InstantFireEndTrace(vector StartTrace)
 {
-	return StartTrace + vector(GetAdjustedAim(StartTrace)) * GetTraceRange();
+	return StartTrace + vector(ProjectileFire(StartTrace)) * GetTraceRange();
 }
 
 /**
@@ -2371,7 +2371,7 @@ simulated function Projectile ProjectileFire()
 		SpawnedProjectile = Spawn(GetProjectileClass(),,, RealStartLoc);
 		if( SpawnedProjectile != None && !SpawnedProjectile.bDeleteMe )
 		{
-			SpawnedProjectile.Init( Vector(GetAdjustedAim( RealStartLoc )) );
+			SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc )) );
 		}
 
 		// Return it up the line

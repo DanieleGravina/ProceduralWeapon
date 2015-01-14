@@ -38,16 +38,35 @@ function SetProceduralWeapon()
 		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
 		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
 		myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*1000;
+
+		myWeapon.ShotCost[0] = (myWeapon.ShotCost[0] > 10) ? 10 : myWeapon.ShotCost[0];
 	
 		myWeapon.AmmoCount = myWeapon.MaxAmmoCount;
 		myWeapon.Spread[1] = myWeapon.Spread[0];
 		myWeapon.FireInterval[1] = myWeapon.FireInterval[0];
 		myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
-		
+
+		myWeapon.SpreadDist = myWeapon.Spread[0];
+
 	
 		if(myWeapon.WeaponRange >= MinRangeSniping)
 		{
 			myWeapon.bSniping = true;
+		}
+
+		if(myWeapon.FireInterval[0] < 0.5){
+			myWeapon.bFastRepeater = true;
+		}
+
+		if(myWeapon.ShotCost[0] > 1)
+		{
+			myWeapon.WeaponFireTypes[0]=EWFT_Custom;
+			myWeapon.WeaponFireTypes[1]=EWFT_Custom;
+		}
+		else
+		{
+			myWeapon.WeaponFireTypes[0]=EWFT_Projectile;
+			myWeapon.WeaponFireTypes[1]=EWFT_Projectile;
 		}
 	}
 }
@@ -55,7 +74,7 @@ function SetProceduralWeapon()
 defaultproperties
 {
 	
-	//InventoryManagerClass = class'MyInventoryManager'
+	InventoryManagerClass = class'ProceduralInventoryManager'
 	
 	minRangeSniping = 10000;
 	

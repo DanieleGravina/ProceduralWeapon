@@ -15,6 +15,7 @@ var int numParWeapon;
 var int numParProjectile;
 
 var bool bIsGameInitialized;
+var bool bTestKillsVsTime;
 
 var int GoalScore;
 
@@ -85,6 +86,18 @@ event ReceivedText( string Text )
 		if (InStr(parsedString[i], "GameSpeed") != -1 && StateCurrent == INITIALIZATION)
 		{
 			WorldInfo.Game.SetGameSpeed( float(parsedString[i + 1]) );
+
+			i += 1;
+		}
+
+		if (InStr(parsedString[i], "TestKillsVsTime") != -1 && StateCurrent == INITIALIZATION)
+		{
+			bTestKillsVsTime = true;
+		}
+
+		if (InStr(parsedString[i], "GoalScore") != -1 && StateCurrent == INITIALIZATION)
+		{
+			GoalScore = int(parsedString[i + 1]);
 
 			i += 1;
 		}
@@ -324,8 +337,38 @@ function SendPawnDied(Controller killed, Controller killer)
 				}
 			}
 		}
+
+		if(bTestKillsVsTime || ServerGame(WorldInfo.Game).bTotalGoalScore)
+		{
+			CheckTotalFinishGame();
+		}
+		else
+		{
+			CheckFinishGame();
+			
+		}
+	}
+}
+
+function CheckTotalFinishGame()
+{
+	local int i;
+	local int sum;
+
+	sum = 0;
 	
-		CheckFinishGame();
+	for(i = 0; i < botStatics.Length; ++i)
+	{
+
+		sum += botStatics[i].num_kills;
+	}
+
+	if(sum >= GoalScore)
+	{
+		StateCurrent = ENDGAME;
+		ClearTimer('TimeOut');
+		FinishGame();
+		return;
 	}
 }
 
@@ -410,6 +453,7 @@ defaultproperties
 	numParProjectile = 4;
 	
 	bIsGameInitialized = false;
+	bTestKillsVsTime = false;
 	
 	GoalScore = 100;
 	

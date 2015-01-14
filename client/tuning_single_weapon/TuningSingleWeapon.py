@@ -141,7 +141,6 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
-    return
 
     clients = []
 
@@ -203,7 +202,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
-    return stats, PORT, numServerCrashed
+    #return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -300,10 +299,10 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, statics):
-    e = random.randint(0, 2)
-    #e = entropy(index*2, statics)
+    #e = random.randint(0, 2)
+    e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
-    #e += match_kills(index*2, statics)
+    e += match_kills(index*2, statics)
     return e,
 
 

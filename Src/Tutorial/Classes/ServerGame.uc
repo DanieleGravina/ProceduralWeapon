@@ -4,6 +4,7 @@ var TcpLinkServer tcpServer;
 
 var bool bGameStart;
 var bool bTestGame;
+var bool bTotalGoalScore;
 
 var int numPlayer;
 
@@ -66,6 +67,13 @@ event InitGame( string Options, out string ErrorMessage )
 	{
 		`log("TestGame"@InOpt);
 		bTestGame = true;
+	}
+
+	InOpt = ParseOption( Options, "TotalGoalScore");
+	if( InOpt != "" )
+	{
+		`log("TotalGoalScore"@InOpt);
+		bTotalGoalScore = true;
 	}
 	
 }
@@ -224,6 +232,7 @@ defaultproperties
     numPlayer = 4
 
     bTestGame = false
+    bTotalGoalScore = false
 
     BotClass=Class'ProceduralWeaponBot'
 

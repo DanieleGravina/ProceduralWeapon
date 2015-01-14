@@ -1,43 +1,108 @@
 class ProceduralWeapon extends MyWeapon;
 
-//Cannot pickup any different weapon from default one
-function bool DenyPickupQuery(class<Inventory> ItemClass, Actor Pickup)
-{
-	
-	if(ClassIsChildOf(ItemClass, class 'UTWeapon'))
-	{
-		AddAmmo(MaxAmmoCount);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-simulated function Projectile ProjectileFire()
-{
-    local Projectile SpawnedProjectile;
-
-    SpawnedProjectile = super.ProjectileFire();
-
-	if(ProceduralProjectile(SpawnedProjectile) != none)
-	{
-		//`log("[ProceduralWeapon] ProjectileFire: set projectile");
-		//ProceduralProjectile(SpawnedProjectile).Initialize();
-	}
-    
-    return SpawnedProjectile;
-}
+var float SpreadDist;
 
 function class<Projectile> GetProjectileClass()
 {
     return WeaponProjectiles[CurrentFireMode];  // Use our default projectile
 }
 
-simulated function FireAmmunition()
+/**
+ * Fires a projectile.
+ * Spawns the projectile, but also increment the flash count for remote client effects.
+ * Network: Local Player and Server
+ */
+simulated function Projectile ProjectileFire()
 {
-    Super.FireAmmunition();
+    local vector        RealStartLoc;
+    local Projectile    SpawnedProjectile;
+
+    // tell remote clients that we fired, to trigger effects
+    IncrementFlashCount();
+
+    if( Role == ROLE_Authority )
+    {
+        // this is the location where the projectile is spawned.
+        RealStartLoc = GetPhysicalFireStartLoc();
+
+        // Spawn projectile
+        SpawnedProjectile = Spawn(GetProjectileClass(),,, RealStartLoc);
+        if( SpawnedProjectile != None && !SpawnedProjectile.bDeleteMe )
+        {
+            SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+        }
+
+        // Return it up the line
+        return SpawnedProjectile;
+    }
+
+    return None;
+}
+
+simulated function Rotator GetAdjustedAim( vector StartFireLoc )
+{
+    local rotator R;
+
+    // Start the chain, see Pawn.GetAdjustedAimFor()
+    if( Instigator != None )
+    {
+        R = Instigator.GetAdjustedAimFor( Self, StartFireLoc );
+
+        if ( (PlayerController(Instigator.Controller) != None) && (CurrentFireMode == 1) )
+        {
+            R.Pitch = R.Pitch & 65535;
+            if ( R.Pitch < 16384 )
+            {
+                R.Pitch += (16384 - R.Pitch)/32;
+            }
+            else if ( R.Pitch > 49152 )
+            {
+                R.Pitch += 512;
+            }
+        }
+    }
+
+    return R;
+}
+
+simulated function CustomFire()
+{
+    local int i, y, z, Mag;
+    local vector RealStartLoc, AimDir, YDir, ZDir;
+    local Projectile Proj;
+    local class<Projectile> ShardProjectileClass;
+
+    if (Role == ROLE_Authority)
+    {
+        // this is the location where the projectile is spawned
+        RealStartLoc = GetPhysicalFireStartLoc();
+        // get fire aim direction
+        GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
+
+        // one shard in each of 9 zones (except center)
+        ShardProjectileClass = GetProjectileClass();
+
+        for( i = 0; i < ShotCost[0]; i++)
+        {
+            y = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
+            z = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
+            Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
+
+            Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
+            if (Proj != None)
+            {
+               if( y != 0 && z != 0)
+               {
+                    Proj.Init(AimDir + (0.3 + 0.7*FRand())*SpreadDist*YDir*y + (0.3 + 0.7*FRand())*SpreadDist*ZDir*z);
+               }
+               else
+               {
+                   Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+               }
+            }
+
+        }
+    }
 }
 
 
@@ -45,6 +110,8 @@ simulated function FireAmmunition()
 
 defaultproperties
 {
+    SpreadDist=0.100000
+
 	// Weapon SkeletalMesh
     Begin Object class=AnimNodeSequence Name=MeshSequenceA
     End Object
@@ -96,7 +163,7 @@ defaultproperties
     bInstantHit=false                               // Is it an instant hit weapon?
     bSplashJump=false
     bRecommendSplashDamage=true                     // Can a bot use this for splash damage?
-    bSniping=true                                   // Could a bot snipe with this?
+    bSniping=false                                  // Could a bot snipe with this?
     ShouldFireOnRelease(0)=0                        // Should it fire when the mouse is released?
     ShouldFireOnRelease(1)=0                        // Should it fire when the mouse is released?
     

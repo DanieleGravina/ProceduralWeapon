@@ -1,0 +1,21 @@
+number of estimated clusters : 2
+index:
+[5, 7]
+fitness:
+[(1.868136110750982, 1.9041870633787943, 20.0), (1.7625817984613854, 1.9524620306139988, 20.0)]
+mean fitness:
+[1.8153589546061837, 1.9283245469963965, 20.0]
+members:
+Weapon  Rof:1.33 Spread:0.0 MaxAmmo:40.0 ShotCost:1.0 Range:10.0
+Projectile  Speed:20000.0 Damage:50.0 DamageRadius:20.0 Gravity:0.0
+*********************************************************
+Weapon  Rof:1.33 Spread:0.0 MaxAmmo:40.0 ShotCost:1.0 Range:10.0
+Projectile  Speed:20000.0 Damage:50.0 DamageRadius:20.0 Gravity:0.0
+*********************************************************
+index:
+[]
+fitness:
+[]
+mean fitness:
+[]
+members:
