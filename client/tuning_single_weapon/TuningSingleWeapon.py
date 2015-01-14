@@ -37,57 +37,81 @@ toolbox = base.Toolbox()
 ###############
 # Weapon ######
 ###############
+#default Rof = 100
+ROF_MIN, ROF_MAX = RoF(MEDIUM)
+#default Spread = 0
+SPREAD_MIN, SPREAD_MAX = Spread(LOW)
+#default MaxAmmo = 40
+AMMO_MIN, AMMO_MAX = Ammo(MEDIUM)
+#deafult ShotCost = 1
+SHOT_COST_MIN, SHOT_COST_MAX = ShotCost(VERY_HIGH)
+#defualt Range 10000
+RANGE_MIN, RANGE_MAX = Range(MEDIUM)
 
-Weapon_1 = [RoF(MEDIUM), Spread(LOW), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
-            Speed(VERY_HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
+###################
+# Projectile ######
+###################
+
+#default speed = 1000
+SPEED_MIN, SPEED_MAX = Speed(VERY_HIGH)
+#default damage = 1
+DMG_MIN, DMG_MAX = Damage(LOW)
+#default damgae radius = 10
+DMG_RAD_MIN, DMG_RAD_MAX = DamageRad(LOW)
+#default gravity = 1
+GRAVITY_MIN, GRAVITY_MAX = Gravity(LOW)
+
+limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
 
 Weapon_Fixed = [1.05,  0.5,     30,      1,     8, 1350, 100,       42,      -1]
 
-limits = []
-
-for i in range(len(Weapon_1)):
-   if i == 0 or i == 1 or i == 4 or i == 8 :
-    limits += [(Weapon_1[i][0]/100, Weapon_1[i][1]/100)]
-   else :
-    limits += [(Weapon_1[i][0], Weapon_1[i][1])]
+Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0]
 
 print(limits)
 
 
 N_CYCLES = 1
 # size of the population
-NUM_POP_SEED = 25
-NUM_POP_RANDOM = 25
+NUM_POP = 50
 
 #MAX KILLS PER MATCH
-MAX_KILLS = 50
+MAX_KILLS = 20
 
 #NUM OF NOT RUNNING SERVER
 numServerCrashed = 0
 
+def round_decorator(min, max):
+    def decorator(func):
+        def wrapper(*args, **kargs):
+            result = func(*args, **kargs)
+            result = result/100
+            return result
+        return wrapper
+    return decorator
 
-def TuningIndividual(container):
+toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
+toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
+toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
+toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
+toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
 
-    result = []
+toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
+toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
+toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
+toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
 
-    for i in range(len(Weapon_1)):
-        if i == 0 or i == 1 or i == 4 or i == 8 :
-            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1]) / 100]
-        else :
-            result += [random.randint(Weapon_1[i][0], Weapon_1[i][1])]
+toolbox.decorate("attr_rof", round_decorator(0,1))
+toolbox.decorate("attr_spread", round_decorator(0,1))
+toolbox.decorate("attr_range", round_decorator(0,1))
+toolbox.decorate("attr_gravity", round_decorator(0,1))
 
-    return container(result[i] for i in range(len(result)))
+toolbox.register("individual", tools.initCycle, creator.Individual,
+                 (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
+                  toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
+                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = 1)
 
-def SeedIndividual(container):
-    result = getOneSeedWeapons()
-    return container(result[i] for i in range(len(result)))
-
-
-toolbox.register("individual", TuningIndividual, creator.Individual)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-toolbox.register("individual_guess", SeedIndividual, creator.Individual)
-toolbox.register("population_guess", tools.initRepeat, list, toolbox.individual_guess)
 
 def printWeapon(pop):
     i = 0
@@ -284,6 +308,19 @@ def match_kills(index, statics) :
 
     return total_kills
 
+def difference(index, pop) :
+
+    total = 0
+    diff = 0
+
+    for j in range(9):
+        norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
+        norm2 = (Weapon_Fixed[j] - limits[j][0])/(limits[j][1] - limits[j][0])
+        total = first - second
+        diff += pow(norm1 - norm2, 2)
+
+    result = sqrt(diff)/9
+
 
 
 def evaluate_entropy(index, statics, total_kills, total_dies, N) :
@@ -298,18 +335,20 @@ def evaluate_entropy(index, statics, total_kills, total_dies, N) :
     return -(entropy_kill + entropy_dies)
 
 # ATTENTION, you MUST return a tuple
-def evaluate(index, statics):
-    #e = random.randint(0, 2)
+def evaluate(index, statics, pop):
+    #e = random.randint(0, 3)
     e = entropy(index*2, statics)
     print('entropy :' + str(index) + " " + str(e))
     e += match_kills(index*2, statics)
+    e -= difference(index, pop)
+    print('difference :' + str(index) + " " + str(difference(index, pop)))
     return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
 
 toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(9)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.05 for j in range(9)] , 
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(9)] , 
                                               indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
@@ -337,13 +376,12 @@ def main():
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
 
-    pop = toolbox.population(n = NUM_POP_RANDOM)
-    pop += toolbox.population_guess(n = NUM_POP_SEED)
+    pop = toolbox.population(n = NUM_POP)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 10
 
     fitnesses = []
     gen_fitnesses = []
@@ -365,7 +403,7 @@ def main():
 
     # Evaluate the entire population
     for i in range(len(pop)) :
-        fitnesses += [toolbox.evaluate(i, statics)]
+        fitnesses += [toolbox.evaluate(i, statics, pop)]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
@@ -412,7 +450,7 @@ def main():
         while index < len(offspring):
 
             if not offspring[index].fitness.valid :
-                fit = toolbox.evaluate(index, statics)
+                fit = toolbox.evaluate(index, statics, offspring)
                 fitnesses += [fit]
                 offspring[index].fitness.values = fit
 

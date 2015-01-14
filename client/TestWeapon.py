@@ -14,7 +14,7 @@ AMMO = [30, 40]
 #deafult ShotCost = 1
 SHOT_COST = [9, 1]
 #defualt Range 10000
-RANGE = [2, 10]
+RANGE = [2, 2.1799699918792252]
 
 ###################
 # Projectile ######
@@ -25,7 +25,7 @@ SPEED = [3500, 20000]
 #default damage = 1
 DMG = [18, 50]
 #default damgae radius = 10
-DMG_RAD = [20, 20]
+DMG_RAD = [20, 20.969226693261554]
 #default gravity = 1
 GRAVITY = [0, 0]
 
