@@ -1,0 +1,32 @@
+Single objective, 10 server, 10 iterations
+
+Weapon_Fixed = [1.05,  0.5,     30,      1,     8, 1350, 100,       42,      -1]
+
+Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0]
+
+Fitness = Entropy + num of kills - difference from target weapon
+
+Range :
+#default Rof = 100
+ROF_MIN, ROF_MAX = RoF(MEDIUM)
+#default Spread = 0
+SPREAD_MIN, SPREAD_MAX = Spread(LOW)
+#default MaxAmmo = 40
+AMMO_MIN, AMMO_MAX = Ammo(MEDIUM)
+#deafult ShotCost = 1
+SHOT_COST_MIN, SHOT_COST_MAX = ShotCost(VERY_HIGH)
+#defualt Range 10000
+RANGE_MIN, RANGE_MAX = Range(MEDIUM)
+
+###################
+# Projectile ######
+###################
+
+#default speed = 1000
+SPEED_MIN, SPEED_MAX = Speed(VERY_HIGH)
+#default damage = 1
+DMG_MIN, DMG_MAX = Damage(LOW)
+#default damgae radius = 10
+DMG_RAD_MIN, DMG_RAD_MAX = DamageRad(LOW)
+#default gravity = 1
+GRAVITY_MIN, GRAVITY_MAX = Gravity(LOW)

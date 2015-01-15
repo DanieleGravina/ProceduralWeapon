@@ -37,8 +37,8 @@ toolbox = base.Toolbox()
 # Weapon ######
 ###############
 
-Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(LOW), 
-            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
+Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(HIGH), 
+            Speed(LOW), Damage(MEDIUM), DamageRad(MEDIUM), Gravity(MEDIUM)]
 
 Weapon_2 = [RoF(MEDIUM), Spread(MEDIUM), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
             Speed(MEDIUM), Damage(HIGH), DamageRad(MEDIUM), Gravity(MEDIUM)]
@@ -362,12 +362,16 @@ def main():
     gen_fitnesses = []
     statics = {}
 
+    hof = tools.HallOfFame(1)
+
     initialize_server(PORT)
 
     statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
 
+    logbook_file.write("Gen : " + str(0) + "\n")
     for key, val in statics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
+    logbook_file.write("*********************************************************\n")
 
     # Evaluate the entire population
     for i in range(len(pop)) :
@@ -377,6 +381,9 @@ def main():
         ind.fitness.values = fit
 
     record = stats.compile(pop)
+    hof.update(pop)
+
+
     logbook.record(gen = 0, **record)
 
     logbook.header = "gen", "avg", "std", "min", "max"
@@ -404,8 +411,10 @@ def main():
 
         statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
 
+        logbook_file.write("Gen : " + str(g + 1) + "\n")
         for key, val in statics.items():
-            logbook_file.write(str(key) + " : " + str(val) + "\n")
+                logbook_file.write(str(key) + " : " + str(val) + "\n")
+        logbook_file.write("*********************************************************\n")
 
         fitnesses = []
 
@@ -425,6 +434,7 @@ def main():
         pop[:] = offspring
 
         record = stats.compile(pop)
+        hof.update(pop)
 
         printWeapon(pop)
 
@@ -456,6 +466,11 @@ def main():
 
     logbook_file.write(log_string)
 
+    print("best individual")
+    printWeapon(hof)
+    pop_file.write("best individual\n")
+    writeWeapon(hof, pop_file)
+
     pop_file.close()
     logbook_file.close()
 
@@ -467,7 +482,5 @@ def main():
         real_pop += [temp1]
         real_pop += [temp2]
 
-    cluster = ClusterProceduralWeapon(real_pop, pop, 100, 9, 7)
+    cluster = ClusterProceduralWeapon(real_pop, pop)
     cluster.cluster()
-
-main()

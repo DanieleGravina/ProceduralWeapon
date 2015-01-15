@@ -132,7 +132,7 @@ class ClusterProceduralWeapon:
 
 		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
 
-		plt.figure(1)
+		plt.figure(7)
 
 		for i in range(len(pos[:,0])):
 
@@ -150,7 +150,7 @@ class ClusterProceduralWeapon:
 
 		labels_ = [labels[i] for i in range(len(labels)) if labels[i] != -1]
 
-		plt.figure(2)
+		plt.figure(8)
 		plt.title("number of estimated clusters : %d" % n_clusters_)
 		colors_cluster = [colors[labels_[i]] for i in range(len(labels_))]
 

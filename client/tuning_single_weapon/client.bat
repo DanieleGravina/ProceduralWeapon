@@ -1,5 +1,5 @@
 set PATH=%PATH%;C:\Python34
 
-python TuningSingleWeapon.py
+python MultiTuningSingleWeapon.py
 
 pause

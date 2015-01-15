@@ -61,13 +61,14 @@ def normalize(data):
 	return data
 
 class ClusterProceduralWeapon:
-	def __init__(self, data = None, pure_data = None):
+	def __init__(self, data = None, pure_data = None, file = open("cluster.txt", "w")):
 		self.data = np.array(data, np.float32)
 		self.pure_data = pure_data
+		self.file = file
 
 	def cluster(self):
 
-		cluster_file = open("cluster.txt", "w")
+		cluster_file = self.file
 
 		print(self.data.shape)
 

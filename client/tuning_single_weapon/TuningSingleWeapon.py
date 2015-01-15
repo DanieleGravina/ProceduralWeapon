@@ -22,6 +22,8 @@ from ClusterProceduralWeapon import ClusterProceduralWeapon
 from InitialPopulationSeed import getOneSeedWeapons
 
 from math import log
+from math import pow
+from math import sqrt
 
 from deap import base
 from deap import creator
@@ -165,7 +167,6 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
-
     clients = []
 
     for i in range(NUM_SERVER):
@@ -316,10 +317,10 @@ def difference(index, pop) :
     for j in range(9):
         norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
         norm2 = (Weapon_Fixed[j] - limits[j][0])/(limits[j][1] - limits[j][0])
-        total = first - second
+        total = norm1 - norm2
         diff += pow(norm1 - norm2, 2)
 
-    result = sqrt(diff)/9
+    return sqrt(diff)/9
 
 
 
