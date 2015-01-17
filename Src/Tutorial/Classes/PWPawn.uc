@@ -38,6 +38,13 @@ function SetProceduralWeapon()
 		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
 		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
 		myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*1000;
+/*
+		`log("[PWPawn] Spread "$string(myWeapon.Spread[0]));
+		`log("[PWPawn] FireInterval "$string(myWeapon.FireInterval[0]));
+		`log("[PWPawn] MaxAmmoCount "$string(myWeapon.MaxAmmoCount));
+		`log("[PWPawn] Shotcost "$string(myWeapon.Shotcost[0]));
+		`log("[PWPawn] WeaponRange "$string(myWeapon.WeaponRange));
+	*/	
 
 		myWeapon.ShotCost[0] = (myWeapon.ShotCost[0] > 10) ? 10 : myWeapon.ShotCost[0];
 	
@@ -55,7 +62,7 @@ function SetProceduralWeapon()
 		}
 
 		if(myWeapon.FireInterval[0] < 0.5){
-			myWeapon.bFastRepeater = true;
+			myWeapon.bFastrepeater = true;
 		}
 
 		if(myWeapon.ShotCost[0] > 1)

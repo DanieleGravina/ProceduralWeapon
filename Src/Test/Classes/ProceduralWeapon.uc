@@ -21,8 +21,9 @@ function class<Projectile> GetProjectileClass()
  */
 simulated function Projectile ProjectileFire()
 {
-    local vector        RealStartLoc;
+    local vector        RealStartLoc, AimDir, YDir, ZDir;
     local Projectile    SpawnedProjectile;
+    local int IdWeapon;
 
     // tell remote clients that we fired, to trigger effects
     IncrementFlashCount();
@@ -39,8 +40,14 @@ simulated function Projectile ProjectileFire()
             SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
         }
 
-        //Logging
-        myLog.(RealStartLoc, GetAdjustedAim( RealStartLoc ), Instigator.ShotCount)
+        if(myLog != None)
+        {
+            //Logging
+            GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
+            IdWeapon = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
+
+            ProceduralProjectile(SpawnedProjectile).SetTestLog(myLog, IdWeapon);
+        }
 
 
 
@@ -79,10 +86,12 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 
 simulated function CustomFire()
 {
-    local int i, y, z, Mag;
+    local int i, y, z, Mag, IdWeapon;
     local vector RealStartLoc, AimDir, YDir, ZDir;
     local Projectile Proj;
     local class<Projectile> ShardProjectileClass;
+
+    IncrementFlashCount();
 
     if (Role == ROLE_Authority)
     {
@@ -91,8 +100,11 @@ simulated function CustomFire()
         // get fire aim direction
         GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
 
-        //Logging
-        myLog.(RealStartLoc, GetAdjustedAim( RealStartLoc ), Instigator.ShotCount)
+        if(myLog != None)
+        {
+            //Logging
+            IdWeapon = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
+        }
 
         // one shard in each of 9 zones (except center)
         ShardProjectileClass = GetProjectileClass();
@@ -114,14 +126,22 @@ simulated function CustomFire()
                {
                    Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
                }
+
+               if(myLog != None)
+               {
+                    ProceduralProjectile(Proj).SetTestLog(myLog, IdWeapon);
+               }
             }
 
         }
     }
 }
 
-
-
+function float GetOptimalRangeFor(Actor Target)
+{
+    // short range so bots try to maximize shards that hit
+    return WeaponRange;
+}
 
 defaultproperties
 {

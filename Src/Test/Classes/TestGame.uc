@@ -1,5 +1,7 @@
 class TestGame extends UTDeathmatch;
 
+const NUM_BOTS = 2;
+
 var TcpLinkServer tcpServer;
 
 var bool bGameStart;
@@ -36,17 +38,38 @@ struct BotParTriple{
 };
 
 /* array of weapon parameters */
-var array<BotParTriple> mapBotPar;
+var BotParTriple mapBotPar[NUM_BOTS];
 
 var PPParameters tempPP;
 var PWParameters tempPW;
 
 struct MapPlayerLog{
-	string PlayerName;
-	TestLog log;
+	var string PlayerName;
+	var TestLog log;
 };
 
 var array<MapPlayerLog> logs;
+
+
+struct BotKill
+{
+	var int id;
+	var string name;
+	var int num_kills;
+	var int num_dies;
+};
+
+var array<BotKill> botStatics;
+
+//states
+var int StateCurrent;
+
+var int INITIALIZATION;
+var int SIMULATION;
+var int ENDGAME;
+
+var int FinalTotalScore;
+
 
 //Added functionality to set the listen port of tcpServer
 event InitGame( string Options, out string ErrorMessage )
@@ -81,6 +104,7 @@ event InitGame( string Options, out string ErrorMessage )
 	{
 		`log("TotalGoalScore"@InOpt);
 		bTotalGoalScore = true;
+		FinalTotalScore = int(InOpt);
 	}
 	
 }
@@ -88,11 +112,13 @@ event InitGame( string Options, out string ErrorMessage )
 event PreBeginPlay()
 {
     super.PreBeginPlay();
+
+    if(Role == ROLE_Authority)
+    {
+    	tcpServer = Spawn(class'TcpLinkServer');
     
-    tcpServer = Spawn(class'TcpLinkServer');
-    
-    tcpServer.SetListenPort(listenPort);
-    tcpServer.SetMaxDuration(maxDuration);
+	    tcpServer.SetListenPort(listenPort);
+    }
 
     bChangeLevels = false;
 
@@ -110,7 +136,7 @@ function AddDefaultInventory( pawn Pawn ){
 
 		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 		{
-			for(i = 0; i < mapBotPar.length; ++i)
+			for(i = 0; i < NUM_BOTS; ++i)
 			{
 				if(mapBotPar[i].botName == Pawn.Controller.PlayerReplicationInfo.PlayerName)
 				{
@@ -167,7 +193,7 @@ function SetInventoryLog(Pawn p, TestLog log)
 {
 	if(PWPawn(p) != none)
 	{
-		ProceduralInventoryManager(p.InvManager).SetTestLog(log)
+		ProceduralInventoryManager(p.InvManager).SetTestLog(log);
 	}
 }
 
@@ -177,36 +203,27 @@ function SetWeaponLog(Pawn p)
 
 	for (i = 0; i < logs.length ; i++)
 	{
-		if (logs[i].PlayerName == Pawn.Controller.PlayerReplicationInfo.PlayerName)
+		if (logs[i].PlayerName == p.Controller.PlayerReplicationInfo.PlayerName)
 		{
-			ProceduralWeapon(Pawn.Weapon).SetTestLog(logs[i].log)
-			SetInventoryLog(p, logs[i].log)
-			return
+			ProceduralWeapon(p.Weapon).SetTestLog(logs[i].log);
+			SetInventoryLog(p, logs[i].log);
+			return;
 		}
 	}
-
-	logs.Add(1)
-
-	logs[logs.length - 1].PlayerName = Pawn.Controller.PlayerReplicationInfo.PlayerName
-	logs[logs.length - 1].log = Spawn(TestLog)
-
-	ProceduralWeapon(Pawn.Weapon).SetTestLog(logs[logs.length - 1].log)
-	SetInventoryLog(p, logs[logs.length - 1].log)
-
 }
 
 function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 {
 	Super.NotifyKilled(Killer, Killed, KilledPawn);
-	
-	tcpServer.SendPawnDied(killed, killer);
+
+    //SendPawnDied(killed, killer);
 }
 
-function SetPWParameters(string botName)
+simulated function SetPWParameters(string botName)
 {
 	local int i;
 	
-	for(i = 0; i < mapBotPar.Length; ++i)
+	for(i = 0; i < NUM_BOTS; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
@@ -217,11 +234,11 @@ function SetPWParameters(string botName)
 	
 }
 
-function SetPPParameters(string botName)
+simulated function SetPPParameters(string botName)
 {
 	local int i;
 	
-	for(i = 0; i < mapBotPar.Length; ++i)
+	for(i = 0; i < NUM_BOTS; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
@@ -232,12 +249,12 @@ function SetPPParameters(string botName)
 	
 }
 
-function PWParameters GetPWParameters()
+simulated function PWParameters GetPWParameters()
 {
 	return tempPW;
 }
 
-function PPParameters GetPPParameters()
+simulated function PPParameters GetPPParameters()
 {
 	return tempPP;
 }
@@ -259,6 +276,150 @@ function bool TooManyBots(Controller botToRemove)
 	}
 }
 
+function initializeStatistics()
+{
+	local Controller Aplayer;
+	local int i;
+
+	i = 0;
+
+	if(StateCurrent == ENDGAME)
+	{
+		StateCurrent = INITIALIZATION;
+
+		botStatics.Remove(0, botStatics.Length);
+		logs.Remove(0, logs.length);
+
+		foreach WorldInfo.AllControllers(class 'Controller', Aplayer)
+		{
+			if (Aplayer.bIsPlayer && Aplayer.PlayerReplicationInfo != none)
+			{
+				botStatics.Add(1);
+				botStatics[botStatics.Length - 1].name = Aplayer.PlayerReplicationInfo.playername;
+				botStatics[botStatics.Length - 1].num_kills = 0;
+				botStatics[botStatics.Length - 1].num_dies = 0;
+
+				mapBotPar[i].botName = Aplayer.PlayerReplicationInfo.playername;
+
+				logs.Add(1);
+
+				logs[logs.length - 1].PlayerName = Aplayer.PlayerReplicationInfo.PlayerName;
+				logs[logs.length - 1].log = Spawn(class 'TestLog');
+
+				i++;
+			}
+		}
+	}
+}
+
+function initializeWeaponStat(int weaponID, int val)
+{
+	botStatics[weaponID].id = val;
+}
+
+function SendPawnDied(String killed, String killer)
+{
+	local int i;
+	
+	if(StateCurrent == SIMULATION)
+	{
+	
+		if(killed == killer)
+		{
+	
+			for(i = 0; i < botStatics.Length; ++i)
+			{
+				if(botStatics[i].name == killed)
+				{
+					botStatics[i].num_dies++;
+				}
+			}
+		}
+		else
+		{
+	
+			for(i = 0; i < botStatics.Length; ++i)
+			{
+				if(botStatics[i].name == killer)
+				{
+					botStatics[i].num_kills++;
+				}
+		
+				if(botStatics[i].name == killed)
+				{
+					botStatics[i].num_dies++;
+				}
+			}
+		}
+
+		CheckTotalFinishGame();
+		
+	}
+}
+
+function CheckTotalFinishGame()
+{
+	local int i;
+	local int sum;
+
+	sum = 0;
+	
+	for(i = 0; i < botStatics.Length; ++i)
+	{
+
+		sum += botStatics[i].num_kills;
+	}
+
+	if(sum >= FinalTotalScore)
+	{
+		StateCurrent = ENDGAME;
+		ClearTimer('TimeOut');
+		EndMatch();
+	}
+}
+
+function TimeOut()
+{
+	StateCurrent = ENDGAME;
+	EndMatch();	
+	
+}
+
+function MatchStarted()
+{
+	StateCurrent = SIMULATION;
+	SetTimer(MaxDuration, false, 'TimeOut');
+
+	if(bGameStart)
+	{
+		ResetLevel();
+	}
+	else
+	{
+		StartMatch();
+		bGameStart = true;
+	}
+}
+
+function EndMatch()
+{
+	local int i;
+
+	for (i = 0; i < logs.length ; i++)
+	{
+		logs[i].log.WriteLog("%:ID:"$botStatics[i].id$":kills:"$string(botStatics[i].num_kills)$":dies:"$string(botStatics[i].num_dies));
+	}
+
+}
+
+replication
+{
+  // Variables the server should send ALL clients.
+  if (bNetDirty && Role == ROLE_Authority)
+  mapBotPar;
+
+}
+
 defaultproperties
 {
 	DefaultInventory(0)=class'ProceduralWeapon'
@@ -273,7 +434,9 @@ defaultproperties
     numPlayer = 4
 
     bTestGame = false
-    bTotalGoalScore = false
+    bTotalGoalScore = true
+
+    FinalTotalScore = 2;
 
     BotClass=Class'ProceduralWeaponBot'
 
@@ -289,4 +452,11 @@ defaultproperties
 	tempPP.Damage = 0
 	tempPP.DamageRadius = 0
 	tempPP.Gravity = 0
+
+	StateCurrent = 3;
+	INITIALIZATION = 1;
+	SIMULATION = 2;
+	ENDGAME = 3;
+
+	MaxDuration = 600f;
 }

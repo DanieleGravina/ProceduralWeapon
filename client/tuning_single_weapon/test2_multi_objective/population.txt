@@ -3039,8 +3039,7 @@ Projectile  Speed:2623 Damage:97 DamageRadius:33 Gravity:-1.71
 fitness: (1.6225562489182657, 0.343202192216921, 1.0)
 *********************************************************
 
-Target :
-Weapon  Rof:1.1 Spread:0.1 MaxAmmo:30 ShotCost:9 Range:2
-Projectile  Speed:3500 Damage:18 DamageRadius:20 Gravity:0
+
+Target = [1.05,  0.5,     30,      1,     8, 1350, 100,       42,      -1]
 
 ============================================================================================================

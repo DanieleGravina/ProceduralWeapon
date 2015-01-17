@@ -11,7 +11,6 @@ class TcpLinkServer extends TcpLink;
 var int ListenPort;
 var int MaxClients;
 var int NumClients;
-var float maxDuration;
 
 var Actor currentAcceptor;
 
@@ -34,11 +33,6 @@ event GainedChild( Actor C )
 	}
 	
 	currentAcceptor = C;
-	
-	if(TcpLinkServerAcceptor(currentAcceptor) != none)
-	{
-		TcpLinkServerAcceptor(currentAcceptor).SetMaxDuration(maxDuration);
-	}
 }
 
 event LostChild( Actor C )
@@ -52,14 +46,6 @@ event LostChild( Actor C )
 	{
 		`log("[TcpLinkServer] Listening for incoming connections");
  		Listen();
-	}
-}
-
-function SendPawnDied(Controller killed, Controller killer)
-{
-	if(currentAcceptor != none && TcpLinkServerAcceptor(currentAcceptor) != none)
-	{
-		TcpLinkServerAcceptor(currentAcceptor).SendPawnDied(killed, killer);
 	}
 }
 
@@ -89,15 +75,9 @@ function SetListenPort(int p)
     }
 }
 
-function SetMaxDuration(float time)
-{
-	maxDuration = time;
-}
-
 
 defaultproperties
 {
-	maxDuration = 3600
     ListenPort=3742
     MaxClients=1    
     AcceptClass=Class'TcpLinkServerAcceptor'

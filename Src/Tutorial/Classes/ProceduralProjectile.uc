@@ -19,6 +19,13 @@ function Init(vector Direction)
 	
 	MaxSpeed = Speed;
 
+/*
+	`log("[ProceduralProjectile] AccelRate "$string(AccelRate));
+	`log("[ProceduralProjectile] Damage "$string(Damage));
+	`log("[ProceduralProjectile] CheckRadius "$string(CheckRadius));
+	`log("[ProceduralProjectile] TossZ "$string(TossZ));
+	`log("[ProceduralProjectile] LifeSpan "$string(LifeSpan));	
+*/
 	Super.Init(Direction);
 }
 
@@ -37,7 +44,7 @@ function Initialize()
 	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
 
 	Speed = AccelRate;
-	
+
 	MaxSpeed = Speed;
 	
 }

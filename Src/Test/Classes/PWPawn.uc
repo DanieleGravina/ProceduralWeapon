@@ -19,7 +19,7 @@ simulated event PostBeginPlay()
 }
 
 //Set the weapon with the parameters hold by the controller
-function SetProceduralWeapon()
+simulated function SetProceduralWeapon()
 {
 	local ProceduralWeapon myWeapon;
 	
@@ -31,13 +31,13 @@ function SetProceduralWeapon()
 	
 		myWeapon = ProceduralWeapon(Weapon);
 
-		ServerGame(WorldInfo.Game).SetPWParameters(Controller.PlayerReplicationInfo.playername);
+		TestGame(WorldInfo.Game).SetPWParameters(Controller.PlayerReplicationInfo.playername);
 
-		myWeapon.Spread[0] = ServerGame(WorldInfo.Game).GetPWParameters().Spread;
-		myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters().RoF;
-		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
-		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
-		myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*1000;
+		myWeapon.Spread[0] = TestGame(WorldInfo.Game).GetPWParameters().Spread;
+		myWeapon.FireInterval[0] = TestGame(WorldInfo.Game).GetPWParameters().RoF;
+		myWeapon.MaxAmmoCount = TestGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
+		myWeapon.ShotCost[0] = TestGame(WorldInfo.Game).GetPWParameters().ShotCost;
+		myWeapon.WeaponRange = TestGame(WorldInfo.Game).GetPWParameters().Range*1000;
 /*
 		`log("[PWPawn] Spread "$string(myWeapon.Spread[0]));
 		`log("[PWPawn] FireInterval "$string(myWeapon.FireInterval[0]));

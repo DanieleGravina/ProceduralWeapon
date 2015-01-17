@@ -3,7 +3,7 @@ class ProceduralInventoryManager extends UTInventoryManager;
 var bool bIsFirstWeapon;
 var TestLog myLog;
 
-function SetTestLog(log)
+function SetTestLog(TestLog log)
 {
 	myLog = log;
 }
@@ -15,7 +15,12 @@ function SetTestLog(log)
 simulated function PrevWeapon()
 {
 	super.PrevWeapon();
-	myLog.addInventoryLog();
+
+
+	if(myLog != None)
+	{
+		myLog.addInventoryLog();
+	}
 }
 
 /**
@@ -25,7 +30,12 @@ simulated function PrevWeapon()
 simulated function NextWeapon()
 {	
 	super.NextWeapon();
-	myLog.addInventoryLog();
+
+
+	if(myLog != None)
+	{
+		myLog.addInventoryLog();
+	}
 }
 
 simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActivate)

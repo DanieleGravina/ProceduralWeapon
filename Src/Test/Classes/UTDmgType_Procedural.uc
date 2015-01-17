@@ -6,7 +6,7 @@ defaultproperties
    DamageBodyMatColor=(R=40.000000,G=0.000000,B=50.000000,A=1.000000)
    DamageOverlayTime=0.300000
    DeathOverlayTime=0.600000
-   DamageWeaponClass=Class'Tutorial.ProceduralWeapon'
+   DamageWeaponClass=Class'Test.ProceduralWeapon'
    DamageWeaponFireMode=0
    KillStatsName="KILLS_PROCEDURAL"
    DeathStatsName="DEATHS_PROCEDURAL"
