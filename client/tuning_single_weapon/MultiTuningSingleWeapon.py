@@ -29,7 +29,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, -1.0, 1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, 1.0))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 #initialization
@@ -346,7 +346,7 @@ def difference(index, pop) :
 
     for j in range(9):
         norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
-        norm2 = (Weapon_Target[j] - limits[j][0])/(limits[j][1] - limits[j][0])
+        norm2 = (Weapon_Fixed[j] - limits[j][0])/(limits[j][1] - limits[j][0])
         total = norm1 - norm2
         diff += pow(norm1 - norm2, 2)
 

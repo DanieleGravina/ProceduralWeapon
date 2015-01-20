@@ -109,7 +109,7 @@ event InitGame( string Options, out string ErrorMessage )
 	
 }
 
-event PreBeginPlay()
+simulated event PreBeginPlay()
 {
     super.PreBeginPlay();
 
@@ -179,12 +179,13 @@ function AddDefaultInventory( pawn Pawn ){
 	else
 	{
 		Super.AddDefaultInventory(Pawn);
+
+		`log("[TestGame] Call AddDefaultInventory");
 		
 		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 		{
-			`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+			`log("[TestGame] Set Weapon Log of "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
 			PWPawn(Pawn).SetProceduralWeapon();
-			SetWeaponLog(Pawn);
 		}
 	}
 }
@@ -412,12 +413,19 @@ function EndMatch()
 
 }
 
-replication
+function InitGameReplicationInfo()
 {
-  // Variables the server should send ALL clients.
-  if (bNetDirty && Role == ROLE_Authority)
-  mapBotPar;
+	local ProceduralGameReplicationInfo GRI;
+	local int i;
 
+	Super.InitGameReplicationInfo();
+
+	GRI = ProceduralGameReplicationInfo(GameReplicationInfo);
+
+	for(i = 0; i < NUM_BOTS; ++i)
+	{
+		GRI.mapBotPar[i] = mapBotPar[i];
+	}
 }
 
 defaultproperties
@@ -459,4 +467,6 @@ defaultproperties
 	ENDGAME = 3;
 
 	MaxDuration = 600f;
+
+	GameReplicationInfoClass=class'ProceduralGameReplicationInfo'
 }

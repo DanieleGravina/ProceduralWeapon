@@ -38,6 +38,15 @@ simulated function NextWeapon()
 	}
 }
 
+/*simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet)
+{
+	Super.ClientWeaponSet(NewWeapon, bOptionalSet);
+
+	PWPawn(Instigator).ClientSetProceduralWeapon();
+}*/
+
+
+
 simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActivate)
 {
 	local int reloadCount;

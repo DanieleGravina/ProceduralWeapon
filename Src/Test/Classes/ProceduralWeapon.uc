@@ -37,6 +37,7 @@ simulated function Projectile ProjectileFire()
         SpawnedProjectile = Spawn(GetProjectileClass(),,, RealStartLoc);
         if( SpawnedProjectile != None && !SpawnedProjectile.bDeleteMe )
         {
+            //ProceduralProjectile(SpawnedProjectile).SetProceduralProjectile();
             SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
         }
 
@@ -120,10 +121,12 @@ simulated function CustomFire()
             {
                if( y != 0 && z != 0)
                {
+                    //ProceduralProjectile(Proj).SetProceduralProjectile();
                     Proj.Init(AimDir + (0.3 + 0.7*FRand())*SpreadDist*YDir*y + (0.3 + 0.7*FRand())*SpreadDist*ZDir*z);
                }
                else
                {
+                   //ProceduralProjectile(Proj).SetProceduralProjectile();
                    Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
                }
 
@@ -137,7 +140,7 @@ simulated function CustomFire()
     }
 }
 
-function float GetOptimalRangeFor(Actor Target)
+simulated function float GetOptimalRangeFor(Actor Target)
 {
     // short range so bots try to maximize shards that hit
     return WeaponRange;
@@ -188,8 +191,6 @@ defaultproperties
     WeaponEquipSnd=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_RaiseCue'
     WeaponPutDownSnd=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_LowerCue'
     PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Shock_Cue'
-    LockAcquiredSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLock_Cue'
-    LockLostSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLost_Cue'
     
      // AI logic
     MaxDesireability=1                           // Max desireability for bots
@@ -204,14 +205,6 @@ defaultproperties
     
     FireOffset=(X=20,Y=5)                           // Holds an offset for spawning protectile effects
     PlayerViewOffset=(X=17,Y=10.0,Z=-8.0)           // Offset from view center (first person)
-    
-    // Homing properties
-    ConsoleLockAim=0.992                            // angle for locking for lock targets when on Console
-    LockRange=9000                                  // How far out should we be considering actors for a lock
-    LockAim=0.997                                   // angle for locking for lock target
-    LockChecktime=0.1                               // The frequency with which we will check for a lock 
-    LockAcquireTime=.3                              // How long does the player need to target an actor to lock on to it
-    LockTolerance=0.8
     
     // camera anim to play when firing (for camera shakes)
     FireCameraAnim(0)=CameraAnim'Camera_FX.ShockRifle.C_WP_ShockRifle_Alt_Fire_Shake'

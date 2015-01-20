@@ -55,6 +55,8 @@ function int AddWeaponLog(vector firePosition, vector aim, int shotcount)
 		return weaponLogs.length - 1;
 
 	}
+
+	return 0;
 }
 
 function AddProjectileLog(vector HitLocation, bool bDamaged, bool bHasKilled, int IdWeapon)

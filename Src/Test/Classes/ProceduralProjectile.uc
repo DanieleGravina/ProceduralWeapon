@@ -43,26 +43,29 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
 	local bool bHasKilled;
 	local string killer, killed;
 
-	killer = InstigatorController.PlayerReplicationInfo.playername;
-	killed = PWPawn(Other).PlayerReplicationInfo.playername;
+	if(myLog != None)
+	{
+		killer = InstigatorController.PlayerReplicationInfo.playername;
+		killed = PWPawn(Other).PlayerReplicationInfo.playername;
+	}
 
 	bHasKilled = false;
 
 	Super.ProcessTouch(Other, HitLocation, HitNormal);
 
-	if(PWPawn(Other).Health <= 0)
-	{
-		bHasKilled = true;
-	}
-
 	if(myLog != None)
 	{
-		myLog.AddProjectileLog(HitLocation, true, bHasKilled, IdWeapon);
-	}
+		if(PWPawn(Other).Health <= 0)
+		{
+			bHasKilled = true;
+		}
 
-	if(bHasKilled)
-	{
-		TestGame(WorldInfo.Game).SendPawnDied(killed, killer);
+		myLog.AddProjectileLog(HitLocation, true, bHasKilled, IdWeapon);
+
+		if(bHasKilled)
+		{
+			TestGame(WorldInfo.Game).SendPawnDied(killed, killer);
+		}
 	}
 }
 
