@@ -37,11 +37,11 @@ toolbox = base.Toolbox()
 # Weapon ######
 ###############
 
-Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(HIGH), 
-            Speed(LOW), Damage(MEDIUM), DamageRad(MEDIUM), Gravity(MEDIUM)]
+Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(MEDIUM), ShotCost(HIGH), Range(LOW), 
+            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
 
-Weapon_2 = [RoF(MEDIUM), Spread(MEDIUM), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
-            Speed(MEDIUM), Damage(HIGH), DamageRad(MEDIUM), Gravity(MEDIUM)]
+Weapon_2 = [RoF(HIGH), Spread(LOW), Ammo(LOW), ShotCost(LOW), Range(VERY_HIGH), 
+            Speed(VERY_HIGH), Damage(HIGH), DamageRad(LOW), Gravity(VERY_HIGH)]
 
 limits = []
 
@@ -159,6 +159,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
+    #return
 
     clients = []
 
@@ -220,6 +221,7 @@ def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
 # Run the simulation on the server side (UT3)
 def simulate_population(population, numServerCrashed, PORT) :
     stats = {}
+    #return stats, PORT, numServerCrashed
     threads = []
     # population index
     index = 0
@@ -379,7 +381,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
+    CXPB, MUTPB, NGEN = 0.6, 0.2, 10 #160 min
 
     fitnesses = []
     statics = {}

@@ -82,7 +82,7 @@ event ReceivedText( string Text )
 		}
 
 		//Initialize weapon parameter of bots
-		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < TestGame(WorldInfo.Game).NUM_BOTS 
+		if (InStr(parsedString[i], "WeaponPar") != -1 && weapInitialized < TestGame(WorldInfo.Game).NUM_WEAPON 
 		    && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParWeapon*2 < parsedString.Length)
@@ -94,7 +94,7 @@ event ReceivedText( string Text )
 			weapInitialized++;
 		}
 
-		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < TestGame(WorldInfo.Game).NUM_BOTS 
+		if (InStr(parsedString[i], "ProjectilePar") != -1 && projInitialized < TestGame(WorldInfo.Game).NUM_WEAPON 
 		    && StateCurrent == INITIALIZATION)
 		{
 			if(i + numParProjectile*2 < parsedString.Length)

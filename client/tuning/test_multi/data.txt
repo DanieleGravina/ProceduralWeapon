@@ -1,0 +1,5 @@
+Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(HIGH), ShotCost(LOW), Range(HIGH), 
+            Speed(LOW), Damage(MEDIUM), DamageRad(MEDIUM), Gravity(MEDIUM)]
+
+Weapon_2 = [RoF(MEDIUM), Spread(MEDIUM), Ammo(LOW), ShotCost(LOW), Range(MEDIUM), 
+            Speed(MEDIUM), Damage(HIGH), DamageRad(MEDIUM), Gravity(MEDIUM)]

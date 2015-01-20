@@ -44,7 +44,7 @@ def Ammo( label):
 
 def ShotCost( label):
 	if label == LOW :
-		return 1, 2
+		return 1, 1
 	elif label == MEDIUM :
 		return 2, 4
 	elif label == HIGH:

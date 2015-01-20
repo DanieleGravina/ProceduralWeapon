@@ -160,7 +160,7 @@ class ClusterProceduralWeapon:
 		plt.figure(8)
 		plt.title("number of estimated clusters : %d" % n_clusters_)
 
-		width = 1.0
+		width = 0.8
 		ind = np.arange(len(labels_))
 
 		k = [i for i in range(len(labels_))]
@@ -169,12 +169,12 @@ class ClusterProceduralWeapon:
 			plt.ylabel(label[j])
 			plt.ylim(limits[j][0], limits[j][1])
 			plt.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)
-			plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) if labels[i] != -1) )
+			#plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) if labels[i] != -1) )
 
 		plt.figure(9)
 		colors_cluster = [colors[labels[i]] for i in range(len(labels))]
 
-		width = 1.0
+		width = 0.8
 		ind = np.arange(len(labels))
 
 		k = [i for i in range(len(labels))]
@@ -183,7 +183,7 @@ class ClusterProceduralWeapon:
 			plt.ylabel(label[j])
 			plt.ylim(limits[j][0], limits[j][1])
 			plt.bar(k, [X[i][j] for i in range(len(labels))], color=colors_cluster)
-			plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) ) )
+			#plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) ) )
 		plt.show()
 
 def main():

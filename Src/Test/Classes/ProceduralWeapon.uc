@@ -4,6 +4,8 @@ var TestLog myLog;
 
 var float SpreadDist;
 
+var int WeaponID;
+
 function SetTestLog(TestLog log)
 {
     myLog = log;
@@ -19,7 +21,7 @@ function class<Projectile> GetProjectileClass()
  * Spawns the projectile, but also increment the flash count for remote client effects.
  * Network: Local Player and Server
  */
-simulated function Projectile ProjectileFire()
+/*simulated function Projectile ProjectileFire()
 {
     local vector        RealStartLoc, AimDir, YDir, ZDir;
     local Projectile    SpawnedProjectile;
@@ -57,7 +59,7 @@ simulated function Projectile ProjectileFire()
     }
 
     return None;
-}
+}*/
 
 simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 {
@@ -87,7 +89,7 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 
 simulated function CustomFire()
 {
-    local int i, y, z, Mag, IdWeapon;
+    local int i, y, z, Mag, WeaponTime;
     local vector RealStartLoc, AimDir, YDir, ZDir;
     local Projectile Proj;
     local class<Projectile> ShardProjectileClass;
@@ -104,7 +106,7 @@ simulated function CustomFire()
         if(myLog != None)
         {
             //Logging
-            IdWeapon = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
+            WeaponTime = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
         }
 
         // one shard in each of 9 zones (except center)
@@ -121,18 +123,18 @@ simulated function CustomFire()
             {
                if( y != 0 && z != 0)
                {
-                    //ProceduralProjectile(Proj).SetProceduralProjectile();
+                    ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
                     Proj.Init(AimDir + (0.3 + 0.7*FRand())*SpreadDist*YDir*y + (0.3 + 0.7*FRand())*SpreadDist*ZDir*z);
                }
                else
                {
-                   //ProceduralProjectile(Proj).SetProceduralProjectile();
+                   ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
                    Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
                }
 
                if(myLog != None)
                {
-                    ProceduralProjectile(Proj).SetTestLog(myLog, IdWeapon);
+                    ProceduralProjectile(Proj).SetTestLog(myLog, WeaponTime);
                }
             }
 
@@ -148,6 +150,8 @@ simulated function float GetOptimalRangeFor(Actor Target)
 
 defaultproperties
 {
+    WeaponID = 0
+
     SpreadDist=0.100000
 
 	// Weapon SkeletalMesh
@@ -172,8 +176,8 @@ defaultproperties
     AttachmentClass=Class'UTGame.UTAttachment_ShockRifle'
 
     // Defines the type of fire for each mode
-    WeaponFireTypes(0)=EWFT_Projectile
-    WeaponFireTypes(1)=EWFT_Projectile
+    WeaponFireTypes(0)=EWFT_Custom
+    WeaponFireTypes(1)=EWFT_Custom
     WeaponProjectiles(1)=class'ProceduralProjectile'
     WeaponProjectiles(0)=class'ProceduralProjectile'
 

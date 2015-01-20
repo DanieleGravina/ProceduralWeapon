@@ -1,28 +1,32 @@
-class ProceduralProjectile extends UTProjectile;
+class ProceduralProjectile extends UTProjectile
+	dependson(TestGame);
 
 var TestLog myLog;
-var int IdWeapon;
+var int WeaponTime;
 
 function SetTestLog(TestLog log, int IdWeap)
 {
     myLog = log;
-    IdWeapon = IdWeap;
+    WeaponTime = IdWeap;
 }
 
-simulated function Init(vector Direction)
+function SetProceduralProjectile(int WeaponID)
 {
 	local string playerName;
+	local array<PWParameters> weaponPars;
+	local array<PPParameters> projPars;
 
 	playerName = InstigatorController.PlayerReplicationInfo.PlayerName;
 	
-	TestGame(WorldInfo.Game).SetPPParameters(playerName);
+	weaponPars = TestGame(WorldInfo.Game).GetPWParameters(playerName);
+	projPars = TestGame(WorldInfo.Game).GetPPParameters(playerName);
 	
-	AccelRate = TestGame(WorldInfo.Game).GetPPParameters().Speed;
-	Damage = TestGame(WorldInfo.Game).GetPPParameters().Damage;
+	AccelRate = projPars[WeaponID].Speed;
+	Damage = projPars[WeaponID].Damage;
 	bWideCheck = true;
-	CheckRadius = TestGame(WorldInfo.Game).GetPPParameters().DamageRadius;
-	TossZ = TestGame(WorldInfo.Game).GetPPParameters().Gravity;
-	LifeSpan = TestGame(WorldInfo.Game).GetPWParameters().Range;
+	CheckRadius = projPars[WeaponID].DamageRadius;
+	TossZ = projPars[WeaponID].Gravity;
+	LifeSpan = weaponPars[WeaponID].Range;
 
 	Speed = AccelRate;
 	
@@ -35,7 +39,7 @@ simulated function Init(vector Direction)
 	`log("[ProceduralProjectile] TossZ "$string(TossZ));
 	`log("[ProceduralProjectile] LifeSpan "$string(LifeSpan));	
 */
-	Super.Init(Direction);
+
 }
 
 simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNormal)
@@ -60,7 +64,7 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
 			bHasKilled = true;
 		}
 
-		myLog.AddProjectileLog(HitLocation, true, bHasKilled, IdWeapon);
+		myLog.AddProjectileLog(HitLocation, true, bHasKilled, WeaponTime);
 
 		if(bHasKilled)
 		{
@@ -73,7 +77,7 @@ simulated singular event HitWall(vector HitNormal, actor Wall, PrimitiveComponen
 {
 	if(myLog != None)
 	{
-		myLog.AddProjectileLog(Wall.Location, false, false, IdWeapon);
+		myLog.AddProjectileLog(Wall.Location, false, false, WeaponTime);
 	}
 
 	ImpactedActor = Wall;

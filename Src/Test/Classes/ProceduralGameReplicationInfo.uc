@@ -1,52 +1,44 @@
 class ProceduralGameReplicationInfo extends UTGameReplicationInfo
 	DependsOn(TestGame);
 
-const NUM_BOTS = 2;
+const NUM_WEAPON = 3;
 
 /* array of weapon parameters */
-var BotParTriple mapBotPar[NUM_BOTS];
+var BotParTriple mapBotPar[NUM_WEAPON];
 
-var PPParameters tempPP;
-var PWParameters tempPW;
-
-simulated function SetPWParameters(string botName)
+simulated function array<PWParameters> GetPWParameters(string botName)
 {
 	local int i;
+	local array<PWParameters> result;
 	
-	for(i = 0; i < NUM_BOTS; ++i)
+	for(i = 0; i < NUM_WEAPON; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			tempPW =  mapBotPar[i].weapPars;
-			break;
+			result.Add(1);
+			result[result.length - 1] =  mapBotPar[i].weapPars;
 		}
 	}
+
+	return result;
 	
 }
 
-simulated function SetPPParameters(string botName)
+simulated function array<PPParameters> GetPPParameters(string botName)
 {
 	local int i;
+	local array<PPParameters> result;
 	
-	for(i = 0; i < NUM_BOTS; ++i)
+	for(i = 0; i < NUM_WEAPON; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			tempPP = mapBotPar[i].projPars;
-			break;
+			result.Add(1);
+			result[result.length - 1] =  mapBotPar[i].projPars;
 		}
-	}	
-	
-}
+	}
 
-simulated function PWParameters GetPWParameters()
-{
-	return tempPW;
-}
-
-simulated function PPParameters GetPPParameters()
-{
-	return tempPP;
+	return result;
 }
 
 replication

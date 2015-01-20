@@ -2,7 +2,7 @@ class TestLog extends Actor;
 
 var FileWriter file;
 
-var string PlayerName;
+var int ID;
 
 var int LastWeaponID;
 
@@ -113,7 +113,7 @@ function WriteLog(string statistics)
 
 	file = Spawn(class'FileWriter');
 
-	if(file.OpenFile(("log" $ PlayerName), FWFT_Log, ".txt", true, true))
+	if(file.OpenFile(("log" $ string(ID)), FWFT_Log, ".txt", true, true))
 	{
 		while(!bFinish)
 		{

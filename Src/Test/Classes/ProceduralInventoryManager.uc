@@ -1,7 +1,7 @@
 class ProceduralInventoryManager extends UTInventoryManager;
 
-var bool bIsFirstWeapon;
 var TestLog myLog;
+var int addedWeapon;
 
 function SetTestLog(TestLog log)
 {
@@ -58,10 +58,10 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 	{
 		if(ProceduralWeapon(NewItem) != none)
 		{
-			if(bIsFirstWeapon)
+			if(addedWeapon < PWPawn(Instigator).num_weapon)
 			{
 				//`log("[ProcInvManager] add procedural weapon");
-				bIsFirstWeapon = false;
+				addedWeapon++;
 				return super.AddInventory(NewItem, bDoNotActivate);
 			}
 			else
@@ -98,5 +98,5 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 
 defaultproperties
 {
-	bIsFirstWeapon = true;
+	addedWeapon = 0;
 }

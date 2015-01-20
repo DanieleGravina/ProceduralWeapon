@@ -1,6 +1,7 @@
 class TestGame extends UTDeathmatch;
 
 const NUM_BOTS = 2;
+const NUM_WEAPON = 3;
 
 var TcpLinkServer tcpServer;
 
@@ -38,7 +39,7 @@ struct BotParTriple{
 };
 
 /* array of weapon parameters */
-var BotParTriple mapBotPar[NUM_BOTS];
+var BotParTriple mapBotPar[NUM_WEAPON];
 
 var PPParameters tempPP;
 var PWParameters tempPW;
@@ -122,71 +123,30 @@ simulated event PreBeginPlay()
 
     bChangeLevels = false;
 
-    TimeLimit = 1000;
-    GoalScore = 1000;
+    TimeLimit = 10000;
+    GoalScore = 10000;
    
 }
 
 function AddDefaultInventory( pawn Pawn ){
 
-	local int i;
-
-	if(bTestGame)
+	if(Pawn.Controller.PlayerReplicationInfo.playername == mapBotPar[2].botName)
 	{
-
-		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
-		{
-			for(i = 0; i < NUM_BOTS; ++i)
-			{
-				if(mapBotPar[i].botName == Pawn.Controller.PlayerReplicationInfo.PlayerName)
-				{
-					switch (i)
-					{
-						case 0:
-							
-							DefaultInventory[0] = class 'ProceduralSniper';
-							`log("[TestGame] Add SniperRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-					
-						case 1:
-							DefaultInventory[0]  = class 'ProceduralFlak';
-							`log("[TestGame] Add ShockRifle inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-
-						case 2:
-							DefaultInventory[0]  = class 'ProceduralRocketLauncher';
-							`log("[TestGame] Add Flak inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-
-						case 3:
-							DefaultInventory[0]  = class 'ProceduralShockRifle';
-							`log("[TestGame] Add Rocket inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-							break;
-							
-					
-						default:
-							DefaultInventory[0] = class 'UTWeap_SniperRifle';
-							break;
-							
-					}
-				}
-			}
-		}
-
+		PWPawn(Pawn).num_weapon = 2;
 		Super.AddDefaultInventory(Pawn);
-
+		Pawn.CreateInventory(class'ProceduralWeapon', false);
 	}
 	else
 	{
 		Super.AddDefaultInventory(Pawn);
+	}
 
-		`log("[TestGame] Call AddDefaultInventory");
-		
-		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
-		{
-			`log("[TestGame] Set Weapon Log of "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-			PWPawn(Pawn).SetProceduralWeapon();
-		}
+	`log("[TestGame] Call AddDefaultInventory");
+	
+	if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
+	{
+		`log("[TestGame] Set Weapon Log of "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
+		PWPawn(Pawn).SetProceduralWeapon();
 	}
 }
 
@@ -220,44 +180,39 @@ function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
     //SendPawnDied(killed, killer);
 }
 
-simulated function SetPWParameters(string botName)
+function array<PWParameters> GetPWParameters(string botName)
 {
 	local int i;
+	local array<PWParameters> result;
 	
-	for(i = 0; i < NUM_BOTS; ++i)
+	for(i = 0; i < NUM_WEAPON; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			tempPW =  mapBotPar[i].weapPars;
-			break;
+			result.Add(1);
+			result[result.length - 1] =  mapBotPar[i].weapPars;
 		}
 	}
+
+	return result;
 	
 }
 
-simulated function SetPPParameters(string botName)
+function array<PPParameters> GetPPParameters(string botName)
 {
 	local int i;
+	local array<PPParameters> result;
 	
-	for(i = 0; i < NUM_BOTS; ++i)
+	for(i = 0; i < NUM_WEAPON; ++i)
 	{
 		if(mapBotPar[i].botName == botName)
 		{
-			tempPP = mapBotPar[i].projPars;
-			break;
+			result.Add(1);
+			result[result.length - 1] =  mapBotPar[i].projPars;
 		}
-	}	
-	
-}
+	}
 
-simulated function PWParameters GetPWParameters()
-{
-	return tempPW;
-}
-
-simulated function PPParameters GetPPParameters()
-{
-	return tempPP;
+	return result;
 }
 
 function int LevelRecommendedPlayers()
@@ -310,12 +265,20 @@ function initializeStatistics()
 				i++;
 			}
 		}
+
+		//@fixme
+		mapBotPar[2].botName = mapBotPar[1].botName;
 	}
 }
 
 function initializeWeaponStat(int weaponID, int val)
 {
-	botStatics[weaponID].id = val;
+	if(weaponID < NUM_BOTS)
+	{
+		botStatics[weaponID].id = val;
+
+		logs[weaponID].log.ID = val;
+	}
 }
 
 function SendPawnDied(String killed, String killer)
