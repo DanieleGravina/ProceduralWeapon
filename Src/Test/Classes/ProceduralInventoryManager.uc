@@ -56,7 +56,7 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 
 	if( (NewItem != None) && !NewItem.bDeleteMe )
 	{
-		if(ProceduralWeapon(NewItem) != none)
+		if(ProceduralWeapon(NewItem) != none || ProceduralWeapon2(NewItem) != none)
 		{
 			if(addedWeapon < PWPawn(Instigator).num_weapon)
 			{
@@ -66,9 +66,17 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 			}
 			else
 			{
-				reloadCount = ProceduralWeapon(Instigator.Weapon).MaxAmmoCount/4 + 1;
-				ProceduralWeapon(Instigator.Weapon).AddAmmo(reloadCount);
-				//`log("[ProcInvManager] added ammo");
+				if(ProceduralWeapon(Instigator.Weapon) != none)
+				{
+					reloadCount = ProceduralWeapon(Instigator.Weapon).MaxAmmoCount/4 + 1;
+					ProceduralWeapon(Instigator.Weapon).AddAmmo(reloadCount);	
+				}
+				else
+				{
+					reloadCount = ProceduralWeapon2(Instigator.Weapon).MaxAmmoCount/4 + 1;
+					ProceduralWeapon2(Instigator.Weapon).AddAmmo(reloadCount);
+				}
+
 				NewItem.Destroy();
 				return true;
 			}

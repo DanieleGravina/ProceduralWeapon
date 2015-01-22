@@ -61,37 +61,12 @@ DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
 DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -2000, 2000
-'''
-#default Rof = 100
-ROF_MIN, ROF_MAX = RoF(MEDIUM)
-#default Spread = 0
-SPREAD_MIN, SPREAD_MAX = Spread(LOW)
-#default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = Ammo(MEDIUM)
-#deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = ShotCost(VERY_HIGH)
-#defualt Range 10000
-RANGE_MIN, RANGE_MAX = Range(MEDIUM)
-
-###################
-# Projectile ######
-###################
-
-#default speed = 1000
-SPEED_MIN, SPEED_MAX = Speed(VERY_HIGH)
-#default damage = 1
-DMG_MIN, DMG_MAX = Damage(LOW)
-#default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = DamageRad(LOW)
-#default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = Gravity(LOW)
-'''
+GRAVITY_MIN, GRAVITY_MAX = -10000, 10000
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
 
-Weapon_Fixed = [1.05,  0.5,     30,      1,     8, 1350, 100,       42,      -1]
+Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      -1]
 
 Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0]
 

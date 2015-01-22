@@ -1,7 +1,7 @@
 class TestGame extends UTDeathmatch;
 
 const NUM_BOTS = 2;
-const NUM_WEAPON = 3;
+const NUM_WEAPON = 4;
 
 var TcpLinkServer tcpServer;
 
@@ -33,6 +33,7 @@ struct PPParameters{
 
 /* map PW parameters with bots name*/
 struct BotParTriple{
+	var int Id;
 	var string botName;
 	var PWParameters weapPars;
 	var PPParameters projPars;
@@ -61,6 +62,15 @@ struct BotKill
 };
 
 var array<BotKill> botStatics;
+
+//map player name and Id with the number of weapon
+struct MapPlayerWeapon{
+	var int id;
+	var string PlayerName;
+	var int NumWeapon;
+};
+
+var array<MapPlayerWeapon> mPlayers;
 
 //states
 var int StateCurrent;
@@ -130,11 +140,19 @@ simulated event PreBeginPlay()
 
 function AddDefaultInventory( pawn Pawn ){
 
-	if(Pawn.Controller.PlayerReplicationInfo.playername == mapBotPar[2].botName)
+	local int i;
+
+	if(true || Pawn.IsHumanControlled())
 	{
-		PWPawn(Pawn).num_weapon = 2;
-		Super.AddDefaultInventory(Pawn);
-		Pawn.CreateInventory(class'ProceduralWeapon', false);
+		for(i = 0; i < NUM_WEAPON; i++)
+		{
+			if(mapBotPar[i].botName == Pawn.Controller.PlayerReplicationInfo.playername)
+			{
+				PWPawn(Pawn).num_weapon = mPlayers[mapBotPar[i].id].NumWeapon;
+				Super.AddDefaultInventory(Pawn);
+				Pawn.CreateInventory(class'ProceduralWeapon2', false);
+			}
+		}
 	}
 	else
 	{
@@ -152,13 +170,13 @@ function AddDefaultInventory( pawn Pawn ){
 
 function SetInventoryLog(Pawn p, TestLog log)
 {
-	if(PWPawn(p) != none)
+	if(PWPawn(p) != none && ProceduralInventoryManager(p.InvManager).myLog == none)
 	{
 		ProceduralInventoryManager(p.InvManager).SetTestLog(log);
 	}
 }
 
-function SetWeaponLog(Pawn p)
+function SetWeaponLog(Pawn p, Weapon w)
 {
 	local int i;
 
@@ -166,7 +184,7 @@ function SetWeaponLog(Pawn p)
 	{
 		if (logs[i].PlayerName == p.Controller.PlayerReplicationInfo.PlayerName)
 		{
-			ProceduralWeapon(p.Weapon).SetTestLog(logs[i].log);
+			ProceduralWeapon(w).SetTestLog(logs[i].log);
 			SetInventoryLog(p, logs[i].log);
 			return;
 		}
@@ -245,6 +263,7 @@ function initializeStatistics()
 
 		botStatics.Remove(0, botStatics.Length);
 		logs.Remove(0, logs.length);
+		mPlayers.Remove(0, mPlayers.length);
 
 		foreach WorldInfo.AllControllers(class 'Controller', Aplayer)
 		{
@@ -261,23 +280,33 @@ function initializeStatistics()
 
 				logs[logs.length - 1].PlayerName = Aplayer.PlayerReplicationInfo.PlayerName;
 				logs[logs.length - 1].log = Spawn(class 'TestLog');
+				logs[logs.length - 1].log.PlayerName = Aplayer.PlayerReplicationInfo.PlayerName;
+
+				mPlayers.add(1);
+				mPlayers[mPlayers.length - 1].PlayerName = Aplayer.PlayerReplicationInfo.playername;
+				mPlayers[mPlayers.length - 1].NumWeapon = 1;
+				mPlayers[mPlayers.length - 1].id = i;
 
 				i++;
 			}
 		}
-
-		//@fixme
-		mapBotPar[2].botName = mapBotPar[1].botName;
 	}
 }
 
-function initializeWeaponStat(int weaponID, int val)
+function initializeWeaponStat(int weaponInitialized, int IDPlayer)
 {
-	if(weaponID < NUM_BOTS)
+	if(weaponInitialized < NUM_BOTS)
 	{
-		botStatics[weaponID].id = val;
-
-		logs[weaponID].log.ID = val;
+		botStatics[weaponInitialized].id = IDPlayer;
+		logs[weaponInitialized].log.ID = IDPlayer;
+		
+		mapBotPar[weaponInitialized].Id = IDPlayer;
+	}
+	else if(IDPlayer < mPlayers.length)
+	{
+		mPlayers[IDPlayer].NumWeapon++;
+		mapBotPar[weaponInitialized].botName = mPlayers[IDPlayer].PlayerName;
+		mapBotPar[weaponInitialized].Id = IDPlayer;
 	}
 }
 

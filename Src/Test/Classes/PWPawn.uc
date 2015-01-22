@@ -50,14 +50,13 @@ function SetProceduralWeapon()
 	{
 		`log("[PWPawn] set weapon of "$Controller.PlayerReplicationInfo.playername);
 
-		TestGame(WorldInfo.Game).SetWeaponLog(self);
-
 		weaponPars = TestGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername);
 
 		index = 0;
 
 		ForEach InvManager.InventoryActors( class'ProceduralWeapon', myWeapon )
 		{
+			TestGame(WorldInfo.Game).SetWeaponLog(self, myWeapon);
 
 			myWeapon.WeaponId = index;
 

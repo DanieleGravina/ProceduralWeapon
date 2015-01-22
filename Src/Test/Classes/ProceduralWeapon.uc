@@ -106,7 +106,7 @@ simulated function CustomFire()
         if(myLog != None)
         {
             //Logging
-            WeaponTime = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
+            WeaponTime = myLog.AddWeaponLog(RealStartLoc, GetAdjustedAim(RealStartLoc));
         }
 
         // one shard in each of 9 zones (except center)
@@ -197,9 +197,9 @@ defaultproperties
     PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Shock_Cue'
     
      // AI logic
-    MaxDesireability=1                           // Max desireability for bots
-    AIRating=1
-    CurrentRating=1
+    MaxDesireability=0.8                           // Max desireability for bots
+    AIRating=0.8
+    CurrentRating=0.8
     bInstantHit=false                               // Is it an instant hit weapon?
     bSplashJump=false
     bRecommendSplashDamage=true                     // Can a bot use this for splash damage?

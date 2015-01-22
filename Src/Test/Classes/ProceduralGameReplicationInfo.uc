@@ -1,7 +1,7 @@
 class ProceduralGameReplicationInfo extends UTGameReplicationInfo
 	DependsOn(TestGame);
 
-const NUM_WEAPON = 3;
+const NUM_WEAPON = 4;
 
 /* array of weapon parameters */
 var BotParTriple mapBotPar[NUM_WEAPON];

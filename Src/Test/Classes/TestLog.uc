@@ -1,10 +1,13 @@
-class TestLog extends Actor;
+class TestLog extends Actor
+	dependson(TestGame);
 
 var FileWriter file;
 
 var int ID;
 
 var int LastWeaponID;
+
+var string PlayerName;
 
 //states
 var int StateCurrent;
@@ -15,8 +18,7 @@ const ENDGAME  = 1;
 struct WeaponLog{
 	var float time;
 	var Vector firePosition;
-	var Vector aim;
-	var int shotcount;
+	var Rotator aim;
 };
 
 struct ProjectileLog
@@ -39,18 +41,16 @@ var array<ProjectileLog> projectileLogs;
 var array<InventoryLog> inventoryLogs;
 
 /*Add log of weapon firing, return the index for projectile identification*/
-function int AddWeaponLog(vector firePosition, vector aim, int shotcount)
+function int AddWeaponLog(vector firePosition, Rotator aim)
 {
 	if(StateCurrent == SIMULATION)
 	{
-		`log("[TestLog] Add Weapon log");
 
 		weaponLogs.add(1);
 
 		weaponLogs[weaponLogs.length - 1].time = WorldInfo.TimeSeconds;
 		weaponLogs[weaponLogs.length - 1].firePosition = firePosition;
 		weaponLogs[weaponLogs.length - 1].aim = aim;
-		weaponLogs[weaponLogs.length - 1].shotcount = shotcount;
 
 		return weaponLogs.length - 1;
 
@@ -63,7 +63,6 @@ function AddProjectileLog(vector HitLocation, bool bDamaged, bool bHasKilled, in
 {
 	if(StateCurrent == SIMULATION)
 	{
-		`log("[TestLog] Add projectileLog log");
 
 		projectileLogs.add(1);
 
@@ -80,7 +79,6 @@ function addInventoryLog()
 {
 	if(StateCurrent == SIMULATION)
 	{
-		`log("[TestLog] Add inventoryLog log");
 
 		inventoryLogs.add(1);
 
@@ -97,7 +95,7 @@ function addInventoryLog()
 
 }
 
-//TODO
+
 function WriteLog(string statistics)
 {
 	local int i, j, k;
@@ -115,6 +113,8 @@ function WriteLog(string statistics)
 
 	if(file.OpenFile(("log" $ string(ID)), FWFT_Log, ".txt", true, true))
 	{
+		WriteWeaponParameters();
+
 		while(!bFinish)
 		{
 			if( i < weaponLogs.length)
@@ -185,12 +185,41 @@ function WriteLog(string statistics)
 
 }
 
+function WriteWeaponParameters()
+{
+	local array<PWParameters> weapPar;
+	local array<PPParameters> projPar;
+	local int i;
+
+	weapPar = TestGame(WorldInfo.Game).GetPWParameters(PlayerName);
+	projPar = TestGame(WorldInfo.Game).GetPPParameters(PlayerName);
+
+	file.Logf("Player : "$PlayerName);
+
+	for(i = 0; i < weapPar.length; i++)
+	{
+
+		file.Logf("ID :" $ string(i));
+		file.Logf("Rof " $ string(weapPar[i].RoF));
+		file.Logf("Spread " $ string(weapPar[i].Spread));
+		file.Logf("MaxAmmo " $ string(weapPar[i].MaxAmmo));
+		file.Logf("Shotcost " $ string(weapPar[i].Shotcost));
+		file.Logf("Range " $ string(weapPar[i].Range));
+
+		file.Logf("Speed " $ string(projPar[i].Speed));
+		file.Logf("Damage " $ string(projPar[i].Damage));
+		file.Logf("DamageRadius " $ string(projPar[i].DamageRadius));
+		file.Logf("Gravity " $ string(projPar[i].Gravity));
+	}
+
+}
+
 function writeWeapon(WeaponLog l)
 {
 	file.Logf( "[" $ string(l.time) $ "]");
 	file.Logf( "fire_position: " $ string(l.firePosition));
 	file.Logf( "aim: " $ string(l.aim));
-	file.Logf( "shot_count: " $string(l.shotcount));
+	file.Logf( "\n");
 }
 
 function writeProjectile(ProjectileLog l)
@@ -200,12 +229,14 @@ function writeProjectile(ProjectileLog l)
 	file.Logf( "hit_location: " $ string(l.HitLocation));
 	file.Logf( "has_hit: " $ string(l.bDamaged));
 	file.Logf( "has_killed: " $string(l.bHasKilled));
+	file.Logf( "\n");
 }
 
 function writeInventory(InventoryLog l)
 {
 	file.Logf( "[" $ string(l.time) $ "]");
 	file.Logf( "switch_to: " $ string(l.WeaponId));
+	file.Logf( "\n");
 }
 
 

@@ -354,7 +354,7 @@ def evaluate_difference(index, population):
 
     result = sqrt(diff)
 
-    return result
+    return 1
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):

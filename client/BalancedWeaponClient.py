@@ -19,6 +19,7 @@ class BalancedWeaponClient:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = port
         self.host = 'localhost'
+        #self.host = '192.168.173.116'
         self.serverRunning = True
 
         # connection to hostname on the port.
