@@ -29,11 +29,11 @@ class myThread (threading.Thread):
 
         self.client.SendWeaponParams(index, population[i][0], population[i][1], population[i][2], population[i][3], population[i][4])
 
-        self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8])
+        self.client.SendProjectileParams(population[i][5], population[i][6], population[i][7], population[i][8], population[i][9])
 
         self.client.SendWeaponParams(index + 1, self.fixedWeapon[0], self.fixedWeapon[1], self.fixedWeapon[2], self.fixedWeapon[3], self.fixedWeapon[4])
 
-        self.client.SendProjectileParams(self.fixedWeapon[5], self.fixedWeapon[6], self.fixedWeapon[7], self.fixedWeapon[8])
+        self.client.SendProjectileParams(self.fixedWeapon[5], self.fixedWeapon[6], self.fixedWeapon[7], self.fixedWeapon[8], self.fixedWeapon[9])
 
         self.client.SendStartMatch()
 

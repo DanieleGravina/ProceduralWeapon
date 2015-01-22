@@ -32,6 +32,7 @@ function SetProceduralWeapon()
 		myWeapon = ProceduralWeapon(Weapon);
 
 		ServerGame(WorldInfo.Game).SetPWParameters(Controller.PlayerReplicationInfo.playername);
+		ServerGame(WorldInfo.Game).SetPPParameters(Controller.PlayerReplicationInfo.playername);
 
 		myWeapon.Spread[0] = ServerGame(WorldInfo.Game).GetPWParameters().Spread;
 		myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters().RoF;
@@ -54,6 +55,11 @@ function SetProceduralWeapon()
 		myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
 
 		myWeapon.SpreadDist = myWeapon.Spread[0];
+
+		if(ServerGame(WorldInfo.Game).GetPPParameters().Explosive > 0)
+		{
+			myWeapon.bRecommendSplashDamage = true;
+		}
 
 	
 		if(myWeapon.WeaponRange >= MinRangeSniping)

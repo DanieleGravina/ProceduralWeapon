@@ -280,6 +280,10 @@ function ModifyProjectile(array<string> ProjectilePar, int index)
 		{
 			ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Gravity = val;
 		}
+		else if (par ~= "Explosive")
+		{
+			ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Explosive = val;
+		}
 		
 		++i;
 	}	
@@ -450,7 +454,7 @@ defaultproperties
 	weapInitialized = 0;
 	projInitialized = 0;
 	numParWeapon = 5;
-	numParProjectile = 4;
+	numParProjectile = 5;
 	
 	bIsGameInitialized = false;
 	bTestKillsVsTime = false;

@@ -27,6 +27,7 @@ function SetProceduralProjectile(int WeaponID)
 	CheckRadius = projPars[WeaponID].DamageRadius;
 	TossZ = projPars[WeaponID].Gravity;
 	LifeSpan = weaponPars[WeaponID].Range;
+	DamageRadius = projPars[WeaponID].Explosive;
 
 	Speed = AccelRate;
 	

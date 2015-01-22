@@ -14,6 +14,7 @@ function Init(vector Direction)
 	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
 	TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
 	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
+	DamageRadius = ServerGame(WorldInfo.Game).GetPPParameters().Explosive;
 
 	Speed = AccelRate;
 	
@@ -27,26 +28,6 @@ function Init(vector Direction)
 	`log("[ProceduralProjectile] LifeSpan "$string(LifeSpan));	
 */
 	Super.Init(Direction);
-}
-
-function Initialize()
-{
-	local string playerName;
-	
-	playerName = InstigatorController.PlayerReplicationInfo.PlayerName;
-
-	ServerGame(WorldInfo.Game).SetPPParameters(playerName);
-	
-	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
-	Damage = ServerGame(WorldInfo.Game).GetPPParameters().Damage;
-	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
-	TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
-	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
-
-	Speed = AccelRate;
-
-	MaxSpeed = Speed;
-	
 }
 
 defaultproperties

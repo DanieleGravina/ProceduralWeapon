@@ -82,13 +82,14 @@ class BalancedWeaponClient:
 
         time.sleep(0.1)
 
-    def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity):
+    def SendProjectileParams(self, Speed, Damage, DamageRadius, Gravity, Explosive):
         time.sleep(0.1) 
         messageProjectile = ':ProjectilePar'
         messageProjectile += ':Speed:' + str(Speed)
         messageProjectile += ':Damage:' + str(Damage)
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
+        messageProjectile += ':Explosive:' + str(Explosive)
         print('Send ' + messageProjectile)
 
         try:

@@ -29,7 +29,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, 1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0, -1.0, 1.0))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 #initialization
@@ -62,13 +62,16 @@ DMG_MIN, DMG_MAX = 1, 100
 DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
 #default gravity = 1
 GRAVITY_MIN, GRAVITY_MAX = -10000, 10000
+#Explosion
+EXPLOSIVE_MIN, EXPLOSIVE_MAX = 0, 100
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
+          (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
-Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      -1]
+Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      -1, 220]
 
-Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0]
+Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]
 
 print(limits)
 
@@ -107,6 +110,7 @@ toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
 toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
 toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
 toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
+toolbox.register("attr_explosive", random.randint, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
 
 toolbox.decorate("attr_rof", round_decorator(0,1))
 toolbox.decorate("attr_spread", round_decorator(0,1))
@@ -116,7 +120,7 @@ toolbox.decorate("attr_gravity", round_decorator(0,1))
 toolbox.register("individual", tools.initCycle, creator.Individual,
                  (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
                   toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
-                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity ), n = 1)
+                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity, toolbox.attr_explosive ), n = 1)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
@@ -128,7 +132,7 @@ def printWeapon(pop):
         print("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
         print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
-            + " Gravity:" + str(ind[8]) )
+            + " Gravity:" + str(ind[8]) + " Explosive:" + str(ind[9]) )
 
         print("fitness: " + str(ind.fitness.values))
         print("*********************************************************")
@@ -141,7 +145,7 @@ def writeWeapon(pop, pop_file):
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
-            + " Gravity:" + str(ind[8]) +"\n")
+            + " Gravity:" + str(ind[8]) + " Explosive:" + str(ind[9]) +"\n")
 
         pop_file.write("fitness: " + str(ind.fitness.values) + "\n")
         pop_file.write("*********************************************************" + "\n")
@@ -172,6 +176,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
+    #return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -321,7 +326,7 @@ def difference(index, pop) :
 
     for j in range(9):
         norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
-        norm2 = (Weapon_Fixed[j] - limits[j][0])/(limits[j][1] - limits[j][0])
+        norm2 = (Weapon_Target[j] - limits[j][0])/(limits[j][1] - limits[j][0])
         total = norm1 - norm2
         diff += pow(norm1 - norm2, 2)
 
@@ -356,8 +361,8 @@ def evaluate(index, population, statics):
 
 toolbox.register("mate", tools.cxTwoPoint)
 
-toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(9)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(9)] , 
+toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(10)],
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
                                               indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
@@ -408,7 +413,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
 
     fitnesses = []
     statics = {}

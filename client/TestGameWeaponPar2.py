@@ -35,6 +35,8 @@ DMG_RAD = [25, 11, 20, 42]
 #default gravity = 1
 GRAVITY = [-0.1, 16.76, 0, -1]
 
+EXPLOSIVE = [0, 0, 0, 220]
+
 PORT = [3760]
 
 
@@ -54,7 +56,7 @@ def main():
         #client.SendWeaponParams(ID[len(ID) - 1 - i], ROF[len(ID) - 1 - i], SPREAD[len(ID) - 1 - i], AMMO[len(ID) - 1 - i], SHOT_COST[len(ID) - 1 - i], RANGE[len(ID) - 1 - i])
         #client.SendProjectileParams(SPEED[len(ID) - 1 - i], DMG[len(ID) - 1 - i], DMG_RAD[len(ID) - 1 - i], GRAVITY[len(ID) - 1 - i])
         client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
-        client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i])
+        client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
 
     t0 = time.clock()
 

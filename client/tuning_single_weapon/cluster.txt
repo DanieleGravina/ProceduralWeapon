@@ -1,0 +1,8 @@
+number of estimated clusters : 1
+index:
+[]
+fitness:
+[]
+mean fitness:
+[]
+members:

@@ -5,7 +5,6 @@ from sklearn import metrics
 import statistics
 import matplotlib.pyplot as plt
 
-#default Rof = 100
 ROF_MIN, ROF_MAX = 10, 1000
 #default Spread = 0
 SPREAD_MIN, SPREAD_MAX = 0, 300
@@ -27,12 +26,15 @@ DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
 DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -2000, 2000
+GRAVITY_MIN, GRAVITY_MAX = -10000, 10000
+#Explosion
+EXPLOSIVE_MIN, EXPLOSIVE_MAX = 0, 100
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100)]
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
+          (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
-label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "RANGE", "SPEED", "DMG", "DMG_RAD", "GRAVITY"]
+label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "RANGE", "SPEED", "DMG", "DMG_RAD", "GRAVITY", "EXPLOSIVE"]
 
 def printWeapon(pop):
 
@@ -41,7 +43,7 @@ def printWeapon(pop):
         print("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
         print("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
-            + " Gravity:" + str(ind[8]) )
+            + " Gravity:" + str(ind[8]) + " Explosive:" + str(ind[9]))
         print("*********************************************************" + "\n")
 
 
@@ -50,7 +52,7 @@ def writeWeapon(pop, pop_file):
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
-            + " Gravity:" + str(ind[8]) +"\n")
+            + " Gravity:" + str(ind[8]) + " Explosive:" + str(ind[9]) +"\n")
         pop_file.write("*********************************************************" + "\n")
 
 def normalize(data):
@@ -155,8 +157,8 @@ class ClusterProceduralWeapon:
 		colors_cluster = [colors[labels_[i]] for i in range(len(labels_))]
 
 		k = [i for i in range(len(labels_))]
-		for j in range(9):
-			plt.subplot(330 + j)
+		for j in range(10):
+			plt.subplot(340 + j)
 			plt.ylabel(label[j])
 			plt.ylim(limits[j][0], limits[j][1])
 			plt.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)

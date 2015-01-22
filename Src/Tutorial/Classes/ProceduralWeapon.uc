@@ -168,7 +168,7 @@ defaultproperties
     CurrentRating=1
     bInstantHit=false                               // Is it an instant hit weapon?
     bSplashJump=false
-    bRecommendSplashDamage=true                     // Can a bot use this for splash damage?
+    bRecommendSplashDamage=false                     // Can a bot use this for splash damage?
     bSniping=false                                  // Could a bot snipe with this?
     ShouldFireOnRelease(0)=0                        // Should it fire when the mouse is released?
     ShouldFireOnRelease(1)=0                        // Should it fire when the mouse is released?

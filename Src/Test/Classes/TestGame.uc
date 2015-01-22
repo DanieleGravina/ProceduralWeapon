@@ -29,6 +29,7 @@ struct PPParameters{
 	var float Damage;
 	var float DamageRadius;
 	var float Gravity;
+	var float Explosive;
 };
 
 /* map PW parameters with bots name*/
