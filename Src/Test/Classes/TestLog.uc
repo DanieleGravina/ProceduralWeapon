@@ -12,6 +12,8 @@ var string PlayerName;
 //states
 var int StateCurrent;
 
+var float t0;
+
 const SIMULATION = 0;
 const ENDGAME  = 1;
 
@@ -48,7 +50,7 @@ function int AddWeaponLog(vector firePosition, Rotator aim)
 
 		weaponLogs.add(1);
 
-		weaponLogs[weaponLogs.length - 1].time = WorldInfo.TimeSeconds;
+		weaponLogs[weaponLogs.length - 1].time = WorldInfo.TimeSeconds - t0;
 		weaponLogs[weaponLogs.length - 1].firePosition = firePosition;
 		weaponLogs[weaponLogs.length - 1].aim = aim;
 
@@ -66,7 +68,7 @@ function AddProjectileLog(vector HitLocation, bool bDamaged, bool bHasKilled, in
 
 		projectileLogs.add(1);
 
-		projectileLogs[projectileLogs.length - 1].time = WorldInfo.TimeSeconds;
+		projectileLogs[projectileLogs.length - 1].time = WorldInfo.TimeSeconds - t0;
 		projectileLogs[projectileLogs.length - 1].timeWeapon = weaponLogs[IdWeapon].time;
 		projectileLogs[projectileLogs.length - 1].hitLocation = HitLocation;
 		projectileLogs[projectileLogs.length - 1].bDamaged = bDamaged;
@@ -89,7 +91,7 @@ function addInventoryLog()
 			LastWeaponID = 0;
 		}
 
-		inventoryLogs[inventoryLogs.length - 1].time = WorldInfo.TimeSeconds;
+		inventoryLogs[inventoryLogs.length - 1].time = WorldInfo.TimeSeconds - t0;
 		inventoryLogs[inventoryLogs.length - 1].WeaponId = LastWeaponID;
 	}
 
@@ -210,6 +212,7 @@ function WriteWeaponParameters()
 		file.Logf("Damage " $ string(projPar[i].Damage));
 		file.Logf("DamageRadius " $ string(projPar[i].DamageRadius));
 		file.Logf("Gravity " $ string(projPar[i].Gravity));
+		file.Logf("Explosion " $ string(projPar[i].Explosive));
 	}
 
 }
@@ -243,6 +246,8 @@ function writeInventory(InventoryLog l)
 defaultproperties
 {
 	LastWeaponID = 0
+
+	t0 = 0
 
 	StateCurrent = SIMULATION;
 }

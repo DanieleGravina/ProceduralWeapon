@@ -37,11 +37,12 @@ toolbox = base.Toolbox()
 # Weapon ######
 ###############
 
-Weapon_1 = [RoF(LOW), Spread(HIGH), Ammo(MEDIUM), ShotCost(HIGH), Range(LOW), 
-            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(LOW)]
 
-Weapon_2 = [RoF(HIGH), Spread(LOW), Ammo(LOW), ShotCost(LOW), Range(VERY_HIGH), 
-            Speed(VERY_HIGH), Damage(HIGH), DamageRad(LOW), Gravity(VERY_HIGH)]
+Weapon_1 = [RoF(LOW), Spread(LOW), Ammo(MEDIUM), ShotCost(LOW), Range(HIGH), 
+            Speed(LOW), Damage(HIGH), DamageRad(MEDIUM), Gravity(LOW)]
+
+Weapon_2 = [RoF(LOW), Spread(MEDIUM), Ammo(HIGH), ShotCost(HIGH), Range(LOW), 
+            Speed(HIGH), Damage(LOW), DamageRad(LOW), Gravity(MEDIUM)]
 
 limits = []
 

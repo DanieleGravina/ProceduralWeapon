@@ -5,35 +5,36 @@ import time
 # Weapon ######
 ###############
 
-#Test 
-# 0 -> 1 tune test 3 (low range weap), flack
-# 1 -> 1 tune test 3 (sniper), rocket launcher
+#Test (test multi tuning 4)
+# 0 -> 1 tune test 3 (low speed), 2 flack
+# 1 -> 1 tune test 3 (low range), 2 rocket launcher
+
 
 ID = [0, 1, 0, 1]
 
 #default Rof = 1
-ROF = [0.25, 3.15, 1.1, 1.05]
+ROF = [0.14, 1.1, 0.72, 1.05]
 #default Spread = 0
-SPREAD = [1.3, 0.03, 0.1, 0.1]
+SPREAD = [0.06, 0.1, 0.44, 0.1]
 #default MaxAmmo = 40
-AMMO = [92, 29, 30, 30]
+AMMO = [50, 30, 395, 30]
 #deafult ShotCost = 1
-SHOT_COST = [5, 1, 9, 1]
+SHOT_COST = [1, 9, 7, 1]
 #defualt Range 10000
-RANGE = [0.35, 36, 2, 8]
+RANGE = [5.18, 2, 0.43, 8]
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED = [344, 9667, 3500, 1350]
+SPEED = [8, 3500, 677, 1350]
 #default damage = 1
-DMG = [23, 57, 18, 100]
+DMG = [63, 18, 17, 100]
 #default damgae radius = 10
-DMG_RAD = [25, 11, 20, 42]
+DMG_RAD = [45, 20, 21, 42]
 #default gravity = 1
-GRAVITY = [-0.1, 16.76, 0, -1]
+GRAVITY = [-0.02, 16.76, -0.72, -1]
 
 EXPLOSIVE = [0, 0, 0, 220]
 

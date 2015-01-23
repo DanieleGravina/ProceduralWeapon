@@ -324,7 +324,7 @@ def difference(index, pop) :
     total = 0
     diff = 0
 
-    for j in range(9):
+    for j in range(10):
         norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
         norm2 = (Weapon_Target[j] - limits[j][0])/(limits[j][1] - limits[j][0])
         total = norm1 - norm2
@@ -413,7 +413,7 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
+    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
 
     fitnesses = []
     statics = {}

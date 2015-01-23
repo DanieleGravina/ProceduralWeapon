@@ -113,6 +113,7 @@ class BalancedWeaponClient:
         messageProjectile += ':Damage:' + str(Damage)
         messageProjectile += ':DamageRadius:' + str(DamageRadius)
         messageProjectile += ':Gravity:' + str(Gravity)
+        messageProjectile += ':Explosive:' + str(0)
         print('Send ' + messageProjectile)
 
         try:
