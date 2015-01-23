@@ -38,6 +38,16 @@ simulated function NextWeapon()
 	}
 }
 
+reliable server function ServerSetCurrentWeapon(Weapon DesiredWeapon)
+{
+	super.ServerSetCurrentWeapon(DesiredWeapon);
+	
+	if(myLog != None)
+	{
+		myLog.addInventoryLog();
+	}
+}
+
 /*simulated function ClientWeaponSet(Weapon NewWeapon, bool bOptionalSet)
 {
 	Super.ClientWeaponSet(NewWeapon, bOptionalSet);

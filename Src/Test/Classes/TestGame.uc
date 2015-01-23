@@ -412,7 +412,7 @@ function InitGameReplicationInfo()
 
 	GRI = ProceduralGameReplicationInfo(GameReplicationInfo);
 
-	for(i = 0; i < NUM_BOTS; ++i)
+	for(i = 0; i < NUM_WEAPON; ++i)
 	{
 		GRI.mapBotPar[i] = mapBotPar[i];
 	}
