@@ -1,4 +1,4 @@
-class ProceduralProjectile extends UTProjectile;
+class ProceduralProjectile2 extends UTProjectile;
 
 function Init(vector Direction)
 {
@@ -8,19 +8,18 @@ function Init(vector Direction)
 	
 	ServerGame(WorldInfo.Game).SetPPParameters(playerName);
 	
-	AccelRate = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+	Speed = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
 	Damage = ServerGame(WorldInfo.Game).GetPPParameters().Damage;
 	bWideCheck = true;
 	CheckRadius = ServerGame(WorldInfo.Game).GetPPParameters().DamageRadius;
-	//TossZ = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
 	LifeSpan = ServerGame(WorldInfo.Game).GetPWParameters().Range;
 	DamageRadius = ServerGame(WorldInfo.Game).GetPPParameters().Explosive;
 
-	Speed = AccelRate;
-	
-	MaxSpeed = Speed;
-  
-   Super.Init(Direction);
+   Velocity += Normal(Direction)*Speed;
+
+   MaxSpeed = Speed;
+
+   Acceleration.Z = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
 
 /*
 	`log("[ProceduralProjectile] AccelRate "$string(AccelRate));
@@ -55,4 +54,6 @@ defaultproperties
    CollisionComponent=CollisionCylinder
    Name="Default__Procedural_Projectile"
    ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
+   Physics=PHYS_Falling
+   AccelRate = 0
 }

@@ -10,7 +10,7 @@ import time
 # 1 -> 1 tune test 3 (low range), 2 rocket launcher
 
 
-ID = [0, 1, 0, 1]
+ID = [1, 0, 0, 1]
 
 #default Rof = 1
 ROF = [0.14, 1.1, 0.72, 1.05]
@@ -54,10 +54,10 @@ def main():
     client.SendInit()
 
     for i in range(len(ID)):
-        #client.SendWeaponParams(ID[len(ID) - 1 - i], ROF[len(ID) - 1 - i], SPREAD[len(ID) - 1 - i], AMMO[len(ID) - 1 - i], SHOT_COST[len(ID) - 1 - i], RANGE[len(ID) - 1 - i])
-        #client.SendProjectileParams(SPEED[len(ID) - 1 - i], DMG[len(ID) - 1 - i], DMG_RAD[len(ID) - 1 - i], GRAVITY[len(ID) - 1 - i])
-        client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
-        client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
+        client.SendWeaponParams(ID[len(ID) - 1 - i], ROF[len(ID) - 1 - i], SPREAD[len(ID) - 1 - i], AMMO[len(ID) - 1 - i], SHOT_COST[len(ID) - 1 - i], RANGE[len(ID) - 1 - i])
+        client.SendProjectileParams(SPEED[len(ID) - 1 - i], DMG[len(ID) - 1 - i], DMG_RAD[len(ID) - 1 - i], GRAVITY[len(ID) - 1 - i],  EXPLOSIVE[len(ID)- 1 - i])
+        #client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
+        #client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
 
     t0 = time.clock()
 

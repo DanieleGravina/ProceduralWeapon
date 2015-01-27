@@ -46,6 +46,7 @@ var PWParameters tempPW;
 event InitGame( string Options, out string ErrorMessage )
 {
 	local string InOpt;
+	local Mutator mut;
 	
 	super.InitGame(Options, ErrorMessage);
 	
@@ -75,6 +76,23 @@ event InitGame( string Options, out string ErrorMessage )
 	{
 		`log("TotalGoalScore"@InOpt);
 		bTotalGoalScore = true;
+	}
+
+	//Add Procedural Weapon Mutator -> change weapon in weapon factory and projectile as well
+	mut = Spawn(class 'UTMutator_ProceduralWeapon');
+	// mc, beware of mut being none
+	if (mut != None)
+	{
+
+		if (BaseMutator == None)
+		{
+			BaseMutator = mut;
+		}
+		else
+		{
+			BaseMutator.AddMutator(mut);
+		}
+
 	}
 	
 }

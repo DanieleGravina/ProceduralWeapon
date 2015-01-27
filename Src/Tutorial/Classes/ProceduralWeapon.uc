@@ -7,37 +7,6 @@ function class<Projectile> GetProjectileClass()
     return WeaponProjectiles[CurrentFireMode];  // Use our default projectile
 }
 
-/**
- * Fires a projectile.
- * Spawns the projectile, but also increment the flash count for remote client effects.
- * Network: Local Player and Server
- */
-simulated function Projectile ProjectileFire()
-{
-    local vector        RealStartLoc;
-    local Projectile    SpawnedProjectile;
-
-    // tell remote clients that we fired, to trigger effects
-    IncrementFlashCount();
-
-    if( Role == ROLE_Authority )
-    {
-        // this is the location where the projectile is spawned.
-        RealStartLoc = GetPhysicalFireStartLoc();
-
-        // Spawn projectile
-        SpawnedProjectile = Spawn(GetProjectileClass(),,, RealStartLoc);
-        if( SpawnedProjectile != None && !SpawnedProjectile.bDeleteMe )
-        {
-            SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
-        }
-
-        // Return it up the line
-        return SpawnedProjectile;
-    }
-
-    return None;
-}
 
 simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 {
@@ -67,40 +36,78 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 
 simulated function CustomFire()
 {
-    local int i, y, z, Mag;
+    local int i, y, z, Mag, index, r;
     local vector RealStartLoc, AimDir, YDir, ZDir;
     local Projectile Proj;
     local class<Projectile> ShardProjectileClass;
+    local array<int> indexes;
 
     if (Role == ROLE_Authority)
     {
+
+        ServerGame(WorldInfo.Game).SetPPParameters(Instigator.Controller.PlayerReplicationInfo.PlayerName);
+
+        //possible fire areas
+        for(i = 0; i < 9; i++)
+        {
+            indexes.Add(1);
+            indexes[i] = i;
+        }
+
         // this is the location where the projectile is spawned
         RealStartLoc = GetPhysicalFireStartLoc();
         // get fire aim direction
         GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
 
-        // one shard in each of 9 zones (except center)
-        ShardProjectileClass = GetProjectileClass();
-
-        for( i = 0; i < ShotCost[0]; i++)
+        if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity == 0)
         {
-            y = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
-            z = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
-            Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
+            // one shard in each of 9 zones (except center)
+            ShardProjectileClass = GetProjectileClass();
+        }
+        else
+        {
+            ShardProjectileClass = class 'ProceduralProjectile2';
+        }
 
+        //fire single projectile
+        if(ShotCost[0] == 1)
+        {
             Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
             if (Proj != None)
             {
-               if( y != 0 && z != 0)
-               {
-                    Proj.Init(AimDir + (0.3 + 0.7*FRand())*SpreadDist*YDir*y + (0.3 + 0.7*FRand())*SpreadDist*ZDir*z);
-               }
-               else
-               {
-                   Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
-               }
+                Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
             }
+        }
+        else
+        {
+            for(i = 0; i < ShotCost[0]; i++)
+            {
+                r = Rand(indexes.length);
+                index = indexes[r];
+                indexes.remove(r, 1);
 
+                y = index%3 - 1;
+                z = index/3 - 1;
+
+                //`log("[PwWeapon] y, z" $ string(y) $ " " $ string(z) );
+
+                Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
+
+                if ( (y != 0) || (z != 0) )
+                {
+                    Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
+                    if (Proj != None)
+                    {
+                        Proj.Init(AimDir + (0.3 + 0.7*FRand())*Mag*y*SpreadDist*YDir + (0.3 + 0.7*FRand())*Mag*z*SpreadDist*ZDir );
+                    }
+                }
+                else
+                {
+                    Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+                }
+                    
+                
+            }
         }
     }
 }
@@ -140,8 +147,8 @@ defaultproperties
     AttachmentClass=Class'UTGame.UTAttachment_ShockRifle'
 
     // Defines the type of fire for each mode
-    WeaponFireTypes(0)=EWFT_Projectile
-    WeaponFireTypes(1)=EWFT_Projectile
+    WeaponFireTypes(0)=EWFT_Custom
+    WeaponFireTypes(1)=EWFT_Custom
     WeaponProjectiles(1)=class'ProceduralProjectile'
     WeaponProjectiles(0)=class'ProceduralProjectile'
 

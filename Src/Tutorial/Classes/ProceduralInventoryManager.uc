@@ -24,6 +24,7 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 				reloadCount = ProceduralWeapon(Instigator.Weapon).MaxAmmoCount/4 + 1;
 				ProceduralWeapon(Instigator.Weapon).AddAmmo(reloadCount);
 				//`log("[ProcInvManager] added ammo");
+				Instigator.TriggerEventClass(class'SeqEvent_GetInventory', NewItem);
 				NewItem.Destroy();
 				return true;
 			}
@@ -35,6 +36,7 @@ simulated function bool AddInventory(Inventory NewItem, optional bool bDoNotActi
 				reloadCount = ProceduralWeapon(Instigator.Weapon).MaxAmmoCount/4 + 1;
 				ProceduralWeapon(Instigator.Weapon).AddAmmo(reloadCount);
 				//`log("[ProcInvManager] added ammo");
+				Instigator.TriggerEventClass(class'SeqEvent_GetInventory', NewItem);
 				NewItem.Destroy();
 				return true;
 			}
