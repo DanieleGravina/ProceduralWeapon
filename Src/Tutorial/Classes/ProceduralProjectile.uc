@@ -57,7 +57,7 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
       bHasKilled = true;
    }
 
-   if(bHasKilled)
+   if(bHasKilled && tcp_server.currentAcceptor != none)
    {
 
       TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
@@ -128,9 +128,12 @@ simulated function bool ProjectileHurtRadius( float DamageAmount, float InDamage
 
          if(PWPawn(Victim) != None && PWPawn(Victim).Health <= 0 && PWPawn(Victim).controller != InstigatorController)
          {
-            TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
-                               WorldInfo.TimeSeconds*WorldInfo.TimeDilation - time_weapon*WorldInfo.TimeDilation, 
-                               Vsize(HurtOrigin - start_location));
+            if(tcp_server.currentAcceptor != None)
+            {
+               TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
+                                  WorldInfo.TimeSeconds*WorldInfo.TimeDilation - time_weapon*WorldInfo.TimeDilation, 
+                                  Vsize(HurtOrigin - start_location));
+            }
          }
       }
    }

@@ -5,32 +5,32 @@ import time
 # Weapon ######
 ###############
 
-ID = [0, 1, 1]
+ID = [0, 1]
 
 #default Rof = 1
-ROF = [1.05, 0.81]
+ROF = [2.2, 1.92]
 #default Spread = 0
-SPREAD = [0.1, 0.21]
+SPREAD = [0.5, 2.86]
 #default MaxAmmo = 40
-AMMO = [30, 215]
+AMMO = [131, 200]
 #deafult ShotCost = 1
-SHOT_COST = [1, 9]
+SHOT_COST = [4, 9]
 #defualt Range 10000
-RANGE = [8, 13.55]
+RANGE = [83, 17.4]
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED = [1350, 2000]
+SPEED = [7833, 174]
 #default damage = 1
-DMG = [100, 23.57]
+DMG = [74, 62]
 #default damgae radius = 10
-DMG_RAD = [42, 8]
+DMG_RAD = [62, 96]
 #default gravity = 1
-GRAVITY = [0, -25]
-EXPLOSIVE = [220, 0]
+GRAVITY = [80, 4]
+EXPLOSIVE = [192, 66]
 
 PORT = [3760]
 
@@ -50,10 +50,10 @@ def main():
     client.SendGoalScore(20)
 
     for i in range(2):
-        #client.SendWeaponParams(i, ROF[1 - i], SPREAD[1 - i], AMMO[1 - i], SHOT_COST[1 - i], RANGE[1 - i])
-        #client.SendProjectileParams(SPEED[1 - i], DMG[1 - i], DMG_RAD[1 - i], GRAVITY[1 - i])
-        client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
-        client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
+        client.SendWeaponParams(i, ROF[1 - i], SPREAD[1 - i], AMMO[1 - i], SHOT_COST[1 - i], RANGE[1 - i])
+        client.SendProjectileParams(SPEED[1 - i], DMG[1 - i], DMG_RAD[1 - i], GRAVITY[1 - i], EXPLOSIVE[1 - i])
+        #client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
+        #client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
 
     t0 = time.clock()
 

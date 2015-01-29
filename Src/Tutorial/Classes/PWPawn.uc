@@ -40,7 +40,18 @@ function SetProceduralWeapon(TcpLinkServer _tcp_server)
 		myWeapon.FireInterval[0] = ServerGame(WorldInfo.Game).GetPWParameters().RoF;
 		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
 		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
-		myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*300;
+
+		//Range is MaxRange on default implementation 
+		if(ServerGame(WorldInfo.Game).GetPPParameters().Speed < 300)
+		{
+			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*
+									ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+		}
+		else
+		{
+			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*300;
+		}
+
 /*
 		`log("[PWPawn] Spread "$string(myWeapon.Spread[0]));
 		`log("[PWPawn] FireInterval "$string(myWeapon.FireInterval[0]));

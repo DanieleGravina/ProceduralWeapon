@@ -2,6 +2,7 @@ import threading
 import time
 from Costants import MAX_DURATION
 from Costants import GOAL_SCORE
+from BalancedWeaponClient import BalancedWeaponClient
 
 class SimulationThread(threading.Thread):
 	"""#Simulation thread that communicate with the server UT3"""
@@ -24,28 +25,28 @@ class SimulationThread(threading.Thread):
 			self.lock.acquire()
 
 			if self.my_port == None :
-				self.my_port = self.port[index_port]
+				self.my_port = self.port[self.index_port]
 
-			if len(pop_to_simulate) != 0:
-				individual_index = pop_to_simulate.keys()[0]
-				individual = pop_to_simulate.get(individual_index)
+			if len(self.pop_to_simulate) != 0:
+				individual_index = list(self.pop_to_simulate.keys())[0]
+				individual = self.pop_to_simulate.get(individual_index)
 
-				del pop_to_simulate[individual_index]
+				del self.pop_to_simulate[individual_index]
 
 				self.lock.release()
 
-				result = simulate(individual_index, individual)
+				result = self.simulate(individual_index, individual)
 
 				if result != None :
 					self.result.update(result)
-				else
+				else:
 					#server crashed
 					b_not_finished = False
 
 					self.lock.acquire()
 
-					pop_to_simulate.update({individual_index : individual})
-					del port[index_port]
+					self.pop_to_simulate.update({individual_index : individual})
+					self.port.remove(self.my_port);
 
 					self.lock.release()					
 
@@ -54,36 +55,38 @@ class SimulationThread(threading.Thread):
 				self.lock.release()
 				b_not_finished = False;
 
-	def simulate(ind_index, individual):
+	def simulate(self, ind_index, individual):
 		print("Starting " + str(self.index_port))
 
-		client = BalancedWeaponClient(my_port)
-        client.SendInit()
-        client.SendMaxDuration(MAX_DURATION)
-        client.SendGoalScore(GOAL_SCORE)
+		client = BalancedWeaponClient(self.my_port)
+		client.SendInit()
+		client.SendMaxDuration(MAX_DURATION)
+		client.SendGoalScore(GOAL_SCORE)
 
-        client.SendWeaponParams(ind_index, individual[0], individual[1], individual[2], individual[3], individual[4])
+		client.SendWeaponParams(ind_index, individual[0], individual[1], individual[2], individual[3], individual[4])
 
-        client.SendProjectileParams(individual[5], individual[6], individual[7], individual[8], individual[9])
+		client.SendProjectileParams(individual[5], individual[6], individual[7], individual[8], individual[9])
 
-        client.SendWeaponParams(ind_index + 1, individual[10], individual[11], individual[12], individual[13], individual[14])
+		client.SendWeaponParams(ind_index + 1, individual[10], individual[11], individual[12], individual[13], individual[14])
 
-        client.SendProjectileParams(individual[15], individual[16], individual[17], individual[18], individual[19])
+		client.SendProjectileParams(individual[15], individual[16], individual[17], individual[18], individual[19])
 
-        client.SendStartMatch()
+		client.SendStartMatch()
 
-        client.WaitForBotStatics()
+		t0 = time.clock()
 
-        print(str(self.index_port) + " " + str(time.clock() - t0))
+		client.WaitForBotStatics()
 
-        result = self.client.GetStatics()
+		print(str(self.index_port) + " " + str(time.clock() - t0))
 
-        print(result)
+		result = client.GetStatics()
 
-        return result
+		print(result)
+
+		return result
 
 	def join(self):
-        threading.Thread.join(self)
-        return self.result
+		threading.Thread.join(self)
+		return self.result
 
 

@@ -128,7 +128,6 @@ simulated function CustomFire()
 
 function float GetOptimalRangeFor(Actor Target)
 {
-    // short range so bots try to maximize shards that hit
     return WeaponRange;
 }
 

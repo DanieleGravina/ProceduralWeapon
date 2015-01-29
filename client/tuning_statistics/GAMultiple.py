@@ -6,15 +6,10 @@ import time
 import itertools
 import threading
 
-from Costants import NUM_BOTS
-from Costants import NUM_SERVER
-from Costants import INITIAL_PORT
-from Costants import MAX_DURATION
+from Costants import *
 
-from InitialPopulationSeed import getTwoSeedWeapons
 from BalancedWeaponClient import BalancedWeaponClient
-from ClusterProceduralWeapon import ClusterProceduralWeapon
-from ClientThread import myThread
+from SimulationThread import SimulationThread
 from itertools import repeat
 
 from math import log
@@ -32,36 +27,6 @@ creator.create("Individual", list, fitness = creator.FitnessMax)
 #initialization
 
 toolbox = base.Toolbox()
-
-###############
-# Weapon ######
-###############
-
-#default Rof = 100
-ROF_MIN, ROF_MAX = 10, 1000
-#default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 300
-#default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 999
-#deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 9
-#defualt Range 10000
-RANGE_MIN, RANGE_MAX = 100, 10000
-
-###################
-# Projectile ######
-###################
-
-#default speed = 1000
-SPEED_MIN, SPEED_MAX = 1, 10000
-#default damage = 1
-DMG_MIN, DMG_MAX = 1, 100
-#default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
-#default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -100, 100
-#Explosion
-EXPLOSIVE_MIN, EXPLOSIVE_MAX = 0, 500
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX), 
@@ -201,6 +166,9 @@ def simulate_population(population, port) :
 
     stats = {}
     pop = {}
+    threads = []
+
+    #return stats, port
 
     num_server = len(port)
     
@@ -222,15 +190,19 @@ def simulate_population(population, port) :
         for t in threads:
             stats.update(t.join())
 
+        del threads
+
+        threads = []
+
         num_server = len(port)
 
     return stats, port
 
-def match_kills(index, statics) :
+def match_kills(index, statistics) :
 
     total_kills = 0
 
-    for key, val in statics.items():
+    for key, val in statistics.items():
         if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
 
@@ -248,36 +220,44 @@ def entropy(index, statistics) :
             total_kills += val[0]
             total_dies += val[1]
 
+    suicides = {}
+    suicides.update = {index : statistics[index][1] - statistics[index + 1][0]}
+    suicides.update = {index + 1 : statistics[index + 1][1] - statistics[index][0]}
+
     for i in range(index, index + NUM_BOTS):
-        e += evaluate_entropy(i, statistics, total_kills, total_dies, NUM_BOTS)
+        e += evaluate_entropy(i, statistics, total_kills, total_dies, suicides, NUM_BOTS)
 
     return e
 
 
 def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
-    p_kills = 0  if total_kills == 0 else statistics[index][0]/total_kills
-    p_dies = 0 if total_dies == 0 else statistics[index][1]/total_dies
+    kills = statistics[index][0] - suicides[index] 
+
+    if kills < 0 :
+        kills = 0
+
+    p_kills = 0  if total_kills == 0 else kills/total_kills
 
     entropy_kill = p_kills*log(p_kills, N) if p_kills != 0 else 0
 
-    entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
-
-    return -(entropy_kill + entropy_dies)
+    return -entropy_kill
 
 def evaluate_distance(index, statistics):
 
-    return statistics[index][4], statistics[index + 1][5]
+    return statistics[index][3], statistics[index + 1][3]
 
 def evaluate_delta_time(index, statistics):
 
-    return statistics[index][2], statistics[index + 1][3]
+    return statistics[index][2], statistics[index + 1][2]
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):
+    #e = random.randint(0 ,2)
     e = entropy(index*2, statistics)
 
-    dist1, dist2 = evaluate_difference(index*2, statistics)
+    dist1, dist2 = evaluate_distance(index*2, statistics)
+    #dist1, dist2 = random.randint(0, 5), random.randint(0, 5)
     
     print('entropy :' + str(index) + " " + str(e))
     print('distance :' + str(index) + " " + str(dist1) + " " + str(dist2))
@@ -314,7 +294,14 @@ stats2.register("std", numpy.std)
 stats2.register("min", numpy.min)
 stats2.register("max", numpy.max)
 
-mstats = tools.MultiStatistics(entropy = stats1, dist = stats2)
+stats3 = tools.Statistics(key = lambda ind: ind.fitness.values[2])
+
+stats3.register("avg", numpy.mean)
+stats3.register("std", numpy.std)
+stats3.register("min", numpy.min)
+stats3.register("max", numpy.max)
+
+mstats = tools.MultiStatistics(entropy = stats1, dist1 = stats2, dist2 = stats3)
 
 logbook = tools.Logbook()
 
@@ -350,11 +337,10 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
     index = 0
     fit = 0,
 
-    for index in range(len(offspring))
+    for index in range(len(offspring)):
 
         if not offspring[index].fitness.valid :
             fit = toolbox.evaluate(index, offspring, statistics)
-            fitnesses += [fit]
             offspring[index].fitness.values = fit
 
     pop[:] = toolbox.select(pop + offspring, MU)
@@ -384,7 +370,7 @@ def main():
 
     ###logbook update ####
     logbook_file.write("Gen : " + str(0) + "\n")
-    for key, val in statics.items():
+    for key, val in statistics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
     logbook_file.write("*********************************************************\n")
     ######################
@@ -509,20 +495,21 @@ def main():
     d1_front = [hof[i].fitness.values[1] for i in range(len(hof))]
     d2_front = [hof[i].fitness.values[2] for i in range(len(hof))]
 
-    patch_1 = mpatches.Patch(marker='^', label='entropy - distance 1')
-    patch_2 = mpatches.Patch(marker='o', label='entropy - distance 2')
-    patch_3 = mpatches.Patch(marker='V', label='distance 1 - distance 2')
+    plt.scatter(e, d1, marker=u'o')
+    plt.scatter(e_front, d1_front, c=u'r', marker=u'o')
+    f1, = plt.plot(e_front, d1_front, c='r', marker=u'o')
 
-    plt.legend(handles=[patch_1, patch_2, patch_3])
+    plt.scatter(e, d2, marker=u'+')
+    plt.scatter(e_front, d2_front, c=u'r', marker=u'+')
+    f2, = plt.plot(e_front, d2_front, c='r', marker=u'+')
 
-    plt.scatter(e, d1, marker=u'^')
-    plt.scatter(e_front, d_front, c=u'r', marker=u'^')
+    plt.scatter(d1, d2, marker=u'x')
+    plt.scatter(d1_front, d2_front, c=u'r', marker=u'x')
+    f3, = plt.plot(d1_front, d2_front, c='r', marker=u'x')
 
-    plt.scatter(e, d2, marker=u'o')
-    plt.scatter(e_front, k_front, c=u'r', marker=u'o')
+    plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
 
-    plt.scatter(d1, d2, marker=u'V')
-    plt.scatter(e_front, k_front, c=u'r', marker=u'V')
+    plt.show();
 
     ##########################################################################
 
