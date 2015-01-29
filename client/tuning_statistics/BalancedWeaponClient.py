@@ -1,9 +1,8 @@
 import socket
 import time
+import select
 
-messageWeapon = ':WeaponPar:Rof:0.1:Spread:0.5:MaxAmmo:40:ShotCost:1:Range:10000'
-
-messageProjectile = ':ProjectilePar:Speed:1000:Damage:1:DamageRadius:10:Gravity:1'
+from Costants import TIMEOUT
 
 messageInit = ':Init'
 messageStartMatch = ':StartMatch'
@@ -19,7 +18,6 @@ class BalancedWeaponClient:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.port = port
         self.host = 'localhost'
-        #self.host = '192.168.173.116'
         self.serverRunning = True
 
         # connection to hostname on the port.
@@ -45,6 +43,7 @@ class BalancedWeaponClient:
         message = ":GameSpeed:" + str(gameSpeed)
         try:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
         except :
             self.serverRunning = False
             pass
@@ -52,11 +51,26 @@ class BalancedWeaponClient:
     def SendMaxDuration(self, maxDuration):
         time.sleep(0.1)
         message = ":MaxDuration:" + str(maxDuration)
-        self.s.send(message.encode(encoding='utf-8',errors='strict'))
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
+        except :
+            self.serverRunning = False
+            pass
 
     def SendGoalScore(self, goalScore):
         time.sleep(0.1)
         message = ":GoalScore:" + str(goalScore)
+        try:
+            self.s.send(message.encode(encoding='utf-8',errors='strict'))
+            print('Send ' + message)
+        except :
+            self.serverRunning = False
+            pass
+
+    def SendTestKillsVsTime(self):
+        time.sleep(0.1)
+        message = ":TestKillsVsTime:" 
         try:
             self.s.send(message.encode(encoding='utf-8',errors='strict'))
             print('Send ' + message)
@@ -130,19 +144,21 @@ class BalancedWeaponClient:
 
     def WaitForBotStatics(self):
 
-        self.serverRunning = True
+        self.s.setblocking(0)
 
         finish = True
 
         while finish and self.serverRunning:
 
-            try:
+            #if server crashes, it can continue after timeout
+            ready = select.select([self.s], [], [], TIMEOUT)
+
+            if ready[0]:
                 data = self.s.recv(255)
-            except :
+            else :
                 self.serverRunning = False
                 message = ""
                 data = message.encode()
-                pass
 
             splitted = data.decode().split("%")
 
@@ -160,6 +176,7 @@ class BalancedWeaponClient:
         try:
             self.s.close()
         except :
+            self.serverRunning = False
             pass
 
 
@@ -182,7 +199,7 @@ class BalancedWeaponClient:
             else :
                 i += 1
 
-         print(self.statics)
+         #print(self.statics)
 
          return self.statics       
 

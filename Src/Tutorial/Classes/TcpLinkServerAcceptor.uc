@@ -35,6 +35,8 @@ struct BotKill
 	var string name;
 	var int num_kills;
 	var int num_dies;
+	var array<float> distance_kill;
+	var array<float> time_kill;
 };
 
 var array<BotKill> botStatics;
@@ -406,6 +408,11 @@ function FinishGame()
 	local string line;
 	local int i, j;
 	local byte B[255];
+	//avarage distance of kill & avarage delta time fire-kill
+	local float avg_dist, avg_time;
+
+	avg_dist = 0.0;
+	avg_time = 0.0;
 	
 	`log("[TcpLinkServerAcceptor] EndGame called");
 	
@@ -413,6 +420,37 @@ function FinishGame()
 	for(i = 0; i < botStatics.Length; ++i)
 	{
 		line = "%:ID:"$botStatics[i].id$":kills:"$string(botStatics[i].num_kills)$":dies:"$string(botStatics[i].num_dies);
+
+		for(j = 0; j < botStatics[i].time_kill.length; j++)
+		{
+			avg_time += botStatics[i].time_kill[j];
+		}
+
+		if(botStatics[i].time_kill.length != 0)
+		{
+			avg_time /= botStatics[i].time_kill.length;
+		}
+		else
+		{
+			avg_time = 0;
+		}
+
+		for(j = 0; j < botStatics[i].distance_kill.length; j++)
+		{
+			avg_dist += botStatics[i].distance_kill[j];
+		}
+
+		if(botStatics[i].distance_kill.length != 0)
+		{
+			avg_dist /= botStatics[i].distance_kill.length;
+		}
+		else
+		{
+			avg_dist = 0;
+		}
+
+		line $= ":avg_time:" $ string(avg_time) $ ":avg_dist:" $ string(avg_dist);
+
 
 		`log("[TcpLinkServerAcceptor] "$line);
 		
@@ -431,6 +469,26 @@ function FinishGame()
 	
 	SendBinary(Len(line), B);
 
+	
+}
+
+function SetStatKill(string player_name, float delta_time, float distance)
+{
+	local int i;
+
+	for(i = 0; i < botStatics.Length; ++i)
+	{
+		if(botStatics[i].name == player_name)
+		{
+			botStatics[i].time_kill.Add(1);
+			botStatics[i].time_kill[botStatics[i].time_kill.length - 1] = delta_time;
+
+			`log("[TcpLinkServerAcceptor] " $ player_name $" " $ string(delta_time)$" "$string(distance));
+
+			botStatics[i].distance_kill.Add(1);
+			botStatics[i].distance_kill[botStatics[i].distance_kill.length - 1] = distance;
+		}
+	}
 	
 }
 

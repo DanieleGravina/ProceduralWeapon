@@ -2,9 +2,18 @@ class ProceduralWeapon extends MyWeapon;
 
 var float SpreadDist;
 
+var TcpLinkServer tcp_server;
+
 function class<Projectile> GetProjectileClass()
 {
-    return WeaponProjectiles[CurrentFireMode];  // Use our default projectile
+    if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity == 0)
+    {
+        return WeaponProjectiles[CurrentFireMode];
+    }
+    else
+    {
+        return class 'ProceduralProjectile2';
+    }
 }
 
 
@@ -34,6 +43,15 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
     return R;
 }
 
+function SetStatProjectile(Projectile proj, Vector start_loc)
+{
+    ProceduralProjectile(proj).tcp_server = tcp_server;
+
+    ProceduralProjectile(proj).time_weapon = WorldInfo.TimeSeconds;
+
+    ProceduralProjectile(proj).start_location = start_loc;
+}
+
 simulated function CustomFire()
 {
     local int i, y, z, Mag, index, r;
@@ -59,15 +77,8 @@ simulated function CustomFire()
         // get fire aim direction
         GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
 
-        if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity == 0)
-        {
-            // one shard in each of 9 zones (except center)
-            ShardProjectileClass = GetProjectileClass();
-        }
-        else
-        {
-            ShardProjectileClass = class 'ProceduralProjectile2';
-        }
+        // one shard in each of 9 zones (except center)
+        ShardProjectileClass = GetProjectileClass();
 
         //fire single projectile
         if(ShotCost[0] == 1)
@@ -75,6 +86,7 @@ simulated function CustomFire()
             Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
             if (Proj != None)
             {
+                SetStatProjectile(Proj, RealStartLoc);
                 Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
             }
         }
@@ -98,11 +110,13 @@ simulated function CustomFire()
                     Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
                     if (Proj != None)
                     {
+                        SetStatProjectile(Proj, RealStartLoc);
                         Proj.Init(AimDir + (0.3 + 0.7*FRand())*Mag*y*SpreadDist*YDir + (0.3 + 0.7*FRand())*Mag*z*SpreadDist*ZDir );
                     }
                 }
                 else
                 {
+                    SetStatProjectile(Proj, RealStartLoc);
                     Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
                 }
                     

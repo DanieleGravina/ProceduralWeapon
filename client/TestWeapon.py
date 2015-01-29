@@ -46,6 +46,8 @@ def main():
     client = BalancedWeaponClient(PORT[0])
 
     client.SendInit()
+    client.SendMaxDuration(3600)
+    client.SendGoalScore(20)
 
     for i in range(2):
         #client.SendWeaponParams(i, ROF[1 - i], SPREAD[1 - i], AMMO[1 - i], SHOT_COST[1 - i], RANGE[1 - i])

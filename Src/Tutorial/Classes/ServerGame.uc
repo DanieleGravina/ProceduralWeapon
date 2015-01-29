@@ -168,7 +168,7 @@ function AddDefaultInventory( pawn Pawn ){
 		if(PWPawn(Pawn) != none && Pawn.Controller != none && Pawn.Controller.bIsPlayer)
 		{
 			`log("[ServerGame] Add default inventory to "$Pawn.Controller.PlayerReplicationInfo.PlayerName);
-			PWPawn(Pawn).SetProceduralWeapon();
+			PWPawn(Pawn).SetProceduralWeapon(tcpServer);
 		}
 	}
 }
@@ -251,7 +251,7 @@ defaultproperties
     numPlayer = 4
 
     bTestGame = false
-    bTotalGoalScore = false
+    bTotalGoalScore = true
 
     BotClass=Class'ProceduralWeaponBot'
 

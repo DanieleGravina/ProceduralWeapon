@@ -5,7 +5,7 @@ function bool CheckReplacement(Actor Other)
 	local UTWeaponPickupFactory WeaponPickup;
 	local UTWeaponLocker Locker;
 	local UTAmmoPickupFactory AmmoPickup, NewAmmo;
-	local int i, Index;
+	local int i;
 	local class<UTAmmoPickupFactory> NewAmmoClass;
 
 	WeaponPickup = UTWeaponPickupFactory(Other);

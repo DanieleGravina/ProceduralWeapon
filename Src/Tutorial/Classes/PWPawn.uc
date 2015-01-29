@@ -19,7 +19,7 @@ simulated event PostBeginPlay()
 }
 
 //Set the weapon with the parameters hold by the controller
-function SetProceduralWeapon()
+function SetProceduralWeapon(TcpLinkServer _tcp_server)
 {
 	local ProceduralWeapon myWeapon;
 	
@@ -30,6 +30,8 @@ function SetProceduralWeapon()
 		`log("[PWPawn] set weapon of "$Controller.PlayerReplicationInfo.playername);
 	
 		myWeapon = ProceduralWeapon(Weapon);
+
+		myWeapon.tcp_server = _tcp_server;
 
 		ServerGame(WorldInfo.Game).SetPWParameters(Controller.PlayerReplicationInfo.playername);
 		ServerGame(WorldInfo.Game).SetPPParameters(Controller.PlayerReplicationInfo.playername);
