@@ -11,7 +11,7 @@ from Costants import *
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
 from itertools import repeat
-from Normalization import *
+from ClusterProceduralWeapon import ClusterProceduralWeapon
 
 from math import log
 from math import pow
@@ -23,7 +23,7 @@ from deap import creator
 from deap import tools
 from deap.tools.emo import assignCrowdingDist
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, -1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0,))
 creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
@@ -179,7 +179,7 @@ def simulate_population(population, port) :
     for i in range(len(population)):
 
         if not population[i].fitness.valid :
-            pop.update( {i*2 : population[i]} )
+            pop.update({i*2 : population[i]})
 
     while len(pop) != 0 :
 
@@ -258,19 +258,10 @@ def evaluate_delta_time(index, statistics):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):
-    #e = random.randint(0 ,2)
+    #e = random.randint(0 ,3)
     e = entropy(index*2, statistics)
 
-    total_kills = match_kills(index*2, statistics)
-
-    suicides = match_suicides(index*2, statistics)
-
-    dist1, dist2 = evaluate_delta_time(index*2, statistics)
-    #dist1, dist2 = random.randint(0, 5), random.randint(0, 5)
-
-    print("distance " +  str(dist1) + " " + str(dist2))
-
-    return e, dist1, dist2
+    return e,
 
 
 toolbox.register("mate", tools.cxTwoPoint)
@@ -280,46 +271,29 @@ toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
                                               sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(10)] , 
                                               indpb = 0.1)
 
-toolbox.register("select", tools.selNSGA2)
+toolbox.register("select", tools.selTournament, tournsize = 3)
 
 toolbox.decorate("mate", checkBounds(0,1))
 toolbox.decorate("mutate", checkBounds(0,1))
 
 toolbox.register("evaluate", evaluate)
 
+stats = tools.Statistics(key=lambda ind: ind.fitness.values)
 
-stats1 = tools.Statistics(key = lambda ind: ind.fitness.values[0])
-
-stats1.register("avg", numpy.mean)
-stats1.register("std", numpy.std)
-stats1.register("min", numpy.min)
-stats1.register("max", numpy.max)
-
-stats2 = tools.Statistics(key = lambda ind: ind.fitness.values[1])
-
-stats2.register("avg", numpy.mean)
-stats2.register("std", numpy.std)
-stats2.register("min", numpy.min)
-stats2.register("max", numpy.max)
-
-stats3 = tools.Statistics(key = lambda ind: ind.fitness.values[2])
-
-stats3.register("avg", numpy.mean)
-stats3.register("std", numpy.std)
-stats3.register("min", numpy.min)
-stats3.register("max", numpy.max)
-
-mstats = tools.MultiStatistics(entropy = stats1, dist1 = stats2, dist2 = stats3)
+stats.register("avg", numpy.mean)
+stats.register("std", numpy.std)
+stats.register("min", numpy.min)
+stats.register("max", numpy.max)
 
 logbook = tools.Logbook()
 
-hof = tools.ParetoFront()
+hof = tools.HallOfFame(1)
 
 def eaSimple(pop, gen, port, logbook_file):
 
-    offspring = [toolbox.clone(ind) for ind in pop]
-
     offspring = toolbox.select(pop, len(pop))
+    # Clone the selected individuals
+    offspring = list(map(toolbox.clone, offspring))
     
     # Apply crossover and mutation on the offspring
     for i in range(1, len(offspring), 2):
@@ -343,80 +317,6 @@ def eaSimple(pop, gen, port, logbook_file):
     index = 0
     fit = 0,
 
-    for index in range(len(offspring)):
-
-        if not offspring[index].fitness.valid :
-            fit = toolbox.evaluate(index, offspring, statistics)
-            offspring[index].fitness.values = fit
-
-    pop = offspring[:]
-
-    return pop, port
-
-def binary_tournament(ind1, ind2):
-        if ind1.fitness.dominates(ind2.fitness):
-            return ind1
-        elif ind2.fitness.dominates(ind1.fitness):
-            return ind2
-
-        if ind1.fitness.crowding_dist < ind2.fitness.crowding_dist:
-            return ind2
-        elif ind1.fitness.crowding_dist > ind2.fitness.crowding_dist:
-            return ind1
-
-        if random.random() <= 0.5:
-            return ind1
-        return ind2
-
-
-def eaMuPlusLambda(pop, gen, port, logbook_file) :
-    offspring = []
-
-    for _ in range(LAMBDA):
-        op_choice = random.random()
-        if op_choice < CXPB:            # Apply crossover
-            ind1, ind2 = random.sample(pop, 2)
-            ind3, ind4 = random.sample(pop, 2)
-
-            child1 = binary_tournament(ind1, ind2)
-            child2 = binary_tournament(ind3, ind4)
-
-            ind1, ind2 = map(toolbox.clone, [child1, child2])
-
-            ind1, ind2 = toolbox.mate(ind1, ind2)
-            del ind1.fitness.values
-            offspring.append(ind1)
-
-        elif op_choice < CXPB + MUTPB:  # Apply mutation
-            ind1, ind2 = random.sample(pop, 2)
-            child = binary_tournament(ind1, ind2)
-
-            ind = toolbox.clone(child)
-
-            ind, = toolbox.mutate(ind)
-            del ind.fitness.values
-            offspring.append(ind)
-
-        else:
-
-            ind1, ind2 = random.sample(pop, 2)
-            child = binary_tournament(ind1, ind2)     # Apply reproduction
-
-            ind = toolbox.clone(child) 
-            offspring.append(ind)
-
-    statistics, port = simulate_population(offspring, port)
-
-
-    logbook_file.write("Gen : " + str(gen+1) + "\n")
-    for key, val in statistics.items():
-            logbook_file.write(str(key) + " : " + str(val) + "\n")
-    logbook_file.write("*********************************************************\n")
-
-    # Evaluate only invalid population
-    index = 0
-    fit = 0,
-
     fitnesses = [0 for _ in range(len(offspring))]
 
     for index in range(len(offspring)):
@@ -430,7 +330,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
     for ind, fit in zip(offspring, fitnesses):
         ind.fitness.values = fit
 
-    pop[:] = toolbox.select(pop + offspring, MU)
+    pop = offspring[:]
 
     return pop, port
 
@@ -445,53 +345,38 @@ def main():
 
     #p_0 and q_0
     pop = toolbox.population(n = NUM_POP)
-    child_pop = toolbox.population(n = NUM_POP)
 
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
     fitnesses = []
-    fitnesses_child = []
 
     statistics = {}
-    statistics_child = {}
 
     initialize_server(port)
 
     statistics, port = simulate_population(pop, port)
-    statistics_child, port = simulate_population(child_pop, port)
 
     ###logbook update ####
     logbook_file.write("Gen : " + str(0) + "\n")
     for key, val in statistics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
-    for key, val in statistics_child.items():
-            logbook_file.write(str(key) + " : " + str(val) + "\n") 
     logbook_file.write("*********************************************************\n")
     ######################
 
     # Evaluate the entire population
     for i in range(len(pop)) :
         fitnesses += [toolbox.evaluate(i, pop, statistics)]
-        fitnesses_child += [toolbox.evaluate(i, child_pop, statistics_child)]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
-    for ind, fit in zip(child_pop, fitnesses_child):
-        ind.fitness.values = fit
-
-    pop[:] = toolbox.select(pop + child_pop, MU)
-
-    record = mstats.compile(pop)
+    record = stats.compile(pop)
     hof.update(pop)
 
     logbook.record(gen = 0, **record)
 
-    logbook.header = "gen", "entropy", "dist1", "dist2"
-    logbook.chapters["entropy"].header = "min", "avg", "max"
-    logbook.chapters["dist1"].header = "min", "avg", "max"
-    logbook.chapters["dist2"].header = "min", "avg", "max"
+    logbook.header = "gen", "avg", "std", "min", "max"
 
     print(logbook)
 
@@ -500,28 +385,23 @@ def main():
 
     for g in range(NGEN - 1):
 
-        pop, port = eaMuPlusLambda(pop, g, port, logbook_file) 
+        pop, port = eaSimple(pop, g, port, logbook_file)
 
         printWeapon(pop)
         writeWeapon(pop, pop_file)
 
-        record = mstats.compile(pop)
+        record = stats.compile(pop)
         hof.update(pop)
 
         logbook.record(gen = g + 1, **record)
 
-        logbook.header = "gen", "entropy", "dist1", "dist2"
-        logbook.chapters["entropy"].header = "min", "avg", "max"
-        logbook.chapters["dist1"].header = "min", "avg", "max"
-        logbook.chapters["dist2"].header = "min", "avg", "max"
+        logbook.header = "gen", "avg", "std", "min", "max"
 
         print(logbook)
+            
 
 
-    logbook.header = "gen", "entropy", "dist1", "dist2"
-    logbook.chapters["entropy"].header = "min", "avg", "max"
-    logbook.chapters["dist1"].header = "min", "avg", "max"
-    logbook.chapters["dist2"].header = "min", "avg", "max"
+    logbook.header = "gen", "avg", "std", "min", "max"
     
     log_string = str(logbook)
 
@@ -545,111 +425,19 @@ def main():
 
     plt.figure(1)
 
-    plt.subplot(221)
-
     gen = logbook.select("gen")
-    fit_avg = logbook.chapters["entropy"].select("avg")
-    fit_max = logbook.chapters["entropy"].select("max")
-    fit_min = logbook.chapters["entropy"].select("min")
+    fit_avg = logbook.select("avg")
+    fit_max = logbook.select("max")
+    fit_min = logbook.select("min")
 
     plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
 
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
 
-    plt.subplot(222)
-
-    fit_avg = logbook.chapters["dist1"].select("avg")
-    fit_max = logbook.chapters["dist1"].select("max")
-    fit_min = logbook.chapters["dist1"].select("min")
-
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
-
-    plt.xlabel("Generation")
-    plt.ylabel("Distance1")
-
-    plt.subplot(223)
-
-    fit_avg = logbook.chapters["dist2"].select("avg")
-    fit_max = logbook.chapters["dist2"].select("max")
-    fit_min = logbook.chapters["dist2"].select("min")
-
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
-
-    plt.xlabel("Generation")
-    plt.ylabel("Distance2")
-
-    ##########################################################################
-
-    ##########################
-    ##plot multiobjective ####
-    ##########################
-
-    plt.figure(2)
-
-    pop_12 = []
-    pop_13 = []
-    pop_23 = []
-
-
-
-    for i in range(len(hof)) :
-        pop_12 += [toolbox.clone(hof[i])]
-        del pop_12[i].fitness.values
-        pop_12[i].fitness.values = hof[i].fitness.values[:2]
-
-    hof_12 = tools.ParetoFront()
-    hof_12.update(pop_12)
-
-    for i in range(len(hof)) :
-        pop_13 += [toolbox.clone(hof[i])]
-        del pop_13[i].fitness.values
-        pop_13[i].fitness.values = hof[i].fitness.values[0], hof[i].fitness.values[2]
-
-    hof_13 = tools.ParetoFront()
-    hof_13.update(pop_13)
-
-    for i in range(len(hof)) :
-        pop_23 += [toolbox.clone(hof[i])]
-        del pop_23[i].fitness.values
-        pop_23[i].fitness.values = hof[i].fitness.values[1:]
-
-    hof_23 = tools.ParetoFront()
-    hof_23.update(pop_23)
-
-    plt.subplot(221)
-
-    plt.scatter([pop_12[i].fitness.values[1] for i in range(len(pop_12))], [pop_12[i].fitness.values[0] for i in range(len(pop_12))])
-    plt.scatter([hof_12[i].fitness.values[1] for i in range(len(hof_12))], [hof_12[i].fitness.values[0] for i in range(len(hof_12))], c=u'r')
-
-    plt.xlabel("Distance1")
-    plt.ylabel("Entropy")
-
-    plt.subplot(222)
-
-    plt.scatter([pop_13[i].fitness.values[1] for i in range(len(pop_13))], [pop_13[i].fitness.values[0] for i in range(len(pop_13))])
-    plt.scatter([hof_13[i].fitness.values[1] for i in range(len(hof_13))], [hof_13[i].fitness.values[0] for i in range(len(hof_13))], c=u'r')
-
-    plt.xlabel("Distance2")
-    plt.ylabel("Entropy")
-
-    plt.subplot(224)
-
-    plt.scatter([pop_23[i].fitness.values[1] for i in range(len(pop_23))], [pop_23[i].fitness.values[0] for i in range(len(pop_23))])
-    plt.scatter([hof_23[i].fitness.values[1] for i in range(len(hof_23))], [hof_23[i].fitness.values[0] for i in range(len(hof_23))], c=u'r')
-
-    plt.xlabel("Distance2")
-    plt.ylabel("Distance1")
-
-    #plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
-
-    plt.show();
-    ##########################################################################
+    plt.show()
 
     '''
-    cluster_file = open("cluster.txt", "w")
-
-    cluster_file.write("Hall of Fame cluster")
 
     real_pop = []
 
@@ -659,7 +447,7 @@ def main():
         real_pop += [temp1]
         real_pop += [temp2]
 
-    cluster = ClusterProceduralWeapon(real_pop, pop, cluster_file)
+    cluster = ClusterProceduralWeapon(real_pop, pop)
     cluster.cluster()
     '''
 

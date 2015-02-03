@@ -1,5 +1,5 @@
 set PATH=%PATH%;C:\Python34
 
-python GAMultiple.py
+python GASingle.py
 
 pause
