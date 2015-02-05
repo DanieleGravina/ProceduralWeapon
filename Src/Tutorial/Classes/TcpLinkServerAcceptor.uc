@@ -37,6 +37,8 @@ struct BotKill
 	var int num_dies;
 	var array<float> distance_kill;
 	var array<float> time_kill;
+	var int last_kill_streak;
+	var array<int> kill_streak;
 };
 
 var array<BotKill> botStatics;
@@ -192,6 +194,7 @@ function Initialize()
 			botStatics[botStatics.Length - 1].name =  Aplayer.PlayerReplicationInfo.playername;
 			botStatics[botStatics.Length - 1].num_kills = 0;
 			botStatics[botStatics.Length - 1].num_dies = 0;
+			botStatics[botStatics.Length - 1].last_kill_streak = 0;
 
 			//TODO rewrite in more elegant way
 			if(!bIsGameInitialized)
@@ -288,7 +291,9 @@ function ModifyProjectile(array<string> ProjectilePar, int index)
 		}
 		
 		++i;
-	}	
+	}
+
+	ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = false;	
 	
 }
 
@@ -320,6 +325,15 @@ function SendPawnDied(Controller killed, Controller killer)
 					if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
 					{
 						botStatics[i].num_dies++;
+
+						if(botStatics[i].last_kill_streak > 0)
+						{
+							botStatics[i].kill_streak.Add(1);
+							botStatics[i].kill_streak[botStatics[i].kill_streak.length - 1] = botStatics[i].last_kill_streak;
+						}
+
+						botStatics[i].last_kill_streak = 0;
+
 					}
 				}
 			}
@@ -334,11 +348,23 @@ function SendPawnDied(Controller killed, Controller killer)
 					if(botStatics[i].name == killer.PlayerReplicationInfo.playername)
 					{
 						botStatics[i].num_kills++;
+						botStatics[i].last_kill_streak++;
+
 					}
 			
 					if(botStatics[i].name == killed.PlayerReplicationInfo.playername)
 					{
 						botStatics[i].num_dies++;
+
+						if(botStatics[i].last_kill_streak > 0)
+						{
+							botStatics[i].kill_streak.Add(1);
+							botStatics[i].kill_streak[botStatics[i].kill_streak.length - 1] = botStatics[i].last_kill_streak;
+						}
+
+						botStatics[i].last_kill_streak = 0;
+
+
 					}
 				}
 			}
@@ -409,10 +435,11 @@ function FinishGame()
 	local int i, j;
 	local byte B[255];
 	//avarage distance of kill & avarage delta time fire-kill
-	local float avg_dist, avg_time;
+	local float avg_dist, avg_time, avg_kill_streak;
 
 	avg_dist = 0.0;
 	avg_time = 0.0;
+	avg_kill_streak = 0.0;
 	
 	`log("[TcpLinkServerAcceptor] EndGame called");
 	
@@ -451,6 +478,21 @@ function FinishGame()
 
 		line $= ":avg_time:" $ string(avg_time) $ ":avg_dist:" $ string(avg_dist);
 
+		for(j = 0; j < botStatics[i].kill_streak.length; j++)
+		{
+			avg_kill_streak += botStatics[i].kill_streak[j];
+		}
+
+		if(botStatics[i].kill_streak.length != 0)
+		{
+			avg_kill_streak /= botStatics[i].kill_streak.length;
+		}
+		else
+		{
+			avg_kill_streak = 0;
+		}
+
+		line $= ":kill_streak:" $ string(avg_kill_streak);
 
 		`log("[TcpLinkServerAcceptor] "$line);
 		
@@ -483,7 +525,7 @@ function SetStatKill(string player_name, float delta_time, float distance)
 			botStatics[i].time_kill.Add(1);
 			botStatics[i].time_kill[botStatics[i].time_kill.length - 1] = delta_time;
 
-			`log("[TcpLinkServerAcceptor] " $ player_name $" " $ string(delta_time)$" "$string(distance));
+			//`log("[TcpLinkServerAcceptor] " $ player_name $" " $ string(delta_time)$" "$string(distance));
 
 			botStatics[i].distance_kill.Add(1);
 			botStatics[i].distance_kill[botStatics[i].distance_kill.length - 1] = distance;

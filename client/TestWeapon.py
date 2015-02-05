@@ -5,32 +5,33 @@ import time
 # Weapon ######
 ###############
 
+
 ID = [0, 1]
 
 #default Rof = 1
-ROF = [5.47, 2.03]
+ROF = [2.03, 20]
 #default Spread = 0
-SPREAD = [1.11, 0.42]
+SPREAD = [0.86, 0.29]
 #default MaxAmmo = 40
-AMMO = [746, 219]
+AMMO = [131, 492]
 #deafult ShotCost = 1
-SHOT_COST = [7, 9]
+SHOT_COST = [6, 3]
 #defualt Range 10000
-RANGE = [7.36, 51.94]
+RANGE = [4, 29]
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED = [1, 802]
+SPEED = [206, 7297]
 #default damage = 1
-DMG = [28, 51]
+DMG = [89, 1]
 #default damgae radius = 10
-DMG_RAD = [50, 59]
+DMG_RAD = [79, 75]
 #default gravity = 1
-GRAVITY = [25, 67]
-EXPLOSIVE = [81, 45.75]
+GRAVITY = [-23, 18]
+EXPLOSIVE = [30, 55]
 
 PORT = [3760]
 
@@ -46,8 +47,8 @@ def main():
     client = BalancedWeaponClient(PORT[0])
 
     client.SendInit()
-    client.SendMaxDuration(3600)
-    client.SendGoalScore(20)
+    client.SendMaxDuration(1200)
+    client.SendGoalScore(30)
 
     for i in range(2):
         client.SendWeaponParams(i, ROF[1 - i], SPREAD[1 - i], AMMO[1 - i], SHOT_COST[1 - i], RANGE[1 - i])

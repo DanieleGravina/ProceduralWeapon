@@ -41,15 +41,25 @@ function SetProceduralWeapon(TcpLinkServer _tcp_server)
 		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
 		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
 
-		//Range is MaxRange on default implementation 
-		if(ServerGame(WorldInfo.Game).GetPPParameters().Speed < 300)
+		if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity != 0)
 		{
-			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*
+			myWeapon.WeaponRange = Sqrt( 2*80/Abs( ServerGame(WorldInfo.Game).GetPPParameters().Gravity) ) *
 									ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+
+			//`log("[PWPawn] WeaponRange "$string(myWeapon.WeaponRange));
 		}
-		else
-		{
-			myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*300;
+		else{
+				//Range is MaxRange on default implementation 
+			if(ServerGame(WorldInfo.Game).GetPPParameters().Speed < 300)
+			{
+				myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*
+										ServerGame(WorldInfo.Game).GetPPParameters().Speed;
+			}
+			else
+			{
+				myWeapon.WeaponRange = ServerGame(WorldInfo.Game).GetPWParameters().Range*300;
+			}
+
 		}
 
 /*
@@ -91,7 +101,7 @@ defaultproperties
 	
 	InventoryManagerClass = class'ProceduralInventoryManager'
 	
-	minRangeSniping = 10000;
+	minRangeSniping = 2000;
 	
 	 /** AI and navigation */
     /*AvoidLedges=true               // don't get too close to ledges

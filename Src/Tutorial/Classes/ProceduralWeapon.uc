@@ -47,7 +47,7 @@ function SetStatProjectile(Projectile proj, Vector start_loc)
 {
     ProceduralProjectile(proj).tcp_server = tcp_server;
 
-    ProceduralProjectile(proj).time_weapon = WorldInfo.TimeSeconds;
+    ProceduralProjectile(proj).time_weapon = WorldInfo.RealTimeSeconds;
 
     ProceduralProjectile(proj).start_location = start_loc;
 }
@@ -74,6 +74,9 @@ simulated function CustomFire()
 
         // this is the location where the projectile is spawned
         RealStartLoc = GetPhysicalFireStartLoc();
+
+        //`log("[ProceduralWeapon] Fire pos "$string(RealStartLoc));
+        
         // get fire aim direction
         GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
 
@@ -108,7 +111,7 @@ simulated function CustomFire()
                 if ( (y != 0) || (z != 0) )
                 {
                     Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
-                    if (Proj != None)
+                    if (Proj != None && !Proj.bDeleteMe)
                     {
                         SetStatProjectile(Proj, RealStartLoc);
                         Proj.Init(AimDir + (0.3 + 0.7*FRand())*Mag*y*SpreadDist*YDir + (0.3 + 0.7*FRand())*Mag*z*SpreadDist*ZDir );
@@ -116,8 +119,11 @@ simulated function CustomFire()
                 }
                 else
                 {
-                    SetStatProjectile(Proj, RealStartLoc);
-                    Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+                    if (Proj != None && !Proj.bDeleteMe)
+                    {
+                        SetStatProjectile(Proj, RealStartLoc);
+                        Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+                    }
                 }
                     
                 
@@ -127,6 +133,11 @@ simulated function CustomFire()
 }
 
 function float GetOptimalRangeFor(Actor Target)
+{
+    return MaxRange();
+}
+
+simulated function float MaxRange()
 {
     return WeaponRange;
 }

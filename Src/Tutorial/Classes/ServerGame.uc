@@ -27,6 +27,7 @@ struct PPParameters{
 	var float DamageRadius;
 	var float Gravity;
 	var float Explosive;
+	var bool Bounce;
 };
 
 /* map PW parameters with bots name*/
@@ -46,7 +47,7 @@ var PWParameters tempPW;
 event InitGame( string Options, out string ErrorMessage )
 {
 	local string InOpt;
-	local Mutator mut;
+	local Mutator mutPW, mutNoPowerUps;
 	
 	super.InitGame(Options, ErrorMessage);
 	
@@ -79,18 +80,21 @@ event InitGame( string Options, out string ErrorMessage )
 	}
 
 	//Add Procedural Weapon Mutator -> change weapon in weapon factory and projectile as well
-	mut = Spawn(class 'UTMutator_ProceduralWeapon');
+	mutPW = Spawn(class 'UTMutator_ProceduralWeapon');
+	mutNoPowerUps = Spawn(class 'UTMutator_NoPowerups ');
 	// mc, beware of mut being none
-	if (mut != None)
+	if (mutPW != None && mutNoPowerUps != None)
 	{
 
 		if (BaseMutator == None)
 		{
-			BaseMutator = mut;
+			BaseMutator = mutPW;
+			BaseMutator.AddMutator(mutNoPowerUps);
 		}
 		else
 		{
-			BaseMutator.AddMutator(mut);
+			BaseMutator.AddMutator(mutPW);
+			BaseMutator.AddMutator(mutNoPowerUps);
 		}
 
 	}

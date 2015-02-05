@@ -7,6 +7,8 @@ var TcpLinkServer tcp_server;
 var float time_weapon;
 var vector start_location;
 
+var bool bHasBounce;
+
 function Init(vector Direction)
 {
 	local string playerName;
@@ -40,29 +42,80 @@ function Init(vector Direction)
 
 simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNormal)
 {
-   local bool bHasKilled, bIsAlreadyKilled;
+   /*local bool bHasKilled, bIsAlreadyKilled;
 
    bIsAlreadyKilled = false;
    bHasKilled = false;
 
+   `log("[ProceduralProjectile] HitBot "$string(HitLocation)); 
+
    if(PWPawn(Other).Health <= 0)
    {
       bIsAlreadyKilled = true;
-   }
+   }*/
 
    Super.ProcessTouch(Other, HitLocation, HitNormal);
 
-   if(PWPawn(Other).Health <= 0 && !bIsAlreadyKilled)
+   /*if(PWPawn(Other).Health <= 0 && !bIsAlreadyKilled)
    {
       bHasKilled = true;
-   }
+   }*/
 
-   if(bHasKilled && tcp_server.currentAcceptor != none)
+   if(tcp_server.currentAcceptor != none)
    {
 
       TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
-                               WorldInfo.TimeSeconds*WorldInfo.TimeDilation - time_weapon*WorldInfo.TimeDilation, 
-                               Vsize(HitLocation - start_location));
+                               WorldInfo.RealTimeSeconds - time_weapon, Vsize(HitLocation - start_location));
+   }
+}
+
+simulated function Explode(vector HitLocation, vector HitNormal)
+{
+   local vector SpawnPos, BaseChunkDir;
+   local actor HitActor;
+   local rotator rot;
+   local int i;
+   local ProceduralProjectile NewChunk;
+
+   Super.Explode(HitLocation, HitNormal);
+
+   if(bHasBounce)
+   {
+      SpawnPos = Location + 10 * HitNormal;
+
+      HitActor = Trace(HitLocation, HitNormal, SpawnPos, Location, false);
+      if (HitActor != None)
+      {
+         SpawnPos = HitLocation;
+      }
+
+      if ( (Role == ROLE_Authority) && (UTVehicle(ImpactedActor) == None) )
+      {
+         BaseChunkDir = Normal(HitNormal + 0.8 * Normal(Velocity));
+         for (i = 0; i < 5; i++)
+         {
+            rot = rotator(4*BaseChunkDir + VRand());
+            
+            if(self.isA('ProceduralProjectile'))
+            {
+               NewChunk = Spawn(class 'ProceduralProjectile',, '', SpawnPos, rot);
+            }
+            else
+            {
+               NewChunk = Spawn(class 'ProceduralProjectile2',, '', SpawnPos, rot);
+            }
+
+            if (NewChunk != None)
+            {
+               //NewChunk.bCheckShortRangeKill = false;
+               NewChunk.tcp_server = tcp_server;
+               NewChunk.time_weapon = time_weapon;
+               NewChunk.start_location = start_location;
+
+               NewChunk.Init(vector(rot));
+            }
+         }
+      }
    }
 }
 
@@ -126,12 +179,12 @@ simulated function bool ProjectileHurtRadius( float DamageAmount, float InDamage
          Victim.TakeRadiusDamage(InstigatorController, DamageAmount, DamageRadius, DamageType, Momentum, HurtOrigin, false, self);
          bCausedDamage = bCausedDamage || Victim.bProjTarget;
 
-         if(PWPawn(Victim) != None && PWPawn(Victim).Health <= 0 && PWPawn(Victim).controller != InstigatorController)
+         if(PWPawn(Victim) != None && PWPawn(Victim).controller != InstigatorController)
          {
             if(tcp_server.currentAcceptor != None)
             {
                TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
-                                  WorldInfo.TimeSeconds*WorldInfo.TimeDilation - time_weapon*WorldInfo.TimeDilation, 
+                                  WorldInfo.RealTimeSeconds - time_weapon, 
                                   Vsize(HurtOrigin - start_location));
             }
          }
@@ -166,4 +219,6 @@ defaultproperties
    CollisionComponent=CollisionCylinder
    Name="Default__Procedural_Projectile"
    ObjectArchetype=UTProjectile'UTGame.Default__UTProjectile'
+
+   bHasBounce = false;
 }

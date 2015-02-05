@@ -61,21 +61,39 @@ LAMBDA = NUM_POP
 MU = NUM_POP
 
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
+CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
 
 #####################################################################
+
+# Custum random parameter generator for special effect 
+def custumRandom(min, max):
+
+    return random.randint(min, max)
+
+    op_choice = random.random()
+
+    m = min
+
+    if min < 0 :
+        m = (min + max) / 2
+
+    if op_choice <= 0.25 :
+        return m
+    else :
+        return random.randint(min, max)
+
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
 toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
-toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
+toolbox.register("attr_shot_cost", custumRandom, SHOT_COST_MIN, SHOT_COST_MAX)
 toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
 
 toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
 toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
 toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
-toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
-toolbox.register("attr_explosive", random.randint, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
+toolbox.register("attr_gravity", custumRandom, GRAVITY_MIN, GRAVITY_MAX)
+toolbox.register("attr_explosive", custumRandom, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
 
 toolbox.decorate("attr_rof", round_decorator(0,1))
 toolbox.decorate("attr_spread", round_decorator(0,1))
@@ -233,9 +251,9 @@ def entropy(index, statistics) :
         e += evaluate_entropy(i, statistics, total_kills, total_dies, NUM_BOTS)
 
     print(str(index) + " entropy " + str(e) +
-             " kills " + str(total_kills/20) + " suicides " + str(1/(1 + match_suicides(index, statistics))))
+             " kills " + str(total_kills/GOAL_SCORE) + " suicides " + str(pow(9/10, match_suicides(index, statistics))))
 
-    return e + total_kills/20 + 1/(1 + match_suicides(index, statistics))
+    return e + total_kills/GOAL_SCORE + pow(9/10, match_suicides(index, statistics))
 
 
 def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
@@ -263,12 +281,24 @@ def evaluate(index, population, statistics):
 
     return e,
 
+def customCrossover(ind1, ind2):
+    p = random.random()
 
-toolbox.register("mate", tools.cxTwoPoint)
+    ind = toolbox.clone(ind2)
+
+    if p < 0.5 :
+        return tools.cxTwoPoint(ind1, ind2)
+    else :
+        ind[:10] = ind2[10:]
+        ind[10:] = ind2[:10]
+        return tools.cxTwoPoint(ind1, ind)
+
+
+toolbox.register("mate", customCrossover)
 
 
 toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.05 for j in range(10)] , 
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
                                               indpb = 0.1)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
