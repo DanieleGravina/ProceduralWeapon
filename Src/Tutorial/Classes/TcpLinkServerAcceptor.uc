@@ -289,11 +289,21 @@ function ModifyProjectile(array<string> ProjectilePar, int index)
 		{
 			ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Explosive = val;
 		}
+
+		else if (par ~= "Bounce")
+		{
+			if(val == 1)
+			{
+				ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = true;
+			}
+			else
+			{
+				ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = false;
+			}
+		}
 		
 		++i;
 	}
-
-	ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = false;	
 	
 }
 

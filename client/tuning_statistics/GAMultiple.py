@@ -16,7 +16,6 @@ from Costants import *
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
 from itertools import repeat
-from Normalization import *
 
 from math import log
 from math import pow
@@ -44,7 +43,7 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 20 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 10, 10
@@ -106,7 +105,7 @@ toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
 toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
 toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
 toolbox.register("attr_gravity", custumRandom, GRAVITY_MIN, GRAVITY_MAX)
-toolbox.register("attr_explosive", custumRandom, EXPLOSIVE_MIN, EXPLOSIVE_MAX))
+toolbox.register("attr_explosive", custumRandom, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
 
 toolbox.decorate("attr_rof", round_decorator(0,1))
 toolbox.decorate("attr_spread", round_decorator(0,1))

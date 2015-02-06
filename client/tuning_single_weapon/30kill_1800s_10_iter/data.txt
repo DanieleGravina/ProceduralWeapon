@@ -1,0 +1,9 @@
+10 iter
+total goal score : 30
+NSGA II
+1 obiettivo : entropia + 9/10^(suicidi) + kill/30
+2 obiettivo : minimizza distanza da arma target data arma fixed
+
+Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      0, 220]
+
+Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy
 import pickle
 import time
+import threading
 
 
 from decimal import *
@@ -47,7 +48,7 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 20 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 10, 10
@@ -70,7 +71,7 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
-Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      -1, 220]
+Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      0, 220]
 
 Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]
 
@@ -174,7 +175,6 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
-    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -192,8 +192,6 @@ def simulate_population(population, port) :
     pop = {}
     threads = []
 
-    return stats, port
-
     num_server = len(port)
     
     lock = threading.Lock()
@@ -201,7 +199,7 @@ def simulate_population(population, port) :
     for i in range(len(population)):
 
         if not population[i].fitness.valid :
-            pop.update( {i*2 : population[i]} )
+            pop.update( {i*2 : population[i] + Weapon_Fixed} )
 
     while len(pop) != 0 :
 
@@ -221,6 +219,13 @@ def simulate_population(population, port) :
         num_server = len(port)
 
     return stats, port
+
+def match_suicides(index, statistics) :
+    suicides = 0
+    suicides += statistics[index][1] - statistics[index + 1][0]
+    suicides += statistics[index + 1][1] - statistics[index][0]
+
+    return suicides
 
 
 def match_kills(index, statics) :
@@ -283,8 +288,8 @@ def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    #e = entropy(index*2, statics)
-    e = 2
+    e = entropy(index*2, statics)
+    #e = 2
     diff = difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
