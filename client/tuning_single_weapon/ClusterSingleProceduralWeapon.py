@@ -57,12 +57,12 @@ def writeWeapon(pop, pop_file):
 
 def normalize(data):
 	for i in range(data.shape[0]):
-		for j in range(9):
+		for j in range(data.shape[1]):
 			data[i][j] = (data[i][j] - limits[j][0])/(limits[j][1] - limits[j][0])
 
 	return data
 
-class ClusterProceduralWeapon:
+class ClusterSingleProceduralWeapon:
 	def __init__(self, data = None, pure_data = None):
 		self.data = np.array(data, np.float32)
 		self.pure_data = pure_data

@@ -1,3 +1,8 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 import random
 import matplotlib.pyplot as plt
 import numpy
@@ -5,28 +10,26 @@ import pickle
 import time
 import statistics
 
-from Costants import NUM_BOTS
-from Costants import PORT
+from Costants import *
 
-from BalancedWeaponClient import BalancedWeaponClient
 from TestClientThread import TestClientThread
-from InitialPopulationSeed import Weapons
+from BalancedWeaponClient import BalancedWeaponClient
 
 from math import log
 
 
 N_CYCLES = 1
-NUM_SERVER = 2
+NUM_SERVER = 4
 NUM_BOTS = 2
 
-N_SERVER_SPEED_1 = 1
+N_SERVER_SPEED_1 = 3
 
-population = [3, 9]
+population = [3, 3, 3, 9]
 
 statics = {}
 
 speed1 = "1x"
-speed2 = "12x"
+speed2 = "8x"
 
 
 def initialize_server():
@@ -59,7 +62,7 @@ def simulate_population() :
     '''
 
     threads = []
-    GoalScore = 40
+    GoalScore = 30
     TestWeapon = [Weapons[i] for i in range(2)]
 
     print(TestWeapon)

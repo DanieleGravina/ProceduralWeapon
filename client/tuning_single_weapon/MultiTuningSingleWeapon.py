@@ -1,3 +1,8 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 import random
 import matplotlib.pyplot as plt
 import numpy
@@ -9,17 +14,13 @@ from decimal import *
 from functools import partial
 from operator import attrgetter
 
-from Costants import NUM_BOTS
-from Costants import NUM_SERVER
-from Costants import INITIAL_PORT
-from Costants import MAX_DURATION
+from Costants import *
 
 from WeaponParameter import *
 
 from BalancedWeaponClient import BalancedWeaponClient
-from ClientThread import myThread
-from ClusterProceduralWeapon import ClusterProceduralWeapon
-from InitialPopulationSeed import getOneSeedWeapons
+from SimulationThread import SimulationThread
+from ClusterSingleProceduralWeapon import ClusterSingleProceduralWeapon
 
 from math import log
 from math import pow
@@ -29,41 +30,41 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, -1.0, 1.0))
-creator.create("Individual", list, fitness=creator.FitnessMax)
+#####################################################################
+
+#################
+#GA PARAMETERS###
+#################
+
+
+# size of the population
+NUM_POP = 50
+
+#:param mu: The number of individuals to select for the next generation.
+#:param lambda\_: The number of children to produce at each generation.
+LAMBDA = NUM_POP
+MU = NUM_POP
+
+#crossover (0.6 -1), mutation prob (1/nreal)
+#crossover probability, mutation probability, number of generation
+CXPB, MUTPB, NGEN = 0.6, 0.1, 20 #160 min
+
+#eta c (5-50), eta_m (5-20)
+ETA_C, ETA_M = 10, 10
+
+weight_obj_1 = MINIMIZE
+
+
+N_CYCLES = 2
+
+#####################################################################
+
+creator.create("FitnessMax", base.Fitness, weights = (1.0, weight_obj_1))
+creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
 
 toolbox = base.Toolbox()
-
-###############
-# Weapon ######
-###############
-#default Rof = 100
-ROF_MIN, ROF_MAX = 10, 1000
-#default Spread = 0
-SPREAD_MIN, SPREAD_MAX = 0, 300
-#default MaxAmmo = 40
-AMMO_MIN, AMMO_MAX = 1, 999
-#deafult ShotCost = 1
-SHOT_COST_MIN, SHOT_COST_MAX = 1, 10
-#defualt Range 10000
-RANGE_MIN, RANGE_MAX = 100, 10000
-
-###################
-# Projectile ######
-###################
-
-#default speed = 1000
-SPEED_MIN, SPEED_MAX = 1, 10000
-#default damage = 1
-DMG_MIN, DMG_MAX = 1, 100
-#default damgae radius = 10
-DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
-#default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -10000, 10000
-#Explosion
-EXPLOSIVE_MIN, EXPLOSIVE_MAX = 0, 100
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
@@ -87,9 +88,6 @@ MU = NUM_POP
 
 #MAX KILLS PER MATCH
 MAX_KILLS = 20
-
-#NUM OF NOT RUNNING SERVER
-numServerCrashed = 0
 
 def round_decorator(min, max):
     def decorator(func):
@@ -176,7 +174,7 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
-    #return
+    return
     clients = []
 
     for i in range(NUM_SERVER):
@@ -187,125 +185,43 @@ def initialize_server(PORT):
         c.SendStartMatch()
         c.SendClose()
 
-def redo_simulation(indexToRedo, population, numServerCrashed, PORT):
-
-    stats = {}
-    threads = []
-    # population index
-    index = 0
-    # flag to know if we have finished
-    bSimulate = True
-
-    temp = None
-
-    while bSimulate:
-
-        to_simulate = 0
-        
-        while to_simulate < NUM_SERVER - numServerCrashed and len(indexToRedo) != 0 :
-
-            index = indexToRedo.pop()
-
-            threads.append( myThread(index*2, "Thread-" + str(index), population, Weapon_Fixed, PORT[to_simulate]) )
-            to_simulate += 1
-
-        if len(indexToRedo) == 0 :
-            bSimulate = False
-
-        for t in threads:
-            t.start()
-
-        # Wait for all threads to complete
-        for t in threads:
-            temp = t.join()
-
-            if temp != None :
-                stats.update(temp)
-            else :
-                numServerCrashed += 1
-
-                if NUM_SERVER - numServerCrashed == 0 :
-                    bSimulate = False
-                
-                indexToRedo += [int(t.threadID/2)]
-
-        threads = []
-
-    return stats
-
-
 # Run the simulation on the server side (UT3)
-def simulate_population(population, numServerCrashed, PORT) :
+def simulate_population(population, port) :
+
     stats = {}
-    #return stats, PORT, numServerCrashed
+    pop = {}
     threads = []
-    # population index
-    index = 0
-    # flag to know if we have finished
-    bSimulate = True
 
-    temp = None
+    return stats, port
 
-    indexToRedo = []
+    num_server = len(port)
+    
+    lock = threading.Lock()
 
-    to_simulate = 0
+    for i in range(len(population)):
 
-    while bSimulate:
+        if not population[i].fitness.valid :
+            pop.update( {i*2 : population[i]} )
 
-        to_simulate = 0
-        
-        while to_simulate < NUM_SERVER - numServerCrashed and index < len(population) :
+    while len(pop) != 0 :
 
-            if not population[index].fitness.valid :
-                threads.append( myThread(index*2, "Thread-" + str(index), population, Weapon_Fixed, PORT[to_simulate]) )
-                to_simulate += 1
-            
-            index += 1
-
-        if index >= len(population) :
-            bSimulate = False
+        for i in range(num_server):
+            threads.append( SimulationThread(pop, i, port, lock) )
 
         for t in threads:
             t.start()
 
-        # Wait for all threads to complete
         for t in threads:
-            temp = t.join()
+            stats.update(t.join())
 
-            if temp != None :
-                stats.update(temp)
-            else :
-                numServerCrashed += 1
-
-                if NUM_SERVER - numServerCrashed == 0 :
-                    bSimulate = False
-
-                indexToRedo += [int(t.threadID/2)]
-                PORT.remove(t.port)
-                print(PORT)
+        del threads
 
         threads = []
 
-    stats.update(redo_simulation(indexToRedo, population, numServerCrashed, PORT))
+        num_server = len(port)
 
-    return stats, PORT, numServerCrashed
+    return stats, port
 
-def entropy(index, statics) :
-
-    e = 0
-
-    total_kills = 0
-    total_dies = 0
-
-    for key, val in statics.items():
-        if key >= index and key <= index + (NUM_BOTS - 1) :
-            total_kills += val[0]
-            total_dies += val[1]
-
-    for i in range(index, index + NUM_BOTS):
-        e += evaluate_entropy(i, statics, total_kills, total_dies, NUM_BOTS)
-
-    return e
 
 def match_kills(index, statics) :
 
@@ -334,36 +250,65 @@ def difference(index, pop) :
 
 
 
-def evaluate_entropy(index, statics, total_kills, total_dies, N) :
+def entropy(index, statistics) :
 
-    p_kills = 0  if total_kills == 0 else statics[index][0]/total_kills
-    p_dies = 0 if total_dies == 0 else statics[index][1]/total_dies
+    e = 0
+
+    total_kills = 0
+    total_dies = 0
+
+    for key, val in statistics.items():
+        if key >= index and key <= index + (NUM_BOTS - 1) :
+            total_kills += val[0]
+            total_dies += val[1]
+
+    for i in range(index, index + NUM_BOTS):
+        e += evaluate_entropy(i, statistics, total_kills, total_dies, NUM_BOTS)
+
+    print(str(index) + " entropy " + str(e) +
+             " kills " + str(total_kills/GOAL_SCORE) + " suicides " + str(pow(9/10, match_suicides(index, statistics))))
+
+    return e + total_kills/GOAL_SCORE + pow(9/10, match_suicides(index, statistics))
+
+
+def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
+
+    kills = statistics[index][0]
+
+    p_kills = 0 if total_kills == 0 else kills/total_kills
 
     entropy_kill = p_kills*log(p_kills, N) if p_kills != 0 else 0
 
-    entropy_dies = p_dies*log(p_dies, N) if p_dies != 0 else 0
-
-    return -(entropy_kill + entropy_dies)
+    return -entropy_kill
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
-    e = entropy(index*2, statics)
-    #e, tot_kills = random.randint(0,2), random.randint(0, 25)
-    tot_kills = match_kills(index*2, statics)
+    #e = entropy(index*2, statics)
+    e = 2
     diff = difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
     print('difference :' + str(index) + " " + str(diff))
-    print('tot kills :' + str(index) + " " + str(tot_kills))
 
-    return e, diff, tot_kills
+    return e, diff
 
 
-toolbox.register("mate", tools.cxTwoPoint)
+def customCrossover(ind1, ind2):
 
-toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(10)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
-                                              indpb = 0.1)
+    return tools.cxSimulatedBinaryBounded(ind1,
+                                          ind2,
+                                          eta = ETA_C, 
+                                          low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                          up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
+
+
+toolbox.register("mate", customCrossover)
+
+
+toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
+                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
+                                                       indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
 
@@ -386,24 +331,102 @@ stats2.register("std", numpy.std)
 stats2.register("min", numpy.min)
 stats2.register("max", numpy.max)
 
-stats3 = tools.Statistics(key = lambda ind: ind.fitness.values[2])
-
-stats3.register("avg", numpy.mean)
-stats3.register("std", numpy.std)
-stats3.register("min", numpy.min)
-stats3.register("max", numpy.max)
-
-mstats = tools.MultiStatistics(entropy = stats1, diff = stats2, kills = stats3)
+mstats = tools.MultiStatistics(entropy = stats1, diff = stats2)
 
 logbook = tools.Logbook()
 
 hof = tools.ParetoFront()
 
+def binary_tournament(ind1, ind2):
+        if ind1.fitness.dominates(ind2.fitness):
+            return ind1
+        elif ind2.fitness.dominates(ind1.fitness):
+            return ind2
+
+        if ind1.fitness.crowding_dist < ind2.fitness.crowding_dist:
+            return ind2
+        elif ind1.fitness.crowding_dist > ind2.fitness.crowding_dist:
+            return ind1
+
+        if random.random() <= 0.5:
+            return ind1
+        return ind2
+
+
+def eaMuPlusLambda(pop, gen, port, logbook_file) :
+    offspring = []
+
+    while len(offspring) < LAMBDA:
+        op_choice = random.random()
+        if op_choice < CXPB:            # Apply crossover
+            ind1, ind2 = random.sample(pop, 2)
+            ind3, ind4 = random.sample(pop, 2)
+
+            child1 = binary_tournament(ind1, ind2)
+            child2 = binary_tournament(ind3, ind4)
+
+            ind1, ind2 = map(toolbox.clone, [child1, child2])
+
+            ind1, ind2 = toolbox.mate(ind1, ind2)
+
+            del ind1.fitness.values
+            del ind2.fitness.values
+
+            offspring.append(ind1)
+            offspring.append(ind2)
+
+        elif op_choice < CXPB + MUTPB:  # Apply mutation
+            ind1, ind2 = random.sample(pop, 2)
+            child = binary_tournament(ind1, ind2)
+
+            ind = toolbox.clone(child)
+
+            ind, = toolbox.mutate(ind)
+            del ind.fitness.values
+            offspring.append(ind)
+
+        else:
+
+            ind1, ind2 = random.sample(pop, 2)
+            child = binary_tournament(ind1, ind2)     # Apply reproduction
+
+            ind = toolbox.clone(child) 
+            offspring.append(ind)
+
+    statistics, port = simulate_population(offspring, port)
+
+
+    logbook_file.write("Gen : " + str(gen+1) + "\n")
+    for key, val in statistics.items():
+            logbook_file.write(str(key) + " : " + str(val) + "\n")
+    logbook_file.write("*********************************************************\n")
+
+    # Evaluate only invalid population
+    index = 0
+    fit = 0,
+
+    fitnesses = [0 for _ in range(len(offspring))]
+
+    for index in range(len(offspring)):
+
+        if not offspring[index].fitness.valid :
+            fit = toolbox.evaluate(index, offspring, statistics)
+            fitnesses[index] = fit
+        else :
+            fitnesses[index] = offspring[index].fitness.values
+
+    for ind, fit in zip(offspring, fitnesses):
+        ind.fitness.values = fit
+
+    pop[:] = toolbox.select(pop + offspring, MU)
+
+    return pop, port
+
+
 def main():
 
-    PORT = INITIAL_PORT
-
-    numServerCrashed = 0
+    #clone initial port definition
+    port = INITIAL_PORT[:]
 
     pop_file = open("population.txt", "w")
     logbook_file = open("logbook.txt", "w")
@@ -413,27 +436,29 @@ def main():
     printWeapon(pop)
     writeWeapon(pop, pop_file)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 20 #160 min
-
     fitnesses = []
-    statics = {}
 
-    initialize_server(PORT)
+    statistics = {}
 
-    statics, PORT, numServerCrashed = simulate_population(pop, numServerCrashed, PORT)
+    initialize_server(port)
 
+    statistics, port = simulate_population(pop, port)
+
+    ###logbook update ####
     logbook_file.write("Gen : " + str(0) + "\n")
-    for key, val in statics.items():
+    for key, val in statistics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
     logbook_file.write("*********************************************************\n")
+    ######################
 
     # Evaluate the entire population
     for i in range(len(pop)) :
-        fitnesses += [toolbox.evaluate(i, pop, statics)]
+        fitnesses += [toolbox.evaluate(i, pop, statistics)]
 
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
+    pop[:] = toolbox.select(pop, MU)
 
     record = mstats.compile(pop)
     hof.update(pop)
@@ -443,7 +468,6 @@ def main():
     logbook.header = "gen", "entropy", "diff", "kills"
     logbook.chapters["entropy"].header = "avg", "max"
     logbook.chapters["diff"].header = "avg", "min"
-    logbook.chapters["kills"].header = "avg", "max"
 
     print(logbook)
 
@@ -452,44 +476,7 @@ def main():
 
     for g in range(NGEN - 1):
 
-        offspring = []
-        for _ in range(LAMBDA):
-            op_choice = random.random()
-            if op_choice < CXPB:            # Apply crossover
-                ind1, ind2 = list(map(toolbox.clone, random.sample(pop, 2)))
-                ind1, ind2 = toolbox.mate(ind1, ind2)
-                del ind1.fitness.values
-                offspring.append(ind1)
-            elif op_choice < CXPB + MUTPB:  # Apply mutation
-                ind = toolbox.clone(random.choice(pop))
-                ind, = toolbox.mutate(ind)
-                del ind.fitness.values
-                offspring.append(ind)
-            else:                           # Apply reproduction
-                offspring.append(random.choice(pop))
-
-        statics, PORT, numServerCrashed = simulate_population(offspring, numServerCrashed, PORT)
-
-        logbook_file.write("Gen : " + str(g+1) + "\n")
-        for key, val in statics.items():
-                logbook_file.write(str(key) + " : " + str(val) + "\n")
-        logbook_file.write("*********************************************************\n")
-
-        fitnesses = []
-
-        # Evaluate only invalid population
-        index = 0
-        fit = 0,
-        while index < len(pop):
-
-            if not offspring[index].fitness.valid :
-                fit = toolbox.evaluate(index, offspring, statics)
-                fitnesses += [fit]
-                offspring[index].fitness.values = fit
-
-            index += 1
-
-        pop[:] = toolbox.select(pop + offspring, MU)
+        pop, port = eaMuPlusLambda(pop, g, port, logbook_file) 
 
         printWeapon(pop)
         writeWeapon(pop, pop_file)
@@ -499,18 +486,16 @@ def main():
 
         logbook.record(gen = g + 1, **record)
 
-        logbook.header = "gen", "entropy", "diff", "kills"
+        logbook.header = "gen", "entropy", "diff"
         logbook.chapters["entropy"].header = "avg", "max"
         logbook.chapters["diff"].header = "avg", "min"
-        logbook.chapters["kills"].header = "avg", "max"
 
         print(logbook)
 
 
-    logbook.header = "gen", "entropy", "diff", "kills"
+    logbook.header = "gen", "entropy", "diff"
     logbook.chapters["entropy"].header = "min", "avg", "max"
     logbook.chapters["diff"].header = "min", "avg", "max"
-    logbook.chapters["kills"].header = "min", "avg", "max"
     
     log_string = str(logbook)
 
@@ -526,7 +511,15 @@ def main():
     pop_file.close()
     logbook_file.close()
 
+    #################################################################################
+
+    ############################################
+    ###plot min, avg, max of singles objectives#
+    ############################################
+
     plt.figure(1)
+
+    plt.subplot(211)
 
     gen = logbook.select("gen")
     fit_avg = logbook.chapters["entropy"].select("avg")
@@ -538,7 +531,7 @@ def main():
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
 
-    plt.figure(2)
+    plt.subplot(212)
 
     fit_avg = logbook.chapters["diff"].select("avg")
     fit_max = logbook.chapters["diff"].select("max")
@@ -547,28 +540,21 @@ def main():
     plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
 
     plt.xlabel("Generation")
-    plt.ylabel("Difference")
+    plt.ylabel("Difference Target Weapon")
 
-    plt.figure(3)
+    ##########################################################################
 
-    fit_avg = logbook.chapters["kills"].select("avg")
-    fit_max = logbook.chapters["kills"].select("max")
-    fit_min = logbook.chapters["kills"].select("min")
+    ##########################
+    ##plot multiobjective ####
+    ##########################
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
-
-    plt.xlabel("Generation")
-    plt.ylabel("kills")
+    plt.figure(2)
 
     e = [pop[i].fitness.values[0] for i in range(len(pop))]
     d = [pop[i].fitness.values[1] for i in range(len(pop))]
-    k = [pop[i].fitness.values[2] for i in range(len(pop))]
 
     e_front = [hof[i].fitness.values[0] for i in range(len(hof))]
     d_front = [hof[i].fitness.values[1] for i in range(len(hof))]
-    k_front = [hof[i].fitness.values[2] for i in range(len(hof))]
-
-    plt.figure(4)
 
     plt.xlabel("Entropy")
     plt.ylabel("Difference")
@@ -577,25 +563,10 @@ def main():
     plt.scatter(e_front, d_front, c=u'r')
     plt.plot(e_front, d_front)
 
-    plt.figure(5)
+    plt.show();
+    ##########################################################################
 
-    plt.xlabel("Difference")
-    plt.ylabel("Number of Kills")
-
-    plt.scatter(d, k)
-    plt.scatter(d_front, k_front, c=u'r')
-    plt.plot(d_front, k_front)
-
-    plt.figure(6)
-
-    plt.xlabel("Entropy")
-    plt.ylabel("Number of kills")
-
-    plt.scatter(e, k)
-    plt.scatter(e_front, k_front, c=u'r')
-    plt.plot(e_front, k_front)
-    
-    cluster = ClusterProceduralWeapon(pop, pop)
+    cluster = ClusterSingleProceduralWeapon(pop, pop)
     cluster.cluster()
 
 

@@ -1,3 +1,8 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 import random
 import matplotlib.pyplot as plt
 import numpy
@@ -22,7 +27,40 @@ from deap import base
 from deap import creator
 from deap import tools
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, -1.0))
+#####################################################################
+
+#################
+#GA PARAMETERS###
+#################
+
+
+# size of the population
+NUM_POP = 50
+
+#:param mu: The number of individuals to select for the next generation.
+#:param lambda\_: The number of children to produce at each generation.
+LAMBDA = NUM_POP
+MU = NUM_POP
+
+#crossover (0.6 -1), mutation prob (1/nreal)
+#crossover probability, mutation probability, number of generation
+CXPB, MUTPB, NGEN = 0.6, 0.1, 20 #160 min
+
+#eta c (5-50), eta_m (5-20)
+ETA_C, ETA_M = 10, 10
+
+obj_1 = DISTANCE
+obj_2 = KILL_STREAK
+
+weight_obj_1 = MAXIMIZE
+weight_obj_2 = MAXIMIZE
+
+
+N_CYCLES = 2
+
+#####################################################################
+
+creator.create("FitnessMax", base.Fitness, weights = (1.0, weight_obj_1, weight_obj_2))
 creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
@@ -42,39 +80,33 @@ def round_decorator(min, max):
         return wrapper
     return decorator
 
-N_CYCLES = 2
+# Custum random parameter generator for special effect 
+def custumRandom(min, max):
 
-#####################################################################
+    op_choice = random.random()
 
-#################
-#GA PARAMETERS###
-#################
+    m = min
 
+    if min < 0 :
+        m = (min + max) / 2
 
-# size of the population
-NUM_POP = 50
+    if op_choice <= 0.25 :
+        return m
+    else :
+        return random.randint(min, max)
 
-#:param mu: The number of individuals to select for the next generation.
-#:param lambda\_: The number of children to produce at each generation.
-LAMBDA = NUM_POP
-MU = NUM_POP
-
-#crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.5, 0.2, 5 #160 min
-
-#####################################################################
 
 toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
 toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
 toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
-toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
+toolbox.register("attr_shot_cost", custumRandom, SHOT_COST_MIN, SHOT_COST_MAX)
 toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
 
 toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
 toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
 toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
-toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
-toolbox.register("attr_explosive", random.randint, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
+toolbox.register("attr_gravity", custumRandom, GRAVITY_MIN, GRAVITY_MAX)
+toolbox.register("attr_explosive", custumRandom, EXPLOSIVE_MIN, EXPLOSIVE_MAX))
 
 toolbox.decorate("attr_rof", round_decorator(0,1))
 toolbox.decorate("attr_spread", round_decorator(0,1))
@@ -247,13 +279,9 @@ def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
     return -entropy_kill
 
-def evaluate_distance(index, statistics):
+def evaluate_objective(index, statistics, objective_1, objective_2):
 
-    return statistics[index][3], statistics[index + 1][3]
-
-def evaluate_delta_time(index, statistics):
-
-    return statistics[index][2], statistics[index + 1][2]
+    return statistics[index][objective_1], statistics[index + 1][objective_2]
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):
@@ -264,7 +292,7 @@ def evaluate(index, population, statistics):
 
     suicides = match_suicides(index*2, statistics)
 
-    dist1, dist2 = evaluate_delta_time(index*2, statistics)
+    dist1, dist2 = evaluate_objective(index*2, statistics, obj_1, obj_2)
     #dist1, dist2 = random.randint(0, 5), random.randint(0, 5)
 
     print("distance " +  str(dist1) + " " + str(dist2))
@@ -272,30 +300,18 @@ def evaluate(index, population, statistics):
     return e, dist1, dist2
 
 def customCrossover(ind1, ind2):
-    p = random.random()
 
-    ind = toolbox.clone(ind2)
-
-    if p <= 0.5 :
-        return tools.cxSimulatedBinaryBounded(ind1,
-                                              ind2,
-                                              eta = 5, 
-                                              low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                              up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
-    else :
-        ind[:10] = ind2[10:]
-        ind[10:] = ind2[:10]
-        return tools.cxSimulatedBinaryBounded(ind1,
-                                              ind2,
-                                              eta = 5, 
-                                              low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                              up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
+    return tools.cxSimulatedBinaryBounded(ind1,
+                                          ind2,
+                                          eta = ETA_C, 
+                                          low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                          up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
 
 
 toolbox.register("mate", customCrossover)
 
 
-toolbox.register("mutate", tools.mutPolynomialBounded, eta = 5,
+toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
                                                        indpb = 0.1)
@@ -621,7 +637,6 @@ def main():
     plt.show();
     ##########################################################################
 
-    '''
     cluster_file = open("cluster.txt", "w")
 
     cluster_file.write("Hall of Fame cluster")
@@ -636,7 +651,6 @@ def main():
 
     cluster = ClusterProceduralWeapon(real_pop, pop, cluster_file)
     cluster.cluster()
-    '''
 
 
 

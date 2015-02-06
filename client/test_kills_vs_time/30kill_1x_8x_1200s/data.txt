@@ -1,0 +1,9 @@
+3 server 1x 3 iter x server
+1 server 8x 9 iter x server
+
+1200 s
+
+total goal score: 30 kill 
+
+Note:
+il tempo non sembra sufficiente -> molto più errore

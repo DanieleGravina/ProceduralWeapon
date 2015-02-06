@@ -1,3 +1,8 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 import random
 import matplotlib.pyplot as plt
 import numpy
@@ -61,7 +66,7 @@ LAMBDA = NUM_POP
 MU = NUM_POP
 
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.5, 0.2, 10 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
 
 #####################################################################
 
@@ -255,7 +260,6 @@ def entropy(index, statistics) :
 
     return e + total_kills/GOAL_SCORE + pow(9/10, match_suicides(index, statistics))
 
-
 def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
     kills = statistics[index][0]
@@ -265,14 +269,6 @@ def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
     entropy_kill = p_kills*log(p_kills, N) if p_kills != 0 else 0
 
     return -entropy_kill
-
-def evaluate_distance(index, statistics):
-
-    return statistics[index][3], statistics[index + 1][3]
-
-def evaluate_delta_time(index, statistics):
-
-    return statistics[index][2], statistics[index + 1][2]
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):

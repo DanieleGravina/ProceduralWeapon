@@ -1,0 +1,9 @@
+3 server 1x 3 iter x server
+1 server 8x 9 iter x server
+
+1200 s
+
+total goal score: 20 kill 
+
+Note:
+sembra che i suicidi creano molto più errore del dovuto 

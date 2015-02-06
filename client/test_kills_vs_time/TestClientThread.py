@@ -25,6 +25,7 @@ class TestClientThread (threading.Thread):
         self.client.SendInit()
         self.client.SendTestKillsVsTime()
         self.client.SendGoalScore(self.GoalScore)
+        self.client.SendMaxDuration(2400)
 
         result = {}
 
@@ -43,7 +44,7 @@ class TestClientThread (threading.Thread):
             for j in range (NUM_BOTS):
                 index = j
                 self.client.SendWeaponParams(index, weapon[index][0], weapon[index][1], weapon[index][2], weapon[index][3], weapon[index][4])
-                self.client.SendProjectileParams( weapon[index][5],  weapon[index][6],  weapon[index][7],  weapon[index][8])
+                self.client.SendProjectileParams( weapon[index][5],  weapon[index][6],  weapon[index][7],  weapon[index][8], weapon[index][9])
 
             self.client.SendStartMatch()
 
@@ -67,8 +68,9 @@ class TestClientThread (threading.Thread):
 
             self.client = BalancedWeaponClient(self.port)
             self.client.SendInit()
-            self.client.SendTestKillsVsTime();
-            self.client.SendGoalScore(self.GoalScore);
+            self.client.SendTestKillsVsTime()
+            self.client.SendGoalScore(self.GoalScore)
+            self.client.SendMaxDuration(2400)
 
         self.stats.update( {self.threadID : [kills1, kills2, dies1, dies2, times] } )
 
