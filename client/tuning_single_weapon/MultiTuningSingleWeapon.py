@@ -75,8 +75,6 @@ Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      0, 
 
 Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]
 
-print(limits)
-
 
 N_CYCLES = 1
 # size of the population
@@ -297,23 +295,12 @@ def evaluate(index, population, statics):
 
     return e, diff
 
-
-def customCrossover(ind1, ind2):
-
-    return tools.cxSimulatedBinaryBounded(ind1,
-                                          ind2,
-                                          eta = ETA_C, 
-                                          low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                          up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
+toolbox.register("mate", tools.cxTwoPoint)
 
 
-toolbox.register("mate", customCrossover)
-
-
-toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
-                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 0.1)
+toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
+                                              indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
 

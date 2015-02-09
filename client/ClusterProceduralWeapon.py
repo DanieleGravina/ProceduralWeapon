@@ -48,6 +48,13 @@ class ClusterProceduralWeapon:
 
 		cluster_file = self.file
 
+		if pure_data == None:
+			for ind in pop:
+	        temp1 = ind[:10]
+	        temp2 = ind[10:]
+	        real_pop += [temp1]
+	        real_pop += [temp2]
+
 		print(self.data.shape)
 
 		X = np.array(self.data)
@@ -163,6 +170,26 @@ class ClusterProceduralWeapon:
 			plt.bar(k, [X[i][j] for i in range(len(labels))], color=colors_cluster)
 			#plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) ) )
 		plt.show()
+
+		drawRadarChart(X, labels, n_clusters_)
+
+def drawRadarChart(self, data, labels, n_clusters_):
+
+	for k in range(n_clusters_):
+		my_members = labels == k
+		for i in range(len(labels)):
+			if my_members[i]:
+				index += [i]
+				if self.pure_data != None:
+					num = 0
+					if i % 2 == 0:
+						num = int(i/2)
+						fitness += [self.pure_data[num].fitness.values] 
+					else :
+						num = int((i-1)/2)
+						fitness += [self.pure_data[num].fitness.values]
+
+
 
 def main():
 
