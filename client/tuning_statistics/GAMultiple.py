@@ -15,6 +15,7 @@ from Costants import *
 
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
+from ClusterProceduralWeapon import ClusterProceduralWeapon
 from itertools import repeat
 
 from math import log
@@ -32,6 +33,8 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
+DEBUG = True
+
 
 # size of the population
 NUM_POP = 50
@@ -43,7 +46,7 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #10 iter 3H
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 10, 10
@@ -182,6 +185,9 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(port): 
+    if DEBUG :
+        return 
+
     clients = []
 
     for i in range(len(port)):
@@ -200,7 +206,8 @@ def simulate_population(population, port) :
     pop = {}
     threads = []
 
-    #return stats, port
+    if DEBUG :
+        return stats, port
 
     num_server = len(port)
     
@@ -284,7 +291,12 @@ def evaluate_objective(index, statistics, objective_1, objective_2):
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):
-    #e = random.randint(0 ,2)
+
+    if DEBUG:
+        e = random.randint(0 ,2)
+        dist1, dist2 = random.randint(0, 5), random.randint(0, 5)
+        return e, dist1, dist2 
+
     e = entropy(index*2, statistics)
 
     total_kills = match_kills(index*2, statistics)
@@ -292,7 +304,6 @@ def evaluate(index, population, statistics):
     suicides = match_suicides(index*2, statistics)
 
     dist1, dist2 = evaluate_objective(index*2, statistics, obj_1, obj_2)
-    #dist1, dist2 = random.randint(0, 5), random.randint(0, 5)
 
     print("distance " +  str(dist1) + " " + str(dist2))
 
@@ -612,7 +623,7 @@ def main():
     plt.scatter([pop_12[i].fitness.values[1] for i in range(len(pop_12))], [pop_12[i].fitness.values[0] for i in range(len(pop_12))])
     plt.scatter([hof_12[i].fitness.values[1] for i in range(len(hof_12))], [hof_12[i].fitness.values[0] for i in range(len(hof_12))], c=u'r')
 
-    plt.xlabel("Distance1")
+    plt.xlabel("Objective1")
     plt.ylabel("Entropy")
 
     plt.subplot(222)
@@ -620,7 +631,7 @@ def main():
     plt.scatter([pop_13[i].fitness.values[2] for i in range(len(pop_13))], [pop_13[i].fitness.values[0] for i in range(len(pop_13))])
     plt.scatter([hof_13[i].fitness.values[2] for i in range(len(hof_13))], [hof_13[i].fitness.values[0] for i in range(len(hof_13))], c=u'r')
 
-    plt.xlabel("Distance2")
+    plt.xlabel("Objective2")
     plt.ylabel("Entropy")
 
     plt.subplot(224)
@@ -628,8 +639,8 @@ def main():
     plt.scatter([pop_23[i].fitness.values[2] for i in range(len(pop_23))], [pop_23[i].fitness.values[1] for i in range(len(pop_23))])
     plt.scatter([hof_23[i].fitness.values[2] for i in range(len(hof_23))], [hof_23[i].fitness.values[1] for i in range(len(hof_23))], c=u'r')
 
-    plt.xlabel("Distance2")
-    plt.ylabel("Distance1")
+    plt.xlabel("Objective2")
+    plt.ylabel("Objective1")
 
     #plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
 
@@ -637,8 +648,6 @@ def main():
     ##########################################################################
 
     cluster_file = open("cluster.txt", "w")
-
-    cluster_file.write("Hall of Fame cluster")
 
     real_pop = []
 

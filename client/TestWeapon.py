@@ -5,33 +5,32 @@ import time
 # Weapon ######
 ###############
 
-
 ID = [0, 1]
 
 #default Rof = 1
-ROF = [1.26, 2.19]
+ROF = [2.46, 0.92]
 #default Spread = 0
-SPREAD = [1.29, 1.86]
+SPREAD = [0.44, 0.45]
 #default MaxAmmo = 40
-AMMO = [958, 381]
+AMMO = [406, 918]
 #deafult ShotCost = 1
-SHOT_COST = [9, 8]
+SHOT_COST = [8, 4]
 #defualt Range 10000
-RANGE = [41.49, 12.92]
+RANGE = [55, 18]
 
 ###################
 # Projectile ######
 ###################
 
 #default speed = 1000
-SPEED = [8775, 1436]
+SPEED = [4258, 2883]
 #default damage = 1
-DMG = [60, 54]
+DMG = [85, 57]
 #default damgae radius = 10
-DMG_RAD = [21, 26]
+DMG_RAD = [80, 81]
 #default gravity = 1
-GRAVITY = [-100, -63]
-EXPLOSIVE = [7, 12]
+GRAVITY = [0, 6]
+EXPLOSIVE = [1.5, 11]
 
 PORT = [3760]
 

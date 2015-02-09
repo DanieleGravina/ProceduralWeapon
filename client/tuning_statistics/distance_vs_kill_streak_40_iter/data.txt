@@ -1,0 +1,8 @@
+40 iter, 1800s, NSGA-II
+
+obiettivi:
+
+
+1 - maximize -> entropia + 9/10^(suicidi) + kill/30
+2 - maximize distanza fire-hit x 1° arma
+3 - maximize kill-streak x 2° arma

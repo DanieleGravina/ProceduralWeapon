@@ -1,0 +1,5 @@
+10 iter
+
+singolo obiettivo : 
+
+1 obiettivo : entropia + 9/10^(suicidi) + kill/30

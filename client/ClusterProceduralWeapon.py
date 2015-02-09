@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from Costants import *
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
 label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "RANGE", "SPEED", "DMG", "DMG_RAD", "GRAVITY", "EXPLOSIVE"]
@@ -33,7 +33,7 @@ def writeWeapon(pop, pop_file):
 
 def normalize(data):
 	for i in range(data.shape[0]):
-		for j in range(10):
+		for j in range(data.shape[1]):
 			data[i][j] = (data[i][j] - limits[j][0])/(limits[j][1] - limits[j][0])
 
 	return data
@@ -186,7 +186,7 @@ def main():
 				n = float(s)
 				temp += [n]
 				print(n)
-				if (len(temp) == 9):
+				if (len(temp) == 10):
 					data += [temp]
 					temp = []
 
@@ -200,6 +200,6 @@ def main():
 
 	c.cluster()
 
-
+main()
 
 
