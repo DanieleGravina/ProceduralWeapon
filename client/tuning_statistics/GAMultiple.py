@@ -33,11 +33,11 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
-DEBUG = True
+DEBUG = False
 
 
 # size of the population
-NUM_POP = 50
+NUM_POP = 100
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
@@ -46,7 +46,7 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #10 iter 3H
+CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #10 iter 3H
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 10, 10
@@ -311,20 +311,15 @@ def evaluate(index, population, statistics):
 
 def customCrossover(ind1, ind2):
 
-    return tools.cxSimulatedBinaryBounded(ind1,
-                                          ind2,
-                                          eta = ETA_C, 
-                                          low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                          up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
+    return tools.cxTwoPoint(ind1, ind2)
 
 
 toolbox.register("mate", customCrossover)
 
 
-toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
-                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 0.1)
+toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
+                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
+                                              indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
 
