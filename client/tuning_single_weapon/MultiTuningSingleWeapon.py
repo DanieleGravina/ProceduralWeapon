@@ -39,7 +39,7 @@ from deap import tools
 
 
 # size of the population
-NUM_POP = 50
+NUM_POP = 100
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
@@ -48,7 +48,7 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 10, 10
@@ -77,16 +77,6 @@ Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0
 
 
 N_CYCLES = 1
-# size of the population
-NUM_POP = 50
-
-#:param mu: The number of individuals to select for the next generation.
-#:param lambda\_: The number of children to produce at each generation.
-LAMBDA = NUM_POP
-MU = NUM_POP
-
-#MAX KILLS PER MATCH
-MAX_KILLS = 20
 
 def round_decorator(min, max):
     def decorator(func):
@@ -124,7 +114,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 def printWeapon(pop):
     i = 0
     for ind in pop :
-        print("(" + str(i*2) + ")")
+        print("(" + str(i) + ")")
         i += 1
         print("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) )
@@ -137,7 +127,7 @@ def printWeapon(pop):
 def writeWeapon(pop, pop_file):
     i = 0
     for ind in pop :
-        pop_file.write("(" + str(i*2) + ")\n")
+        pop_file.write("(" + str(i) + ")\n")
         i += 1
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
@@ -234,7 +224,7 @@ def match_kills(index, statics) :
         if key >= index and key <= index + (NUM_BOTS - 1) :
             total_kills += val[0]
 
-    total_kills = total_kills/MAX_KILLS
+    total_kills = total_kills/GOAL_SCORE
 
     return total_kills
 
@@ -415,7 +405,15 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
     return pop, port
 
 
-def main():
+def TuningSingleWeapon(iter = 0):
+
+    path = "50_pop_45_iter_" + str(iter)
+
+    try :
+        os.makedirs(path)
+        os.chdir(path)
+    except :
+        pass
 
     #clone initial port definition
     port = INITIAL_PORT[:]
@@ -534,6 +532,8 @@ def main():
     plt.xlabel("Generation")
     plt.ylabel("Difference Target Weapon")
 
+    plt.savefig("graph.png", bbox_inches='tight')
+
     ##########################################################################
 
     ##########################
@@ -555,12 +555,9 @@ def main():
     plt.scatter(e_front, d_front, c=u'r')
     plt.plot(e_front, d_front)
 
-    plt.show();
+    plt.savefig("pareto.png", bbox_inches='tight')
     ##########################################################################
 
-    cluster = ClusterSingleProceduralWeapon(pop, pop)
-    cluster.cluster()
 
-
-
-main()
+if __name__ == '__main__':
+    TuningSingleWeapon()

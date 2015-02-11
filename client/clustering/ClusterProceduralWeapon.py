@@ -1,9 +1,15 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 from sklearn.manifold import MDS
 from sklearn.cluster import DBSCAN
 import numpy as np
 from sklearn import metrics
 import statistics
 import matplotlib.pyplot as plt
+from radar_chart import draw_radar
 
 from Costants import *
 
@@ -40,7 +46,7 @@ def normalize(data):
 
 class ClusterProceduralWeapon:
 	def __init__(self, data = None, pure_data = None, file = open("cluster.txt", "w")):
-		self.data = np.array(data, np.float32)
+		self.data = data
 		self.pure_data = pure_data
 		self.file = file
 
@@ -48,16 +54,16 @@ class ClusterProceduralWeapon:
 
 		cluster_file = self.file
 
-		if pure_data == None:
+		if self.pure_data == None:
 			for ind in pop:
-	        temp1 = ind[:10]
-	        temp2 = ind[10:]
-	        real_pop += [temp1]
-	        real_pop += [temp2]
+				temp1 = ind[:10]
+				temp2 = ind[10:]
+				self.pure_data += [temp1]
+				self.pure_data += [temp2]
 
-		print(self.data.shape)
+		X = np.array(self.pure_data, np.float32)
 
-		X = np.array(self.data)
+		print(X.shape)
 
 		X = normalize(X)
 
@@ -84,7 +90,7 @@ class ClusterProceduralWeapon:
 			for i in range(len(labels)):
 				if my_members[i]:
 					index += [i]
-					if self.pure_data != None:
+					if False:
 						num = 0
 						if i % 2 == 0:
 							num = int(i/2)
@@ -105,11 +111,11 @@ class ClusterProceduralWeapon:
 			cluster_file.write("mean fitness:"+ "\n")
 			cluster_file.write(str(mean)+ "\n")
 			cluster_file.write("members:"+ "\n")
-			writeWeapon(self.data[my_members], cluster_file)
+			writeWeapon([self.pure_data[i] for i in range(len(labels)) if my_members[i]], cluster_file)
 
 			print(index)
 			print("members:")
-			printWeapon(self.data[my_members])
+			printWeapon([self.pure_data[i] for i in range(len(labels)) if my_members[i]])
 			print("fitness:"+ "\n")
 			print(str(fitness)+ "\n")
 
@@ -123,15 +129,16 @@ class ClusterProceduralWeapon:
 		pos = mds.fit_transform(X.astype(np.float64))
 
 		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
-
+		'''
 		plt.figure(7)
 
 		for i in range(len(pos[:,0])):
 
 			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
+		'''
 
 		X_ordered = []
-		X = np.array(self.data);
+		X = np.array(self.pure_data);
 		colors_ordered = []
 
 		for i in range(n_clusters_):
@@ -149,13 +156,15 @@ class ClusterProceduralWeapon:
 		ind = np.arange(len(labels_))
 
 		k = [i for i in range(len(labels_))]
-		for j in range(9):
-			plt.subplot(330 + j)
+		for j in range(10):
+			plt.subplot(340 + j)
 			plt.ylabel(label[j])
 			plt.ylim(limits[j][0], limits[j][1])
 			plt.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)
-			#plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) if labels[i] != -1) )
 
+		plt.show()
+
+		'''
 		plt.figure(9)
 		colors_cluster = [colors[labels[i]] for i in range(len(labels))]
 
@@ -169,25 +178,33 @@ class ClusterProceduralWeapon:
 			plt.ylim(limits[j][0], limits[j][1])
 			plt.bar(k, [X[i][j] for i in range(len(labels))], color=colors_cluster)
 			#plt.xticks(ind+width/2., list(str(i) for i in range(len(labels)) ) )
-		plt.show()
+		#plt.show()
+		'''
 
-		drawRadarChart(X, labels, n_clusters_)
+		drawRadarChart(self, normalize(X), labels, n_clusters_)
 
 def drawRadarChart(self, data, labels, n_clusters_):
+
+	if n_clusters_ > 9:
+		drawRadarChart(self, data[9:], labels[9:], n_clusters_ - 9)
+		n_clusters_ = 9
+
+	clusters = [[] for _ in range(n_clusters_)]
 
 	for k in range(n_clusters_):
 		my_members = labels == k
 		for i in range(len(labels)):
 			if my_members[i]:
-				index += [i]
-				if self.pure_data != None:
-					num = 0
-					if i % 2 == 0:
-						num = int(i/2)
-						fitness += [self.pure_data[num].fitness.values] 
-					else :
-						num = int((i-1)/2)
-						fitness += [self.pure_data[num].fitness.values]
+				clusters[k] += [list(data[i])]
+
+	weapons = []
+
+	for cluster in clusters:
+		weapons += [np.mean(cluster, axis=0)]
+
+	#print(weapons)
+
+	draw_radar(weapons)
 
 
 
@@ -198,32 +215,25 @@ def main():
 
 	pop_file = open("population_cluster.txt", "r")
 
-	text = pop_file.read()
-
-	splitted = text.split(" ")
+	content = pop_file.readlines()
 
 	temp = []
-	n = 0
 
-	for string in splitted:
-		split = string.split(":")
+	for string in content:
+		
+		if "Weapon" in string or "Projectile" in string:
+			split_spaces = string.split(" ")
 
-		for s in split:
-			try:
-				n = float(s)
-				temp += [n]
-				print(n)
-				if (len(temp) == 10):
-					data += [temp]
-					temp = []
-
-			except :
-				pass
-
-	print(data)
+			for splitted in split_spaces:
+				if ":" in splitted:
+					split_colon = splitted.split(":")
+					temp += [float(split_colon[1])]
+					if (len(temp) == 10):
+						data += [temp]
+						temp = []
 
 
-	c = ClusterProceduralWeapon(data, None)
+	c = ClusterProceduralWeapon(data, data)
 
 	c.cluster()
 

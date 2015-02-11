@@ -16,7 +16,6 @@ from Costants import *
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
 from itertools import repeat
-from ClusterProceduralWeapon import ClusterProceduralWeapon
 
 from math import log
 from math import pow
@@ -66,7 +65,7 @@ LAMBDA = NUM_POP
 MU = NUM_POP
 
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 10 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
 
 #####################################################################
 
@@ -278,16 +277,8 @@ def evaluate(index, population, statistics):
     return e,
 
 def customCrossover(ind1, ind2):
-    p = random.random()
 
-    ind = toolbox.clone(ind2)
-
-    if p < 0.5 :
-        return tools.cxTwoPoint(ind1, ind2)
-    else :
-        ind[:10] = ind2[10:]
-        ind[10:] = ind2[:10]
-        return tools.cxTwoPoint(ind1, ind)
+    return tools.cxTwoPoint(ind1, ind2)
 
 
 toolbox.register("mate", customCrossover)

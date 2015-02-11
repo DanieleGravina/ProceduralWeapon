@@ -112,7 +112,7 @@ def unit_poly_verts(theta):
     return verts
 
 
-def example_data(weapons):
+def get_data(weapons):
 
     data = {
         'column names':
@@ -123,7 +123,7 @@ def example_data(weapons):
     i = 0
     for weap in weapons :
         i += 1
-        data.update({'Weapon' + str(i) : weap})
+        data.update({'Weapon' + str(i) : [weap]})
 
     return data
 
@@ -137,26 +137,27 @@ def draw_radar(weapons):
     spoke_labels = data.pop('column names')
 
     fig = plt.figure(figsize=(9, 9))
-    fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
+    #fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
     colors = ['b', 'r', 'g', 'm', 'y']
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(2, 2, n+1, projection='radar')
-        plt.rgrids([0.2, 0.4, 0.6, 0.8])
-        ax.set_title(title, weight='bold', size='medium', position=(0.5, 1.1),
-                     horizontalalignment='center', verticalalignment='center')
+        ax = fig.add_subplot(3, 3, n+1, projection='radar')
+        plt.rgrids([0.5])
+
         for d, color in zip(data[title], colors):
             ax.plot(theta, d, color=color)
             ax.fill(theta, d, facecolor=color, alpha=0.25)
         ax.set_varlabels(spoke_labels)
 
     # add legend relative to top-left plot
+    '''
     plt.subplot(2, 2, 1)
     labels = ('Factor 1', 'Factor 2', 'Factor 3', 'Factor 4', 'Factor 5')
     legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
     plt.setp(legend.get_texts(), fontsize='small')
+    '''
 
-    plt.figtext(0.5, 0.965, '5-Factor Solution Profiles Across Four Scenarios',
+    plt.figtext(0.5, 0.965, 'Mean of clustered weapons',
                 ha='center', color='black', weight='bold', size='large')
     plt.show()
