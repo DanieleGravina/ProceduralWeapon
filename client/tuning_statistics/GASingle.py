@@ -65,10 +65,10 @@ LAMBDA = NUM_POP
 MU = NUM_POP
 
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 25 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
 
-#eta c (5-50), eta_m (5-20)
-ETA_C, ETA_M = 10, 5
+#eta c (5-20), eta_m (5-50)
+ETA_C, ETA_M = 20, 50
 
 #####################################################################
 
@@ -460,22 +460,6 @@ def main():
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
 
-    plt.show()
-
-    '''
-
-    real_pop = []
-
-    for ind in pop:
-        temp1 = ind[:10]
-        temp2 = ind[10:]
-        real_pop += [temp1]
-        real_pop += [temp2]
-
-    cluster = ClusterProceduralWeapon(real_pop, pop)
-    cluster.cluster()
-    '''
-
-
+    plt.savefig("plot_single_objective.png", bbox_inches='tight')
 
 main()
