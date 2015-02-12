@@ -51,7 +51,7 @@ MU = NUM_POP
 CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
 
 #eta c (5-50), eta_m (5-20)
-ETA_C, ETA_M = 10, 10
+ETA_C, ETA_M = 20, 50
 
 weight_obj_1 = MINIMIZE
 
@@ -285,12 +285,22 @@ def evaluate(index, population, statics):
 
     return e, diff
 
-toolbox.register("mate", tools.cxTwoPoint)
+def customCrossover(ind1, ind2):
+
+    return tools.cxSimulatedBinaryBounded(ind1,
+                                            ind2,
+                                            eta = ETA_C, 
+                                            low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                            up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
 
 
-toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
-                                              indpb = 0.1)
+toolbox.register("mate", customCrossover)
+
+
+toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
+                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
+                                                       indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
 
@@ -407,7 +417,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
 
 def TuningSingleWeapon(iter = 0):
 
-    path = "50_pop_45_iter_" + str(iter)
+    path = "100_pop_50_iter_simulated_binary_" + str(iter)
 
     try :
         os.makedirs(path)
