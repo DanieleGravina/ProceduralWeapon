@@ -15,7 +15,6 @@ from Costants import *
 
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
-from ClusterProceduralWeapon import ClusterProceduralWeapon
 from itertools import repeat
 
 from math import log
@@ -298,10 +297,6 @@ def evaluate(index, population, statistics):
         return e, dist1, dist2 
 
     e = entropy(index*2, statistics)
-
-    total_kills = match_kills(index*2, statistics)
-
-    suicides = match_suicides(index*2, statistics)
 
     dist1, dist2 = evaluate_objective(index*2, statistics, obj_1, obj_2)
 
@@ -641,20 +636,6 @@ def main():
 
     plt.show();
     ##########################################################################
-
-    cluster_file = open("cluster.txt", "w")
-
-    real_pop = []
-
-    for ind in pop:
-        temp1 = ind[:10]
-        temp2 = ind[10:]
-        real_pop += [temp1]
-        real_pop += [temp2]
-
-    cluster = ClusterProceduralWeapon(real_pop, pop, cluster_file)
-    cluster.cluster()
-
 
 
 main()
