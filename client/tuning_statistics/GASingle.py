@@ -57,7 +57,7 @@ N_CYCLES = 2
 
 
 # size of the population
-NUM_POP = 100
+NUM_POP = 50
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
@@ -159,6 +159,8 @@ def check_param(param, min, max):
     elif param > max :
         param = max
 
+    
+    param = float("{0:.2f}".format(param))
     return param
 
 def check(param, n) :

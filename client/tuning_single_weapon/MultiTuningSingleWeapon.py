@@ -21,7 +21,6 @@ from WeaponParameter import *
 
 from BalancedWeaponClient import BalancedWeaponClient
 from SimulationThread import SimulationThread
-from ClusterSingleProceduralWeapon import ClusterSingleProceduralWeapon
 
 from math import log
 from math import pow
