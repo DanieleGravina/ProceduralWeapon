@@ -48,7 +48,7 @@ MU = NUM_POP
 CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #10 iter 3H
 
 #eta c (5-50), eta_m (5-20)
-ETA_C, ETA_M = 10, 10
+ETA_C, ETA_M = 20, 50
 
 obj_1 = DISTANCE
 obj_2 = KILL_STREAK
@@ -166,6 +166,7 @@ def check_param(param, min, max):
     elif param > max :
         param = max
 
+    param = float("{0:.2f}".format(param))
     return param
 
 def check(param, n) :
@@ -306,15 +307,20 @@ def evaluate(index, population, statistics):
 
 def customCrossover(ind1, ind2):
 
-    return tools.cxTwoPoint(ind1, ind2)
+    return tools.cxSimulatedBinaryBounded(ind1,
+                                            ind2,
+                                            eta = ETA_C, 
+                                            low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                            up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
 
 
 toolbox.register("mate", customCrossover)
 
 
-toolbox.register("mutate", tools.mutGaussian, mu = [0 for _ in range(20)],
-                                              sigma  = [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] + [(limits[j][1] - limits[j][0])*0.1 for j in range(10)] , 
-                                              indpb = 0.1)
+toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
+                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
+                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
+                                                       indpb = 0.1)
 
 toolbox.register("select", tools.selNSGA2)
 
@@ -438,6 +444,16 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
 
 
 def main():
+
+    iter = 0
+
+    path = "distance_vs_kill_streak_100_pop_50_iter_simulated_binary_" + str(iter)
+
+    try :
+        os.makedirs(path)
+        os.chdir(path)
+    except :
+        pass
 
     #clone initial port definition
     port = INITIAL_PORT[:]
@@ -570,6 +586,8 @@ def main():
     plt.xlabel("Generation")
     plt.ylabel("Distance2")
 
+    plt.savefig("graph.png", bbox_inches='tight')
+
     ##########################################################################
 
     ##########################
@@ -634,7 +652,7 @@ def main():
 
     #plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
 
-    plt.show();
+    plt.savefig("pareto.png", bbox_inches='tight')
     ##########################################################################
 
 

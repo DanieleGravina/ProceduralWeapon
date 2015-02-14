@@ -144,6 +144,8 @@ def check_param(param, min, max):
     elif param > max :
         param = max
 
+
+    param = float("{0:.2f}".format(param))
     return param
 
 def check(param, n) :
