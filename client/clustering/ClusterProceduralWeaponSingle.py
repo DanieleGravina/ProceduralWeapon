@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import metrics
 import statistics
 import matplotlib.pyplot as plt
-from radar_chart import draw_radar
+from radar_chart_single import draw_radar
 
 from Costants import *
 
@@ -161,6 +161,9 @@ class ClusterProceduralWeapon:
 
 		labels_ = [labels[i] for i in range(len(labels)) if labels[i] != -1]
 
+		width = 0.8
+		ind = np.arange(len(labels_))
+
 		fig = plt.figure(figsize=(9, 9))
 		fig.subplots_adjust(wspace=0.50, hspace=0.25)
 
@@ -190,15 +193,13 @@ class ClusterProceduralWeapon:
 		#plt.show()
 		'''
 
-		drawRadarChart(self, normalize(X), labels, n_clusters_ - 1)
+		drawRadarChart(self, normalize(np.array(self.data)), labels, n_clusters_)
 
 def drawRadarChart(self, data, labels, n_clusters_):
 
-	max_radars = 4
-
-	if n_clusters_ > max_radars:
-		drawRadarChart(self, data[max_radars:], labels[max_radars:], n_clusters_ - max_radars)
-		n_clusters_ = max_radars
+	if n_clusters_ > 1:
+		drawRadarChart(self, data[1:], labels[1:], n_clusters_ - 1)
+		n_clusters_ = 1
 
 	clusters = [[] for _ in range(n_clusters_)]
 
@@ -257,9 +258,7 @@ def main():
 
 					if fit < 3 :
 						data.remove(data[len(data) - 1])
-						data.remove(data[len(data) - 1])
-					else :
-						print(fit)
+						#data.remove(data[len(data) - 1])
 
 
 	c = ClusterProceduralWeapon(data, data)
