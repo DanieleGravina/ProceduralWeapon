@@ -18,14 +18,25 @@ from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 
 from Costants import *
+from math import *
 
-limits = [( 1/(ROF_MAX/100), 1/(ROF_MIN/100) ), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
 def normalize(data):
     for j in range(10):
         data[j] = (data[j] - limits[j][0])/(limits[j][1] - limits[j][0])
+
+    return data
+
+def postProcess(data):
+
+    #fireinterval become rate of fire -> (1/fireinterval)
+    data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
+
+    #gravity is inverted
+    data[8] = - data[8]
 
     return data
 
@@ -137,7 +148,7 @@ def get_data(weapons):
         i += 1
         data.update({'Weapon' + str(i) : [weap]})
 
-    data.update({'Target' : [normalize([(1/1.1),   0.1,   30,      9,     2, 3500,  18,       20,      0, 0])]})
+    data.update({'Target' : [normalize(postProcess([1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]))]})
 
     return data
 

@@ -36,9 +36,8 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
-
 # size of the population
-NUM_POP = 100
+NUM_POP = 50
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
@@ -47,12 +46,14 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.1, 100 #160 min
 
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 20, 50
 
 weight_obj_1 = MINIMIZE
+
+path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_2"
 
 
 N_CYCLES = 2
@@ -416,9 +417,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
     return pop, port
 
 
-def TuningSingleWeapon(iter = 0):
-
-    path = "100_pop_50_iter_simulated_binary_" + str(iter)
+def TuningSingleWeapon(iter = 2):
 
     try :
         os.makedirs(path)

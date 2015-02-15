@@ -10,10 +10,11 @@ from sklearn import metrics
 import statistics
 import matplotlib.pyplot as plt
 from radar_chart import draw_radar
+from math import *
 
 from Costants import *
 
-limits = [(1/(ROF_MAX/100), 1/(ROF_MIN/100)), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
@@ -47,7 +48,8 @@ def normalize(data):
 def postProcess(data):
 
 	#fireinterval become rate of fire -> (1/fireinterval)
-	data[0] = 1/data[0]
+	data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
+
 	#gravity is inverted
 	data[8] = - data[8]
 
@@ -102,19 +104,6 @@ class ClusterProceduralWeapon:
 			for i in range(len(labels)):
 				if my_members[i]:
 					index += [i]
-					if False:
-						num = 0
-						if i % 2 == 0:
-							num = int(i/2)
-							fitness += [self.pure_data[num].fitness.values] 
-						else :
-							num = int((i-1)/2)
-							fitness += [self.pure_data[num].fitness.values]
-
-			
-			if fitness != []:
-				for i in range(len(fitness[0])):
-					mean += [statistics.mean([ind[i] for ind in fitness])]
 
 			cluster_file.write("index:"+ "\n")
 			cluster_file.write(str(index) + "\n")
@@ -135,13 +124,13 @@ class ClusterProceduralWeapon:
 			fitness = []
 			mean = []
 
+		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
 
+		'''
 		mds = MDS(n_components=2)
 
 		pos = mds.fit_transform(X.astype(np.float64))
 
-		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
-		'''
 		plt.figure(7)
 
 		for i in range(len(pos[:,0])):
@@ -190,7 +179,7 @@ class ClusterProceduralWeapon:
 		#plt.show()
 		'''
 
-		drawRadarChart(self, normalize(X), labels, n_clusters_ - 1)
+		drawRadarChart(self, normalize(X), labels, n_clusters_)
 
 def drawRadarChart(self, data, labels, n_clusters_):
 
@@ -258,8 +247,6 @@ def main():
 					if fit < 3 :
 						data.remove(data[len(data) - 1])
 						data.remove(data[len(data) - 1])
-					else :
-						print(fit)
 
 
 	c = ClusterProceduralWeapon(data, data)

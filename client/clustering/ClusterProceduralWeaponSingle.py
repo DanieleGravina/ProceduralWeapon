@@ -10,10 +10,11 @@ from sklearn import metrics
 import statistics
 import matplotlib.pyplot as plt
 from radar_chart_single import draw_radar
+from math import *
 
 from Costants import *
 
-limits = [(1/(ROF_MAX/100), 1/(ROF_MIN/100)), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
           (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
@@ -47,7 +48,8 @@ def normalize(data):
 def postProcess(data):
 
 	#fireinterval become rate of fire -> (1/fireinterval)
-	data[0] = 1/data[0]
+	data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
+
 	#gravity is inverted
 	data[8] = - data[8]
 

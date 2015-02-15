@@ -247,3 +247,4 @@ fitness: (3.0, 0.19719406942983514)
 Weapon  Rof:0.68 Spread:0.11 MaxAmmo:61 ShotCost:8 Range:14.5
 Projectile  Speed:3547.5623767739407 Damage:23.615196837893762 DamageRadius:23 Gravity:-0.03 Explosive:4
 fitness: (3.0, 0.19719406942983514)
+*********************************************************

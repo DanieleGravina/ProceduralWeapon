@@ -1,0 +1,5 @@
+20 kill
+1200 s
+50 iter
+operators : simulated binary
+ETA_C, ETA_M = 20, 50
