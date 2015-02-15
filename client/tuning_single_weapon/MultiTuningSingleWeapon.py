@@ -36,6 +36,10 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
+DEBUG = False
+
+NUM_PAR = 10
+
 # size of the population
 NUM_POP = 50
 
@@ -46,14 +50,17 @@ MU = NUM_POP
 
 #crossover (0.6 -1), mutation prob (1/nreal)
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 100 #160 min
+CXPB, MUTPB, NGEN = 0.9, 0.1, 50 #160 min
 
 #eta c (5-50), eta_m (5-20)
-ETA_C, ETA_M = 20, 50
+ETA_C, ETA_M = 20, 20
 
 weight_obj_1 = MINIMIZE
 
-path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_2"
+if DEBUG:
+    path = "prova"
+else : 
+    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_3"
 
 
 N_CYCLES = 2
@@ -165,6 +172,9 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(PORT):
+    if DEBUG:
+        return
+
     clients = []
 
     for i in range(NUM_SERVER):
@@ -181,6 +191,9 @@ def simulate_population(population, port) :
     stats = {}
     pop = {}
     threads = []
+
+    if DEBUG:
+        return stats, port
 
     num_server = len(port)
     
@@ -278,8 +291,11 @@ def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statics):
+
+    if DEBUG:
+        return random.randint(0,2), difference(index, population)
+
     e = entropy(index*2, statics)
-    #e = 2
     diff = difference(index, population)
     
     print('entropy :' + str(index) + " " + str(e))
@@ -302,7 +318,7 @@ toolbox.register("mate", customCrossover)
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 0.1)
+                                                       indpb = 1/NUM_PAR)
 
 toolbox.register("select", tools.selNSGA2)
 
@@ -346,49 +362,46 @@ def binary_tournament(ind1, ind2):
             return ind1
         return ind2
 
-
 def eaMuPlusLambda(pop, gen, port, logbook_file) :
     offspring = []
 
+    # Vary the population
+    offspring = []
+
     while len(offspring) < LAMBDA:
-        op_choice = random.random()
-        if op_choice < CXPB:            # Apply crossover
-            ind1, ind2 = random.sample(pop, 2)
-            ind3, ind4 = random.sample(pop, 2)
+        ind1, ind2 = random.sample(pop, 2)
+        ind = binary_tournament(ind1, ind2)
+        offspring.append(ind)
 
-            child1 = binary_tournament(ind1, ind2)
-            child2 = binary_tournament(ind3, ind4)
 
-            ind1, ind2 = map(toolbox.clone, [child1, child2])
+    offspring = [toolbox.clone(ind) for ind in offspring]
+    
+    for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+        if random.random() <= CXPB:
+            toolbox.mate(ind1, ind2)
+            del ind1.fitness.values, ind2.fitness.values
 
-            ind1, ind2 = toolbox.mate(ind1, ind2)
+        temp1 = toolbox.clone(ind1)
+        temp2 = toolbox.clone(ind2)
+        
+        toolbox.mutate(ind1)
+        toolbox.mutate(ind2)
 
-            del ind1.fitness.values
-            del ind2.fitness.values
+        if ind1.fitness.valid:
+            for i in range(NUM_PAR):
+                if temp1[i] != ind1[i]:
+                    del ind1.fitness.values
+                    break
 
-            offspring.append(ind1)
-            offspring.append(ind2)
+        if ind2.fitness.valid:
+            for i in range(NUM_PAR):
+                if temp2[i] != ind2[i]:
+                    del ind2.fitness.values
+                    break
+        
 
-        elif op_choice < CXPB + MUTPB:  # Apply mutation
-            ind1, ind2 = random.sample(pop, 2)
-            child = binary_tournament(ind1, ind2)
-
-            ind = toolbox.clone(child)
-
-            ind, = toolbox.mutate(ind)
-            del ind.fitness.values
-            offspring.append(ind)
-
-        else:
-
-            ind1, ind2 = random.sample(pop, 2)
-            child = binary_tournament(ind1, ind2)     # Apply reproduction
-
-            ind = toolbox.clone(child) 
-            offspring.append(ind)
 
     statistics, port = simulate_population(offspring, port)
-
 
     logbook_file.write("Gen : " + str(gen+1) + "\n")
     for key, val in statistics.items():
@@ -398,6 +411,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
     # Evaluate only invalid population
     index = 0
     fit = 0,
+    len_invalid = 0
 
     fitnesses = [0 for _ in range(len(offspring))]
 
@@ -406,6 +420,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
         if not offspring[index].fitness.valid :
             fit = toolbox.evaluate(index, offspring, statistics)
             fitnesses[index] = fit
+            len_invalid += 1
         else :
             fitnesses[index] = offspring[index].fitness.values
 
@@ -414,10 +429,10 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
 
     pop[:] = toolbox.select(pop + offspring, MU)
 
-    return pop, port
+    return pop, port, len_invalid
 
 
-def TuningSingleWeapon(iter = 2):
+def TuningSingleWeapon(iter = 0):
 
     try :
         os.makedirs(path)
@@ -463,11 +478,11 @@ def TuningSingleWeapon(iter = 2):
     record = mstats.compile(pop)
     hof.update(pop)
 
-    logbook.record(gen = 0, **record)
+    logbook.record(gen = 0, evals = len(pop), **record)
 
-    logbook.header = "gen", "entropy", "diff", "kills"
-    logbook.chapters["entropy"].header = "avg", "max"
-    logbook.chapters["diff"].header = "avg", "min"
+    logbook.header = "gen", "evals", "entropy", "diff"
+    logbook.chapters["entropy"].header = "min", "avg", "max"
+    logbook.chapters["diff"].header = "min", "avg", "max"
 
     print(logbook)
 
@@ -476,7 +491,7 @@ def TuningSingleWeapon(iter = 2):
 
     for g in range(NGEN - 1):
 
-        pop, port = eaMuPlusLambda(pop, g, port, logbook_file) 
+        pop, port, len_invalid = eaMuPlusLambda(pop, g, port, logbook_file) 
 
         printWeapon(pop)
         writeWeapon(pop, pop_file)
@@ -484,18 +499,10 @@ def TuningSingleWeapon(iter = 2):
         record = mstats.compile(pop)
         hof.update(pop)
 
-        logbook.record(gen = g + 1, **record)
-
-        logbook.header = "gen", "entropy", "diff"
-        logbook.chapters["entropy"].header = "avg", "max"
-        logbook.chapters["diff"].header = "avg", "min"
-
+        logbook.record(gen = g + 1, evals = len_invalid, **record)
         print(logbook)
 
-
-    logbook.header = "gen", "entropy", "diff"
-    logbook.chapters["entropy"].header = "min", "avg", "max"
-    logbook.chapters["diff"].header = "min", "avg", "max"
+    pop.sort(key=lambda x: x.fitness.values)
     
     log_string = str(logbook)
 
