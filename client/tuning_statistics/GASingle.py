@@ -55,9 +55,12 @@ N_CYCLES = 2
 #GA PARAMETERS###
 #################
 
+DEBUG = False
+
+NUM_PAR = 10
 
 # size of the population
-NUM_POP = 50
+NUM_POP = 100
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
@@ -65,10 +68,10 @@ LAMBDA = NUM_POP
 MU = NUM_POP
 
 #crossover probability, mutation probability, number of generation
-CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
+CXPB, MUTPB, NGEN = 0.6, 0.2, 50 #160 min
 
 #eta c (5-20), eta_m (5-50)
-ETA_C, ETA_M = 20, 50
+ETA_C, ETA_M = 20, 20
 
 #####################################################################
 
@@ -179,6 +182,10 @@ def checkBounds(min, max):
     return decorator
 
 def initialize_server(port): 
+
+    if DEBUG :
+        return 
+
     clients = []
 
     for i in range(len(port)):
@@ -197,7 +204,8 @@ def simulate_population(population, port) :
     pop = {}
     threads = []
 
-    #return stats, port
+    if DEBUG:
+        return stats, port
 
     num_server = len(port)
     
@@ -276,7 +284,9 @@ def evaluate_entropy(index, statistics, total_kills, total_dies, N) :
 
 # ATTENTION, you MUST return a tuple
 def evaluate(index, population, statistics):
-    #e = random.randint(0 ,3)
+    if DEBUG:
+        return random.randint(0 ,3),
+
     e = entropy(index*2, statistics)
 
     return e,
@@ -296,7 +306,7 @@ toolbox.register("mate", customCrossover)
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 0.1)
+                                                       indpb = 1/NUM_PAR)
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
 
@@ -330,8 +340,13 @@ def eaSimple(pop, gen, port, logbook_file):
     
     for i in range(len(offspring)):
         if random.random() < MUTPB:
+            temp = toolbox.clone(offspring[i])
             offspring[i], = toolbox.mutate(offspring[i])
-            del offspring[i].fitness.values
+
+            for j in range(NUM_PAR):
+                if temp[j] != offspring[i][j]:
+                    del offspring[i].fitness.values
+                    break
 
     statistics, port = simulate_population(offspring, port)
 
@@ -343,6 +358,7 @@ def eaSimple(pop, gen, port, logbook_file):
     # Evaluate only invalid population
     index = 0
     fit = 0,
+    len_invalid = 0
 
     fitnesses = [0 for _ in range(len(offspring))]
 
@@ -351,6 +367,7 @@ def eaSimple(pop, gen, port, logbook_file):
         if not offspring[index].fitness.valid :
             fit = toolbox.evaluate(index, offspring, statistics)
             fitnesses[index] = fit
+            len_invalid += 1
         else :
             fitnesses[index] = offspring[index].fitness.values
 
@@ -359,7 +376,7 @@ def eaSimple(pop, gen, port, logbook_file):
 
     pop = offspring[:]
 
-    return pop, port
+    return pop, port, len_invalid
 
 
 def main():
@@ -401,9 +418,9 @@ def main():
     record = stats.compile(pop)
     hof.update(pop)
 
-    logbook.record(gen = 0, **record)
+    logbook.record(gen = 0, evals = len(pop), **record)
 
-    logbook.header = "gen", "avg", "std", "min", "max"
+    logbook.header = "gen", "evals", "avg", "std", "min", "max"
 
     print(logbook)
 
@@ -412,7 +429,7 @@ def main():
 
     for g in range(NGEN - 1):
 
-        pop, port = eaSimple(pop, g, port, logbook_file)
+        pop, port, len_invalid = eaSimple(pop, g, port, logbook_file)
 
         printWeapon(pop)
         writeWeapon(pop, pop_file)
@@ -420,15 +437,9 @@ def main():
         record = stats.compile(pop)
         hof.update(pop)
 
-        logbook.record(gen = g + 1, **record)
-
-        logbook.header = "gen", "avg", "std", "min", "max"
+        logbook.record(gen = g + 1, evals = len_invalid, **record)
 
         print(logbook)
-            
-
-
-    logbook.header = "gen", "avg", "std", "min", "max"
     
     log_string = str(logbook)
 
@@ -436,10 +447,12 @@ def main():
 
     logbook_file.write(log_string)
 
+    best_ind = tools.selBest(pop, 1)[0]
+
     print("Best individuals:")
-    printWeapon(hof)
+    printWeapon([best_ind])
     pop_file.write("Best individuals:\n")
-    writeWeapon(hof, pop_file)
+    writeWeapon([best_ind], pop_file)
 
     pop_file.close()
     logbook_file.close()
