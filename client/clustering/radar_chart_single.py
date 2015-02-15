@@ -17,6 +17,18 @@ from matplotlib.spines import Spine
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 
+from Costants import *
+
+limits = [( 1/(ROF_MAX/100), 1/(ROF_MIN/100) ), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
+          (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
+
+def normalize(data):
+    for j in range(10):
+        data[j] = (data[j] - limits[j][0])/(limits[j][1] - limits[j][0])
+
+    return data
+
 
 def radar_factory(num_vars, frame='circle'):
     """Create a radar chart with `num_vars` axes.
@@ -125,6 +137,8 @@ def get_data(weapons):
         i += 1
         data.update({'Weapon' + str(i) : [weap]})
 
+    data.update({'Target' : [normalize([(1/1.1),   0.1,   30,      9,     2, 3500,  18,       20,      0, 0])]})
+
     return data
 
 
@@ -137,13 +151,16 @@ def draw_radar(weapons):
     spoke_labels = data.pop('column names')
 
     fig = plt.figure(figsize=(9, 9))
-    fig.subplots_adjust(wspace=0.50, hspace=0.25)
+    fig.subplots_adjust(wspace=0.50, hspace=0.20)
 
     colors = ['b', 'r', 'g', 'm', 'y']
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(2, 2, n+1, projection='radar')
+        ax = fig.add_subplot(1, 2, n+1, projection='radar')
         plt.rgrids([0.5])
+
+        ax.set_title(title, weight='bold', size='medium', position=(0.5, 1.1),
+                     horizontalalignment='center', verticalalignment='center')
 
         for d, color in zip(data[title], colors):
             ax.plot(theta, d, color=color)
@@ -153,11 +170,11 @@ def draw_radar(weapons):
     # add legend relative to top-left plot
     '''
     plt.subplot(2, 2, 1)
-    labels = ('Factor 1', 'Factor 2', 'Factor 3', 'Factor 4', 'Factor 5')
+    labels = ('Factor 1')
     legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
     plt.setp(legend.get_texts(), fontsize='small')
     '''
 
-    plt.figtext(0.5, 0.965, 'Mean of clustered weapons',
+    plt.figtext(0.5, 0.965, 'Tuned weapon vs Target',
                 ha='center', color='black', weight='bold', size='large')
     plt.show()

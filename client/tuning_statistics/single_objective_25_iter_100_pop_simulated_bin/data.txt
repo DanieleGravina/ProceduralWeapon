@@ -1,0 +1,7 @@
+simulated binary op
+
+eta_c = 10
+eta_m = 5
+
+25 iter
+100 pop
