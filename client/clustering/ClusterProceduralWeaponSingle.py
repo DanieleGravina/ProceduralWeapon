@@ -143,13 +143,12 @@ class ClusterProceduralWeapon:
 		pos = mds.fit_transform(X.astype(np.float64))
 
 		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
-		'''
+
 		plt.figure(7)
 
 		for i in range(len(pos[:,0])):
 
 			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
-		'''
 
 		X_ordered = []
 		X = np.array(self.pure_data);
@@ -176,7 +175,7 @@ class ClusterProceduralWeapon:
 			plt.ylim(limits[j][0], limits[j][1])
 			ax.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)
 
-		plt.show()
+		#plt.show()
 
 		'''
 		plt.figure(9)
@@ -199,10 +198,6 @@ class ClusterProceduralWeapon:
 
 def drawRadarChart(self, data, labels, n_clusters_):
 
-	if n_clusters_ > 1:
-		drawRadarChart(self, data[1:], labels[1:], n_clusters_ - 1)
-		n_clusters_ = 1
-
 	clusters = [[] for _ in range(n_clusters_)]
 
 	for k in range(n_clusters_):
@@ -217,9 +212,16 @@ def drawRadarChart(self, data, labels, n_clusters_):
 		if(len(cluster) > 0):
 			weapons += [np.mean(cluster, axis=0)]
 
-	#print(weapons)
+	
+	while len(weapons) > 0 :
+
+		if len(weapons) > 1 :
+			draw_radar(weapons[:1])
+			weapons = weapons[1:]
 
 	draw_radar(weapons)
+
+	plt.show()
 
 
 
@@ -233,6 +235,9 @@ def main():
 	content = pop_file.readlines()
 
 	temp = []
+
+	fits = []
+	dists = []
 
 	for string in content:
 		
@@ -257,13 +262,38 @@ def main():
 					splitted = splitted.replace(",", "")
 					splitted = splitted.replace("\n", "")
 					fit = float(splitted)
+					fits += [fit]
+				if ")" in splitted:
+					splitted = splitted.replace("(", "")
+					splitted = splitted.replace(")", "")
+					splitted = splitted.replace(",", "")
+					splitted = splitted.replace("\n", "")
+					dist = float(splitted)
+					dists += [dist]
 
-					if fit < 3 :
-						data.remove(data[len(data) - 1])
-						#data.remove(data[len(data) - 1])
+	fits = np.array(fits)
+	dists = np.array(dists)
+
+	#get third quartile
+
+	q3 = np.percentile(fits, 75)
+	print("third quartile " + str(q3))
+
+	data_filtered = []
+	dists_filtered = []
+
+	#filter out ind with fit < q3
+	for i in range(len(fits)):
+		if fits[i] >= q3 :
+			data_filtered += [data[i]]
+			dists_filtered += [dists[i]]
+
+	d3 = np.percentile(dists_filtered, 50)
+	print("median dist" + str(d3))
 
 
-	c = ClusterProceduralWeapon(data, data)
+
+	c = ClusterProceduralWeapon(data_filtered, data_filtered)
 
 	c.cluster()
 

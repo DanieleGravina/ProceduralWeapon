@@ -188,4 +188,4 @@ def draw_radar(weapons):
 
     plt.figtext(0.5, 0.965, 'Tuned weapon vs Target',
                 ha='center', color='black', weight='bold', size='large')
-    plt.show()
+    #plt.show()
