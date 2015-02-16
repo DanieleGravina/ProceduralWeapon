@@ -1,0 +1,11 @@
+50 pop, 50 iter
+
+eta_m, eta_c = 20, 20
+
+CXPB = 90
+
+MUTPB = 100
+
+indpb = 0.1
+
+simulated binary operators

@@ -45,6 +45,13 @@ def normalize(data):
 
 	return data
 
+def normalize_single(data):
+	clone = np.array(data, np.float32)
+	for i in range(data.shape[0]):
+		clone[i] = (data[i] - limits[i][0])/(limits[i][1] - limits[i][0])
+
+	return clone
+
 def postProcess(data):
 
 	#fireinterval become rate of fire -> (1/fireinterval)
@@ -81,7 +88,7 @@ class ClusterProceduralWeapon:
 
 		X = normalize(X)
 
-		db = DBSCAN(eps=0.3, min_samples=2).fit(X)
+		db = DBSCAN(eps=0.3, min_samples=1).fit(X)
 		labels = db.labels_
 
 		labels_unique = np.unique(labels)
@@ -126,7 +133,6 @@ class ClusterProceduralWeapon:
 
 		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
 
-		'''
 		mds = MDS(n_components=2)
 
 		pos = mds.fit_transform(X.astype(np.float64))
@@ -136,17 +142,20 @@ class ClusterProceduralWeapon:
 		for i in range(len(pos[:,0])):
 
 			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
-		'''
 
 		X_ordered = []
 		X = np.array(self.pure_data);
 		colors_ordered = []
+		clusters = [[] for _ in range(n_clusters_)]
+		colors_cluster = {}
 
 		for i in range(n_clusters_):
 			for j in range(len(labels)):
 				if labels[j] == i and labels[j] != -1:
 					X_ordered.append(X[j][:])
+					clusters[i] += [list(normalize_single(X[j][:]))]
 					colors_ordered += [colors[labels[j]]]
+			colors_cluster.update({'Weapon' + str(i+1) : colors_ordered[len(colors_ordered) - 1]})
 
 		labels_ = [labels[i] for i in range(len(labels)) if labels[i] != -1]
 
@@ -160,7 +169,7 @@ class ClusterProceduralWeapon:
 			plt.ylim(limits[j][0], limits[j][1])
 			ax.bar(k, [X_ordered[ind][j] for ind in range(len(labels_))], color=colors_ordered)
 
-		plt.show()
+		#plt.show()
 
 		'''
 		plt.figure(9)
@@ -179,16 +188,15 @@ class ClusterProceduralWeapon:
 		#plt.show()
 		'''
 
-		drawRadarChart(self, normalize(X), labels, n_clusters_)
+		drawRadarChart(self, clusters, n_clusters_, colors_cluster)
 
-def drawRadarChart(self, data, labels, n_clusters_):
+		plt.show()
 
-	max_radars = 4
+def drawRadarChart(self, clusters, n_clusters_, colors):
 
-	if n_clusters_ > max_radars:
-		drawRadarChart(self, data[max_radars:], labels[max_radars:], n_clusters_ - max_radars)
-		n_clusters_ = max_radars
+	max_radars = 20
 
+	'''
 	clusters = [[] for _ in range(n_clusters_)]
 
 	for k in range(n_clusters_):
@@ -196,6 +204,7 @@ def drawRadarChart(self, data, labels, n_clusters_):
 		for i in range(len(labels)):
 			if my_members[i]:
 				clusters[k] += [list(data[i])]
+	'''
 
 	weapons = []
 
@@ -203,9 +212,16 @@ def drawRadarChart(self, data, labels, n_clusters_):
 		if(len(cluster) > 0):
 			weapons += [np.mean(cluster, axis=0)]
 
-	#print(weapons)
+	
+	while len(weapons) > 0 :
 
-	draw_radar(weapons)
+		if len(weapons) > max_radars :
+			draw_radar(weapons[:max_radars], colors)
+			weapons = weapons[max_radars:]
+		else :
+			draw_radar(weapons, colors)
+			weapons = []
+
 
 
 

@@ -128,7 +128,7 @@ def get_data(weapons):
     return data
 
 
-def draw_radar(weapons):
+def draw_radar(weapons, colors_plot):
 
     N = 10
     theta = radar_factory(N, frame='polygon')
@@ -142,12 +142,12 @@ def draw_radar(weapons):
     colors = ['b', 'r', 'g', 'm', 'y']
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(2, 2, n+1, projection='radar')
+        ax = fig.add_subplot(3, 4, n+1, projection='radar')
         plt.rgrids([0.5])
 
         for d, color in zip(data[title], colors):
-            ax.plot(theta, d, color=color)
-            ax.fill(theta, d, facecolor=color, alpha=0.25)
+            ax.plot(theta, d, color=colors_plot[title])
+            ax.fill(theta, d, facecolor=colors_plot[title], alpha=0.25)
         ax.set_varlabels(spoke_labels)
 
     # add legend relative to top-left plot
@@ -160,4 +160,4 @@ def draw_radar(weapons):
 
     plt.figtext(0.5, 0.965, 'Mean of clustered weapons',
                 ha='center', color='black', weight='bold', size='large')
-    plt.show()
+    #plt.show()
