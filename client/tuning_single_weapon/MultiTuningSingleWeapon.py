@@ -60,7 +60,7 @@ weight_obj_1 = MINIMIZE
 if DEBUG:
     path = "prova"
 else : 
-    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_3"
+    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_new"
 
 
 N_CYCLES = 2
@@ -308,17 +308,18 @@ def customCrossover(ind1, ind2):
     return tools.cxSimulatedBinaryBounded(ind1,
                                             ind2,
                                             eta = ETA_C, 
-                                            low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                            up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)])
+                                            low  = [limits[j][0] for j in range(10)], 
+                                            up = [limits[j][1] for j in range(10)])
 
 
 toolbox.register("mate", customCrossover)
 
 
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
-                                                       low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
-                                                       up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
+                                                       low  = [limits[j][0] for j in range(10)], 
+                                                       up = [limits[j][1] for j in range(10)],
                                                        indpb = 1/NUM_PAR)
+
 
 toolbox.register("select", tools.selNSGA2)
 

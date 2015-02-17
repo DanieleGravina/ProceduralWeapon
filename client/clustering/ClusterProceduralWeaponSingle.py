@@ -214,10 +214,8 @@ def drawRadarChart(self, data, labels, n_clusters_):
 
 	
 	while len(weapons) > 0 :
-
-		if len(weapons) > 1 :
-			draw_radar(weapons[:1])
-			weapons = weapons[1:]
+		draw_radar(weapons[:1])
+		weapons = weapons[1:]
 
 	draw_radar(weapons)
 
