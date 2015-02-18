@@ -1,0 +1,7 @@
+CXPB = 0.9
+indpb = 0.1
+
+50 pop
+50 gen
+
+operators : cxTwoPoint, mutGaussian
