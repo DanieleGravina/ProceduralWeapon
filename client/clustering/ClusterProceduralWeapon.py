@@ -74,7 +74,7 @@ def postProcess(data):
 	return data
 
 class ClusterProceduralWeapon:
-	def __init__(self, pure_data = None, fits = [], file = open("cluster.txt", "w")):
+	def __init__(self, pure_data = None, fits = [], file = None):
 		self.pure_data = pure_data
 		self.fits = fits
 		self.file = file
@@ -86,6 +86,8 @@ class ClusterProceduralWeapon:
 			os.chdir("cluster")
 		except :
 			os.chdir("cluster")
+
+		self.file = open("cluster.txt", "w")
 
 		cluster_file = self.file
 

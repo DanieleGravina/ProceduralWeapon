@@ -55,14 +55,14 @@ N_CYCLES = 2
 #GA PARAMETERS###
 #################
 
-DEBUG = True
+DEBUG = False
 
 iter = 0
 
 if DEBUG :
     path = "prova"
 else :
-    path = "single_objective_100_pop_50_iter_simulated_binary_" + str(iter)
+    path = "single_objective_100_pop_50_iter_simulated_binary_new_" + str(iter)
 
 NUM_PAR = 10
 
@@ -475,7 +475,7 @@ def main():
     ###plot min, avg, max of singles objectives#
     ############################################
 
-    plt.figure(1)
+    plt.figure(figsize=(16, 9))
 
     gen = logbook.select("gen")
     fit_avg = logbook.select("avg")
@@ -483,6 +483,7 @@ def main():
     fit_min = logbook.select("min")
 
     plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
+    plt.ylim(0, 3)
 
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
