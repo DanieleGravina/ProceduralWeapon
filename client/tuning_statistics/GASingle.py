@@ -55,7 +55,14 @@ N_CYCLES = 2
 #GA PARAMETERS###
 #################
 
-DEBUG = False
+DEBUG = True
+
+iter = 0
+
+if DEBUG :
+    path = "prova"
+else :
+    path = "single_objective_100_pop_50_iter_simulated_binary_" + str(iter)
 
 NUM_PAR = 10
 
@@ -306,7 +313,7 @@ toolbox.register("mate", customCrossover)
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 1/NUM_PAR)
+                                                       indpb = 1.0/(NUM_PAR*2))
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
 
@@ -339,14 +346,13 @@ def eaSimple(pop, gen, port, logbook_file):
             del offspring[i-1].fitness.values, offspring[i].fitness.values
     
     for i in range(len(offspring)):
-        if random.random() < MUTPB:
-            temp = toolbox.clone(offspring[i])
-            offspring[i], = toolbox.mutate(offspring[i])
+        temp = toolbox.clone(offspring[i])
+        offspring[i], = toolbox.mutate(offspring[i])
 
-            for j in range(NUM_PAR):
-                if temp[j] != offspring[i][j]:
-                    del offspring[i].fitness.values
-                    break
+        for j in range(NUM_PAR):
+            if temp[j] != offspring[i][j]:
+                del offspring[i].fitness.values
+                break
 
     statistics, port = simulate_population(offspring, port)
 
@@ -380,6 +386,12 @@ def eaSimple(pop, gen, port, logbook_file):
 
 
 def main():
+
+    try :
+        os.makedirs(path)
+        os.chdir(path)
+    except :
+        pass
 
     #clone initial port definition
     port = INITIAL_PORT[:]
@@ -470,11 +482,11 @@ def main():
     fit_max = logbook.select("max")
     fit_min = logbook.select("min")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
 
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
 
-    plt.savefig("plot_single_objective.png", bbox_inches='tight')
+    plt.savefig("plot_single_objective.png", bbox_inches='tight', dpi = 200)
 
 main()

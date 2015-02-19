@@ -12,6 +12,8 @@ GOAL_SCORE = 20
 
 TIMEOUT = 400 #1200 : 8 (MAX_DURATION / GAMESPEED)
 
+NUM_PAR = 10
+
 
 
 ###############

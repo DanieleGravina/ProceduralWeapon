@@ -341,17 +341,22 @@ def main():
 		if "fitness" in string :
 			split_spaces = string.split(" ")
 
+			index = 0
+			temp = []
+
 			for splitted in split_spaces:
-				if "(" in splitted:
+
+				if index > 0 and index < 4:
 					splitted = splitted.replace("(", "")
 					splitted = splitted.replace(")", "")
 					splitted = splitted.replace(",", "")
 					splitted = splitted.replace("\n", "")
-					fit = float(splitted)
+					temp += [float(splitted)]
 
-					fits += [fit]
+				index += 1
 
-
+			fits += [temp]
+			
 	c = ClusterProceduralWeapon(data, fits)
 
 	c.cluster()

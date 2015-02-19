@@ -9,6 +9,12 @@ polygon is not aligned with the radial axes.
 
 .. [1] http://en.wikipedia.org/wiki/Radar_chart
 """
+
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -16,6 +22,29 @@ from matplotlib.path import Path
 from matplotlib.spines import Spine
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
+from math import *
+from Costants import *
+
+limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
+          (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
+
+def normalize(data):
+
+    for i in range(NUM_PAR):
+        data[i] = (data[i] - limits[i%NUM_PAR][0])/(limits[i%NUM_PAR][1] - limits[i%NUM_PAR][0])
+
+    return data
+
+def postProcess(data):
+
+    #fireinterval become rate of fire -> (1/fireinterval)
+    data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
+
+    #gravity is inverted
+    data[8] = - data[8]
+
+    return data
 
 
 def radar_factory(num_vars, frame='circle'):
@@ -123,12 +152,12 @@ def get_data(weapons):
     i = 0
     for weap in weapons :
         i += 1
-        data.update({'Weapon' + str(i) : [weap]})
+        data.update({'Weapon' + str(i) : [normalize(postProcess(weap))]})
 
     return data
 
 
-def draw_radar(weapons, colors_plot):
+def draw_radar(weapons, color_cluster, fitness_cluster):
 
     N = 10
     theta = radar_factory(N, frame='polygon')
@@ -136,19 +165,24 @@ def draw_radar(weapons, colors_plot):
     data = get_data(weapons)
     spoke_labels = data.pop('column names')
 
-    fig = plt.figure(figsize=(9, 9))
+    fig = plt.figure(figsize=(16, 9))
     fig.subplots_adjust(wspace=0.50, hspace=0.25)
 
     colors = ['b', 'r', 'g', 'm', 'y']
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(3, 4, n+1, projection='radar')
+        ax = fig.add_subplot(1, 3, n+1, projection='radar')
         plt.rgrids([0.5])
 
         for d, color in zip(data[title], colors):
-            ax.plot(theta, d, color=colors_plot[title])
-            ax.fill(theta, d, facecolor=colors_plot[title], alpha=0.25)
+            ax.plot(theta, d, color=color_cluster)
+            ax.fill(theta, d, facecolor=color_cluster, alpha=0.25)
         ax.set_varlabels(spoke_labels)
+
+    ax = fig.add_subplot(1, 3, 3)
+
+    plt.ylim(0, 3)
+    ax.boxplot(fitness_cluster)
 
     # add legend relative to top-left plot
     '''
