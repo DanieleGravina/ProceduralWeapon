@@ -594,6 +594,8 @@ def main():
 
     plt.savefig("graph.png", bbox_inches='tight', dpi = 200)
 
+    plt.close()
+
     ##########################################################################
 
     ##########################
@@ -659,6 +661,8 @@ def main():
     #plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
 
     plt.savefig("pareto.png", bbox_inches='tight', dpi = 200)
+
+    plt.close()
     ##########################################################################
 
 

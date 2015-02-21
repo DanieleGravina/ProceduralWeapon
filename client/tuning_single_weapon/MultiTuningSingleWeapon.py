@@ -60,7 +60,7 @@ weight_obj_1 = MINIMIZE
 if DEBUG:
     path = "prova"
 else : 
-    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_new"
+    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_new_10"
 
 
 N_CYCLES = 2
@@ -534,7 +534,7 @@ def TuningSingleWeapon(iter = 0):
     fit_max = logbook.chapters["entropy"].select("max")
     fit_min = logbook.chapters["entropy"].select("min")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
 
     plt.xlabel("Generation")
     plt.ylabel("Entropy")
@@ -545,12 +545,13 @@ def TuningSingleWeapon(iter = 0):
     fit_max = logbook.chapters["diff"].select("max")
     fit_min = logbook.chapters["diff"].select("min")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-', gen, fit_min, 'g')
+    plt.plot(gen, fit_avg, 'r--', gen, fit_min, 'g')
 
     plt.xlabel("Generation")
     plt.ylabel("Difference Target Weapon")
 
-    plt.savefig("graph.png", bbox_inches='tight')
+    plt.savefig("graph.png", bbox_inches='tight', dpi = 200)
+    plt.close()
 
     ##########################################################################
 
@@ -573,7 +574,8 @@ def TuningSingleWeapon(iter = 0):
     plt.scatter(e_front, d_front, c=u'r')
     plt.plot(e_front, d_front)
 
-    plt.savefig("pareto.png", bbox_inches='tight')
+    plt.savefig("pareto.png", bbox_inches='tight', dpi = 200)
+    plt.close()
     ##########################################################################
 
 
