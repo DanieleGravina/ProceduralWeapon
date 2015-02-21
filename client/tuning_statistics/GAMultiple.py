@@ -462,6 +462,8 @@ def main():
     except :
         pass
 
+    t0 = time.clock()
+
     #clone initial port definition
     port = INITIAL_PORT[:]
 
@@ -540,6 +542,8 @@ def main():
 
     pop_file.close()
     logbook_file.close()
+
+    print(str(time.clock() - t0))
 
     #################################################################################
 
