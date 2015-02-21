@@ -32,9 +32,11 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
+NUM_PAR = 20
+
 DEBUG = False
 
-iter = 0
+iter = 1
 
 if DEBUG :
     path = "prova"
@@ -55,13 +57,13 @@ MU = NUM_POP
 CXPB, MUTPB, NGEN = 0.9, 0.1, 50 #10 iter 3H
 
 #eta c (5-50), eta_m (5-20)
-ETA_C, ETA_M = 20, 50
+ETA_C, ETA_M = 20, 20
 
 obj_1 = DISTANCE
 obj_2 = KILL_STREAK
 
-weight_obj_1 = MINIMIZE
-weight_obj_2 = MINIMIZE
+weight_obj_1 = MAXIMIZE
+weight_obj_2 = MAXIMIZE
 
 
 N_CYCLES = 2
@@ -329,7 +331,7 @@ toolbox.register("mate", customCrossover)
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 1.0/(NUM_PAR*2))
+                                                       indpb = 1.0/(NUM_PAR))
 
 toolbox.register("select", tools.selNSGA2)
 
@@ -545,7 +547,7 @@ def main():
     ###plot min, avg, max of singles objectives#
     ############################################
 
-    plt.figure(1)
+    plt.figure(figsize = (16, 9))
 
     plt.subplot(221)
 
@@ -594,7 +596,7 @@ def main():
     ##plot multiobjective ####
     ##########################
 
-    plt.figure(2)
+    plt.figure(figsize = (16, 9))
 
     pop_12 = []
     pop_13 = []

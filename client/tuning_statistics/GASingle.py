@@ -57,14 +57,14 @@ N_CYCLES = 2
 
 DEBUG = False
 
-iter = 0
+iter = 8
 
 if DEBUG :
     path = "prova"
 else :
     path = "single_objective_100_pop_50_iter_simulated_binary_new_" + str(iter)
 
-NUM_PAR = 10
+NUM_PAR = 20
 
 # size of the population
 NUM_POP = 100
@@ -313,7 +313,7 @@ toolbox.register("mate", customCrossover)
 toolbox.register("mutate", tools.mutPolynomialBounded, eta = ETA_M,
                                                        low  = [limits[j][0] for j in range(10)] + [limits[j][0] for j in range(10)], 
                                                        up = [limits[j][1] for j in range(10)] + [limits[j][1] for j in range(10)],
-                                                       indpb = 1.0/(NUM_PAR*2))
+                                                       indpb = 1.0/(NUM_PAR))
 
 toolbox.register("select", tools.selTournament, tournsize = 3)
 

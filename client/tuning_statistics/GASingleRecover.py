@@ -349,7 +349,7 @@ def eaSimple(pop, gen, port, logbook_file):
         temp = toolbox.clone(offspring[i])
         offspring[i], = toolbox.mutate(offspring[i])
 
-        for j in range(NUM_PAR):
+        for j in range(NUM_PAR*2):
             if temp[j] != offspring[i][j]:
                 del offspring[i].fitness.values
                 break
