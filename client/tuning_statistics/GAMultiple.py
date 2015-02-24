@@ -36,12 +36,12 @@ NUM_PAR = 20
 
 DEBUG = False
 
-iter = 1
+iter = 6
 
 if DEBUG :
     path = "prova"
 else :
-    path = "distance_vs_kill_streak_100_pop_50_iter_simulated_binary_" + str(iter)
+    path = "distance_vs_kill_streak_100_pop_50_iter_simulated_binary_new_" + str(iter)
 
 
 # size of the population
