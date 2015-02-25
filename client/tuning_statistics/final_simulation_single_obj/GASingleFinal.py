@@ -68,7 +68,7 @@ path  = "final_simulation_single_obj"
 NUM_PAR = 20
 
 # size of the population
-NUM_POP = 2
+NUM_POP = 1000
 
 #:param mu: The number of individuals to select for the next generation.
 #:param lambda\_: The number of children to produce at each generation.
