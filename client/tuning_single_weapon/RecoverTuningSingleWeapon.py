@@ -15,6 +15,16 @@ from decimal import *
 from functools import partial
 from operator import attrgetter
 
+from Costants import *
+
+from WeaponParameter import *
+
+from BalancedWeaponClient import BalancedWeaponClient
+from SimulationThread import SimulationThread
+
+from math import log
+from math import pow
+from math import sqrt
 
 from deap import base
 from deap import creator
@@ -26,6 +36,9 @@ from deap import tools
 #GA PARAMETERS###
 #################
 
+DEBUG = False
+
+NUM_PAR = 10
 
 # size of the population
 NUM_POP = 50
@@ -42,7 +55,7 @@ CXPB, MUTPB, NGEN = 0.6, 0.1, 50 #160 min
 #eta c (5-50), eta_m (5-20)
 ETA_C, ETA_M = 20, 20
 
-weight_obj_1 = MINIMIZE
+weight_obj_1 = -1
 
 path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_new2_1"
 
@@ -58,29 +71,49 @@ creator.create("Individual", list, fitness = creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
-toolbox.register("individual", tools.initCycle, creator.Individual, [lambda : 0 for _ in range(10)], n = 1)
+limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN/100, GRAVITY_MAX/100), 
+          (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
+
+Weapon_Fixed = [1.05,  0.1,     30,      1,     8, 1350, 100,       42,      0, 220]
+
+Weapon_Target = [1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]
+
+
+N_CYCLES = 1
+
+def round_decorator(min, max):
+    def decorator(func):
+        def wrapper(*args, **kargs):
+            result = func(*args, **kargs)
+            result = result/100
+            return result
+        return wrapper
+    return decorator
+
+toolbox.register("attr_rof", random.randint, ROF_MIN, ROF_MAX)
+toolbox.register("attr_spread", random.randint, SPREAD_MIN, SPREAD_MAX)
+toolbox.register("attr_ammo", random.randint, AMMO_MIN, AMMO_MAX)
+toolbox.register("attr_shot_cost", random.randint, SHOT_COST_MIN, SHOT_COST_MAX)
+toolbox.register("attr_range", random.randint, RANGE_MIN, RANGE_MAX)
+
+toolbox.register("attr_speed", random.randint, SPEED_MIN, SPEED_MAX)
+toolbox.register("attr_dmg", random.randint, DMG_MIN, DMG_MAX)
+toolbox.register("attr_dmg_rad", random.randint, DMG_RAD_MIN, DMG_RAD_MAX)
+toolbox.register("attr_gravity", random.randint, GRAVITY_MIN, GRAVITY_MAX)
+toolbox.register("attr_explosive", random.randint, EXPLOSIVE_MIN, EXPLOSIVE_MAX)
+
+toolbox.decorate("attr_rof", round_decorator(0,1))
+toolbox.decorate("attr_spread", round_decorator(0,1))
+toolbox.decorate("attr_range", round_decorator(0,1))
+toolbox.decorate("attr_gravity", round_decorator(0,1))
+
+toolbox.register("individual", tools.initCycle, creator.Individual,
+                 (toolbox.attr_rof, toolbox.attr_spread, toolbox.attr_ammo, 
+                  toolbox.attr_shot_cost, toolbox.attr_range, toolbox.attr_speed,
+                  toolbox.attr_dmg, toolbox.attr_dmg_rad, toolbox.attr_gravity, toolbox.attr_explosive ), n = 1)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-stats1 = tools.Statistics(key = lambda ind: ind.fitness.values[0])
-
-stats1.register("avg", numpy.mean)
-stats1.register("std", numpy.std)
-stats1.register("min", numpy.min)
-stats1.register("max", numpy.max)
-
-stats2 = tools.Statistics(key = lambda ind: ind.fitness.values[1])
-
-stats2.register("avg", numpy.mean)
-stats2.register("std", numpy.std)
-stats2.register("min", numpy.min)
-stats2.register("max", numpy.max)
-
-mstats = tools.MultiStatistics(entropy = stats1, diff = stats2)
-
-logbook = tools.Logbook()
-
-hof = tools.ParetoFront()
 
 def printWeapon(pop):
     i = 0
@@ -367,7 +400,7 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
 
     statistics, port = simulate_population(offspring, port)
 
-    logbook_file.write("Gen : " + str(gen+1) + "\n")
+    logbook_file.write("Gen : " + str(gen) + "\n")
     for key, val in statistics.items():
             logbook_file.write(str(key) + " : " + str(val) + "\n")
     logbook_file.write("*********************************************************\n")
@@ -450,10 +483,12 @@ def getPOP(pop, content):
 
 def main():
 
-	os.chdir(path)
+    port = INITIAL_PORT[:]
 
-    logbook_file = open("logbook_final.txt", "a")
-    pop_file = open("population.txt", "a")
+    os.chdir(path)
+
+    logbook_file = open("logbook.txt", "a")
+    pop_file = open("population.txt", "r")
     best_ind = open("best.txt", "w")
     population_cluster = open("population_cluster.txt", "w")
 
@@ -461,11 +496,11 @@ def main():
 
     pop = toolbox.population(NUM_POP)
 
-    pop, content = getPOP(pop, content, True)
+    pop, content = getPOP(pop, content)
 
     for g in range(29):
 
-        pop, content = getPOP(pop, content, False)
+        pop, content = getPOP(pop, content)
 
         record = mstats.compile(pop)
         hof.update(pop)
@@ -478,18 +513,24 @@ def main():
 
     print(logbook)
 
+    pop_file.close()
+
+    pop_file = open("population.txt", "a")
+
+    pop[:] = toolbox.select(pop, MU)
+
     initialize_server(port)
 
     gen = 29
 
     for g in range(gen, NGEN):
 
-        pop, port, len_invalid = eaSimple(pop, g, port, logbook_file)
+        pop, port, len_invalid = eaMuPlusLambda(pop, g, port, logbook_file)
 
         printWeapon(pop)
         writeWeapon(pop, pop_file)
 
-        record = stats.compile(pop)
+        record = mstats.compile(pop)
         hof.update(pop)
 
         logbook.record(gen = g, evals = len_invalid, **record)
