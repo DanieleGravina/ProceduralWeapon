@@ -4,9 +4,22 @@ var float SpreadDist;
 
 var TcpLinkServer tcp_server;
 
+var float speed_grav;
+
 function class<Projectile> GetProjectileClass()
 {
-    if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity == 0)
+    if(speed_grav == 0){
+        if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity != 0)
+        {
+            speed_grav = Abs(ServerGame(WorldInfo.Game).GetPPParameters().Speed / ServerGame(WorldInfo.Game).GetPPParameters().Gravity);
+        }
+        else
+        {
+            speed_grav = 1;
+        }
+    }
+
+    if(speed_grav >= 7000 || speed_grav <= 5)
     {
         return WeaponProjectiles[CurrentFireMode];
     }
@@ -147,6 +160,7 @@ simulated function float MaxRange()
 
 defaultproperties
 {
+    speed_grav = 0
     SpreadDist=0.100000
 
 	// Weapon SkeletalMesh
