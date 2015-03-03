@@ -22,7 +22,6 @@ simulated event PostBeginPlay()
 function SetProceduralWeapon(TcpLinkServer _tcp_server)
 {
 	local ProceduralWeapon myWeapon;
-	local float speed_grav;
 	
 	`log("[PWPawn] before set weapon of "$Controller.PlayerReplicationInfo.playername);
 	
@@ -42,15 +41,10 @@ function SetProceduralWeapon(TcpLinkServer _tcp_server)
 		myWeapon.MaxAmmoCount = ServerGame(WorldInfo.Game).GetPWParameters().MaxAmmo;
 		myWeapon.ShotCost[0] = ServerGame(WorldInfo.Game).GetPWParameters().ShotCost;
 
-		if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity != 0){
-			speed_grav = Abs(ServerGame(WorldInfo.Game).GetPPParameters().Speed / ServerGame(WorldInfo.Game).GetPPParameters().Gravity);
-		}
-		else
-		{
-			speed_grav = 0;
-		}
+		myWeapon.Gravity = ServerGame(WorldInfo.Game).GetPPParameters().Gravity;
+		myWeapon.Speed = ServerGame(WorldInfo.Game).GetPPParameters().Speed;
 
-		if(!(speed_grav >= 7000 || speed_grav <= 5))
+		if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity != 0)
 		{
 			myWeapon.WeaponRange = Sqrt( 2*80/Abs( ServerGame(WorldInfo.Game).GetPPParameters().Gravity) ) *
 									ServerGame(WorldInfo.Game).GetPPParameters().Speed;

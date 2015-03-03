@@ -4,22 +4,13 @@ var float SpreadDist;
 
 var TcpLinkServer tcp_server;
 
-var float speed_grav;
+var float Gravity;
+var float Speed;
 
 function class<Projectile> GetProjectileClass()
 {
-    if(speed_grav == 0){
-        if(ServerGame(WorldInfo.Game).GetPPParameters().Gravity != 0)
-        {
-            speed_grav = Abs(ServerGame(WorldInfo.Game).GetPPParameters().Speed / ServerGame(WorldInfo.Game).GetPPParameters().Gravity);
-        }
-        else
-        {
-            speed_grav = 1;
-        }
-    }
 
-    if(speed_grav >= 7000 || speed_grav <= 5)
+    if(Gravity == 0)
     {
         return WeaponProjectiles[CurrentFireMode];
     }
@@ -27,6 +18,142 @@ function class<Projectile> GetProjectileClass()
     {
         return class 'ProceduralProjectile2';
     }
+}
+
+function float GetAIRating()
+{
+    return AIRating;
+}
+
+simulated function StartFire(byte FireModeNum)
+{
+    if (Instigator == None || !Instigator.bNoWeaponFiring)
+    {
+        if( Role < Role_Authority )
+        {
+            // if we're a client, synchronize server
+            ServerStartFire(FireModeNum);
+        }
+
+        // Start fire locally
+        BeginFire(FireModeNum);
+        DemoBeginFire(FireModeNum);
+    }
+}
+
+function float RangedAttackTime()
+{
+    local UTBot B;
+
+    B = UTBot(Instigator.Controller);
+    if ( (B == None) || (B.Enemy == None) )
+        return 0;
+
+    return FMin(2,0.3 + VSize(B.Enemy.Location - Instigator.Location)/Speed);
+}
+
+function byte BestMode()
+{
+    local byte Best;
+    if ( IsFiring() )
+        return CurrentFireMode;
+
+    if ( FRand() < 0.5 )
+        Best = 1;
+
+    if ( Best < bZoomedFireMode.Length && bZoomedFireMode[Best] != 0 )
+        return 0;
+    else
+        return Best;
+}
+
+simulated state WeaponFiring
+{
+    /**
+     * Called when the weapon is done firing, handles what to do next.
+     */
+    simulated function RefireCheckTimer()
+    {
+        // if switching to another weapon, abort firing and put down right away
+        if( bWeaponPutDown )
+        {
+            PutDownWeapon();
+            return;
+        }
+
+        // If weapon should keep on firing, then do not leave state and fire again.
+        if( ShouldRefire() )
+        {
+            FireAmmunition();
+            return;
+        }
+
+        // Otherwise we're done firing, so go back to active state.
+        GotoState('Active');
+
+    }
+}
+
+simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace, optional out array<ImpactInfo> ImpactList)
+{
+    local vector            HitLocation, HitNormal, Dir;
+    local Actor             HitActor;
+    local TraceHitInfo      HitInfo;
+    local ImpactInfo        CurrentImpact;
+    local PortalTeleporter  Portal;
+    local float             HitDist;
+
+    // Perform trace to retrieve hit info
+    HitActor = GetTraceOwner().Trace(HitLocation, HitNormal, EndTrace, StartTrace, TRUE, vect(0,0,0), HitInfo, TRACEFLAG_Bullet);
+
+    // If we didn't hit anything, then set the HitLocation as being the EndTrace location
+    if( HitActor == None )
+    {
+        HitLocation = EndTrace;
+    }
+
+    // Convert Trace Information to ImpactInfo type.
+    CurrentImpact.HitActor      = HitActor;
+    CurrentImpact.HitLocation   = HitLocation;
+    CurrentImpact.HitNormal     = HitNormal;
+    CurrentImpact.RayDir        = Normal(EndTrace-StartTrace);
+    CurrentImpact.HitInfo       = HitInfo;
+
+    // Add this hit to the ImpactList
+    ImpactList[ImpactList.Length] = CurrentImpact;
+
+    // check to see if we've hit a trigger.
+    // In this case, we want to add this actor to the list so we can give it damage, and then continue tracing through.
+    if( HitActor != None )
+    {
+        if (!HitActor.bBlockActors && PassThroughDamage(HitActor))
+        {
+            // disable collision temporarily for the trigger so that we can catch anything inside the trigger
+            HitActor.bProjTarget = false;
+            // recurse another trace
+            CurrentImpact = CalcWeaponFire(HitLocation, EndTrace, ImpactList);
+            // and reenable collision for the trigger
+            HitActor.bProjTarget = true;
+        }
+        else
+        {
+            // if we hit a PortalTeleporter, recurse through
+            Portal = PortalTeleporter(HitActor);
+            if( Portal != None && Portal.SisterPortal != None )
+            {
+                Dir = EndTrace - StartTrace;
+                HitDist = VSize(HitLocation - StartTrace);
+                // calculate new start and end points on the other side of the portal
+                StartTrace = Portal.TransformHitLocation(HitLocation);
+                EndTrace = StartTrace + Portal.TransformVector(Normal(Dir) * (VSize(Dir) - HitDist));
+                //@note: intentionally ignoring return value so our hit of the portal is used for effects
+                //@todo: need to figure out how to replicate that there should be effects on the other side as well
+                CalcWeaponFire(StartTrace, EndTrace, ImpactList);
+            }
+        }
+    }
+
+    return CurrentImpact;
 }
 
 
@@ -38,29 +165,16 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
     if( Instigator != None )
     {
         R = Instigator.GetAdjustedAimFor( Self, StartFireLoc );
-
-        if ( (PlayerController(Instigator.Controller) != None) && (CurrentFireMode == 1) )
-        {
-            R.Pitch = R.Pitch & 65535;
-            if ( R.Pitch < 16384 )
-            {
-                R.Pitch += (16384 - R.Pitch)/32;
-            }
-            else if ( R.Pitch > 49152 )
-            {
-                R.Pitch += 512;
-            }
-        }
     }
 
-    return R;
+    return AddSpread(R);
 }
 
 function SetStatProjectile(Projectile proj, Vector start_loc)
 {
     ProceduralProjectile(proj).tcp_server = tcp_server;
 
-    ProceduralProjectile(proj).time_weapon = WorldInfo.RealTimeSeconds;
+    ProceduralProjectile(proj).time_weapon = WorldInfo.TimeSeconds;
 
     ProceduralProjectile(proj).start_location = start_loc;
 }
@@ -160,8 +274,9 @@ simulated function float MaxRange()
 
 defaultproperties
 {
-    speed_grav = 0
     SpreadDist=0.100000
+    Gravity = 0;
+    Speed = 1;
 
 	// Weapon SkeletalMesh
     Begin Object class=AnimNodeSequence Name=MeshSequenceA
@@ -196,16 +311,6 @@ defaultproperties
     FireInterval(1)=+1.0
     InstantHitDamageTypes(0)=None
     InstantHitDamageTypes(1)=None                   // Not an instant hit weapon, so set to "None"
-
-    
-    // Sound effects
-    WeaponFireSnd[0]=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_FireCue'
-    WeaponFireSnd[1]=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_Fire_Cue'
-    WeaponEquipSnd=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_RaiseCue'
-    WeaponPutDownSnd=SoundCue'A_Weapon_ShockRifle.Cue.A_Weapon_SR_LowerCue'
-    PickupSound=SoundCue'A_Pickups.Weapons.Cue.A_Pickup_Weapons_Shock_Cue'
-    LockAcquiredSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLock_Cue'
-    LockLostSound=SoundCue'A_Weapon_RocketLauncher.Cue.A_Weapon_RL_SeekLost_Cue'
     
      // AI logic
     MaxDesireability=1                           // Max desireability for bots
@@ -220,14 +325,6 @@ defaultproperties
     
     FireOffset=(X=20,Y=5)                           // Holds an offset for spawning protectile effects
     PlayerViewOffset=(X=17,Y=10.0,Z=-8.0)           // Offset from view center (first person)
-    
-    // Homing properties
-    ConsoleLockAim=0.992                            // angle for locking for lock targets when on Console
-    LockRange=9000                                  // How far out should we be considering actors for a lock
-    LockAim=0.997                                   // angle for locking for lock target
-    LockChecktime=0.1                               // The frequency with which we will check for a lock 
-    LockAcquireTime=.3                              // How long does the player need to target an actor to lock on to it
-    LockTolerance=0.8
     
     // camera anim to play when firing (for camera shakes)
     FireCameraAnim(0)=CameraAnim'Camera_FX.ShockRifle.C_WP_ShockRifle_Alt_Fire_Shake'

@@ -292,14 +292,7 @@ function ModifyProjectile(array<string> ProjectilePar, int index)
 
 		else if (par ~= "Bounce")
 		{
-			if(val == 1)
-			{
-				ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = true;
-			}
-			else
-			{
-				ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = false;
-			}
+			ServerGame(WorldInfo.Game).mapBotPar[projInitialized].projPars.Bounce = false;
 		}
 		
 		++i;
@@ -456,10 +449,15 @@ function FinishGame()
 	
 	for(i = 0; i < botStatics.Length; ++i)
 	{
+		avg_dist = 0.0;
+		avg_time = 0.0;
+		avg_kill_streak = 0.0;
+
 		line = "%:ID:"$botStatics[i].id$":kills:"$string(botStatics[i].num_kills)$":dies:"$string(botStatics[i].num_dies);
 
 		for(j = 0; j < botStatics[i].time_kill.length; j++)
 		{
+			//`log("[TcpLinkServerAcceptor] time" $ string(botStatics[i].time_kill[j]));
 			avg_time += botStatics[i].time_kill[j];
 		}
 
@@ -474,6 +472,7 @@ function FinishGame()
 
 		for(j = 0; j < botStatics[i].distance_kill.length; j++)
 		{
+			//`log("[TcpLinkServerAcceptor] dist" $ string(botStatics[i].distance_kill[j]));
 			avg_dist += botStatics[i].distance_kill[j];
 		}
 
@@ -490,6 +489,7 @@ function FinishGame()
 
 		for(j = 0; j < botStatics[i].kill_streak.length; j++)
 		{
+			//`log("[TcpLinkServerAcceptor] kill_streak" $ string(botStatics[i].kill_streak[j]));
 			avg_kill_streak += botStatics[i].kill_streak[j];
 		}
 

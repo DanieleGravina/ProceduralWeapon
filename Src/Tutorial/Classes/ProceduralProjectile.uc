@@ -65,57 +65,7 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
    {
 
       TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
-                               WorldInfo.RealTimeSeconds - time_weapon, Vsize(HitLocation - start_location));
-   }
-}
-
-simulated function Explode(vector HitLocation, vector HitNormal)
-{
-   local vector SpawnPos, BaseChunkDir;
-   local actor HitActor;
-   local rotator rot;
-   local int i;
-   local ProceduralProjectile NewChunk;
-
-   Super.Explode(HitLocation, HitNormal);
-
-   if(bHasBounce)
-   {
-      SpawnPos = Location + 10 * HitNormal;
-
-      HitActor = Trace(HitLocation, HitNormal, SpawnPos, Location, false);
-      if (HitActor != None)
-      {
-         SpawnPos = HitLocation;
-      }
-
-      if ( (Role == ROLE_Authority) && (UTVehicle(ImpactedActor) == None) )
-      {
-         BaseChunkDir = Normal(HitNormal + 0.8 * Normal(Velocity));
-         for (i = 0; i < 5; i++)
-         {
-            rot = rotator(4*BaseChunkDir + VRand());
-            
-            if(self.isA('ProceduralProjectile'))
-            {
-               NewChunk = Spawn(class 'ProceduralProjectile',, '', SpawnPos, rot);
-            }
-            else
-            {
-               NewChunk = Spawn(class 'ProceduralProjectile2',, '', SpawnPos, rot);
-            }
-
-            if (NewChunk != None)
-            {
-               //NewChunk.bCheckShortRangeKill = false;
-               NewChunk.tcp_server = tcp_server;
-               NewChunk.time_weapon = time_weapon;
-               NewChunk.start_location = start_location;
-
-               NewChunk.Init(vector(rot));
-            }
-         }
-      }
+                               WorldInfo.TimeSeconds - time_weapon, Vsize(HitLocation - start_location));
    }
 }
 
@@ -184,7 +134,7 @@ simulated function bool ProjectileHurtRadius( float DamageAmount, float InDamage
             if(tcp_server.currentAcceptor != None)
             {
                TcpLinkServerAcceptor(tcp_server.currentAcceptor).SetStatKill(InstigatorController.PlayerReplicationInfo.PlayerName, 
-                                  WorldInfo.RealTimeSeconds - time_weapon, 
+                                  WorldInfo.TimeSeconds - time_weapon, 
                                   Vsize(HurtOrigin - start_location));
             }
          }
