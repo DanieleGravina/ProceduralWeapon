@@ -1,0 +1,251 @@
+============================================================================================================
+(0)
+Weapon  Rof:1.07 Spread:0.09 MaxAmmo:60.02 ShotCost:8.96 Range:1.34
+Projectile  Speed:3485.24 Damage:16.26 DamageRadius:20.48 Gravity:-0.04 Explosive:2.11
+fitness: (2.027653260125146, 0.0421680967183325)
+*********************************************************
+(1)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:40.3 ShotCost:8.84 Range:2.02
+Projectile  Speed:3547.83 Damage:16.22 DamageRadius:21.24 Gravity:-0.03 Explosive:1.28
+fitness: (2.169382194678764, 0.04265709482955947)
+*********************************************************
+(2)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:40.3 ShotCost:8.99 Range:2.81
+Projectile  Speed:3493.61 Damage:14.94 DamageRadius:21.09 Gravity:-0.01 Explosive:1.28
+fitness: (2.3243958340544895, 0.043159785436221544)
+*********************************************************
+(3)
+Weapon  Rof:1.07 Spread:0.11 MaxAmmo:24.8 ShotCost:8.96 Range:1.42
+Projectile  Speed:3484.88 Damage:19.57 DamageRadius:20.48 Gravity:0.04 Explosive:9.0
+fitness: (2.3962122601251457, 0.04103153309234227)
+*********************************************************
+(4)
+Weapon  Rof:1.07 Spread:0.11 MaxAmmo:24.8 ShotCost:8.96 Range:1.42
+Projectile  Speed:3484.88 Damage:19.57 DamageRadius:20.48 Gravity:0.04 Explosive:9.0
+fitness: (2.3962122601251457, 0.04103153309234227)
+*********************************************************
+(5)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.3 ShotCost:8.98 Range:1.67
+Projectile  Speed:3484.83 Damage:18.19 DamageRadius:21.09 Gravity:-0.05 Explosive:3.48
+fitness: (2.4198403047164003, 0.03764856612142755)
+*********************************************************
+(6)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:41.03 ShotCost:8.71 Range:1.04
+Projectile  Speed:3548.81 Damage:16.55 DamageRadius:20.94 Gravity:0.01 Explosive:2.69
+fitness: (2.5384908838722997, 0.04470984685069055)
+*********************************************************
+(7)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:41.25 ShotCost:8.99 Range:2.81
+Projectile  Speed:3508.52 Damage:14.92 DamageRadius:21.09 Gravity:-0.01 Explosive:1.28
+fitness: (2.5472958340544896, 0.04354501918124537)
+*********************************************************
+(8)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.12 ShotCost:8.96 Range:1.67
+Projectile  Speed:3484.68 Damage:18.19 DamageRadius:21.09 Gravity:-0.05 Explosive:3.46
+fitness: (2.591474388009729, 0.03782826597004596)
+*********************************************************
+(9)
+Weapon  Rof:1.13 Spread:0.03 MaxAmmo:40.29 ShotCost:8.96 Range:2.81
+Projectile  Speed:3499.4 Damage:19.3 DamageRadius:17.49 Gravity:-0.04 Explosive:3.48
+fitness: (2.645727452084926, 0.04570430204410661)
+*********************************************************
+(10)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:40.74 ShotCost:8.99 Range:2.81
+Projectile  Speed:3508.52 Damage:15.2 DamageRadius:21.09 Gravity:-0.04 Explosive:1.2
+fitness: (2.6575025463691153, 0.045713471730115376)
+*********************************************************
+(11)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:40.3 ShotCost:8.99 Range:2.81
+Projectile  Speed:3493.61 Damage:14.94 DamageRadius:21.09 Gravity:-0.01 Explosive:1.28
+fitness: (2.6740787648082294, 0.043159785436221544)
+*********************************************************
+(12)
+Weapon  Rof:1.13 Spread:0.09 MaxAmmo:40.3 ShotCost:8.96 Range:1.67
+Projectile  Speed:3485.71 Damage:18.25 DamageRadius:21.15 Gravity:-0.05 Explosive:3.48
+fitness: (2.729, 0.03260598020220887)
+*********************************************************
+(13)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:41.25 ShotCost:9.0 Range:2.81
+Projectile  Speed:3508.52 Damage:14.92 DamageRadius:21.09 Gravity:-0.01 Explosive:1.28
+fitness: (2.7497437586982625, 0.043527074281359955)
+*********************************************************
+(14)
+Weapon  Rof:1.13 Spread:0.03 MaxAmmo:42.51 ShotCost:8.96 Range:2.81
+Projectile  Speed:3497.62 Damage:19.3 DamageRadius:17.49 Gravity:-0.04 Explosive:3.48
+fitness: (2.7809505944546684, 0.04625748969588697)
+*********************************************************
+(15)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:40.3 ShotCost:8.99 Range:2.81
+Projectile  Speed:3547.84 Damage:14.92 DamageRadius:21.09 Gravity:-0.04 Explosive:1.28
+fitness: (2.781290899230693, 0.04767367453829815)
+*********************************************************
+(16)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.3 ShotCost:8.96 Range:1.67
+Projectile  Speed:3484.83 Damage:18.19 DamageRadius:21.09 Gravity:-0.05 Explosive:3.48
+fitness: (2.8027744539878086, 0.037896761484320814)
+*********************************************************
+(17)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:55.42 ShotCost:8.95 Range:1.5
+Projectile  Speed:3473.04 Damage:16.95 DamageRadius:21.08 Gravity:-0.04 Explosive:1.28
+fitness: (2.81, 0.04402151591376903)
+*********************************************************
+(18)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:42.23 ShotCost:8.96 Range:1.08
+Projectile  Speed:3508.84 Damage:14.94 DamageRadius:21.09 Gravity:-0.06 Explosive:7.3
+fitness: (2.811278124459133, 0.053527795235232725)
+*********************************************************
+(19)
+Weapon  Rof:0.78 Spread:0.11 MaxAmmo:40.27 ShotCost:8.96 Range:1.46
+Projectile  Speed:3831.21 Damage:19.69 DamageRadius:19.05 Gravity:-0.01 Explosive:3.51
+fitness: (2.834068055375491, 0.05345390256700957)
+*********************************************************
+(20)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:25.33 ShotCost:8.68 Range:4.77
+Projectile  Speed:3484.88 Damage:19.57 DamageRadius:20.9 Gravity:-0.05 Explosive:8.98
+fitness: (2.834068055375491, 0.06555280311740307)
+*********************************************************
+(21)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.3 ShotCost:8.96 Range:1.67
+Projectile  Speed:3484.83 Damage:19.85 DamageRadius:21.09 Gravity:-0.05 Explosive:3.48
+fitness: (2.8709505944546687, 0.04220995492412997)
+*********************************************************
+(22)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:42.48 ShotCost:8.71 Range:1.08
+Projectile  Speed:3548.49 Damage:16.82 DamageRadius:21.24 Gravity:0.02 Explosive:8.98
+fitness: (2.8927744539878084, 0.053932959380490315)
+*********************************************************
+(23)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:42.48 ShotCost:8.71 Range:1.08
+Projectile  Speed:3548.49 Damage:16.82 DamageRadius:21.24 Gravity:0.02 Explosive:8.98
+fitness: (2.8927744539878084, 0.053932959380490315)
+*********************************************************
+(24)
+Weapon  Rof:1.11 Spread:0.07 MaxAmmo:41.25 ShotCost:9.0 Range:5.21
+Projectile  Speed:3858.95 Damage:17.05 DamageRadius:21.09 Gravity:-0.01 Explosive:3.58
+fitness: (2.8927744539878084, 0.05428100692251589)
+*********************************************************
+(25)
+Weapon  Rof:1.07 Spread:0.14 MaxAmmo:60.02 ShotCost:8.96 Range:1.34
+Projectile  Speed:3485.24 Damage:16.26 DamageRadius:20.48 Gravity:-0.09 Explosive:9.0
+fitness: (2.9340680553754908, 0.06648569221821737)
+*********************************************************
+(26)
+Weapon  Rof:1.07 Spread:0.14 MaxAmmo:60.02 ShotCost:8.96 Range:1.34
+Projectile  Speed:3485.24 Damage:16.26 DamageRadius:20.48 Gravity:-0.09 Explosive:9.0
+fitness: (2.9340680553754908, 0.06648569221821737)
+*********************************************************
+(27)
+Weapon  Rof:1.07 Spread:0.14 MaxAmmo:60.02 ShotCost:8.96 Range:1.34
+Projectile  Speed:3485.24 Damage:16.26 DamageRadius:20.48 Gravity:-0.09 Explosive:9.0
+fitness: (2.9340680553754908, 0.06648569221821737)
+*********************************************************
+(28)
+Weapon  Rof:1.07 Spread:0.14 MaxAmmo:60.02 ShotCost:8.96 Range:1.34
+Projectile  Speed:3485.24 Damage:16.26 DamageRadius:20.48 Gravity:-0.09 Explosive:9.0
+fitness: (2.9340680553754908, 0.06648569221821737)
+*********************************************************
+(29)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.3 ShotCost:8.99 Range:5.57
+Projectile  Speed:3485.94 Damage:14.94 DamageRadius:21.09 Gravity:-0.04 Explosive:2.6
+fitness: (2.970950594454669, 0.058042212447159014)
+*********************************************************
+(30)
+Weapon  Rof:1.13 Spread:0.04 MaxAmmo:40.3 ShotCost:8.99 Range:5.57
+Projectile  Speed:3485.94 Damage:14.94 DamageRadius:21.09 Gravity:-0.04 Explosive:2.6
+fitness: (2.970950594454669, 0.058042212447159014)
+*********************************************************
+(31)
+Weapon  Rof:1.15 Spread:0.14 MaxAmmo:42.48 ShotCost:8.71 Range:8.17
+Projectile  Speed:3548.28 Damage:16.22 DamageRadius:16.52 Gravity:-0.07 Explosive:8.98
+fitness: (2.970950594454669, 0.09610692102192649)
+*********************************************************
+(32)
+Weapon  Rof:1.15 Spread:0.14 MaxAmmo:42.48 ShotCost:8.71 Range:8.17
+Projectile  Speed:3548.28 Damage:16.22 DamageRadius:16.52 Gravity:-0.07 Explosive:8.98
+fitness: (2.970950594454669, 0.09610692102192649)
+*********************************************************
+(33)
+Weapon  Rof:1.15 Spread:0.14 MaxAmmo:42.48 ShotCost:8.71 Range:8.17
+Projectile  Speed:3548.28 Damage:16.22 DamageRadius:16.52 Gravity:-0.07 Explosive:8.98
+fitness: (2.970950594454669, 0.09610692102192649)
+*********************************************************
+(34)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:42.48 ShotCost:8.99 Range:1.08
+Projectile  Speed:3548.49 Damage:16.82 DamageRadius:21.24 Gravity:0.02 Explosive:8.98
+fitness: (2.9927744539878085, 0.039953274052793544)
+*********************************************************
+(35)
+Weapon  Rof:0.92 Spread:0.03 MaxAmmo:42.23 ShotCost:8.96 Range:2.81
+Projectile  Speed:3508.84 Damage:14.94 DamageRadius:21.09 Gravity:-0.04 Explosive:7.3
+fitness: (2.9927744539878085, 0.056428828812290624)
+*********************************************************
+(36)
+Weapon  Rof:1.07 Spread:0.11 MaxAmmo:90.61 ShotCost:8.96 Range:7.91
+Projectile  Speed:3835.25 Damage:19.57 DamageRadius:20.46 Gravity:0.04 Explosive:9.05
+fitness: (2.9927744539878085, 0.10002082580513308)
+*********************************************************
+(37)
+Weapon  Rof:1.15 Spread:0.11 MaxAmmo:77.4 ShotCost:8.71 Range:8.27
+Projectile  Speed:3679.23 Damage:16.03 DamageRadius:22.33 Gravity:-0.09 Explosive:8.62
+fitness: (2.9927744539878085, 0.10829740913591854)
+*********************************************************
+(38)
+Weapon  Rof:1.04 Spread:0.11 MaxAmmo:77.27 ShotCost:8.45 Range:8.04
+Projectile  Speed:3457.66 Damage:18.2 DamageRadius:17.21 Gravity:-0.35 Explosive:19.28
+fitness: (2.9927744539878085, 0.2151643106591986)
+*********************************************************
+(39)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:56.41 ShotCost:8.99 Range:15.33
+Projectile  Speed:3499.4 Damage:19.47 DamageRadius:21.08 Gravity:-0.04 Explosive:1.28
+fitness: (3.0, 0.1419746349866562)
+*********************************************************
+(40)
+Weapon  Rof:1.15 Spread:0.03 MaxAmmo:56.41 ShotCost:8.99 Range:15.33
+Projectile  Speed:3499.4 Damage:19.47 DamageRadius:21.08 Gravity:-0.04 Explosive:1.28
+fitness: (3.0, 0.1419746349866562)
+*********************************************************
+(41)
+Weapon  Rof:1.04 Spread:0.08 MaxAmmo:39.62 ShotCost:8.86 Range:8.16
+Projectile  Speed:3829.55 Damage:38.26 DamageRadius:11.73 Gravity:-0.27 Explosive:8.4
+fitness: (3.0, 0.27049336549336395)
+*********************************************************
+(42)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(43)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(44)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(45)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(46)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(47)
+Weapon  Rof:1.04 Spread:0.14 MaxAmmo:91.89 ShotCost:8.71 Range:8.23
+Projectile  Speed:3829.55 Damage:39.56 DamageRadius:11.53 Gravity:-0.43 Explosive:8.19
+fitness: (3.0, 0.33465235180070396)
+*********************************************************
+(48)
+Weapon  Rof:1.48 Spread:0.14 MaxAmmo:91.21 ShotCost:8.71 Range:8.29
+Projectile  Speed:3829.55 Damage:40.52 DamageRadius:11.88 Gravity:-0.47 Explosive:8.19
+fitness: (3.0, 0.35518774797981156)
+*********************************************************
+(49)
+Weapon  Rof:1.48 Spread:0.14 MaxAmmo:91.21 ShotCost:8.71 Range:8.29
+Projectile  Speed:3829.55 Damage:40.52 DamageRadius:11.88 Gravity:-0.47 Explosive:8.19
+fitness: (3.0, 0.35518774797981156)
+*********************************************************

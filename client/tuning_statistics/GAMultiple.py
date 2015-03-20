@@ -41,7 +41,7 @@ iter = 6
 if DEBUG :
     path = "prova"
 else :
-    path = "distance_vs_kill_streak_100_pop_50_iter_simulated_binary_new_" + str(iter)
+    path = "distance_vs_kill_streak_100_pop_50_iter_simulated_binary_final_" + str(iter)
 
 
 # size of the population
@@ -551,6 +551,22 @@ def main():
     ###plot min, avg, max of singles objectives#
     ############################################
 
+    name_obj = ["", ""]
+
+    if obj_1 == DISTANCE:
+        name_obj[0] = "Distance"
+    elif obj_1 == KILL_STREAK:
+        name_obj[0] = "Kill Streak"
+    elif obj_1 == DELTA_TIME:
+        name_obj == "Time"
+
+    if obj_2 == DISTANCE:
+        name_obj[1] = "Distance"
+    elif obj_2 == KILL_STREAK:
+        name_obj[1] = "Kill Streak"
+    elif obj_2 == DELTA_TIME:
+        name_obj[1] == "Time"
+
     plt.figure(figsize = (16, 9))
 
     plt.subplot(221)
@@ -559,10 +575,12 @@ def main():
     fit_avg = logbook.chapters["entropy"].select("avg")
     fit_max = logbook.chapters["entropy"].select("max")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
+    line_1, = plt.plot(gen, fit_avg, 'r--', label="Average") 
+    line_2, = plt.plot(gen, fit_max, 'b-', label="Max")
 
     plt.xlabel("Generation")
-    plt.ylabel("Entropy")
+    plt.ylabel("Fitness")
+    plt.legend(handles=[line_1, line_2])
 
     plt.subplot(222)
 
@@ -570,13 +588,16 @@ def main():
     fit_max = logbook.chapters["obj_1"].select("max")
     fit_min = logbook.chapters["obj_1"].select("min")
 
+    line_1, = plt.plot(gen, fit_avg, 'r--', label="Average")
+
     if weight_obj_1 == MINIMIZE :
-        plt.plot(gen, fit_avg, 'r--', gen, fit_min, 'g')
+        line_2, = plt.plot(gen, fit_min, 'g', label="Min")
     else :
-        plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
+        line_2, = plt.plot(gen, fit_max, 'b-', label="Max")
 
     plt.xlabel("Generation")
-    plt.ylabel("Distance1")
+    plt.ylabel(name_obj[0])
+    plt.legend(handles=[line_1, line_2])
 
     plt.subplot(223)
 
@@ -584,13 +605,16 @@ def main():
     fit_max = logbook.chapters["obj_2"].select("max")
     fit_min = logbook.chapters["obj_2"].select("min")
 
+    line_1, = plt.plot(gen, fit_avg, 'r--', label="Average")
+
     if weight_obj_2 == MINIMIZE :
-        plt.plot(gen, fit_avg, 'r--', gen, fit_min, 'g')
+        line_2, = plt.plot(gen, fit_min, 'g', label="Min")
     else :
-        plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
+        line_2, = plt.plot(gen, fit_max, 'b-', label="Max")
 
     plt.xlabel("Generation")
-    plt.ylabel("Distance2")
+    plt.ylabel(name_obj[1])
+    plt.legend(handles=[line_1, line_2])
 
     plt.savefig("graph.png", bbox_inches='tight', dpi = 200)
 
@@ -638,25 +662,28 @@ def main():
 
     plt.scatter([pop_12[i].fitness.values[1] for i in range(len(pop_12))], [pop_12[i].fitness.values[0] for i in range(len(pop_12))])
     plt.scatter([hof_12[i].fitness.values[1] for i in range(len(hof_12))], [hof_12[i].fitness.values[0] for i in range(len(hof_12))], c=u'r')
+    plt.plot([hof_12[i].fitness.values[1] for i in range(len(hof_12))], [hof_12[i].fitness.values[0] for i in range(len(hof_12))])
 
-    plt.xlabel("Objective1")
-    plt.ylabel("Entropy")
+    plt.xlabel(name_obj[0])
+    plt.ylabel("Fitness")
 
     plt.subplot(222)
 
     plt.scatter([pop_13[i].fitness.values[2] for i in range(len(pop_13))], [pop_13[i].fitness.values[0] for i in range(len(pop_13))])
     plt.scatter([hof_13[i].fitness.values[2] for i in range(len(hof_13))], [hof_13[i].fitness.values[0] for i in range(len(hof_13))], c=u'r')
+    plt.plot([hof_13[i].fitness.values[2] for i in range(len(hof_13))], [hof_13[i].fitness.values[0] for i in range(len(hof_13))])    
 
-    plt.xlabel("Objective2")
-    plt.ylabel("Entropy")
+    plt.xlabel(name_obj[1])
+    plt.ylabel("Fitness")
 
     plt.subplot(224)
 
     plt.scatter([pop_23[i].fitness.values[2] for i in range(len(pop_23))], [pop_23[i].fitness.values[1] for i in range(len(pop_23))])
     plt.scatter([hof_23[i].fitness.values[2] for i in range(len(hof_23))], [hof_23[i].fitness.values[1] for i in range(len(hof_23))], c=u'r')
+    plt.plot([hof_23[i].fitness.values[2] for i in range(len(hof_23))], [hof_23[i].fitness.values[1] for i in range(len(hof_23))])
 
-    plt.xlabel("Objective2")
-    plt.ylabel("Objective1")
+    plt.xlabel(name_obj[1])
+    plt.ylabel(name_obj[0])
 
     #plt.legend([f1, f2, f3 ], ["entropy - distance 1", "entropy - distance 2", "distance 1 - distance 2"])
 

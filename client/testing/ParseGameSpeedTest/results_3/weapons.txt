@@ -1,0 +1,4 @@
+Weapon  Rof:3.9 Spread:0.17 MaxAmmo:950.76 ShotCost:8.85 Range:83.09
+Projectile  Speed:5162.69 Damage:68.45 DamageRadius:42.49 Gravity:-5.98 Explosive:33.91
+Weapon  Rof:0.31 Spread:0.24 MaxAmmo:388.83 ShotCost:6.32 Range:26.74
+Projectile  Speed:2412.86 Damage:66.58 DamageRadius:13.67 Gravity:-24.34 Explosive:40.63

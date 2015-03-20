@@ -25,24 +25,14 @@ from matplotlib.projections import register_projection
 from math import *
 from Costants import *
 
-limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
+limits = [( log(1/(ROF_MAX/100)), log(1/(ROF_MIN/100)) ), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
 def normalize(data):
 
     for i in range(NUM_PAR):
         data[i] = (data[i] - limits[i%NUM_PAR][0])/(limits[i%NUM_PAR][1] - limits[i%NUM_PAR][0])
-
-    return data
-
-def postProcess(data):
-
-    #fireinterval become rate of fire -> (1/fireinterval)
-    data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
-
-    #gravity is inverted
-    data[8] = - data[8]
 
     return data
 
@@ -145,19 +135,19 @@ def get_data(weapons):
 
     data = {
         'column names':
-            ['RoF', 'Spread', 'Ammo', 'ShotCost', 'Range', 'Speed', 'Dmg', 'DmgRad',
+            ['RoF', 'Spread', 'Ammo', 'ShotCost', 'LifeSpan', 'Speed', 'Dmg', 'DmgRad',
              'Grav', 'Exp']
              }
 
     i = 0
     for weap in weapons :
         i += 1
-        data.update({'Weapon' + str(i) : [normalize(postProcess(weap))]})
+        data.update({str(i) + '° Weapon' : [normalize(weap)]})
 
     return data
 
 
-def draw_radar(weapons, color_cluster, fitness_cluster):
+def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
 
     N = 10
     theta = radar_factory(N, frame='polygon')
@@ -172,7 +162,7 @@ def draw_radar(weapons, color_cluster, fitness_cluster):
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
         ax = fig.add_subplot(1, 3, n+1, projection='radar')
-        plt.rgrids([0.5])
+        plt.rgrids([0.5], (''))
 
         for d, color in zip(data[title], colors):
             ax.plot(theta, d, color=color_cluster)
@@ -182,6 +172,7 @@ def draw_radar(weapons, color_cluster, fitness_cluster):
     ax = fig.add_subplot(1, 3, 3)
 
     plt.ylim(0, 3)
+    ax.set_title("Fitness")
     ax.boxplot(fitness_cluster)
 
     # add legend relative to top-left plot
@@ -192,6 +183,6 @@ def draw_radar(weapons, color_cluster, fitness_cluster):
     plt.setp(legend.get_texts(), fontsize='small')
     '''
 
-    plt.figtext(0.5, 0.965, 'Mean of clustered weapons',
+    plt.figtext(0.5, 0.965, 'Mean of clustered weapons, samples=' + str(num_samples),
                 ha='center', color='black', weight='bold', size='large')
     #plt.show()

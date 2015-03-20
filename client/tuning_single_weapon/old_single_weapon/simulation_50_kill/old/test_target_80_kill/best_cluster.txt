@@ -1,0 +1,4 @@
+Weapon  Rof:1.1 Spread:0.1 MaxAmmo:30 ShotCost:9.0 Range:2
+Projectile  Speed:3500 Damage:18 DamageRadius:20 Gravity:0 Explosive:0
+Weapon  Rof:1.1 Spread:0.1 MaxAmmo:30 ShotCost:9.0 Range:2
+Projectile  Speed:3500 Damage:18 DamageRadius:20 Gravity:0 Explosive:0

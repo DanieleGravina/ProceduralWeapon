@@ -5,32 +5,33 @@ import time
 # Weapon ######
 ###############
 
+
 ID = [0, 1]
 
-#default Rof = 1
-ROF = [2.46, 0.92]
-#default Spread = 0
-SPREAD = [0.44, 0.45]
-#default MaxAmmo = 40
-AMMO = [406, 918]
-#deafult ShotCost = 1
-SHOT_COST = [8, 4]
-#defualt Range 10000
-RANGE = [55, 18]
+weapon = [[], []]
 
-###################
-# Projectile ######
-###################
+weapon_file = open("weapons.txt", "r")
 
-#default speed = 1000
-SPEED = [4258, 2883]
-#default damage = 1
-DMG = [85, 57]
-#default damgae radius = 10
-DMG_RAD = [80, 81]
-#default gravity = 1
-GRAVITY = [0, 6]
-EXPLOSIVE = [1.5, 11]
+content = weapon_file.readlines()
+
+temp = []
+
+i = 0
+
+for string in content:
+    
+    if "Weapon" in string or "Projectile" in string:
+        split_spaces = string.split(" ")
+
+        for splitted in split_spaces:
+            if ":" in splitted:
+                split_colon = splitted.split(":")
+                temp += [float(split_colon[1])]
+                if (len(temp) == 10):
+                    weapon[i] += temp
+                    temp = []
+                    i += 1
+print(weapon)
 
 PORT = [3760]
 
@@ -50,10 +51,8 @@ def main():
     client.SendGoalScore(30)
 
     for i in range(2):
-        client.SendWeaponParams(i, ROF[1 - i], SPREAD[1 - i], AMMO[1 - i], SHOT_COST[1 - i], RANGE[1 - i])
-        client.SendProjectileParams(SPEED[1 - i], DMG[1 - i], DMG_RAD[1 - i], GRAVITY[1 - i], EXPLOSIVE[1 - i])
-        #client.SendWeaponParams(ID[i], ROF[i], SPREAD[i], AMMO[i], SHOT_COST[i], RANGE[i])
-        #client.SendProjectileParams(SPEED[i], DMG[i], DMG_RAD[i], GRAVITY[i], EXPLOSIVE[i])
+        client.SendWeaponParams(i, weapon[i][0], weapon[i][1], weapon[i][2], weapon[i][3], weapon[i][4])
+        client.SendProjectileParams(weapon[i][5], weapon[i][6], weapon[i][7],weapon[i][8], weapon[i][9], 1)
 
     t0 = time.clock()
 

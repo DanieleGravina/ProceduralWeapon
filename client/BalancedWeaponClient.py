@@ -195,8 +195,9 @@ class BalancedWeaponClient:
          while(i < len(strings)) :
             if strings[i] == "ID":
                 self.statics.update({ int(strings[i+1]) : (int(strings[i+3]), int(strings[i+5]), 
-                                      float(strings[i+7]), float(strings[i+9]) , float(strings[i + 11])) })
-                i += 12
+                                      float(strings[i+7]), float(strings[i+9]) , float(strings[i + 11]), 
+                                      float(strings[i + 13])) })
+                i += 14
             else :
                 i += 1
 

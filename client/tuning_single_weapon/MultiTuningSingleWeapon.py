@@ -60,7 +60,7 @@ weight_obj_1 = MINIMIZE
 if DEBUG:
     path = "prova"
 else : 
-    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_new_10"
+    path = str(NUM_POP) + "_pop_" + str(NGEN) + "_iter_simulated_binary_final_10"
 
 
 N_CYCLES = 2
@@ -251,7 +251,6 @@ def difference(index, pop) :
     for j in range(10):
         norm1 = (pop[index][j] - limits[j][0])/(limits[j][1] - limits[j][0])
         norm2 = (Weapon_Target[j] - limits[j][0])/(limits[j][1] - limits[j][0])
-        total = norm1 - norm2
         diff += pow(norm1 - norm2, 2)
 
     return sqrt(diff)
@@ -364,7 +363,6 @@ def binary_tournament(ind1, ind2):
         return ind2
 
 def eaMuPlusLambda(pop, gen, port, logbook_file) :
-    offspring = []
 
     # Vary the population
     offspring = []
@@ -434,6 +432,8 @@ def eaMuPlusLambda(pop, gen, port, logbook_file) :
 
 
 def TuningSingleWeapon(iter = 0):
+
+    time.sleep(6000)
 
     try :
         os.makedirs(path)
@@ -525,7 +525,7 @@ def TuningSingleWeapon(iter = 0):
     ###plot min, avg, max of singles objectives#
     ############################################
 
-    plt.figure(1)
+    plt.figure(figsize = (16, 9))
 
     plt.subplot(211)
 
@@ -534,10 +534,12 @@ def TuningSingleWeapon(iter = 0):
     fit_max = logbook.chapters["entropy"].select("max")
     fit_min = logbook.chapters["entropy"].select("min")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_max, 'b-')
+    line_1, = plt.plot(gen, fit_avg, 'r--', label="Average") 
+    line_2, = plt.plot(gen, fit_max, 'b-', label="Max")
 
     plt.xlabel("Generation")
-    plt.ylabel("Entropy")
+    plt.ylabel("Fitness")
+    plt.legend(handles=[line_1, line_2])
 
     plt.subplot(212)
 
@@ -545,10 +547,12 @@ def TuningSingleWeapon(iter = 0):
     fit_max = logbook.chapters["diff"].select("max")
     fit_min = logbook.chapters["diff"].select("min")
 
-    plt.plot(gen, fit_avg, 'r--', gen, fit_min, 'g')
+    line_1, = plt.plot(gen, fit_avg, 'r--', label="Average") 
+    line_2, = plt.plot(gen, fit_min, 'g', label="Min")
 
     plt.xlabel("Generation")
     plt.ylabel("Difference Target Weapon")
+    plt.legend(handles=[line_1, line_2])
 
     plt.savefig("graph.png", bbox_inches='tight', dpi = 200)
     plt.close()
@@ -559,7 +563,7 @@ def TuningSingleWeapon(iter = 0):
     ##plot multiobjective ####
     ##########################
 
-    plt.figure(2)
+    plt.figure(figsize = (16, 9))
 
     e = [pop[i].fitness.values[0] for i in range(len(pop))]
     d = [pop[i].fitness.values[1] for i in range(len(pop))]
@@ -567,8 +571,8 @@ def TuningSingleWeapon(iter = 0):
     e_front = [hof[i].fitness.values[0] for i in range(len(hof))]
     d_front = [hof[i].fitness.values[1] for i in range(len(hof))]
 
-    plt.xlabel("Entropy")
-    plt.ylabel("Difference")
+    plt.xlabel("Fitness")
+    plt.ylabel("Difference Target Weapon")
 
     plt.scatter(e, d)
     plt.scatter(e_front, d_front, c=u'r')

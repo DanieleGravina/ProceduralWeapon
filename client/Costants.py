@@ -7,10 +7,10 @@ PORT = INITIAL_PORT
 #num of server
 NUM_SERVER = 10
 
-MAX_DURATION = 1200
-GOAL_SCORE = 20
+MAX_DURATION = 2400
+GOAL_SCORE = 40
 
-TIMEOUT = 400 #1200 : 8 (MAX_DURATION / GAMESPEED)
+TIMEOUT = 800 #1200 : 8 (MAX_DURATION / GAMESPEED)
 
 NUM_PAR = 10
 
@@ -42,7 +42,7 @@ DMG_MIN, DMG_MAX = 1, 100
 #default damgae radius = 10
 DMG_RAD_MIN, DMG_RAD_MAX = 0, 100
 #default gravity = 1
-GRAVITY_MIN, GRAVITY_MAX = -100, 100
+GRAVITY_MIN, GRAVITY_MAX = -250, 250
 #Explosion
 EXPLOSIVE_MIN, EXPLOSIVE_MAX = 0, 300
 
@@ -60,8 +60,14 @@ Weapons = []
 
 		   #Rocket Launcher
 
-Weapons += [[1.05,  0.1,     30,      1,     8, 1350, 100,       42,      -1, 220]]
+Weapons += [[1.05,  0.1,     30,      1,     8, 1350, 100,       42,      0, 220]]
 
 			#Flack
 
 Weapons += [[1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]]
+
+#Link Gun
+Weapons += [[0.16,     0,     220,      1,     3, 5000,  26,         24,      0, 0]]
+
+#Shock rifle
+Weapons += [[0.6,     0,     50,      1,     3, 1150,  55,         40,      0, 0]]

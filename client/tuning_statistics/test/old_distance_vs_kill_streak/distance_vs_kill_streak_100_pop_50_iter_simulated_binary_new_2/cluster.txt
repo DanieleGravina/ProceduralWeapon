@@ -1,0 +1,383 @@
+number of estimated clusters : 16
+index:
+[64, 65, 66, 67, 68, 69, 70]
+fitness:
+[[2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0], [2.754434002924965, 45.3674, 12.0]]
+mean entropy:
+[2.7544340029249645]
+std dev fitness:
+[0.0]
+mean obj1:
+[45.36740000000001]
+std dev obj1:
+[0.0]
+mean obj2:
+[12.0]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+Weapon  Rof:6.66 Spread:1.33 MaxAmmo:637.68 ShotCost:7.19 Range:31.16
+Projectile  Speed:136.45 Damage:48.73 DamageRadius:86.0 Gravity:38.24 Explosive:1.11
+index:
+[81, 86]
+fitness:
+[[2.8812908992306925, 484.0853, 3.8125], [2.9340680553754908, 307.0612, 6.6667]]
+mean entropy:
+[2.9076794773030916]
+std dev fitness:
+[0.037319085001728126]
+mean obj1:
+[395.57325000000003]
+std dev obj1:
+[125.17494154344553]
+mean obj2:
+[5.239599999999999]
+std dev obj2:
+[2.0182241748626435]
+members:
+Weapon  Rof:3.52 Spread:0.13 MaxAmmo:345.46 ShotCost:7.97 Range:24.57
+Projectile  Speed:1810.64 Damage:60.79 DamageRadius:91.7 Gravity:-48.04 Explosive:62.8
+Weapon  Rof:3.52 Spread:0.13 MaxAmmo:345.46 ShotCost:7.97 Range:24.57
+Projectile  Speed:1810.64 Damage:60.79 DamageRadius:91.7 Gravity:-48.04 Explosive:62.8
+index:
+[44, 45]
+fitness:
+[[2.6098403047164003, 721.4033, 7.75], [2.6098403047164003, 721.4033, 7.75]]
+mean entropy:
+[2.6098403047164003]
+std dev fitness:
+[0.0]
+mean obj1:
+[721.4033]
+std dev obj1:
+[0.0]
+mean obj2:
+[7.75]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:4.76 Spread:0.14 MaxAmmo:389.87 ShotCost:7.86 Range:27.12
+Projectile  Speed:1969.08 Damage:62.5 DamageRadius:66.23 Gravity:-45.76 Explosive:60.99
+Weapon  Rof:4.76 Spread:0.14 MaxAmmo:389.87 ShotCost:7.86 Range:27.12
+Projectile  Speed:1969.08 Damage:62.5 DamageRadius:66.23 Gravity:-45.76 Explosive:60.99
+index:
+[8, 12, 59]
+fitness:
+[[2.286396957115956, 965.6649, 8.0], [2.4032583347756455, 820.871, 11.0], [2.721928094887362, 788.3942, 4.4444]]
+mean entropy:
+[2.470527795592988]
+std dev fitness:
+[0.225423442128599]
+mean obj1:
+[858.3100333333333]
+std dev obj1:
+[94.37947966758101]
+mean obj2:
+[7.814800000000001]
+std dev obj2:
+[3.2817216700994005]
+members:
+Weapon  Rof:6.62 Spread:2.78 MaxAmmo:357.61 ShotCost:7.97 Range:31.45
+Projectile  Speed:1921.63 Damage:81.03 DamageRadius:64.96 Gravity:-54.34 Explosive:34.56
+Weapon  Rof:6.62 Spread:2.78 MaxAmmo:357.61 ShotCost:7.97 Range:31.26
+Projectile  Speed:1921.63 Damage:81.06 DamageRadius:65.21 Gravity:-54.34 Explosive:3.35
+Weapon  Rof:6.62 Spread:2.78 MaxAmmo:357.61 ShotCost:7.98 Range:27.02
+Projectile  Speed:1921.63 Damage:81.03 DamageRadius:64.96 Gravity:-54.34 Explosive:34.56
+index:
+[6, 13, 14, 15, 19, 24, 71, 91, 92]
+fitness:
+[[2.286396957115956, 550.1298, 19.0], [2.4032583347756455, 849.4634, 2.0], [2.4032583347756455, 849.4634, 2.0], [2.4032583347756455, 849.4634, 2.0], [2.4689955935892813, 632.878, 14.0], [2.4689955935892813, 782.5369, 4.5], [2.811278124459133, 334.1686, 7.8333], [2.970950594454669, 641.3588, 4.5556], [2.970950594454669, 641.3588, 4.5556]]
+mean entropy:
+[2.5763713846655474]
+std dev fitness:
+[0.2654278046319371]
+mean obj1:
+[681.2023444444444]
+std dev obj1:
+[172.60023559648687]
+mean obj2:
+[6.716055555555555]
+std dev obj2:
+[5.980896165941838]
+members:
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:837.46 ShotCost:8.0 Range:31.26
+Projectile  Speed:1921.63 Damage:75.64 DamageRadius:65.24 Gravity:-54.35 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:837.46 ShotCost:8.0 Range:31.26
+Projectile  Speed:1921.63 Damage:75.64 DamageRadius:65.21 Gravity:-54.34 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:837.46 ShotCost:8.0 Range:31.26
+Projectile  Speed:1921.63 Damage:75.64 DamageRadius:65.21 Gravity:-54.34 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:837.46 ShotCost:8.0 Range:31.26
+Projectile  Speed:1921.63 Damage:75.64 DamageRadius:65.21 Gravity:-54.34 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:831.8 ShotCost:7.85 Range:31.26
+Projectile  Speed:1944.6 Damage:75.64 DamageRadius:64.39 Gravity:-54.75 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:876.49 ShotCost:7.85 Range:31.26
+Projectile  Speed:1921.63 Damage:75.53 DamageRadius:65.24 Gravity:-54.16 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:895.42 ShotCost:7.85 Range:31.26
+Projectile  Speed:1921.63 Damage:79.74 DamageRadius:65.21 Gravity:-53.8 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:895.42 ShotCost:7.85 Range:31.26
+Projectile  Speed:1921.63 Damage:79.74 DamageRadius:65.24 Gravity:-53.81 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.77 MaxAmmo:895.42 ShotCost:7.85 Range:31.26
+Projectile  Speed:1921.63 Damage:79.74 DamageRadius:65.24 Gravity:-53.81 Explosive:25.39
+index:
+[25, 26, 27]
+fitness:
+[[2.4689955935892813, 802.6304, 8.5], [2.4689955935892813, 802.6304, 8.5], [2.4689955935892813, 802.6304, 8.5]]
+mean entropy:
+[2.4689955935892813]
+std dev fitness:
+[0.0]
+mean obj1:
+[802.6304]
+std dev obj1:
+[0.0]
+mean obj2:
+[8.5]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:6.66 Spread:2.59 MaxAmmo:977.57 ShotCost:7.85 Range:38.01
+Projectile  Speed:1926.75 Damage:80.03 DamageRadius:65.24 Gravity:-45.24 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.59 MaxAmmo:977.57 ShotCost:7.85 Range:38.01
+Projectile  Speed:1926.75 Damage:80.03 DamageRadius:65.24 Gravity:-45.24 Explosive:25.39
+Weapon  Rof:6.66 Spread:2.59 MaxAmmo:977.57 ShotCost:7.85 Range:38.01
+Projectile  Speed:1926.75 Damage:80.03 DamageRadius:65.24 Gravity:-45.24 Explosive:25.39
+index:
+[48, 49]
+fitness:
+[[2.6924875695421235, 595.4556, 13.0], [2.6924875695421235, 595.4556, 13.0]]
+mean entropy:
+[2.6924875695421235]
+std dev fitness:
+[0.0]
+mean obj1:
+[595.4556]
+std dev obj1:
+[0.0]
+mean obj2:
+[13.0]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:6.57 Spread:2.77 MaxAmmo:363.28 ShotCost:7.96 Range:31.26
+Projectile  Speed:1809.58 Damage:75.64 DamageRadius:65.21 Gravity:-54.34 Explosive:23.47
+Weapon  Rof:6.57 Spread:2.77 MaxAmmo:363.28 ShotCost:7.96 Range:31.26
+Projectile  Speed:1809.58 Damage:75.64 DamageRadius:65.21 Gravity:-54.34 Explosive:23.47
+index:
+[50, 51, 52]
+fitness:
+[[2.721928094887362, 300.5895, 19.0], [2.721928094887362, 300.5895, 19.0], [2.721928094887362, 300.5895, 19.0]]
+mean entropy:
+[2.721928094887362]
+std dev fitness:
+[0.0]
+mean obj1:
+[300.5895]
+std dev obj1:
+[0.0]
+mean obj2:
+[19.0]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:5.99 Spread:0.18 MaxAmmo:90.45 ShotCost:4.86 Range:28.24
+Projectile  Speed:859.85 Damage:48.62 DamageRadius:64.38 Gravity:5.34 Explosive:21.88
+Weapon  Rof:5.99 Spread:0.18 MaxAmmo:90.45 ShotCost:4.86 Range:28.24
+Projectile  Speed:859.85 Damage:48.62 DamageRadius:64.38 Gravity:5.34 Explosive:21.88
+Weapon  Rof:5.99 Spread:0.18 MaxAmmo:90.45 ShotCost:4.86 Range:28.24
+Projectile  Speed:859.85 Damage:48.62 DamageRadius:64.38 Gravity:5.34 Explosive:21.88
+index:
+[30, 32, 33, 34, 35, 36, 57]
+fitness:
+[[2.522294817075638, 487.6271, 14.0], [2.5792492238560345, 788.2599, 6.75], [2.5792492238560345, 788.2599, 6.75], [2.5792492238560345, 788.2599, 6.75], [2.5792492238560345, 788.2599, 6.75], [2.5792492238560345, 788.2599, 6.75], [2.721928094887362, 560.2697, 5.8333]]
+mean entropy:
+[2.5914955758918814]
+std dev fitness:
+[0.06130695001816651]
+mean obj1:
+[712.7423285714285]
+std dev obj1:
+[130.66451097536924]
+mean obj2:
+[7.654757142857143]
+std dev obj2:
+[2.818768657799089]
+members:
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:324.38 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.61 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-47.91 Explosive:3.22
+Weapon  Rof:6.62 Spread:0.22 MaxAmmo:374.67 ShotCost:7.97 Range:28.54
+Projectile  Speed:1810.86 Damage:81.34 DamageRadius:83.38 Gravity:-59.79 Explosive:3.22
+index:
+[97, 98, 99]
+fitness:
+[[3.0, 480.51, 3.1667], [3.0, 480.51, 3.1667], [3.0, 480.51, 3.1667]]
+mean entropy:
+[3.0]
+std dev fitness:
+[0.0]
+mean obj1:
+[480.51]
+std dev obj1:
+[0.0]
+mean obj2:
+[3.1667]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:3.18 Spread:0.2 MaxAmmo:998.19 ShotCost:7.98 Range:32.7
+Projectile  Speed:1964.7 Damage:78.92 DamageRadius:96.7 Gravity:-47.15 Explosive:106.29
+Weapon  Rof:3.18 Spread:0.2 MaxAmmo:998.19 ShotCost:7.98 Range:32.7
+Projectile  Speed:1964.7 Damage:78.92 DamageRadius:96.7 Gravity:-47.15 Explosive:106.29
+Weapon  Rof:3.18 Spread:0.2 MaxAmmo:998.19 ShotCost:7.98 Range:32.7
+Projectile  Speed:1964.7 Damage:78.92 DamageRadius:96.7 Gravity:-47.15 Explosive:106.29
+index:
+[54, 73, 74]
+fitness:
+[[2.721928094887362, 463.2076, 8.0], [2.811278124459133, 468.1927, 7.8333], [2.811278124459133, 468.1927, 7.8333]]
+mean entropy:
+[2.781494781268543]
+std dev fitness:
+[0.05158626362536292]
+mean obj1:
+[466.531]
+std dev obj1:
+[2.878148826937197]
+mean obj2:
+[7.888866666666668]
+std dev obj2:
+[0.0962442898739104]
+members:
+Weapon  Rof:2.2 Spread:0.61 MaxAmmo:980.2 ShotCost:7.97 Range:37.98
+Projectile  Speed:1625.47 Damage:78.7 DamageRadius:97.21 Gravity:1.67 Explosive:20.05
+Weapon  Rof:2.2 Spread:0.61 MaxAmmo:980.2 ShotCost:7.99 Range:37.98
+Projectile  Speed:1625.47 Damage:78.7 DamageRadius:97.03 Gravity:16.53 Explosive:20.05
+Weapon  Rof:2.2 Spread:0.61 MaxAmmo:980.2 ShotCost:7.99 Range:37.98
+Projectile  Speed:1625.47 Damage:78.7 DamageRadius:97.03 Gravity:16.53 Explosive:20.05
+index:
+[38, 39, 40, 41]
+fitness:
+[[2.6098403047164003, 366.7579, 17.0], [2.6098403047164003, 366.7579, 17.0], [2.6098403047164003, 366.7579, 17.0], [2.6098403047164003, 366.7579, 17.0]]
+mean entropy:
+[2.6098403047164003]
+std dev fitness:
+[0.0]
+mean obj1:
+[366.7579]
+std dev obj1:
+[0.0]
+mean obj2:
+[17.0]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:7.89 Spread:2.21 MaxAmmo:363.09 ShotCost:7.85 Range:37.98
+Projectile  Speed:1537.41 Damage:79.67 DamageRadius:96.7 Gravity:-47.5 Explosive:92.7
+Weapon  Rof:7.89 Spread:2.21 MaxAmmo:363.09 ShotCost:7.85 Range:37.98
+Projectile  Speed:1537.41 Damage:79.67 DamageRadius:96.7 Gravity:-47.5 Explosive:92.7
+Weapon  Rof:7.89 Spread:2.21 MaxAmmo:363.09 ShotCost:7.85 Range:37.98
+Projectile  Speed:1537.41 Damage:79.67 DamageRadius:96.7 Gravity:-47.5 Explosive:92.7
+Weapon  Rof:7.89 Spread:2.21 MaxAmmo:363.09 ShotCost:7.85 Range:37.98
+Projectile  Speed:1537.41 Damage:79.67 DamageRadius:96.7 Gravity:-47.5 Explosive:92.7
+index:
+[77, 78]
+fitness:
+[[2.834068055375491, 697.0795, 4.1111], [2.834068055375491, 697.0795, 4.1111]]
+mean entropy:
+[2.834068055375491]
+std dev fitness:
+[0.0]
+mean obj1:
+[697.0795]
+std dev obj1:
+[0.0]
+mean obj2:
+[4.1111]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:2.82 Spread:0.18 MaxAmmo:992.92 ShotCost:7.98 Range:31.22
+Projectile  Speed:1958.16 Damage:79.73 DamageRadius:92.87 Gravity:-47.5 Explosive:1.16
+Weapon  Rof:2.82 Spread:0.18 MaxAmmo:992.92 ShotCost:7.98 Range:31.22
+Projectile  Speed:1958.16 Damage:79.73 DamageRadius:92.87 Gravity:-47.5 Explosive:1.16
+index:
+[58, 87]
+fitness:
+[[2.721928094887362, 682.5692, 5.4444], [2.9340680553754908, 596.2258, 5.3333]]
+mean entropy:
+[2.8279980751314264]
+std dev fitness:
+[0.15000560462180204]
+mean obj1:
+[639.3975]
+std dev obj1:
+[61.05400365070253]
+mean obj2:
+[5.38885]
+std dev obj2:
+[0.0785595633898251]
+members:
+Weapon  Rof:7.13 Spread:2.77 MaxAmmo:833.89 ShotCost:8.0 Range:31.26
+Projectile  Speed:1944.6 Damage:75.64 DamageRadius:92.57 Gravity:-54.75 Explosive:25.39
+Weapon  Rof:6.44 Spread:2.77 MaxAmmo:833.89 ShotCost:8.0 Range:31.26
+Projectile  Speed:1944.6 Damage:75.64 DamageRadius:92.57 Gravity:-54.75 Explosive:25.39
+index:
+[20, 21, 22]
+fitness:
+[[2.4689955935892813, 686.5133, 19.0], [2.4689955935892813, 686.5133, 19.0], [2.4689955935892813, 686.5133, 19.0]]
+mean entropy:
+[2.4689955935892813]
+std dev fitness:
+[0.0]
+mean obj1:
+[686.5133]
+std dev obj1:
+[0.0]
+mean obj2:
+[19.0]
+std dev obj2:
+[0.0]
+members:
+Weapon  Rof:6.54 Spread:2.94 MaxAmmo:989.4 ShotCost:7.97 Range:32.73
+Projectile  Speed:1270.78 Damage:81.37 DamageRadius:83.38 Gravity:-7.7 Explosive:3.24
+Weapon  Rof:6.54 Spread:2.94 MaxAmmo:989.4 ShotCost:7.97 Range:32.73
+Projectile  Speed:1270.78 Damage:81.37 DamageRadius:83.38 Gravity:-7.7 Explosive:3.24
+Weapon  Rof:6.54 Spread:2.94 MaxAmmo:989.4 ShotCost:7.97 Range:32.73
+Projectile  Speed:1270.78 Damage:81.37 DamageRadius:83.38 Gravity:-7.7 Explosive:3.24
+index:
+[]
+fitness:
+[]
+mean entropy:
+[]
+std dev fitness:
+[]
+mean obj1:
+[]
+std dev obj1:
+[]
+mean obj2:
+[]
+std dev obj2:
+[]
+members:

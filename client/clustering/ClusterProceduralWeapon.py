@@ -19,10 +19,10 @@ from sklearn.preprocessing import MinMaxScaler
 from Costants import *
 
 limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
-label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "RANGE", "SPEED", "DMG", "DMG_RAD", "GRAVITY", "EXPLOSIVE"]
+label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "LIFE_SPAN", "SPEED", "DMG", "DMG_RAD", "GRAVITY", "EXPLOSIVE"]
 
 def printWeapon(pop):
     i = 0
@@ -43,11 +43,23 @@ def printWeapon(pop):
 
 
 def writeWeapon(pop, pop_file):
+    i = 0
     for ind in pop :
+        pop_file.write("(" + str(i*2) + ")\n")
+        i += 1
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
             + " Gravity:" + str(ind[8]) + " Explosive:" + str(ind[9]) +"\n")
+
+        pop_file.write("Weapon "+ " Rof:" + str(ind[10]) + " Spread:" + str(ind[11]) + " MaxAmmo:" + str(ind[12]) 
+            + " ShotCost:" + str(ind[13]) + " Range:" + str(ind[14]) + "\n")
+        pop_file.write("Projectile "+ " Speed:" + str(ind[15]) + " Damage:" + str(ind[16]) + " DamageRadius:" + str(ind[17])
+            + " Gravity:" + str(ind[18]) + " Explosive:" + str(ind[19]) + "\n")
+
+        pop_file.write("*********************************************************" + "\n")
+    pop_file.write("\n" + "============================================================================================================" + "\n")
+
 
 def normalize(data):
 	for i in range(data.shape[0]):
@@ -64,14 +76,17 @@ def normalize_single(data):
 	return clone
 
 def postProcess(data):
+	clone = list(data)
 
 	#fireinterval become rate of fire -> (1/fireinterval)
-	data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
+	clone[0] = log(1/clone[0])
+	clone[10] = log(1/clone[10])
 
 	#gravity is inverted
-	data[8] = - data[8]
+	clone[8] = - clone[8]
+	clone[18] = - clone[18]
 
-	return data
+	return clone
 
 class ClusterProceduralWeapon:
 	def __init__(self, pure_data = None, fits = [], file = None):
@@ -110,10 +125,10 @@ class ClusterProceduralWeapon:
 
 		printWeapon(X)
 
-		db = DBSCAN(eps=0.2, min_samples=2).fit(X)
+		db = DBSCAN(eps=0.2, min_samples=5).fit(X)
 		labels = db.labels_
 
-		labels_unique = np.unique(labels)
+		labels_unique = np.unique( [labels[i] for i in range(len(labels)) if labels[i] != - 1] )
 		n_clusters_ = len(labels_unique)
 
 		print(labels)
@@ -143,7 +158,7 @@ class ClusterProceduralWeapon:
 				mean += [statistics.mean(fitness)]
 				stdev += [statistics.stdev(fitness)]
 
-			clusters[k] += [data[i] for i in range(len(labels)) if my_members[i]]
+			clusters[k] += [postProcess(data[i]) for i in range(len(labels)) if my_members[i]]
 
 			cluster_file.write("index:"+ "\n")
 			cluster_file.write(str(index) + "\n")
@@ -154,11 +169,13 @@ class ClusterProceduralWeapon:
 			cluster_file.write("std dev fitness:"+ "\n")
 			cluster_file.write(str(stdev)+ "\n")
 			cluster_file.write("members:"+ "\n")
-			writeWeapon(clusters[k], cluster_file)
+			writeWeapon([data[i] for i in range(len(labels)) if my_members[i]], cluster_file)
+
+			cluster_file.write("==========================================================================="+ "\n")
 
 			print(index)
 			print("members:")
-			printWeapon(clusters[k])
+			printWeapon([data[i] for i in range(len(labels)) if my_members[i]])
 			print("fitness:"+ "\n")
 			print(str(fitness)+ "\n")
 			print("mean fitness:"+ "\n")
@@ -166,9 +183,9 @@ class ClusterProceduralWeapon:
 			print("std dev fitness:"+ "\n")
 			print(str(stdev)+ "\n")
 			print("mean of cluster")
-			print(np.mean(clusters[k], axis=0))
+			print(np.mean([data[i] for i in range(len(labels)) if my_members[i]], axis=0))
 			print("std of cluster")
-			print(np.std(clusters[k], axis=0))
+			print(np.std([data[i] for i in range(len(labels)) if my_members[i]], axis=0))
 
 
 			index = []
@@ -176,19 +193,23 @@ class ClusterProceduralWeapon:
 			fitness = []
 			stdev = []
 
-		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk')
+		colors = list('bgrcmykbgrcmykbgrcmykbgrcmyk') + list('bgrcmykbgrcmykbgrcmykbgrcmyk')
+
+		'''
 
 		mds = MDS(n_components=2)
 
 		pos = mds.fit_transform(X.astype(np.float64))
 
-		'''
-		plt.figure(7)
+		plt.figure(figsize = (16,9))
 
 		for i in range(len(pos[:,0])):
 
 			plt.plot(pos[i, 0], pos[i, 1], 'o', markerfacecolor=colors[labels[i]], markeredgecolor='k')
+
+		plt.savefig("mds.png", bbox_inches='tight')
 		'''
+
 		X_ordered = []
 		X = np.array(data);
 		colors_ordered = []
@@ -247,7 +268,7 @@ class ClusterProceduralWeapon:
 		'''
 
 		drawRadarChart(self, clusters, n_clusters_, colors_cluster, fits_clustered)
-		drawBarPlot(self, clusters, n_clusters_ - 1, colors_cluster, fits_clustered)
+		drawBarPlot(self, clusters, n_clusters_, colors_cluster, fits_clustered)
 
 		#plt.show()
 
@@ -255,38 +276,54 @@ def drawRadarChart(self, clusters, n_clusters_, colors, fits_clustered):
 
 	max_radars = 2
 	n_clusters_ = 2
+	num_samples = []
 
 	weapons = []
 
 	for cluster in clusters:
 		if(len(cluster) > 0):
 			temp = list(np.mean(cluster, axis=0))
-			weapons += [temp[NUM_PAR:]]
+			num_samples += [len(cluster)]
 			weapons += [temp[:NUM_PAR]]
+			weapons += [temp[NUM_PAR:]]
 	
 	index = 0
 
 	while len(weapons) > 0 :
 
 		if len(weapons) > max_radars :
-			draw_radar(weapons[:max_radars], colors[index], fits_clustered[index])
+			draw_radar(weapons[:max_radars], colors[index], fits_clustered[index], num_samples[0])
 			plt.savefig("radar"+ str(index) + ".png", bbox_inches='tight')
+			plt.close()
 			weapons = weapons[max_radars:]
+			num_samples = num_samples[1:]
 		else :
-			draw_radar(weapons, colors[index], fits_clustered[index])
+			draw_radar(weapons, colors[index], fits_clustered[index], num_samples[0])
 			plt.savefig("radar"+ str(index) + ".png", bbox_inches='tight')
+			plt.close()
 			weapons = []
 
 		index += 1
 
-def drawBarPlot(self, clusters, n_clusters_, colors_cluster, fitness_cluster):
+def drawBarPlot(self, clusters, n_clusters_, colors_cluster, fitness_cluster, index = 0):
 
 	weapons = []
 	weapons_std = []
 
+	limits[0] = ( 0, log(1/(ROF_MIN/100)) - log(1/(ROF_MAX/100)))
+
+	path = "cluster.png"
+
+	if n_clusters_ > 10 :
+		drawBarPlot(self, clusters[10:], n_clusters_ - 10, colors_cluster[10:], fitness_cluster[10:], index + 1)
+		clusters = clusters[:10]
+		n_clusters_  = 10
+		colors_cluster = colors_cluster[:10]
+		fitness_cluster[:10]
+		path = "cluster" + str(index) + ".png"
+
 	alphabet = list("ABCDEFGHILMNOPQRSTUVZ")
 
-	k = np.arange(n_clusters_)
 	width = 0.4
 
 	for cluster in clusters:
@@ -294,26 +331,34 @@ def drawBarPlot(self, clusters, n_clusters_, colors_cluster, fitness_cluster):
 			weapons += [list(np.mean(cluster, axis=0))]
 			weapons_std += [list(np.std(cluster, axis=0))]
 
+	for weap_index in range(len(weapons)):
+		for ind in range(2):
+			rof = weapons[weap_index][ind*10]
+			weapons[weap_index][ind*10] = (rof - log(1/(ROF_MAX/100)))
+
 	fig = plt.figure(figsize=(16, 9))
 	fig.subplots_adjust(wspace=0.50, hspace=0.25)
+
+	k = np.arange(len(weapons))
 
 	for j in range(10):
 		ax = fig.add_subplot(4, 3, j+1)
 		plt.ylabel(label[j])
 		plt.ylim(limits[j][0], limits[j][1])
-		ax.bar(k, [weapons[ind][j] for ind in range(n_clusters_)], width, color=colors_cluster)
-		ax.bar(k + width, [weapons[ind][j + NUM_PAR] for ind in range(n_clusters_)], width, color=colors_cluster)
+		ax.bar(k, [weapons[ind][j] for ind in range(len(weapons))], width, color=colors_cluster)
+		ax.bar(k + width, [weapons[ind][j + NUM_PAR] for ind in range(len(weapons))], width, color=colors_cluster)
 		ax.set_xticks(k + width)
 		ax.set_xticklabels( alphabet[:n_clusters_] )
 
 	ax = fig.add_subplot(4, 3, 11)
-	plt.ylabel("ENTROPY")
-	ax.bar(k, [np.mean(fitness_cluster[i]) for i in range(n_clusters_)], width, color=colors_cluster,
-			yerr = [np.std(fitness_cluster[i]) for i in range(n_clusters_)])
-	ax.set_xticks(k + width)
-	ax.set_xticklabels( alphabet[:n_clusters_] )
+	plt.ylabel("FITNESS")
+	ax.bar(k, [np.mean(fitness_cluster[i]) for i in range(len(weapons))], width, color=colors_cluster,
+			yerr = [np.std(fitness_cluster[i]) for i in range(len(weapons))])
+	ax.set_xticks(k + width/2)
+	ax.set_xticklabels( alphabet[:(len(weapons))] )
 
-	plt.savefig("cluster.png", bbox_inches='tight')
+	plt.savefig(path, bbox_inches='tight')
+	plt.close()
 
 def main():
 

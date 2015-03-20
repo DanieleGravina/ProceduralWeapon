@@ -1,0 +1,2 @@
+average error: 5.6362138
+std dev error: 5.08045009631

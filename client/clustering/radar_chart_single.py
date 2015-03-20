@@ -21,7 +21,7 @@ from Costants import *
 from math import *
 
 limits = [(0, log(1/(ROF_MIN/100))*2), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MIN, AMMO_MAX), (SHOT_COST_MIN, SHOT_COST_MAX), (RANGE_MIN/100, RANGE_MAX/100),
-          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (-GRAVITY_MIN, -GRAVITY_MAX), 
+          (SPEED_MIN, SPEED_MAX), (DMG_MIN, DMG_MAX), (DMG_RAD_MIN, DMG_RAD_MAX), (GRAVITY_MIN, GRAVITY_MAX), 
           (EXPLOSIVE_MIN, EXPLOSIVE_MAX)]
 
 def normalize(data):
@@ -139,21 +139,21 @@ def get_data(weapons):
 
     data = {
         'column names':
-            ['RoF', 'Spread', 'Ammo', 'ShotCost', 'Range', 'Speed', 'Dmg', 'DmgRad',
+            ['RoF', 'Spread', 'Ammo', 'ShotCost', 'LifeSpan', 'Speed', 'Dmg', 'DmgRad',
              'Grav', 'Exp']
              }
 
     i = 0
     for weap in weapons :
         i += 1
-        data.update({'Weapon' + str(i) : [weap]})
+        data.update( {'Generated Weapon' : [normalize(weap)] } )
 
-    data.update({'Target' : [normalize(postProcess([1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]))]})
+    data.update({'Target Weapon' : [normalize(postProcess([1.1,   0.1,   30,      9,     2, 3500,  18,       20,      0, 0]))]})
 
     return data
 
 
-def draw_radar(weapons):
+def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
 
     N = 10
     theta = radar_factory(N, frame='polygon')
@@ -161,22 +161,34 @@ def draw_radar(weapons):
     data = get_data(weapons)
     spoke_labels = data.pop('column names')
 
-    fig = plt.figure(figsize=(9, 9))
+    fig = plt.figure(figsize=(16, 9))
     fig.subplots_adjust(wspace=0.50, hspace=0.20)
 
     colors = ['b', 'r', 'g', 'm', 'y']
     # Plot the four cases from the example data on separate axes
     for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(1, 2, n+1, projection='radar')
-        plt.rgrids([0.5])
+        ax = fig.add_subplot(1, 4, n+1, projection='radar')
+        plt.rgrids([0.5], (''))
 
         ax.set_title(title, weight='bold', size='medium', position=(0.5, 1.1),
                      horizontalalignment='center', verticalalignment='center')
 
         for d, color in zip(data[title], colors):
-            ax.plot(theta, d, color=color)
-            ax.fill(theta, d, facecolor=color, alpha=0.25)
+            ax.plot(theta, d, color=color_cluster)
+            ax.fill(theta, d, facecolor=color_cluster, alpha=0.25)
         ax.set_varlabels(spoke_labels)
+
+    ax = fig.add_subplot(1, 4, 3)
+
+    plt.ylim(0, 3)
+    ax.set_title("Fitness")
+    ax.boxplot( [fitness_cluster[i][0] for i in range(len(fitness_cluster))] )
+
+    ax = fig.add_subplot(1, 4, 4)
+
+    plt.ylim(0, 0.5)
+    ax.set_title("Distance from target")
+    ax.boxplot( [fitness_cluster[i][1] for i in range(len(fitness_cluster))] )
 
     # add legend relative to top-left plot
     '''
@@ -186,6 +198,6 @@ def draw_radar(weapons):
     plt.setp(legend.get_texts(), fontsize='small')
     '''
 
-    plt.figtext(0.5, 0.965, 'Tuned weapon vs Target',
+    plt.figtext(0.5, 0.965, 'Mean of clustered weapon, num samples = ' + str(num_samples),
                 ha='center', color='black', weight='bold', size='large')
     #plt.show()
