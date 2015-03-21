@@ -15,3 +15,5 @@ tuning_statistics -> data relativi al tuning con GA multiobiettivo
 	- distance vs kill_streak
 	- delta_time vs kill_streak
 	- delta_time vs distance
+
+test_weapons -> contiene script per testare armi nel gioco
