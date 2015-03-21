@@ -1,4 +1,4 @@
-ProceduralWeapon
+Automated Weapon Tuning 
 ================
 
-Procedural Weapon with UDK
+Automated tuning of weapon in Unreal Tournament III with Genetic Algorithms
