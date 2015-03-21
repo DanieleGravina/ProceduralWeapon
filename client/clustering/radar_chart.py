@@ -159,14 +159,16 @@ def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
     fig.subplots_adjust(wspace=0.50, hspace=0.25)
 
     colors = ['b', 'r', 'g', 'm', 'y']
-    # Plot the four cases from the example data on separate axes
-    for n, title in enumerate(data.keys()):
-        ax = fig.add_subplot(1, 3, n+1, projection='radar')
-        plt.rgrids([0.5], (''))
 
-        for d, color in zip(data[title], colors):
-            ax.plot(theta, d, color=color_cluster)
-            ax.fill(theta, d, facecolor=color_cluster, alpha=0.25)
+    weapons = data['1° Weapon'][0], data['2° Weapon'][0]
+
+    for i in range(len(weapons)) :
+        ax = fig.add_subplot(1, 3, i+1, projection='radar')
+        plt.rgrids([0.5], (''))
+        ax.set_title("Weapon" + str(i+1), weight='bold', size='medium', position=(0.5, 1.1),
+                     horizontalalignment='center', verticalalignment='center')
+        ax.plot(theta, weapons[i], color=color_cluster)
+        ax.fill(theta, weapons[i], facecolor=color_cluster, alpha=0.25)
         ax.set_varlabels(spoke_labels)
 
     ax = fig.add_subplot(1, 3, 3)

@@ -5,6 +5,9 @@ min_samples = 5
 Nel file "cluster.txt" ci sono i singoli individui contenuti nel cluster:
 
 per ogni cluster :
+	cluster : numero del cluster
 	index : indice degli individui nella popolazione finale
 	fitness : elenco [fitness] dei singoli individui
 	members : elenco delle armi dentro il cluster
+
+example -> contiene gli esempi messi nella tesi

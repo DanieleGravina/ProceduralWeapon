@@ -146,6 +146,8 @@ class ClusterProceduralWeapon:
 		print("number of estimated clusters : %d" % n_clusters_ )
 		cluster_file.write("number of estimated clusters : %d" % n_clusters_ + "\n")
 
+		num_cluster = 0
+
 		for k in range(n_clusters_):
 			my_members = labels == k
 			for i in range(len(labels)):
@@ -159,6 +161,9 @@ class ClusterProceduralWeapon:
 				stdev += [statistics.stdev(fitness)]
 
 			clusters[k] += [postProcess(data[i]) for i in range(len(labels)) if my_members[i]]
+
+			cluster_file.write("cluster: " + str(num_cluster) + "°" + "\n")
+			num_cluster += 1
 
 			cluster_file.write("index:"+ "\n")
 			cluster_file.write(str(index) + "\n")

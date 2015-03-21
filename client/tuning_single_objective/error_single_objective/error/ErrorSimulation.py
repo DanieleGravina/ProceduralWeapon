@@ -254,9 +254,12 @@ def TuningSingleWeapon(iter = 0):
     plt.close()
     ##########################################################################
 
-    print(numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)]))
-    print(numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)]))
-    
+    error_file = open("error_balance.txt", "w")
+
+    error_file.write("average error: " + str(numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)])) + "\n")
+    error_file.write("std dev error: " + str(numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)])) + "\n")
+    error_file.close()
+
     plt.figure(figsize=(16, 9))
     plt.xlim(0, 11)
     plt.title("Mean and Standard deviation error")

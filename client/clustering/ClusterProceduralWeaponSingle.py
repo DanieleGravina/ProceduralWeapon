@@ -32,7 +32,11 @@ def printWeapon(pop):
 
 
 def writeWeapon(pop, pop_file):
+	i = 0
+	
     for ind in pop :
+    	pop_file.write("(" + str(i) +  ")" + "\n")
+        i += 1
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
         pop_file.write("Projectile "+ " Speed:" + str(ind[5]) + " Damage:" + str(ind[6]) + " DamageRadius:" + str(ind[7])
@@ -119,19 +123,22 @@ class ClusterProceduralWeapon:
 
 			clusters[k] += [postProcess(self.data[i]) for i in range(len(labels)) if my_members[i]]
 
+			cluster_file.write("cluster: " + str(num_cluster) + "°" + "\n")
+			num_cluster += 1
+
 			cluster_file.write("index:"+ "\n")
 			cluster_file.write(str(index) + "\n")
 			cluster_file.write("fitness:"+ "\n")
 			cluster_file.write(str(fitness)+ "\n")
 
-			cluster_file.write("mean entropy:"+ "\n")
+			cluster_file.write("mean balance:"+ "\n")
 			cluster_file.write(str(entropy_mean)+ "\n")
-			cluster_file.write("std dev fitness:"+ "\n")
+			cluster_file.write("std dev balance:"+ "\n")
 			cluster_file.write(str(entropy_stdev)+ "\n")
 
-			cluster_file.write("mean dist:"+ "\n")
+			cluster_file.write("mean dist from target:"+ "\n")
 			cluster_file.write(str(dist_mean)+ "\n")
-			cluster_file.write("std dev dist:"+ "\n")
+			cluster_file.write("std dev dist from target:"+ "\n")
 			cluster_file.write(str(dist_stdev)+ "\n")
 
 			cluster_file.write("members:"+ "\n")

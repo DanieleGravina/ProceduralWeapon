@@ -175,7 +175,7 @@ def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
     weapons = data['Weapon1'], data['Weapon2']
 
     for i in range(len(weapons)) :
-        ax = fig.add_subplot(1, 5, i+1, projection='radar')
+        ax = fig.add_subplot(2, 3, i+1, projection='radar')
         plt.rgrids([0.5], (''))
         ax.set_title("Weapon" + str(i+1), weight='bold', size='medium', position=(0.5, 1.1),
                      horizontalalignment='center', verticalalignment='center')
@@ -183,22 +183,22 @@ def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
         ax.fill(theta, weapons[i], facecolor=color_cluster, alpha=0.25)
         ax.set_varlabels(spoke_labels)
 
-    ax = fig.add_subplot(1, 5, 3)
+    ax = fig.add_subplot(2, 3, 4)
 
     plt.ylim(0, 3)
     ax.set_title("Balance")
     ax.boxplot( [fitness_cluster[i][0] for i in range(len(fitness_cluster))] )
 
-    ax = fig.add_subplot(1, 5, 4)
-
-    plt.ylim(0, 20)
-    ax.set_title("Hit Time")
-    ax.boxplot( [fitness_cluster[i][1] for i in range(len(fitness_cluster))] )
-
-    ax = fig.add_subplot(1, 5, 5)
+    ax = fig.add_subplot(2, 3, 5)
 
     plt.ylim(0, 2500)
     ax.set_title("Distance")
+    ax.boxplot( [fitness_cluster[i][1] for i in range(len(fitness_cluster))] )
+
+    ax = fig.add_subplot(2, 3, 6)
+
+    plt.ylim(0, 20)
+    ax.set_title("Kill Streak")
     ax.boxplot( [fitness_cluster[i][2] for i in range(len(fitness_cluster))] )
 
     # add legend relative to top-left plot

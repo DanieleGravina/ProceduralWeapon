@@ -24,9 +24,9 @@ limits = [(ROF_MIN/100, ROF_MAX/100), (SPREAD_MIN/100, SPREAD_MAX/100), (AMMO_MI
 
 label =["ROF", "SPREAD", "AMMO", "SHOT_COST", "LIFE_SPAN", "SPEED", "DMG", "DMG_RAD", "GRAVITY", "EXPLOSIVE"]
 
-objective_1 = "HIT_TIME"
+objective_1 = "DISTANCE"
 
-objective_2 = "DISTANCE"
+objective_2 = "KILL_STREAK"
 
 def printWeapon(pop):
     i = 0
@@ -94,13 +94,13 @@ class ClusterProceduralWeapon:
 
 	def cluster(self):
 
-		self.file = open("cluster.txt", "w")
-
 		try :
 			os.makedirs("cluster")
 			os.chdir("cluster")
 		except :
 			os.chdir("cluster")
+
+		self.file = open("cluster.txt", "w")
 
 		cluster_file = self.file
 
