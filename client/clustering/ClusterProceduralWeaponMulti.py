@@ -80,9 +80,11 @@ def postProcess(data):
 
 	#fireinterval become rate of fire -> (1/fireinterval)
 	clone[0] = log(1/(ROF_MIN/100)) + log(1/clone[0])
+	clone[10] = log(1/(ROF_MIN/100)) + log(1/clone[10])
 
 	#gravity is inverted
 	clone[8] = - clone[8]
+	clone[18] = - clone[18]
 
 	return clone
 

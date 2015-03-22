@@ -4,6 +4,9 @@ var TestLog myLog;
 
 var float SpreadDist;
 
+var float Gravity;
+var float Speed;
+
 var int WeaponID;
 
 function SetTestLog(TestLog log)
@@ -13,53 +16,152 @@ function SetTestLog(TestLog log)
 
 function class<Projectile> GetProjectileClass()
 {
-    return WeaponProjectiles[CurrentFireMode];  // Use our default projectile
+
+    if(Gravity == 0)
+    {
+        return WeaponProjectiles[CurrentFireMode];
+    }
+    else
+    {
+        return class 'ProceduralProjectile2';
+    }
 }
 
-/**
- * Fires a projectile.
- * Spawns the projectile, but also increment the flash count for remote client effects.
- * Network: Local Player and Server
- */
-/*simulated function Projectile ProjectileFire()
+function float GetAIRating()
 {
-    local vector        RealStartLoc, AimDir, YDir, ZDir;
-    local Projectile    SpawnedProjectile;
-    local int IdWeapon;
+    return AIRating;
+}
 
-    // tell remote clients that we fired, to trigger effects
-    IncrementFlashCount();
-
-    if( Role == ROLE_Authority )
+simulated function StartFire(byte FireModeNum)
+{
+    if (Instigator == None || !Instigator.bNoWeaponFiring)
     {
-        // this is the location where the projectile is spawned.
-        RealStartLoc = GetPhysicalFireStartLoc();
-
-        // Spawn projectile
-        SpawnedProjectile = Spawn(GetProjectileClass(),,, RealStartLoc);
-        if( SpawnedProjectile != None && !SpawnedProjectile.bDeleteMe )
+        if( Role < Role_Authority )
         {
-            //ProceduralProjectile(SpawnedProjectile).SetProceduralProjectile();
-            SpawnedProjectile.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+            // if we're a client, synchronize server
+            ServerStartFire(FireModeNum);
         }
 
-        if(myLog != None)
-        {
-            //Logging
-            GetAxes(GetAdjustedAim(RealStartLoc),AimDir, YDir, ZDir);
-            IdWeapon = myLog.AddWeaponLog(RealStartLoc, AimDir, Instigator.ShotCount);
+        // Start fire locally
+        BeginFire(FireModeNum);
+        DemoBeginFire(FireModeNum);
+    }
+}
 
-            ProceduralProjectile(SpawnedProjectile).SetTestLog(myLog, IdWeapon);
+function float RangedAttackTime()
+{
+    local UTBot B;
+
+    B = UTBot(Instigator.Controller);
+    if ( (B == None) || (B.Enemy == None) )
+        return 0;
+
+    return FMin(2,0.3 + VSize(B.Enemy.Location - Instigator.Location)/Speed);
+}
+
+function byte BestMode()
+{
+    local byte Best;
+    if ( IsFiring() )
+        return CurrentFireMode;
+
+    if ( FRand() < 0.5 )
+        Best = 1;
+
+    if ( Best < bZoomedFireMode.Length && bZoomedFireMode[Best] != 0 )
+        return 0;
+    else
+        return Best;
+}
+
+simulated state WeaponFiring
+{
+    /**
+     * Called when the weapon is done firing, handles what to do next.
+     */
+    simulated function RefireCheckTimer()
+    {
+        // if switching to another weapon, abort firing and put down right away
+        if( bWeaponPutDown )
+        {
+            PutDownWeapon();
+            return;
         }
 
+        // If weapon should keep on firing, then do not leave state and fire again.
+        if( ShouldRefire() )
+        {
+            FireAmmunition();
+            return;
+        }
 
+        // Otherwise we're done firing, so go back to active state.
+        GotoState('Active');
 
-        // Return it up the line
-        return SpawnedProjectile;
+    }
+}
+
+simulated function ImpactInfo CalcWeaponFire(vector StartTrace, vector EndTrace, optional out array<ImpactInfo> ImpactList)
+{
+    local vector            HitLocation, HitNormal, Dir;
+    local Actor             HitActor;
+    local TraceHitInfo      HitInfo;
+    local ImpactInfo        CurrentImpact;
+    local PortalTeleporter  Portal;
+    local float             HitDist;
+
+    // Perform trace to retrieve hit info
+    HitActor = GetTraceOwner().Trace(HitLocation, HitNormal, EndTrace, StartTrace, TRUE, vect(0,0,0), HitInfo, TRACEFLAG_Bullet);
+
+    // If we didn't hit anything, then set the HitLocation as being the EndTrace location
+    if( HitActor == None )
+    {
+        HitLocation = EndTrace;
     }
 
-    return None;
-}*/
+    // Convert Trace Information to ImpactInfo type.
+    CurrentImpact.HitActor      = HitActor;
+    CurrentImpact.HitLocation   = HitLocation;
+    CurrentImpact.HitNormal     = HitNormal;
+    CurrentImpact.RayDir        = Normal(EndTrace-StartTrace);
+    CurrentImpact.HitInfo       = HitInfo;
+
+    // Add this hit to the ImpactList
+    ImpactList[ImpactList.Length] = CurrentImpact;
+
+    // check to see if we've hit a trigger.
+    // In this case, we want to add this actor to the list so we can give it damage, and then continue tracing through.
+    if( HitActor != None )
+    {
+        if (!HitActor.bBlockActors && PassThroughDamage(HitActor))
+        {
+            // disable collision temporarily for the trigger so that we can catch anything inside the trigger
+            HitActor.bProjTarget = false;
+            // recurse another trace
+            CurrentImpact = CalcWeaponFire(HitLocation, EndTrace, ImpactList);
+            // and reenable collision for the trigger
+            HitActor.bProjTarget = true;
+        }
+        else
+        {
+            // if we hit a PortalTeleporter, recurse through
+            Portal = PortalTeleporter(HitActor);
+            if( Portal != None && Portal.SisterPortal != None )
+            {
+                Dir = EndTrace - StartTrace;
+                HitDist = VSize(HitLocation - StartTrace);
+                // calculate new start and end points on the other side of the portal
+                StartTrace = Portal.TransformHitLocation(HitLocation);
+                EndTrace = StartTrace + Portal.TransformVector(Normal(Dir) * (VSize(Dir) - HitDist));
+                //@note: intentionally ignoring return value so our hit of the portal is used for effects
+                //@todo: need to figure out how to replicate that there should be effects on the other side as well
+                CalcWeaponFire(StartTrace, EndTrace, ImpactList);
+            }
+        }
+    }
+
+    return CurrentImpact;
+}
 
 simulated function Rotator GetAdjustedAim( vector StartFireLoc )
 {
@@ -69,30 +171,18 @@ simulated function Rotator GetAdjustedAim( vector StartFireLoc )
     if( Instigator != None )
     {
         R = Instigator.GetAdjustedAimFor( Self, StartFireLoc );
-
-        if ( (PlayerController(Instigator.Controller) != None) && (CurrentFireMode == 1) )
-        {
-            R.Pitch = R.Pitch & 65535;
-            if ( R.Pitch < 16384 )
-            {
-                R.Pitch += (16384 - R.Pitch)/32;
-            }
-            else if ( R.Pitch > 49152 )
-            {
-                R.Pitch += 512;
-            }
-        }
     }
 
-    return R;
+    return AddSpread(R);
 }
 
 simulated function CustomFire()
 {
-    local int i, y, z, Mag, WeaponTime;
+    local int i, y, z, Mag, index, r, WeaponTime;
     local vector RealStartLoc, AimDir, YDir, ZDir;
     local Projectile Proj;
     local class<Projectile> ShardProjectileClass;
+    local array<int> indexes;
 
     IncrementFlashCount();
 
@@ -112,39 +202,70 @@ simulated function CustomFire()
         // one shard in each of 9 zones (except center)
         ShardProjectileClass = GetProjectileClass();
 
-        for( i = 0; i < ShotCost[0]; i++)
+        //fire single projectile
+        if(ShotCost[0] == 1)
         {
-            y = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
-            z = Rand(ShotCost[0]/2) - Rand(ShotCost[0]/2);
-            Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
-
             Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
             if (Proj != None)
             {
-               if( y != 0 && z != 0)
-               {
-                    ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
-                    Proj.Init(AimDir + (0.3 + 0.7*FRand())*SpreadDist*YDir*y + (0.3 + 0.7*FRand())*SpreadDist*ZDir*z);
-               }
-               else
-               {
-                   ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
-                   Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
-               }
-
-               if(myLog != None)
-               {
-                    ProceduralProjectile(Proj).SetTestLog(myLog, WeaponTime);
-               }
+                ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
+                Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
             }
 
+            if(myLog != None)
+            {
+                ProceduralProjectile(Proj).SetTestLog(myLog, WeaponTime);
+            }
+        }
+        else
+        {
+            for(i = 0; i < ShotCost[0]; i++)
+            {
+                r = Rand(indexes.length);
+                index = indexes[r];
+                indexes.remove(r, 1);
+
+                y = index%3 - 1;
+                z = index/3 - 1;
+
+                //`log("[PwWeapon] y, z" $ string(y) $ " " $ string(z) );
+
+                Proj = Spawn(ShardProjectileClass,,, RealStartLoc);
+
+                if ( (y != 0) || (z != 0) )
+                {
+                    Mag = (abs(y)+abs(z) > 1) ? 0.7 : 1.0;
+                    if (Proj != None && !Proj.bDeleteMe)
+                    {
+                        ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
+                        Proj.Init(AimDir + (0.3 + 0.7*FRand())*Mag*y*SpreadDist*YDir + (0.3 + 0.7*FRand())*Mag*z*SpreadDist*ZDir );
+                    }
+                }
+                else
+                {
+                    if (Proj != None && !Proj.bDeleteMe)
+                    {
+                        ProceduralProjectile(Proj).SetProceduralProjectile(WeaponID);
+                        Proj.Init( Vector(AddSpread(GetAdjustedAim( RealStartLoc ))) );
+                    }
+                }
+
+                if(myLog != None)
+                {
+                    ProceduralProjectile(Proj).SetTestLog(myLog, WeaponTime);
+                } 
+            }
         }
     }
 }
 
-simulated function float GetOptimalRangeFor(Actor Target)
+function float GetOptimalRangeFor(Actor Target)
 {
-    // short range so bots try to maximize shards that hit
+    return MaxRange();
+}
+
+simulated function float MaxRange()
+{
     return WeaponRange;
 }
 
@@ -153,6 +274,8 @@ defaultproperties
     WeaponID = 0
 
     SpreadDist=0.100000
+    Gravity = 0;
+    Speed = 1;
 
 	// Weapon SkeletalMesh
     Begin Object class=AnimNodeSequence Name=MeshSequenceA

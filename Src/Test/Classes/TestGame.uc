@@ -192,7 +192,7 @@ function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 {
 	Super.NotifyKilled(Killer, Killed, KilledPawn);
 
-    //SendPawnDied(killed, killer);
+    SendPawnDied(killed.PlayerReplicationInfo.playername, killer.PlayerReplicationInfo.playername);
 }
 
 function array<PWParameters> GetPWParameters(string botName)
@@ -399,7 +399,8 @@ function EndMatch()
 		logs[i].log.WriteLog("%:ID:"$botStatics[i].id$":kills:"$string(botStatics[i].num_kills)$":dies:"$string(botStatics[i].num_dies));
 	}
 
-	ResetLevel();
+	ConsoleCommand("Quit");
+	//ResetLevel();
 
 }
 

@@ -36,18 +36,6 @@ def normalize(data):
 
     return data
 
-def postProcess(data):
-
-    return data
-
-    #fireinterval become rate of fire -> (1/fireinterval)
-    data[0] = log(1/(ROF_MIN/100)) + log(1/data[0])
-
-    #gravity is inverted
-    data[8] = - data[8]
-
-    return data
-
 
 def radar_factory(num_vars, frame='circle'):
     """Create a radar chart with `num_vars` axes.
@@ -154,7 +142,7 @@ def get_data(weapons):
     i = 0
     for weap in weapons :
         i += 1
-        data.update({'Weapon' + str(i) : normalize(postProcess(weap))})
+        data.update({'Weapon' + str(i) : normalize(weap)})
 
     return data
 
