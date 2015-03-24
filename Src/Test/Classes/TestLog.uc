@@ -20,7 +20,7 @@ const ENDGAME  = 1;
 struct WeaponLog{
 	var float time;
 	var Vector firePosition;
-	var Rotator aim;
+	var Vector aim;
 };
 
 struct ProjectileLog
@@ -43,7 +43,7 @@ var array<ProjectileLog> projectileLogs;
 var array<InventoryLog> inventoryLogs;
 
 /*Add log of weapon firing, return the index for projectile identification*/
-function int AddWeaponLog(vector firePosition, Rotator aim)
+function int AddWeaponLog(vector firePosition, Vector aim_dir)
 {
 	if(StateCurrent == SIMULATION)
 	{
@@ -52,7 +52,7 @@ function int AddWeaponLog(vector firePosition, Rotator aim)
 
 		weaponLogs[weaponLogs.length - 1].time = WorldInfo.TimeSeconds - t0;
 		weaponLogs[weaponLogs.length - 1].firePosition = firePosition;
-		weaponLogs[weaponLogs.length - 1].aim = aim;
+		weaponLogs[weaponLogs.length - 1].aim = aim_dir;
 
 		return weaponLogs.length - 1;
 

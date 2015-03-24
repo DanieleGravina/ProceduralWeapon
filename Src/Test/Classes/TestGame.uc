@@ -1,7 +1,7 @@
 class TestGame extends UTDeathmatch;
 
 const NUM_BOTS = 2;
-const NUM_WEAPON = 4;
+const NUM_WEAPON = 3;
 
 var TcpLinkServer tcpServer;
 
@@ -87,6 +87,7 @@ var int FinalTotalScore;
 event InitGame( string Options, out string ErrorMessage )
 {
 	local string InOpt;
+	local Mutator mutPW, mutNoPowerUps;
 	
 	super.InitGame(Options, ErrorMessage);
 	
@@ -117,6 +118,26 @@ event InitGame( string Options, out string ErrorMessage )
 		`log("TotalGoalScore"@InOpt);
 		bTotalGoalScore = true;
 		FinalTotalScore = int(InOpt);
+	}
+
+	//Add Procedural Weapon Mutator -> change weapon in weapon factory and projectile as well
+	mutPW = Spawn(class 'UTMutator_ProceduralWeapon');
+	mutNoPowerUps = Spawn(class 'UTMutator_NoPowerups ');
+	// mc, beware of mut being none
+	if (mutPW != None && mutNoPowerUps != None)
+	{
+
+		if (BaseMutator == None)
+		{
+			BaseMutator = mutPW;
+			BaseMutator.AddMutator(mutNoPowerUps);
+		}
+		else
+		{
+			BaseMutator.AddMutator(mutPW);
+			BaseMutator.AddMutator(mutNoPowerUps);
+		}
+
 	}
 	
 }
@@ -193,6 +214,16 @@ function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 	Super.NotifyKilled(Killer, Killed, KilledPawn);
 
     SendPawnDied(killed.PlayerReplicationInfo.playername, killer.PlayerReplicationInfo.playername);
+
+
+    if(killed.PlayerReplicationInfo.playername == "Giocatore")
+    {
+    	ResetBotWeapon(Killed, killer, killed);
+    }
+    else
+    {
+    	ResetBotWeapon(Killer, killed, killed);
+    }
 }
 
 function array<PWParameters> GetPWParameters(string botName)
@@ -419,6 +450,119 @@ function InitGameReplicationInfo()
 	}
 }
 
+simulated function ResetBotWeapon(Controller player, Controller bot, Controller killed)
+{
+	local ProceduralWeapon myWeapon;
+	local array<PWParameters> weaponPars;
+	local array<PPParameters> projPars;
+	local int index, i;
+
+	`log("[TestGame] ResetBotWeapon called");
+
+	weaponPars = GetPWParameters("Giocatore");
+	projPars = GetPPParameters("Giocatore");
+
+	index = 0;
+
+	//setting weapon of bot
+
+	if(killed == bot)
+	{
+		myWeapon = ProceduralWeapon(player.Pawn.weapon);
+
+		if(weaponPars[index].RoF == myWeapon.FireInterval[0] && weaponPars[index].Spread == myWeapon.Spread[0])
+		{
+			index += 1;
+		}
+
+		for(i = 0; i  < NUM_WEAPON; i++)
+		{
+			if(mapBotPar[i].botName != "Giocatore")
+			{
+				mapBotPar[i].weapPars.RoF = weaponPars[index].RoF;
+				mapBotPar[i].weapPars.Spread = weaponPars[index].Spread;
+				mapBotPar[i].weapPars.Range = weaponPars[index].Range;
+				mapBotPar[i].weapPars.MaxAmmo = weaponPars[index].MaxAmmo;
+				mapBotPar[i].weapPars.ShotCost = weaponPars[index].ShotCost;
+
+				mapBotPar[i].projPars.Speed = projPars[index].Speed;
+				mapBotPar[i].projPars.Damage = projPars[index].Damage;
+				mapBotPar[i].projPars.DamageRadius = projPars[index].DamageRadius;
+				mapBotPar[i].projPars.Gravity = projPars[index].Gravity;
+				mapBotPar[i].projPars.Explosive = projPars[index].Explosive;
+			}
+		}
+	}
+	else{
+
+		myWeapon = ProceduralWeapon(bot.Pawn.weapon);
+
+		index = 1;
+
+		//proportionate ammo count
+		myWeapon.AmmoCount = myWeapon.AmmoCount/myWeapon.MaxAmmoCount*weaponPars[index].MaxAmmo;
+
+		myWeapon.Spread[0] = weaponPars[index].Spread;
+		myWeapon.FireInterval[0] = weaponPars[index].RoF;
+		myWeapon.MaxAmmoCount = weaponPars[index].MaxAmmo;
+		myWeapon.ShotCost[0] = weaponPars[index].ShotCost;
+		
+		myWeapon.Spread[1] = myWeapon.Spread[0];
+		myWeapon.FireInterval[1] = myWeapon.FireInterval[0];
+		myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
+
+		myWeapon.SpreadDist = myWeapon.Spread[0];
+
+		myWeapon.Gravity = projPars[index].Gravity;
+		myWeapon.Speed = projPars[index].Speed;
+
+		if(projPars[index].Gravity != 0)
+		{
+			myWeapon.WeaponRange = Sqrt( 2*80/Abs(projPars[index].Gravity) ) *
+									projPars[index].Speed;
+		}
+		else{
+				//Range is MaxRange on default implementation 
+			if(projPars[index].Speed < 300)
+			{
+				myWeapon.WeaponRange = weaponPars[index].Range*
+										projPars[index].Speed;
+			}
+			else
+			{
+				myWeapon.WeaponRange = weaponPars[index].Range*300;
+			}
+
+		}
+
+		
+		if(myWeapon.WeaponRange >= PWPawn(bot.Pawn).MinRangeSniping)
+		{
+			myWeapon.bSniping = true;
+		}
+
+		if(myWeapon.FireInterval[0] < 0.5){
+			myWeapon.bFastrepeater = true;
+		}
+
+		//setting projectile of bot
+
+		for(i = 0; i  < NUM_WEAPON; i++)
+		{
+			if(mapBotPar[i].botName != "Giocatore")
+			{
+				mapBotPar[i].projPars.Speed = projPars[index].Speed;
+				mapBotPar[i].projPars.Damage = projPars[index].Damage;
+				mapBotPar[i].projPars.DamageRadius = projPars[index].DamageRadius;
+				mapBotPar[i].projPars.Gravity = projPars[index].Gravity;
+				mapBotPar[i].projPars.Explosive = projPars[index].Explosive;
+			}
+		}
+
+		`log("[TestGame] Weapon: " $string(bot.Pawn.Weapon.FireInterval[0]));
+	}
+}
+
 defaultproperties
 {
 	DefaultInventory(0)=class'ProceduralWeapon'
@@ -441,15 +585,15 @@ defaultproperties
 
     MaxCustomChars = 4
 
-    tempPW.RoF = 0
-	tempPW.Spread = 0
-	tempPW.Range = 0
-	tempPW.MaxAmmo = 0
-	tempPW.ShotCost = 0
+    tempPW.RoF = 1
+	tempPW.Spread = 1
+	tempPW.Range = 1
+	tempPW.MaxAmmo = 1
+	tempPW.ShotCost = 1
 
-	tempPP.Speed = 0
-	tempPP.Damage = 0
-	tempPP.DamageRadius = 0
+	tempPP.Speed = 1
+	tempPP.Damage = 1
+	tempPP.DamageRadius = 1
 	tempPP.Gravity = 0
 
 	StateCurrent = 3;

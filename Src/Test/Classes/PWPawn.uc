@@ -34,6 +34,7 @@ simulated function ProceduralWeaponSetTimer()
 function SetProceduralWeapon()
 {
 	local array<PWParameters> weaponPars;
+	local array<PPParameters> projPars;
 	local int index;
 	local ProceduralWeapon myWeapon;
 	
@@ -51,6 +52,7 @@ function SetProceduralWeapon()
 		`log("[PWPawn] set weapon of "$Controller.PlayerReplicationInfo.playername);
 
 		weaponPars = TestGame(WorldInfo.Game).GetPWParameters(Controller.PlayerReplicationInfo.playername);
+		projPars = TestGame(WorldInfo.Game).GetPPParameters(Controller.PlayerReplicationInfo.playername);
 
 		index = 0;
 
@@ -64,7 +66,6 @@ function SetProceduralWeapon()
 			myWeapon.FireInterval[0] = weaponPars[index].RoF;
 			myWeapon.MaxAmmoCount = weaponPars[index].MaxAmmo;
 			myWeapon.ShotCost[0] = weaponPars[index].ShotCost;
-			myWeapon.WeaponRange = weaponPars[index].Range*1000;
 	    /*
 			`log("[PWPawn] Spread "$string(myWeapon.Spread[0]));
 			`log("[PWPawn] FireInterval "$string(myWeapon.FireInterval[0]));
@@ -81,6 +82,30 @@ function SetProceduralWeapon()
 			myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
 
 			myWeapon.SpreadDist = myWeapon.Spread[0];
+
+			myWeapon.Gravity = projPars[index].Gravity;
+			myWeapon.Speed = projPars[index].Speed;
+
+			if(projPars[index].Gravity != 0)
+			{
+				myWeapon.WeaponRange = Sqrt( 2*80/Abs(projPars[index].Gravity) ) *
+										projPars[index].Speed;
+
+				//`log("[PWPawn] WeaponRange "$string(myWeapon.WeaponRange));
+			}
+			else{
+					//Range is MaxRange on default implementation 
+				if(projPars[index].Speed < 300)
+				{
+					myWeapon.WeaponRange = weaponPars[index].Range*
+											projPars[index].Speed;
+				}
+				else
+				{
+					myWeapon.WeaponRange = weaponPars[index].Range*300;
+				}
+
+			}
 
 		
 			if(myWeapon.WeaponRange >= MinRangeSniping)
@@ -105,6 +130,7 @@ function SetProceduralWeapon()
 reliable client function ClientSetProceduralWeapon()
 {
 	local array<PWParameters> weaponPars;
+	local array<PPParameters> projPars;
 	local int index;
 	local UTGameReplicationInfo GRI;
 	local ProceduralGameReplicationInfo PGRI;
@@ -120,6 +146,7 @@ reliable client function ClientSetProceduralWeapon()
 		PGRI = ProceduralGameReplicationInfo(GRI);
 
 		weaponPars = PGRI.GetPWParameters(Controller.PlayerReplicationInfo.playername);
+		projPars = PGRI.GetPPParameters(Controller.PlayerReplicationInfo.playername);
 
 		index = 0;
 
@@ -132,7 +159,6 @@ reliable client function ClientSetProceduralWeapon()
 			myWeapon.FireInterval[0] = weaponPars[index].RoF;
 			myWeapon.MaxAmmoCount = weaponPars[index].MaxAmmo;
 			myWeapon.ShotCost[0] = weaponPars[index].ShotCost;
-			myWeapon.WeaponRange = weaponPars[index].Range*1000;
 	    /*
 			`log("[PWPawn] Spread "$string(myWeapon.Spread[0]));
 			`log("[PWPawn] FireInterval "$string(myWeapon.FireInterval[0]));
@@ -149,6 +175,30 @@ reliable client function ClientSetProceduralWeapon()
 			myWeapon.ShotCost[1] = myWeapon.ShotCost[0];
 
 			myWeapon.SpreadDist = myWeapon.Spread[0];
+
+			myWeapon.Gravity = projPars[index].Gravity;
+			myWeapon.Speed = projPars[index].Speed;
+
+			if(projPars[index].Gravity != 0)
+			{
+				myWeapon.WeaponRange = Sqrt( 2*80/Abs(projPars[index].Gravity) ) *
+										projPars[index].Speed;
+
+				//`log("[PWPawn] WeaponRange "$string(myWeapon.WeaponRange));
+			}
+			else{
+					//Range is MaxRange on default implementation 
+				if(projPars[index].Speed < 300)
+				{
+					myWeapon.WeaponRange = weaponPars[index].Range*
+											projPars[index].Speed;
+				}
+				else
+				{
+					myWeapon.WeaponRange = weaponPars[index].Range*300;
+				}
+
+			}
 
 		
 			if(myWeapon.WeaponRange >= MinRangeSniping)
@@ -170,7 +220,7 @@ defaultproperties
 	
 	InventoryManagerClass = class'ProceduralInventoryManager'
 	
-	minRangeSniping = 10000;
+	minRangeSniping = 2000;
 
 	bIsRemote = false;
 

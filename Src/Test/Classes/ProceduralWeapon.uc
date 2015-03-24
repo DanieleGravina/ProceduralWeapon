@@ -188,6 +188,14 @@ simulated function CustomFire()
 
     if (Role == ROLE_Authority)
     {
+
+        //possible fire areas
+        for(i = 0; i < 9; i++)
+        {
+            indexes.Add(1);
+            indexes[i] = i;
+        }
+        
         // this is the location where the projectile is spawned
         RealStartLoc = GetPhysicalFireStartLoc();
         // get fire aim direction
@@ -196,7 +204,7 @@ simulated function CustomFire()
         if(myLog != None)
         {
             //Logging
-            WeaponTime = myLog.AddWeaponLog(RealStartLoc, GetAdjustedAim(RealStartLoc));
+            WeaponTime = myLog.AddWeaponLog(RealStartLoc, Vector(GetAdjustedAim(RealStartLoc)));
         }
 
         // one shard in each of 9 zones (except center)

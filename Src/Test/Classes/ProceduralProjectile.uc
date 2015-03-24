@@ -44,17 +44,17 @@ function SetProceduralProjectile(int WeaponID)
 simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNormal)
 {
 	local bool bHasKilled, bIsAlreadyKilled;
-	local string killer, killed;
+	//local string killer, killed;
 
 	bIsAlreadyKilled = false;
 	bHasKilled = false;
 
 	if(myLog != None)
 	{
-		killer = InstigatorController.PlayerReplicationInfo.playername;
-		killed = PWPawn(Other).PlayerReplicationInfo.playername;
+		//killer = InstigatorController.PlayerReplicationInfo.playername;
+		//killed = PWPawn(Other).PlayerReplicationInfo.playername;
 
-		if(PWPawn(Other).Health <= 0)
+		if(Other == None || PWPawn(Other).Health <= 0)
 		{
 			bIsAlreadyKilled = true;
 		}
@@ -64,7 +64,7 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
 
 	if(myLog != None)
 	{
-		if(PWPawn(Other).Health <= 0 && !bIsAlreadyKilled)
+		if(!bIsAlreadyKilled && PWPawn(Other).Health <= 0)
 		{
 			bHasKilled = true;
 		}
