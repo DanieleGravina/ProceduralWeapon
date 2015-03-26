@@ -1,6 +1,7 @@
 from deap import base
 from deap import creator
 from deap import tools
+from math import pow, log
 
 import random
 import matplotlib.pyplot as plt
@@ -12,7 +13,7 @@ import threading
 import os
 
 
-creator.create("FitnessMax", base.Fitness, weights = (1.0, -1.0))
+creator.create("FitnessMax", base.Fitness, weights = (1.0, 1.0, 1.0, 1.0))
 creator.create("Individual", list, fitness = creator.FitnessMax)
 
 #initialization
@@ -22,22 +23,6 @@ toolbox = base.Toolbox()
 toolbox.register("individual", tools.initCycle, creator.Individual, [lambda : 0 for _ in range(20)], n = 1)
 
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-stats1 = tools.Statistics(key = lambda ind: ind.fitness.values[0])
-
-stats1.register("avg", numpy.mean)
-stats1.register("std", numpy.std)
-stats1.register("min", numpy.min)
-stats1.register("max", numpy.max)
-
-stats2 = tools.Statistics(key = lambda ind: ind.fitness.values[1])
-
-stats2.register("avg", numpy.mean)
-stats2.register("std", numpy.std)
-stats2.register("min", numpy.min)
-stats2.register("max", numpy.max)
-
-mstats = tools.MultiStatistics(entropy = stats1, diff = stats2)
 
 #num of final population
 NUM_POPs = 10
@@ -64,6 +49,73 @@ def writeWeapon(pop, pop_file):
         pop_file.write("*********************************************************" + "\n")
     pop_file.write("\n" + "============================================================================================================" + "\n")
 
+def getFitness(kills, dies):
+
+	p = 0
+	e = 0
+
+	s = (dies[0] - kills[1]) + (dies[1] - kills[0])
+
+	total = sum(kills)
+
+	for d in kills:
+	    p = d/total if total != 0 else 0
+	    e += p*log(p, 2) if p != 0 else 0
+
+	return -e, total/20, pow(9/10, s)
+
+
+def getLogData(log_file) :
+    content = log_file.readlines()
+
+    kills = []
+    dies = []
+    result = []
+
+    temp = {}
+
+    for string in content:
+        
+        if "(" in string:
+            split_spaces = string.split(" ")
+
+            weap_index = int(split_spaces[0])
+
+            if weap_index % 2 == 0:
+                kill = split_spaces[2]
+                kill = kill.replace("(", "")
+                kill = kill.replace(",", "")
+                kills += [int(kill)]
+
+                die = split_spaces[3]
+                die = die.replace("(", "")
+                die = die.replace(",", "")
+                dies += [float(die)]
+
+            else :
+                weap_index -= 1
+                kill = split_spaces[2]
+                kill = kill.replace("(", "")
+                kill = kill.replace(",", "")
+                kills += [int(kill)]
+
+                die = split_spaces[3]
+                die = die.replace("(", "")
+                die = die.replace(",", "")
+                dies += [int(die)]
+
+                temp.update({int(weap_index/2) : getFitness(kills, dies) } )
+                kills = []
+                dies = []
+
+        if "*" in string:
+        	result += [temp]
+        	temp = {}
+
+    log_file.close()
+
+    return result
+
 def getPopulationData() :
 
 	logbooks = []
@@ -78,16 +130,41 @@ def getPopulationData() :
 
 		logbook = tools.Logbook()
 
-		stats = tools.Statistics(key=lambda ind: ind.fitness.values)
+		stats1 = tools.Statistics(key = lambda ind: ind.fitness.values[0])
 
-		stats.register("avg", numpy.mean)
-		stats.register("std", numpy.std)
-		stats.register("min", numpy.min)
-		stats.register("max", numpy.max)
+		stats1.register("avg", numpy.mean)
+		stats1.register("std", numpy.std)
+		stats1.register("min", numpy.min)
+		stats1.register("max", numpy.max)
+
+		stats2 = tools.Statistics(key = lambda ind: ind.fitness.values[1])
+
+		stats2.register("avg", numpy.mean)
+		stats2.register("std", numpy.std)
+		stats2.register("min", numpy.min)
+		stats2.register("max", numpy.max)
+
+		stats3 = tools.Statistics(key = lambda ind: ind.fitness.values[2])
+
+		stats3.register("avg", numpy.mean)
+		stats3.register("std", numpy.std)
+		stats3.register("min", numpy.min)
+		stats3.register("max", numpy.max)
+
+		stats4 = tools.Statistics(key = lambda ind: ind.fitness.values[3])
+
+		stats4.register("avg", numpy.mean)
+		stats4.register("std", numpy.std)
+		stats4.register("min", numpy.min)
+		stats4.register("max", numpy.max)
+
+
+		mstats = tools.MultiStatistics(entropy = stats1, e = stats2, t = stats3, s = stats4)
 
 		os.chdir("single_objective_100_pop_50_iter_simulated_binary_final_" + str(index + 1))
 
 		pop_file = open("population.txt", "r")
+		log_file = open("logbook.txt", "r")
 
 		content = pop_file.readlines()
 
@@ -97,6 +174,8 @@ def getPopulationData() :
 		gen = 0
 		bIsFirst = True
 		fit = 0
+
+		result_log = getLogData(log_file)
 
 		for string in content:
 			
@@ -124,7 +203,11 @@ def getPopulationData() :
 						fit = float(splitted)
 
 				if not bIsFirst:
-					pop[index_pop].fitness.values = fit,
+					try:
+						log = result_log[gen][index_pop]
+						pop[index_pop].fitness.values = fit, log[0], log[1], log[2]
+					except :
+						pop[index_pop].fitness.values = fit, pop[index_pop].fitness.values[1], pop[index_pop].fitness.values[2], pop[index_pop].fitness.values[3]
 
 					if pop[index_pop].fitness.values[0] == 3 and gen == 49:
 							best_weapons += [ pop[index_pop] ]
@@ -134,8 +217,7 @@ def getPopulationData() :
 				if index_pop == NUM_POP :
 
 					if not bIsFirst :
-						record = stats.compile(pop)
-						logbook.header = "gen", "avg", "std", "min", "max"
+						record = mstats.compile(pop)
 						logbook.record(gen = gen, **record)
 						gen += 1
 					else :
@@ -144,11 +226,16 @@ def getPopulationData() :
 					index_pop = 0
 
 
-		logbook.header = "gen", "avg", "std", "min", "max"
-
 		pops += [pop]
 
 		logbooks += [logbook]
+
+		logbook.header = "gen", "entropy", "e", "s", "t"
+		logbook.chapters["entropy"].header = "avg", "max"
+		logbook.chapters["e"].header = "avg", "max"
+		logbook.chapters["s"].header = "avg", "max"
+		logbook.chapters["t"].header = "avg", "max"
+
 
 		pop_file.close()
 
@@ -157,35 +244,66 @@ def getPopulationData() :
 	return logbooks, best_weapons, pops
 
 
-def plot_avg(gen, fit_avg, fit_std):
+def plot_avg(gen, fit_avgs, e_avgs, t_avgs, s_avgs):
+
+	fit_avg = numpy.mean(fit_avgs, axis = 0)
+	fit_std = numpy.std(fit_avgs, axis = 0)
+
+	e_avg = numpy.mean(e_avgs, axis = 0)
+	e_std = numpy.std(e_avgs, axis = 0)
+
+	t_avg = numpy.mean(t_avgs, axis = 0)
+	t_std = numpy.std(t_avgs, axis = 0)
+
+	s_avg = numpy.mean(s_avgs, axis = 0)
+	s_std = numpy.std(s_avgs, axis = 0)
+
 
 	plt.figure(figsize=(16, 9))
 
-	print(gen)
-
-	print(fit_avg)
-
-	print(fit_std)
-
-	plt.errorbar(gen, fit_avg, yerr = fit_std, fmt='-o')
 	plt.ylim(0, 3.5)
 
 	plt.xlabel("Generation")
-	plt.ylabel("Entropy")
+	plt.ylabel("Fitness")
+
+	plt.errorbar(gen, fit_avg, yerr = fit_std, fmt='-o', label="fitness")
+	plt.errorbar(gen, e_avg, yerr = e_std, fmt='-o', c = "r", label="entropy")
+	plt.errorbar(gen, t_avg, yerr = t_std, fmt='-o', c = "g", label="score ratio")
+	plt.errorbar(gen, s_avg, yerr = s_std, fmt='-o', c = "k", label="suicides")
+
+	plt.legend()
 
 	plt.savefig("avg_of_avg.png", bbox_inches='tight')
 
 	plt.close()
 
-def plot_max(gen, fit_avg, fit_std):
+def plot_max(gen, fit_avgs, e_avgs, t_avgs, s_avgs):
+
+	fit_avg = numpy.mean(fit_avgs, axis = 0)
+	fit_std = numpy.std(fit_avgs, axis = 0)
+
+	e_avg = numpy.mean(e_avgs, axis = 0)
+	e_std = numpy.std(e_avgs, axis = 0)
+
+	t_avg = numpy.mean(t_avgs, axis = 0)
+	t_std = numpy.std(t_avgs, axis = 0)
+
+	s_avg = numpy.mean(s_avgs, axis = 0)
+	s_std = numpy.std(s_avgs, axis = 0)
 
 	plt.figure(figsize=(16, 9))
 
-	plt.errorbar(gen, fit_avg, yerr = fit_std, fmt='-o')
+	plt.errorbar(gen, fit_avg, yerr = fit_std, fmt='-o', label="fitness")
+	plt.errorbar(gen, e_avg, yerr = e_std, fmt='-o', c = "r", label="entropy")
+	plt.errorbar(gen, t_avg, yerr = t_std, fmt='-o', c = "g", label="score ratio")
+	plt.errorbar(gen, s_avg, yerr = s_std, fmt='-o', c = "k", label="suicides")
+
+	plt.legend()
+
 	plt.ylim(0, 3.5)
 
 	plt.xlabel("Generation")
-	plt.ylabel("Entropy")
+	plt.ylabel("Fitness")
 
 	plt.savefig("avg_of_max.png", bbox_inches='tight')
 
@@ -218,21 +336,32 @@ def  AverageOfAverage():
 
 	gen = logbooks[0].select("gen")
 
+	e_avg, t_avg, s_avg = [], [], []
+	e_max, t_max, s_max = [], [], []
+
 	for i in range(NUM_POPs):
 
 		print(logbooks[i])
 
-		fit_avgs += [logbooks[i].select("avg")]
+		fit_avgs += [logbooks[i].chapters["entropy"].select("avg")]
 
-		fit_maxs += [logbooks[i].select("max")]
+		fit_maxs += [logbooks[i].chapters["entropy"].select("max")]
+
+		e_avg += [logbooks[i].chapters["e"].select("avg")]
+		t_avg += [logbooks[i].chapters["t"].select("avg")]
+		s_avg += [logbooks[i].chapters["s"].select("avg")]
+
+		e_max += [logbooks[i].chapters["e"].select("max")]
+		t_max += [logbooks[i].chapters["t"].select("max")]
+		s_max += [logbooks[i].chapters["s"].select("max")]
 
 	writeWeapon(best_weapons, best_pop_file)
 
 	os.chdir("avg_single_objective")
 
-	plot_avg(gen, numpy.mean(fit_avgs, axis = 0), numpy.std(fit_avgs, axis = 0))
+	plot_avg(gen, fit_avgs, e_avg, t_avg, s_avg)
 
-	plot_max(gen, numpy.mean(fit_maxs, axis = 0), numpy.std(fit_maxs, axis = 0))
+	plot_max(gen, fit_maxs, e_max, t_max, s_max)
 
 	avg = numpy.mean(fit_avgs, axis = 0)
 	std = numpy.std(fit_avgs, axis = 0)

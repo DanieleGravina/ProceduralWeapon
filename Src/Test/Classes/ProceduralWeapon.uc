@@ -304,7 +304,7 @@ defaultproperties
     End Object
     
     // Attachment class
-    AttachmentClass=Class'UTGame.UTAttachment_ShockRifle'
+    AttachmentClass=Class'UTGame.UTAttachment_RocketLauncher'
 
     // Defines the type of fire for each mode
     WeaponFireTypes(0)=EWFT_Custom

@@ -256,8 +256,8 @@ def TuningSingleWeapon(iter = 0):
 
     error_file = open("error_balance.txt", "w")
 
-    error_file.write("average error: " + str(numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)])) + "\n")
-    error_file.write("std dev error: " + str(numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*100, (p+1)*100)])) + "\n")
+    error_file.write("average error: " + str(numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0]  for i in range(0, 1000)])) + "\n")
+    error_file.write("std dev error: " + str(numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0]  for i in range(0, 1000)])) + "\n")
     error_file.close()
 
     plt.figure(figsize=(16, 9))
@@ -266,8 +266,8 @@ def TuningSingleWeapon(iter = 0):
     plt.xlabel("population")
     plt.ylabel("absolute error")
     plt.xticks([i + 1 for i in range(10)])
-    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*100, (j+1)*100)]) for j in range(10)],
-                  yerr = [ numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*100, (j+1)*100)]) for j in range(10)])
+    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*100, (j+1)*100)]) for j in range(10)],
+                  yerr = [ numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*100, (j+1)*100)]) for j in range(10)])
     plt.savefig("plot error.png", bbox_inches='tight', dpi = 200)
 
 if __name__ == '__main__':

@@ -1,8 +1,13 @@
 class ProceduralProjectile2 extends ProceduralProjectile;
 
-var vector myDirection;
+var int myWeaponID;
 
 function SetProceduralProjectile(int WeaponID)
+{
+	myWeaponID = WeaponID;
+}
+
+function Init(vector Direction)
 {
 	local string playerName;
 	local array<PWParameters> weaponPars;
@@ -13,28 +18,23 @@ function SetProceduralProjectile(int WeaponID)
 	weaponPars = TestGame(WorldInfo.Game).GetPWParameters(playerName);
 	projPars = TestGame(WorldInfo.Game).GetPPParameters(playerName);
 	
-	Speed = projPars[WeaponID].Speed;
-	Damage = projPars[WeaponID].Damage;
+	Speed = projPars[myWeaponID].Speed;
+	Damage = projPars[myWeaponID].Damage;
 	bWideCheck = true;
-	CheckRadius = projPars[WeaponID].DamageRadius;
-	LifeSpan = weaponPars[WeaponID].Range;
-	DamageRadius = projPars[WeaponID].Explosive;
+	CheckRadius = projPars[myWeaponID].DamageRadius;
+	LifeSpan = weaponPars[myWeaponID].Range;
+	DamageRadius = projPars[myWeaponID].Explosive;
 
-	Velocity += Normal(myDirection)*Speed;
+    Velocity += Normal(Direction)*Speed;
 
     MaxSpeed = Speed;
 
-    Acceleration.Z = projPars[WeaponID].Gravity;
-}
-
-function Init(vector Direction)
-{
-	myDirection = Direction;
-	super.Init(Direction);
+    Acceleration.Z = projPars[myWeaponID].Gravity;
 }
 
 defaultproperties
 {
+   myWeaponID = 0
    Physics = PHYS_Falling
    AccelRate = 0
 }
