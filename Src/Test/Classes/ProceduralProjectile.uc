@@ -64,7 +64,7 @@ simulated function ProcessTouch(Actor Other, Vector HitLocation, Vector HitNorma
 
 	if(myLog != None)
 	{
-		if(!bIsAlreadyKilled && PWPawn(Other).Health <= 0)
+		if(!bIsAlreadyKilled && Other != None && PWPawn(Other).Health <= 0)
 		{
 			bHasKilled = true;
 		}
