@@ -157,7 +157,7 @@ def plot_pareto(hof, pop):
 	e_front = [hof[i].fitness.values[0] for i in range(len(hof))]
 	d_front = [hof[i].fitness.values[1] for i in range(len(hof))]
 
-	plt.xlabel("Fitness")
+	plt.xlabel("Balance")
 	plt.ylabel("Difference")
 
 	plt.scatter(e, d)

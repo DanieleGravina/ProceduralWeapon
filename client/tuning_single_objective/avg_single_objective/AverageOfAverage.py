@@ -45,7 +45,7 @@ def writeWeapon(pop, pop_file):
         pop_file.write("Projectile "+ " Speed:" + str(ind[15]) + " Damage:" + str(ind[16]) + " DamageRadius:" + str(ind[17])
             + " Gravity:" + str(ind[18]) + " Explosive:" + str(ind[19]) + "\n")
 
-        pop_file.write("fitness: " + str(ind.fitness.values) + "\n")
+        pop_file.write("fitness: " + "(" + str(ind.fitness.values[0]) + ",)" + "\n")
         pop_file.write("*********************************************************" + "\n")
     pop_file.write("\n" + "============================================================================================================" + "\n")
 

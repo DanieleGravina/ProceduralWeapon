@@ -195,7 +195,7 @@ def plot_pareto(hof, pop):
 	plt.plot([hof_12[i].fitness.values[1] for i in range(len(hof_12))], [hof_12[i].fitness.values[0] for i in range(len(hof_12))])
 
 	plt.xlabel("Distance")
-	plt.ylabel("Fitness")
+	plt.ylabel("Balance")
 
 	plt.subplot(222)
 
@@ -204,7 +204,7 @@ def plot_pareto(hof, pop):
 	plt.plot([hof_13[i].fitness.values[2] for i in range(len(hof_13))], [hof_13[i].fitness.values[0] for i in range(len(hof_13))])
 
 	plt.xlabel("Kill Streak")
-	plt.ylabel("Fitness")
+	plt.ylabel("Balance")
 
 	plt.subplot(224)
 

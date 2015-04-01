@@ -1,6 +1,7 @@
 import os,sys,inspect
 os.chdir("..")
 os.chdir("..")
+os.chdir("..")
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir) 
@@ -233,6 +234,7 @@ def getPopulationData(pop):
 
 def TuningSingleWeapon(iter = 0):
 
+    os.chdir("delta_time_vs_distance")
     os.chdir("final_simulation_delta_time_vs_distance")
     os.chdir("error")
 
@@ -328,10 +330,10 @@ def TuningSingleWeapon(iter = 0):
     plt.xlim(0, 11)
     plt.title("Mean and Standard deviation error: Balance")
     plt.xlabel("population")
-    plt.ylabel("absolute error")
+    plt.ylabel("error")
     plt.xticks([i + 1 for i in range(10)])
-    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*100, (j+1)*100)]) for j in range(10)],
-                  yerr = [ numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*100, (j+1)*100)]) for j in range(10)])
+    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*100, (j+1)*100)]) for j in range(10)],
+                  yerr = [ numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*100, (j+1)*100)]) for j in range(10)])
     plt.savefig("plot error balance.png", bbox_inches='tight', dpi = 200)
     plt.close()
 
@@ -339,7 +341,7 @@ def TuningSingleWeapon(iter = 0):
     plt.xlim(0, 11)
     plt.title("Mean and Standard deviation error: Distance ")
     plt.xlabel("population")
-    plt.ylabel("absolute error")
+    plt.ylabel("error")
     plt.xticks([i + 1 for i in range(10)])
     plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([abs(streaks[i][1] - streaks[i][0]) for i in range(j*100, (j+1)*100)]) for j in range(10)],
                   yerr = [ numpy.std([abs(streaks[i][1] - streaks[i][0]) for i in range(j*100, (j+1)*100)]) for j in range(10)])
@@ -348,8 +350,8 @@ def TuningSingleWeapon(iter = 0):
 
     error = open("error_balance.txt", "w")
 
-    err_avg = numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(1000)])
-    err_std = numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(1000)])
+    err_avg = numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(1000)])
+    err_std = numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(1000)])
 
     error.write("average error: " + str(err_avg) + "\n")
     error.write("std dev error: " + str(err_std) + "\n")

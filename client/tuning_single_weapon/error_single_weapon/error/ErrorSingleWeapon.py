@@ -210,7 +210,7 @@ def getPopulationData(pop):
 
     pop_sorted = toolbox.clone(pop)
     for index in range(NUM_POP):
-        pop_sorted[index].fitness.values = abs(pop[index].fitness.values[1] - pop[index].fitness.values[0]), diff[index]
+        pop_sorted[index].fitness.values = pop[index].fitness.values[1] - pop[index].fitness.values[0], diff[index]
     pop_sorted.sort(key=lambda x: x.fitness.values[1])
 
     return pop, pop_sorted
@@ -275,7 +275,7 @@ def TuningSingleWeapon(iter = 0):
     plt.figure(figsize = (16,9))
     plt.subplot(211)
     plt.xlabel("individual")
-    plt.ylabel("Absolute Error")
+    plt.ylabel("Error")
     plt.plot([i for i in range(NUM_POP - 49)], moving_average([pop_sorted[i].fitness.values[0] for i in range(NUM_POP)]))
     plt.subplot(212)
     plt.xlabel("individual")
@@ -288,16 +288,19 @@ def TuningSingleWeapon(iter = 0):
     plt.xlim(0, 11)
     plt.title("Mean and Standard deviation error")
     plt.xlabel("population")
-    plt.ylabel("absolute error")
+    plt.ylabel("error")
     plt.xticks([i + 1 for i in range(10)])
-    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*50, (j+1)*50)]) for j in range(10)],
-                  yerr = [ numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0]) for i in range(j*50, (j+1)*50)]) for j in range(10)])
+    plt.errorbar([k + 1 for k in range(10)], [ numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*50, (j+1)*50)]) for j in range(10)],
+                  yerr = [ numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(j*50, (j+1)*50)]) for j in range(10)])
     plt.savefig("plot error.png", bbox_inches='tight', dpi = 200)
     plt.close()
 
-    print(numpy.mean([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*50, (p+1)*50)]))
-    print(numpy.std([abs(pop[i].fitness.values[1] - pop[i].fitness.values[0])  for i in range(p*50, (p+1)*50)]))
+    error_file = open("error_balance.txt", "w")
 
+    error_file.write("average error: " + str(numpy.mean([pop[i].fitness.values[1] - pop[i].fitness.values[0] for i in range(500)])) + "\n" )
+    error_file.write("std dev error: " + str(numpy.std([pop[i].fitness.values[1] - pop[i].fitness.values[0]  for i in range(500)])) + "\n" )
+
+    error_file.close()
 
 if __name__ == '__main__':
     TuningSingleWeapon()

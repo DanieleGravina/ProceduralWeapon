@@ -32,10 +32,10 @@ def printWeapon(pop):
 
 
 def writeWeapon(pop, pop_file):
-	i = 0
+    i = 0
 	
     for ind in pop :
-    	pop_file.write("(" + str(i) +  ")" + "\n")
+        pop_file.write("(" + str(i) +  ")" + "\n")
         i += 1
         pop_file.write("Weapon "+ " Rof:" + str(ind[0]) + " Spread:" + str(ind[1]) + " MaxAmmo:" + str(ind[2]) 
             + " ShotCost:" + str(ind[3]) + " Range:" + str(ind[4]) + "\n")
@@ -105,6 +105,8 @@ class ClusterProceduralWeapon:
 
 		print("number of estimated clusters : %d" % n_clusters_ )
 		cluster_file.write("number of estimated clusters : %d" % n_clusters_ + "\n")
+
+		num_cluster = 0
 
 		for k in range(n_clusters_):
 			my_members = labels == k
@@ -300,7 +302,7 @@ def drawBarPlot(self, clusters, n_clusters_, colors_cluster, fitness_cluster):
 		ax.set_xticklabels( alphabet[:n_clusters_] )
 
 	ax = fig.add_subplot(4, 3, 11)
-	plt.ylabel("FITNESS")
+	plt.ylabel("BALANCE")
 	ax.bar(k, [np.mean(fitness_cluster[i], axis = 0)[0] for i in range(n_clusters_)], width, color=colors_cluster,
 			yerr = [np.std(fitness_cluster[i], axis = 0)[0] for i in range(n_clusters_)])
 	ax.set_xticks(k + width/2)

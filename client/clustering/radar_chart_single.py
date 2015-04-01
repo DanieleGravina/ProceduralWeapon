@@ -181,7 +181,7 @@ def draw_radar(weapons, color_cluster, fitness_cluster, num_samples):
     ax = fig.add_subplot(1, 4, 3)
 
     plt.ylim(0, 3)
-    ax.set_title("Fitness")
+    ax.set_title("Balance")
     ax.boxplot( [fitness_cluster[i][0] for i in range(len(fitness_cluster))] )
 
     ax = fig.add_subplot(1, 4, 4)

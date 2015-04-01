@@ -82,6 +82,9 @@ var int ENDGAME;
 
 var int FinalTotalScore;
 
+var string name_human_player;
+var bool bNamePlayerFound;
+
 
 //Added functionality to set the listen port of tcpServer
 event InitGame( string Options, out string ErrorMessage )
@@ -211,12 +214,32 @@ function SetWeaponLog(Pawn p, Weapon w)
 
 function NotifyKilled(Controller Killer, Controller Killed, Pawn KilledPawn )
 {
+	local int i;
+
 	Super.NotifyKilled(Killer, Killed, KilledPawn);
 
     SendPawnDied(killed.PlayerReplicationInfo.playername, killer.PlayerReplicationInfo.playername);
 
+    if(!bNamePlayerFound)
+    {
+    	for(i = 0; i < NUM_WEAPON; ++i)
+		{
+			if(mapBotPar[i].botName == name_human_player)
+			{
+				bNamePlayerFound = true;
+			}
+		}
 
-    if(killed.PlayerReplicationInfo.playername == "Giocatore")
+		if(!bNamePlayerFound)
+		{
+			name_human_player = "Player";
+			bNamePlayerFound = true;
+		}
+
+    }
+
+
+    if(killed.PlayerReplicationInfo.playername == name_human_player)
     {
     	ResetBotWeapon(Killed, killer, killed);
     }
@@ -459,8 +482,9 @@ simulated function ResetBotWeapon(Controller player, Controller bot, Controller 
 
 	`log("[TestGame] ResetBotWeapon called");
 
-	weaponPars = GetPWParameters("Giocatore");
-	projPars = GetPPParameters("Giocatore");
+	weaponPars = GetPWParameters(name_human_player);
+
+	projPars = GetPPParameters(name_human_player);
 
 	index = 0;
 
@@ -477,7 +501,7 @@ simulated function ResetBotWeapon(Controller player, Controller bot, Controller 
 
 		for(i = 0; i  < NUM_WEAPON; i++)
 		{
-			if(mapBotPar[i].botName != "Giocatore")
+			if(mapBotPar[i].botName != name_human_player)
 			{
 				mapBotPar[i].weapPars.RoF = weaponPars[index].RoF;
 				mapBotPar[i].weapPars.Spread = weaponPars[index].Spread;
@@ -549,7 +573,7 @@ simulated function ResetBotWeapon(Controller player, Controller bot, Controller 
 
 		for(i = 0; i  < NUM_WEAPON; i++)
 		{
-			if(mapBotPar[i].botName != "Giocatore")
+			if(mapBotPar[i].botName != name_human_player)
 			{
 				mapBotPar[i].projPars.Speed = projPars[index].Speed;
 				mapBotPar[i].projPars.Damage = projPars[index].Damage;
@@ -604,4 +628,7 @@ defaultproperties
 	MaxDuration = 600f;
 
 	GameReplicationInfoClass=class'ProceduralGameReplicationInfo'
+
+	name_human_player = "Giocatore"
+	bNamePlayerFound = false;
 }
