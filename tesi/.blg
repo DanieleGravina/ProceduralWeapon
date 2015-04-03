@@ -1,0 +1,4 @@
+[0] Config.pm:320> INFO - This is Biber 1.9
+[1] Config.pm:323> INFO - Logfile is '.blg'
+[91] biber-MSWIN:274> INFO - === %a %b %e, %Y, %H:%M:%S
+[974] Biber.pm:333> INFO - Reading 'd:/texlive/2014/texmf-dist/tex/latex/tools/.tex'

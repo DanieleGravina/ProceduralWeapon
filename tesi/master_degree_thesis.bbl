@@ -1,0 +1,373 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 2.4 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \sortlist{nty}{nty}
+    \entry{fpsmaps:article}{inproceedings}{}
+      \name{labelname}{3}{}{%
+        {{hash=999f10bdd2eeccc13f164098a78f4bbc}{Cardamone}{C\bibinitperiod}{Luigi}{L\bibinitperiod}{}{}{}{}}%
+        {{hash=b4919fa76de055498b14343b7e79d08b}{Togelius}{T\bibinitperiod}{Georgios\bibnamedelimb N.\bibnamedelimi Yannakakis\bibnamedelima Julian}{G\bibinitperiod\bibinitdelim N\bibinitperiod\bibinitdelim Y\bibinitperiod\bibinitdelim J\bibinitperiod}{}{}{}{}}%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{3}{}{%
+        {{hash=999f10bdd2eeccc13f164098a78f4bbc}{Cardamone}{C\bibinitperiod}{Luigi}{L\bibinitperiod}{}{}{}{}}%
+        {{hash=b4919fa76de055498b14343b7e79d08b}{Togelius}{T\bibinitperiod}{Georgios\bibnamedelimb N.\bibnamedelimi Yannakakis\bibnamedelima Julian}{G\bibinitperiod\bibinitdelim N\bibinitperiod\bibinitdelim Y\bibinitperiod\bibinitdelim J\bibinitperiod}{}{}{}{}}%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{d3e451185f1264e7ef9ca8fa5a7dbc05}
+      \strng{fullhash}{d3e451185f1264e7ef9ca8fa5a7dbc05}
+      \field{sortinit}{C}
+      \field{sortinithash}{dd0e4ddd17488a6ebf12cd6de2f2c237}
+      \field{labeltitle}{Evolving Interesting Maps for a First Person Shooter}
+      \field{booktitle}{EvoApplications (1)}
+      \field{title}{Evolving Interesting Maps for a First Person Shooter}
+      \field{year}{2011}
+      \field{pages}{63\bibrangedash 72}
+    \endentry
+    \entry{nsga2:article}{article}{}
+      \name{labelname}{4}{}{%
+        {{hash=b11d1da0cc2920eef235d484e6b858ef}{Deb}{D\bibinitperiod}{Kalyanmoy}{K\bibinitperiod}{}{}{}{}}%
+        {{hash=9fbc80a7299653739376ff004f77fab1}{Pratap}{P\bibinitperiod}{Amrit}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=4e180088c2d397bb169dfb45679eba22}{Agarwal}{A\bibinitperiod}{Sameer}{S\bibinitperiod}{}{}{}{}}%
+        {{hash=b48a097305788d7919a8610a070f19c4}{Meyarivan}{M\bibinitperiod}{T.}{T\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{4}{}{%
+        {{hash=b11d1da0cc2920eef235d484e6b858ef}{Deb}{D\bibinitperiod}{Kalyanmoy}{K\bibinitperiod}{}{}{}{}}%
+        {{hash=9fbc80a7299653739376ff004f77fab1}{Pratap}{P\bibinitperiod}{Amrit}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=4e180088c2d397bb169dfb45679eba22}{Agarwal}{A\bibinitperiod}{Sameer}{S\bibinitperiod}{}{}{}{}}%
+        {{hash=b48a097305788d7919a8610a070f19c4}{Meyarivan}{M\bibinitperiod}{T.}{T\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{6943967d389ec1de2e10e25fbdf3b2a0}
+      \strng{fullhash}{e0bf96cba487196ff6e27bdad228420c}
+      \field{sortinit}{D}
+      \field{sortinithash}{a01c54d1737685bc6dbf0ea0673fa44c}
+      \field{labeltitle}{A Fast Elitist Multi-Objective Genetic Algorithm: NSGA-II}
+      \field{journaltitle}{IEEE Transactions on Evolutionary Computation}
+      \field{title}{A Fast Elitist Multi-Objective Genetic Algorithm: NSGA-II}
+      \field{volume}{6}
+      \field{year}{2000}
+      \field{pages}{182\bibrangedash 197}
+    \endentry
+    \entry{dbscan:article}{inproceedings}{}
+      \name{labelname}{4}{}{%
+        {{hash=2c062e64ed26aacc08a62155e7944f04}{Ester}{E\bibinitperiod}{Martin}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=fbbb40638d5a14c61874416f926b0e0e}{Kriegel}{K\bibinitperiod}{Hans-peter}{H\bibinithyphendelim p\bibinitperiod}{}{}{}{}}%
+        {{hash=ca49c5c3c53c3a15c83a489c69ac8e41}{S}{S\bibinitperiod}{Jörg}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=2dda16c0a5d50fc830d0d4a3787937fa}{Xu}{X\bibinitperiod}{Xiaowei}{X\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{4}{}{%
+        {{hash=2c062e64ed26aacc08a62155e7944f04}{Ester}{E\bibinitperiod}{Martin}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=fbbb40638d5a14c61874416f926b0e0e}{Kriegel}{K\bibinitperiod}{Hans-peter}{H\bibinithyphendelim p\bibinitperiod}{}{}{}{}}%
+        {{hash=ca49c5c3c53c3a15c83a489c69ac8e41}{S}{S\bibinitperiod}{Jörg}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=2dda16c0a5d50fc830d0d4a3787937fa}{Xu}{X\bibinitperiod}{Xiaowei}{X\bibinitperiod}{}{}{}{}}%
+      }
+      \list{publisher}{1}{%
+        {AAAI Press}%
+      }
+      \strng{namehash}{9158a41d23cb4e154e78366d59c05728}
+      \strng{fullhash}{e0937437c06c07c306237dd492319b64}
+      \field{sortinit}{E}
+      \field{sortinithash}{655e26c7438ff123e5c69c6c3f702107}
+      \field{labeltitle}{A density-based algorithm for discovering clusters in large spatial databases with noise}
+      \field{title}{A density-based algorithm for discovering clusters in large spatial databases with noise}
+      \field{year}{1996}
+      \field{pages}{226\bibrangedash 231}
+    \endentry
+    \entry{deap:article}{article}{}
+      \name{labelname}{5}{}{%
+        {{hash=cb726dd65ed70d42db90a71456f3ccfc}{Fortin}{F\bibinitperiod}{Félix-Antoine}{F\bibinithyphendelim A\bibinitperiod}{}{}{}{}}%
+        {{hash=6209beeac6cb26deefb5a0eeeac816be}{{De\bibnamedelimb Rainville}}{D\bibinitperiod}{François-Michel}{F\bibinithyphendelim M\bibinitperiod}{}{}{}{}}%
+        {{hash=3ec3b044bed6d19168fae25d72ae8fd2}{Gardner}{G\bibinitperiod}{Marc-André}{M\bibinithyphendelim A\bibinitperiod}{}{}{}{}}%
+        {{hash=4db4c30a39950c04076d8822a71150b3}{Parizeau}{P\bibinitperiod}{Marc}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=6cf428558c3d4908897307fde7e4f5f4}{Gagné}{G\bibinitperiod}{Christian}{C\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{5}{}{%
+        {{hash=cb726dd65ed70d42db90a71456f3ccfc}{Fortin}{F\bibinitperiod}{Félix-Antoine}{F\bibinithyphendelim A\bibinitperiod}{}{}{}{}}%
+        {{hash=6209beeac6cb26deefb5a0eeeac816be}{{De\bibnamedelimb Rainville}}{D\bibinitperiod}{François-Michel}{F\bibinithyphendelim M\bibinitperiod}{}{}{}{}}%
+        {{hash=3ec3b044bed6d19168fae25d72ae8fd2}{Gardner}{G\bibinitperiod}{Marc-André}{M\bibinithyphendelim A\bibinitperiod}{}{}{}{}}%
+        {{hash=4db4c30a39950c04076d8822a71150b3}{Parizeau}{P\bibinitperiod}{Marc}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=6cf428558c3d4908897307fde7e4f5f4}{Gagné}{G\bibinitperiod}{Christian}{C\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{2d86837c4e4b0d62a789893eba4aad52}
+      \strng{fullhash}{2f75ef2f8c34e331c2ef3f00ad533aef}
+      \field{sortinit}{F}
+      \field{sortinithash}{9661cce5f16ac30b6b0c804d4583ed99}
+      \field{labeltitle}{{DEAP}: Evolutionary Algorithms Made Easy}
+      \field{journaltitle}{Journal of Machine Learning Research}
+      \field{month}{07}
+      \field{title}{{DEAP}: Evolutionary Algorithms Made Easy}
+      \field{volume}{13}
+      \field{year}{2012}
+      \field{pages}{2171\bibrangedash 2175}
+    \endentry
+    \entry{ga:article}{book}{}
+      \name{labelname}{1}{}{%
+        {{hash=eb281234920fe78f929f4e0831d65be5}{Goldberg}{G\bibinitperiod}{David\bibnamedelima E.}{D\bibinitperiod\bibinitdelim E\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{1}{}{%
+        {{hash=eb281234920fe78f929f4e0831d65be5}{Goldberg}{G\bibinitperiod}{David\bibnamedelima E.}{D\bibinitperiod\bibinitdelim E\bibinitperiod}{}{}{}{}}%
+      }
+      \list{location}{1}{%
+        {New York, NY, USA}%
+      }
+      \list{publisher}{1}{%
+        {Addison-Wesley Longman Publishing Co., Inc.}%
+      }
+      \strng{namehash}{eb281234920fe78f929f4e0831d65be5}
+      \strng{fullhash}{eb281234920fe78f929f4e0831d65be5}
+      \field{sortinit}{G}
+      \field{sortinithash}{480ee01f9ffd559b3258d822f54a8ac2}
+      \field{labeltitle}{Genetic Algorithms in Search, Optimization and Machine Learning}
+      \field{title}{Genetic Algorithms in Search, Optimization and Machine Learning}
+      \field{year}{1989}
+      \keyw{imported}
+    \endentry
+    \entry{gar:article}{article}{}
+      \name{labelname}{3}{}{%
+        {{hash=967a9620c93444d19d423c777dcb38de}{Hastingsa}{H\bibinitperiod}{Erin\bibnamedelima J.}{E\bibinitperiod\bibinitdelim J\bibinitperiod}{}{}{}{}}%
+        {{hash=d2575103d44a38a1f9e81d88a9d705e6}{Guha}{G\bibinitperiod}{Ratan\bibnamedelima K.}{R\bibinitperiod\bibinitdelim K\bibinitperiod}{}{}{}{}}%
+        {{hash=6efbd8468c509d77f9d16e4715165f22}{Stanley}{S\bibinitperiod}{Kenneth\bibnamedelima O.}{K\bibinitperiod\bibinitdelim O\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{3}{}{%
+        {{hash=967a9620c93444d19d423c777dcb38de}{Hastingsa}{H\bibinitperiod}{Erin\bibnamedelima J.}{E\bibinitperiod\bibinitdelim J\bibinitperiod}{}{}{}{}}%
+        {{hash=d2575103d44a38a1f9e81d88a9d705e6}{Guha}{G\bibinitperiod}{Ratan\bibnamedelima K.}{R\bibinitperiod\bibinitdelim K\bibinitperiod}{}{}{}{}}%
+        {{hash=6efbd8468c509d77f9d16e4715165f22}{Stanley}{S\bibinitperiod}{Kenneth\bibnamedelima O.}{K\bibinitperiod\bibinitdelim O\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{d4219682914ce6866118631128a7c41c}
+      \strng{fullhash}{d4219682914ce6866118631128a7c41c}
+      \field{sortinit}{H}
+      \field{sortinithash}{95b2cb08933fe649b7e9f8beee2132b4}
+      \field{labeltitle}{Evolving Content in the Galactic Arms Race Video Game.}
+      \field{journaltitle}{Proceedings of the IEEE Symposium on Computational Intelligence and Games (CIG09). Piscataway, NJ:IEEE}
+      \field{title}{Evolving Content in the Galactic Arms Race Video Game.}
+      \field{year}{2009}
+    \endentry
+    \entry{stucchi:article}{inproceedings}{}
+      \name{labelname}{3}{}{%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+        {{hash=ce248f919da2618f77c7c18fb3c6ea40}{Loiacono}{L\bibinitperiod}{Daniele}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=2034b9adf69d519e9de196981b6d5c88}{Stucchi}{S\bibinitperiod}{Riccardo}{R\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{3}{}{%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+        {{hash=ce248f919da2618f77c7c18fb3c6ea40}{Loiacono}{L\bibinitperiod}{Daniele}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=2034b9adf69d519e9de196981b6d5c88}{Stucchi}{S\bibinitperiod}{Riccardo}{R\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{2d044682bf2c0010143236b710e0cb17}
+      \strng{fullhash}{2d044682bf2c0010143236b710e0cb17}
+      \field{sortinit}{L}
+      \field{sortinithash}{c41a2b5886eeae464e75d1a9df4cd13e}
+      \field{labeltitle}{Evolving maps for match balancing in first person shooters}
+      \field{booktitle}{2014 {IEEE} Conference on Computational Intelligence and Games, {CIG} 2014, Dortmund, Germany, August 26-29, 2014}
+      \field{title}{Evolving maps for match balancing in first person shooters}
+      \field{year}{2014}
+      \field{pages}{1\bibrangedash 8}
+      \verb{doi}
+      \verb 10.1109/CIG.2014.6932901
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1109/CIG.2014.6932901
+      \endverb
+    \endentry
+    \entry{trackgen:article}{article}{}
+      \name{labelname}{3}{}{%
+        {{hash=ce248f919da2618f77c7c18fb3c6ea40}{Loiacono}{L\bibinitperiod}{Daniele}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=999f10bdd2eeccc13f164098a78f4bbc}{Cardamone}{C\bibinitperiod}{Luigi}{L\bibinitperiod}{}{}{}{}}%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{3}{}{%
+        {{hash=ce248f919da2618f77c7c18fb3c6ea40}{Loiacono}{L\bibinitperiod}{Daniele}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=999f10bdd2eeccc13f164098a78f4bbc}{Cardamone}{C\bibinitperiod}{Luigi}{L\bibinitperiod}{}{}{}{}}%
+        {{hash=96653fe9ca54aaefe89a001afff85a15}{Lanzi}{L\bibinitperiod}{Pier\bibnamedelima Luca}{P\bibinitperiod\bibinitdelim L\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{077bf9f54bd035b4e4af6a8f0eec7b36}
+      \strng{fullhash}{077bf9f54bd035b4e4af6a8f0eec7b36}
+      \field{sortinit}{L}
+      \field{sortinithash}{c41a2b5886eeae464e75d1a9df4cd13e}
+      \field{labeltitle}{Automatic Track Generation for High-End Racing Games Using Evolutionary Computation.}
+      \field{journaltitle}{Member IEEE}
+      \field{title}{Automatic Track Generation for High-End Racing Games Using Evolutionary Computation.}
+      \field{year}{2010}
+    \endentry
+    \entry{tbhw:article}{article}{}
+      \name{labelname}{2}{}{%
+        {{hash=9d196aedb5df21605e4b1b6b6798802d}{McDuffeei}{M\bibinitperiod}{Eric}{E\bibinitperiod}{}{}{}{}}%
+        {{hash=78363ef11b0f40c678ae3f5c9bcd68b1}{Pantaleev}{P\bibinitperiod}{Alex}{A\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{2}{}{%
+        {{hash=9d196aedb5df21605e4b1b6b6798802d}{McDuffeei}{M\bibinitperiod}{Eric}{E\bibinitperiod}{}{}{}{}}%
+        {{hash=78363ef11b0f40c678ae3f5c9bcd68b1}{Pantaleev}{P\bibinitperiod}{Alex}{A\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{8ec3e9ee7424448c9b1e0861cb46008e}
+      \strng{fullhash}{8ec3e9ee7424448c9b1e0861cb46008e}
+      \field{sortinit}{M}
+      \field{sortinithash}{4203d16473bc940d4ac780773cb7c5dd}
+      \field{labeltitle}{Team Blockhead Wars: Generating FPS Weapons in a Multiplayer Environment}
+      \field{journaltitle}{PCG2013}
+      \field{title}{Team Blockhead Wars: Generating FPS Weapons in a Multiplayer Environment}
+      \field{year}{2013}
+    \endentry
+    \entry{platform:article}{article}{}
+      \name{labelname}{2}{}{%
+        {{hash=b0603c89432045f404402d7d4225ce21}{Michael\bibnamedelima Cook}{M\bibinitperiod\bibinitdelim C\bibinitperiod}{Simon\bibnamedelima Colton}{S\bibinitperiod\bibinitdelim C\bibinitperiod}{}{}{}{}}%
+        {{hash=8746dd5d0a32da7843b0ab0d7c10397c}{Gowi}{G\bibinitperiod}{Jeremy}{J\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{2}{}{%
+        {{hash=b0603c89432045f404402d7d4225ce21}{Michael\bibnamedelima Cook}{M\bibinitperiod\bibinitdelim C\bibinitperiod}{Simon\bibnamedelima Colton}{S\bibinitperiod\bibinitdelim C\bibinitperiod}{}{}{}{}}%
+        {{hash=8746dd5d0a32da7843b0ab0d7c10397c}{Gowi}{G\bibinitperiod}{Jeremy}{J\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{cd6a96df5798c040775db1418ec4c6f4}
+      \strng{fullhash}{cd6a96df5798c040775db1418ec4c6f4}
+      \field{sortinit}{M}
+      \field{sortinithash}{4203d16473bc940d4ac780773cb7c5dd}
+      \field{labeltitle}{Initial Results From Co-operative Co-evolution for Automated Platformer Design.}
+      \field{journaltitle}{Computational Creativity Group, Imperial College, London}
+      \field{title}{Initial Results From Co-operative Co-evolution for Automated Platformer Design.}
+      \field{year}{2012}
+    \endentry
+    \entry{scikit-learn:article}{article}{}
+      \name{labelname}{16}{}{%
+        {{hash=22e2e571cc6356b3cb21d40e212ca6ac}{Pedregosa}{P\bibinitperiod}{F.}{F\bibinitperiod}{}{}{}{}}%
+        {{hash=90a0a2720bfe73efd4029f8a456cdcc3}{Varoquaux}{V\bibinitperiod}{G.}{G\bibinitperiod}{}{}{}{}}%
+        {{hash=386dd6e7464b390d92ce58cf04ba101c}{Gramfort}{G\bibinitperiod}{A.}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=ce3bf798cb091d3910827d51160fe0f8}{Michel}{M\bibinitperiod}{V.}{V\bibinitperiod}{}{}{}{}}%
+        {{hash=b8fa2de348731073d50b89e07267e159}{Thirion}{T\bibinitperiod}{B.}{B\bibinitperiod}{}{}{}{}}%
+        {{hash=1c2f66c39a6e2b2ca4d545348028a677}{Grisel}{G\bibinitperiod}{O.}{O\bibinitperiod}{}{}{}{}}%
+        {{hash=f5652799b846fbd40ce19b83c70ef1d3}{Blondel}{B\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=8d2ca4be32fef4d9e848709878fcb757}{Prettenhofer}{P\bibinitperiod}{P.}{P\bibinitperiod}{}{}{}{}}%
+        {{hash=56ac3785f81550a29a28d3abd746ecff}{Weiss}{W\bibinitperiod}{R.}{R\bibinitperiod}{}{}{}{}}%
+        {{hash=cb070bdb80f3a6add15c62ca13a4a419}{Dubourg}{D\bibinitperiod}{V.}{V\bibinitperiod}{}{}{}{}}%
+        {{hash=f1aa9e81c02f406a26762c8c85fdc1fb}{Vanderplas}{V\bibinitperiod}{J.}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=35a7037441ee9fd7ca45c2216a9cb080}{Passos}{P\bibinitperiod}{A.}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=39b253ebe84b96f6acd07b762d251ca1}{Cournapeau}{C\bibinitperiod}{D.}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=3c836162a7c1b02a3454bb2df2c57303}{Brucher}{B\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=980c432be67e1ca5879a0aee315ff2a9}{Perrot}{P\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=ad11ee93370bf63bb64684cfdff0836f}{Duchesnay}{D\bibinitperiod}{E.}{E\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{16}{}{%
+        {{hash=22e2e571cc6356b3cb21d40e212ca6ac}{Pedregosa}{P\bibinitperiod}{F.}{F\bibinitperiod}{}{}{}{}}%
+        {{hash=90a0a2720bfe73efd4029f8a456cdcc3}{Varoquaux}{V\bibinitperiod}{G.}{G\bibinitperiod}{}{}{}{}}%
+        {{hash=386dd6e7464b390d92ce58cf04ba101c}{Gramfort}{G\bibinitperiod}{A.}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=ce3bf798cb091d3910827d51160fe0f8}{Michel}{M\bibinitperiod}{V.}{V\bibinitperiod}{}{}{}{}}%
+        {{hash=b8fa2de348731073d50b89e07267e159}{Thirion}{T\bibinitperiod}{B.}{B\bibinitperiod}{}{}{}{}}%
+        {{hash=1c2f66c39a6e2b2ca4d545348028a677}{Grisel}{G\bibinitperiod}{O.}{O\bibinitperiod}{}{}{}{}}%
+        {{hash=f5652799b846fbd40ce19b83c70ef1d3}{Blondel}{B\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=8d2ca4be32fef4d9e848709878fcb757}{Prettenhofer}{P\bibinitperiod}{P.}{P\bibinitperiod}{}{}{}{}}%
+        {{hash=56ac3785f81550a29a28d3abd746ecff}{Weiss}{W\bibinitperiod}{R.}{R\bibinitperiod}{}{}{}{}}%
+        {{hash=cb070bdb80f3a6add15c62ca13a4a419}{Dubourg}{D\bibinitperiod}{V.}{V\bibinitperiod}{}{}{}{}}%
+        {{hash=f1aa9e81c02f406a26762c8c85fdc1fb}{Vanderplas}{V\bibinitperiod}{J.}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=35a7037441ee9fd7ca45c2216a9cb080}{Passos}{P\bibinitperiod}{A.}{A\bibinitperiod}{}{}{}{}}%
+        {{hash=39b253ebe84b96f6acd07b762d251ca1}{Cournapeau}{C\bibinitperiod}{D.}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=3c836162a7c1b02a3454bb2df2c57303}{Brucher}{B\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=980c432be67e1ca5879a0aee315ff2a9}{Perrot}{P\bibinitperiod}{M.}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=ad11ee93370bf63bb64684cfdff0836f}{Duchesnay}{D\bibinitperiod}{E.}{E\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{7f03c9665977d16cca3f7d744a8a06df}
+      \strng{fullhash}{81371d66ce2cfb28d217f955948ace55}
+      \field{sortinit}{P}
+      \field{sortinithash}{b8af9282ac256b81613dc9012a0ac921}
+      \field{labeltitle}{Scikit-learn: Machine Learning in {P}ython}
+      \field{journaltitle}{Journal of Machine Learning Research}
+      \field{title}{Scikit-learn: Machine Learning in {P}ython}
+      \field{volume}{12}
+      \field{year}{2011}
+      \field{pages}{2825\bibrangedash 2830}
+    \endentry
+    \entry{psmage:article}{article}{}
+      \name{labelname}{4}{}{%
+        {{hash=9455ae7b71c029beb38002baa6784bc9}{Preuss}{P\bibinitperiod}{Mike}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=c62a4f8d879c25e595dfc63902acbf30}{Kozakowski}{K\bibinitperiod}{Daniel}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=5e44f6fe6f8e8b27bb447f5325b97432}{Hagelb{ä}ck}{H\bibinitperiod}{Johan}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=5f68ce10c238f4be96bfe2a8193836de}{Trautmann}{T\bibinitperiod}{Heike}{H\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{4}{}{%
+        {{hash=9455ae7b71c029beb38002baa6784bc9}{Preuss}{P\bibinitperiod}{Mike}{M\bibinitperiod}{}{}{}{}}%
+        {{hash=c62a4f8d879c25e595dfc63902acbf30}{Kozakowski}{K\bibinitperiod}{Daniel}{D\bibinitperiod}{}{}{}{}}%
+        {{hash=5e44f6fe6f8e8b27bb447f5325b97432}{Hagelb{ä}ck}{H\bibinitperiod}{Johan}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=5f68ce10c238f4be96bfe2a8193836de}{Trautmann}{T\bibinitperiod}{Heike}{H\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{1cf32f979c768e27181c484f9c99179f}
+      \strng{fullhash}{38edcfa54d3d82c16af7785a9a7a361f}
+      \field{sortinit}{P}
+      \field{sortinithash}{b8af9282ac256b81613dc9012a0ac921}
+      \field{labeltitle}{Reactive strategy choice in StarCraft by means of Fuzzy Control}
+      \field{booktitle}{2013 {IEEE} Conference on Computational Inteligence in Games (CIG), Niagara Falls, ON, Canada, August 11-13, 2013}
+      \field{title}{Reactive strategy choice in StarCraft by means of Fuzzy Control}
+      \field{year}{2013}
+      \field{pages}{1\bibrangedash 8}
+      \verb{doi}
+      \verb 10.1109/CIG.2013.6633627
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1109/CIG.2013.6633627
+      \endverb
+    \endentry
+    \entry{dungeon:article}{article}{}
+      \name{labelname}{2}{}{%
+        {{hash=23acdb518d31ff36ba77ad985d86aac4}{Sorenson}{S\bibinitperiod}{Nathan}{N\bibinitperiod}{}{}{}{}}%
+        {{hash=98a4249d5bf6edf5cb5809788bd84b51}{Pasquier}{P\bibinitperiod}{Philippe}{P\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{2}{}{%
+        {{hash=23acdb518d31ff36ba77ad985d86aac4}{Sorenson}{S\bibinitperiod}{Nathan}{N\bibinitperiod}{}{}{}{}}%
+        {{hash=98a4249d5bf6edf5cb5809788bd84b51}{Pasquier}{P\bibinitperiod}{Philippe}{P\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{5dd4ed8b15726c8a06060c2ec10d13b7}
+      \strng{fullhash}{5dd4ed8b15726c8a06060c2ec10d13b7}
+      \field{sortinit}{S}
+      \field{sortinithash}{4125bb4c3a0eb3eaee3ea6da32eb70c8}
+      \field{labeltitle}{Towards a Generic Framework for Automated Video Game Level Creation}
+      \field{booktitle}{Applications of Evolutionary Computation, EvoApplicatons 2010: EvoCOMPLEX, EvoGAMES, EvoIASP, EvoINTELLIGENCE, EvoNUM, and EvoSTOC, Istanbul, Turkey, April 7-9, 2010, Proceedings, Part {I}}
+      \field{title}{Towards a Generic Framework for Automated Video Game Level Creation}
+      \field{year}{2010}
+      \field{pages}{131\bibrangedash 140}
+      \verb{doi}
+      \verb 10.1007/978-3-642-12239-2_14
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1007/978-3-642-12239-2_14
+      \endverb
+    \endentry
+    \entry{taxonomy:article}{article}{}
+      \name{labelname}{4}{}{%
+        {{hash=74b2ee2a872fa4ffc684b6ba67861833}{Togelius}{T\bibinitperiod}{J.}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=c0fc1979fb9daf67e47baa8591636713}{Yannakakis}{Y\bibinitperiod}{G.}{G\bibinitperiod}{}{}{}{}}%
+        {{hash=cfef0666bd08ed69a40aab253658d944}{Stanley}{S\bibinitperiod}{K.}{K\bibinitperiod}{}{}{}{}}%
+        {{hash=41d2f287191f30e0f828b8d78f733dfc}{Browne}{B\bibinitperiod}{C.}{C\bibinitperiod}{}{}{}{}}%
+      }
+      \name{author}{4}{}{%
+        {{hash=74b2ee2a872fa4ffc684b6ba67861833}{Togelius}{T\bibinitperiod}{J.}{J\bibinitperiod}{}{}{}{}}%
+        {{hash=c0fc1979fb9daf67e47baa8591636713}{Yannakakis}{Y\bibinitperiod}{G.}{G\bibinitperiod}{}{}{}{}}%
+        {{hash=cfef0666bd08ed69a40aab253658d944}{Stanley}{S\bibinitperiod}{K.}{K\bibinitperiod}{}{}{}{}}%
+        {{hash=41d2f287191f30e0f828b8d78f733dfc}{Browne}{B\bibinitperiod}{C.}{C\bibinitperiod}{}{}{}{}}%
+      }
+      \strng{namehash}{aae0bd92f1ac4e629767ddc846f7e7b3}
+      \strng{fullhash}{a7c2068d86198cf7728523e838f67add}
+      \field{sortinit}{T}
+      \field{sortinithash}{9378dd666f3c24d81538df53aa99e23d}
+      \field{labeltitle}{Search-based procedural content generation: A taxonomy and survey.}
+      \field{journaltitle}{IEEE Transactions on Computational Intelligence and AI in Game}
+      \field{number}{3}
+      \field{title}{Search-based procedural content generation: A taxonomy and survey.}
+      \field{year}{2011}
+      \field{pages}{172\bibrangedash 186}
+    \endentry
+  \endsortlist
+\endrefsection
+\endinput
+

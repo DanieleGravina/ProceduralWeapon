@@ -1,0 +1,75 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\select@language {english}
+\defcounter {refsection}{0}\relax 
+\select@language {italian}
+\select@language {english}
+\select@language {italian}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Beaneath Apple Manor\relax }}{5}{figure.caption.5}
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Elite\relax }}{5}{figure.caption.6}
+\contentsline {figure}{\numberline {2.3}{\ignorespaces SpeedTree\relax }}{6}{figure.caption.7}
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Borderlands\relax }}{6}{figure.caption.8}
+\contentsline {figure}{\numberline {2.5}{\ignorespaces A sinistra mappa generata con rappresentazione All-White, a destra con All-Black\relax }}{13}{figure.caption.19}
+\contentsline {figure}{\numberline {2.6}{\ignorespaces A sinistra mappa generata con rappresentazione Grind, a destra con Random-Digger\relax }}{13}{figure.caption.20}
+\contentsline {figure}{\numberline {2.7}{\ignorespaces A sinistra mappa migliore ottenuta con rappresentazione \emph {All-Black}, a destra con rappresentazione \emph {Grid}\relax }}{14}{figure.caption.23}
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Team Blockhead Wars, screenshot di un match\relax }}{15}{figure.caption.25}
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Team Blockhead Wars, la mesh dell'arma cambia a seconda dei parametri\relax }}{16}{figure.caption.28}
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Screenshot di GAR\relax }}{18}{figure.caption.32}
+\contentsline {figure}{\numberline {2.11}{\ignorespaces Compositional Pattern Producing Network\relax }}{19}{figure.caption.34}
+\contentsline {figure}{\numberline {2.12}{\ignorespaces Esempi di armi generati in GAR\relax }}{20}{figure.caption.38}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Unreal Tournament III\relax }}{23}{figure.caption.39}
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Tempi delle simulazioni con la prima coppia di armi\relax }}{29}{figure.caption.43}
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Tempi delle simulazioni con la seconda coppia di armi\relax }}{30}{figure.caption.44}
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Tempi delle simulazioni con la terza coppia di armi\relax }}{30}{figure.caption.45}
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Risultati delle uccisioni ottenute dai due bot con la prima coppia di armi\relax }}{31}{figure.caption.46}
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Risultati delle uccisioni ottenute dai due bot con la seconda coppia di armi\relax }}{32}{figure.caption.47}
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Risultati delle uccisioni ottenute dai due bot con la terza coppia di armi\relax }}{32}{figure.caption.48}
+\contentsline {figure}{\numberline {3.8}{\ignorespaces \emph {boxplot} delle uccisioni dei due bot con la prima coppia di armi\relax }}{34}{figure.caption.50}
+\contentsline {figure}{\numberline {3.9}{\ignorespaces \emph {boxplot} delle uccisioni dei due bot con la seconda coppia di armi\relax }}{34}{figure.caption.51}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Media e deviazione standard delle fitness medie\relax }}{41}{figure.caption.52}
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Media e deviazione standard delle fitness massime\relax }}{41}{figure.caption.53}
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Grafico a barre delle coppie di armi ottenute con il GA a singolo obiettivo\relax }}{43}{figure.caption.54}
+\contentsline {figure}{\numberline {4.4}{\ignorespaces 1\IeC {\textdegree } esempio di armi generate con il GA a singolo obiettivo\relax }}{45}{figure.caption.55}
+\contentsline {figure}{\numberline {4.5}{\ignorespaces statistiche relative al 1\IeC {\textdegree } esempio di armi generate\relax }}{45}{figure.caption.56}
+\contentsline {figure}{\numberline {4.6}{\ignorespaces 2\IeC {\textdegree } esempio di armi generate con il GA a singolo obiettivo\relax }}{46}{figure.caption.57}
+\contentsline {figure}{\numberline {4.7}{\ignorespaces statistiche relative al 2\IeC {\textdegree } esempio di armi generate\relax }}{46}{figure.caption.58}
+\contentsline {figure}{\numberline {4.8}{\ignorespaces media e deviazione standard dell'errore ottenuto con GA a singolo obiettivo\relax }}{48}{figure.caption.59}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces \emph {radar chart} dell'arma \emph {Rocket Launcher} e dell'arma \emph {Flak}\relax }}{53}{figure.caption.60}
+\contentsline {figure}{\numberline {5.2}{\ignorespaces \emph {boxplot} delle uccisioni ottenute con il \emph {Rocket Launcher} contro il \emph {Flak}\relax }}{54}{figure.caption.61}
+\contentsline {figure}{\numberline {5.3}{\ignorespaces pareto ottenuta con il bilanciamento dell'arma obiettivo\relax }}{56}{figure.caption.62}
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Grafico a barre delle armi ottenute attraverso il \emph {tuning} dell'arma obiettivo\relax }}{58}{figure.caption.63}
+\contentsline {figure}{\numberline {5.5}{\ignorespaces \emph {radar chart} della 1\IeC {\textdegree } arma generata attraverso il bilanciamento dell'arma obiettivo\relax }}{59}{figure.caption.64}
+\contentsline {figure}{\numberline {5.6}{\ignorespaces \emph {radar chart} della 2\IeC {\textdegree } arma generata attraverso il bilanciamento dell'arma obiettivo\relax }}{60}{figure.caption.65}
+\contentsline {figure}{\numberline {5.7}{\ignorespaces \emph {radar chart} della 3\IeC {\textdegree } arma generata attraverso il bilanciamento dell'arma obiettivo\relax }}{61}{figure.caption.66}
+\contentsline {figure}{\numberline {5.8}{\ignorespaces confronto tra media mobile dell'errore assoluto e media mobile della distanza euclidea dall'arma obiettivo\relax }}{63}{figure.caption.67}
+\contentsline {figure}{\numberline {5.9}{\ignorespaces media e deviazione standard dell'errore ottenuto dai risultati del bilanciamento dell'arma obiettivo\relax }}{64}{figure.caption.68}
+\contentsline {figure}{\numberline {5.10}{\ignorespaces pareto ottenuta con il bilanciamento dell'arma obiettivo nella validazione\relax }}{65}{figure.caption.69}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces pareto ottenuto con il GA multiobiettivo (bilanciamento, distanza media e \emph {Kill Streak})\relax }}{71}{figure.caption.71}
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Grafico a barre delle armi ottenute attraverso \emph {clustering} con il GA multiobiettivo (bilanciamento, distanza media e \emph {Kill Streak}) \relax }}{73}{figure.caption.72}
+\contentsline {figure}{\numberline {6.3}{\ignorespaces \emph {radar chart} della 1\IeC {\textdegree } arma generata con GA multiobiettivo (bilanciamento, distanza media e \emph {Kill Streak})\relax }}{74}{figure.caption.73}
+\contentsline {figure}{\numberline {6.4}{\ignorespaces \emph {radar chart} della 2\IeC {\textdegree } arma generata con GA multiobiettivo (bilanciamento, distanza media e \emph {Kill Streak})\relax }}{75}{figure.caption.74}
+\contentsline {figure}{\numberline {6.5}{\ignorespaces \emph {radar chart} della 3\IeC {\textdegree } arma generata con GA multiobiettivo (bilanciamento, distanza media e \emph {Kill Streak})\relax }}{76}{figure.caption.75}
+\contentsline {figure}{\numberline {6.6}{\ignorespaces pareto ottenuto con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e \emph {Kill Streak})\relax }}{78}{figure.caption.76}
+\contentsline {figure}{\numberline {6.7}{\ignorespaces Grafico a barre delle armi ottenute attraverso \emph {clustering} con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e \emph {Kill Streak})\relax }}{80}{figure.caption.77}
+\contentsline {figure}{\numberline {6.8}{\ignorespaces \emph {radar chart} della 1\IeC {\textdegree } arma generata con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e \emph {Kill Streak})\relax }}{81}{figure.caption.78}
+\contentsline {figure}{\numberline {6.9}{\ignorespaces \emph {radar chart} della 2\IeC {\textdegree } arma generata con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e \emph {Kill Streak})\relax }}{82}{figure.caption.79}
+\contentsline {figure}{\numberline {6.10}{\ignorespaces \emph {radar chart} della 3\IeC {\textdegree } arma generata con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e \emph {Kill Streak})\relax }}{83}{figure.caption.80}
+\contentsline {figure}{\numberline {6.11}{\ignorespaces pareto ottenuto con il GA multiobiettivo (bilanciamento, \emph {Hit Time} e distanza media dei colpi)\relax }}{85}{figure.caption.81}
+\contentsline {figure}{\numberline {6.12}{\ignorespaces Grafico a barre delle armi ottenute attraverso \emph {clustering} nell'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e \emph {Kill Streak}\relax }}{87}{figure.caption.82}
+\contentsline {figure}{\numberline {6.13}{\ignorespaces \emph {radar chart} della 1\IeC {\textdegree } esempio di arma generata nell'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e \emph {Kill Streak}\relax }}{88}{figure.caption.83}
+\contentsline {figure}{\numberline {6.14}{\ignorespaces \emph {radar chart} della 2\IeC {\textdegree } esempio arma generata nell'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e \emph {Kill Streak}\relax }}{89}{figure.caption.84}
+\contentsline {figure}{\numberline {6.15}{\ignorespaces \emph {radar chart} della 3\IeC {\textdegree } esempio di arma generata nell'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e \emph {Kill Streak}\relax }}{90}{figure.caption.85}
+\contentsline {figure}{\numberline {6.16}{\ignorespaces errore ottenuto con la rivalutazione della popolazione finale per l'esperimento di massimizzazione del bilanciamento, distanza media dei colpi e \emph {Kill Streak}\relax }}{92}{figure.caption.86}
+\contentsline {figure}{\numberline {6.17}{\ignorespaces errore ottenuto con la rivalutazione della popolazione finale per l'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e \emph {Kill Streak}\relax }}{93}{figure.caption.87}
+\contentsline {figure}{\numberline {6.18}{\ignorespaces errore ottenuto con la rivalutazione della popolazione finale per l'esperimento di massimizzazione del bilanciamento, \emph {Hit Time} e distanza media dei colpi\relax }}{94}{figure.caption.88}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces \emph {radar chart} della prima coppia di armi testata nella validazione con persone fisiche\relax }}{98}{figure.caption.89}
+\contentsline {figure}{\numberline {7.2}{\ignorespaces \emph {radar chart} della seconda coppia di armi testata nella validazione con persone fisiche\relax }}{99}{figure.caption.90}
+\contentsline {figure}{\numberline {7.3}{\ignorespaces percentuali delle risposte ottenute dai gli utenti rispetto i test effettuati con la prima coppia di armi\relax }}{100}{figure.caption.91}
+\contentsline {figure}{\numberline {7.4}{\ignorespaces percentuali delle risposte ottenute dai gli utenti rispetto i test effettuati con la seconda coppia di armi\relax }}{101}{figure.caption.92}
